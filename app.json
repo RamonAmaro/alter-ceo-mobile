@@ -32,6 +32,12 @@
             "imageWidth": 76
           }
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permitir biometría para iniciar sesión de forma segura."
+        }
       ]
     ],
     "experiments": {

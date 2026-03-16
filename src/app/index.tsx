@@ -1,26 +1,12 @@
-import { StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from "@/stores/auth-store";
+import { Redirect } from "expo-router";
 
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
+export default function Index() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">AlterCEO</ThemedText>
-      </SafeAreaView>
-    </ThemedView>
-  );
+  if (isAuthenticated) {
+    return <Redirect href="/(app)/home" />;
+  }
+
+  return <Redirect href="/(auth)/login" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

@@ -2531,12 +2531,24 @@ expo-keep-awake@~55.0.4:
   resolved "https://registry.yarnpkg.com/expo-keep-awake/-/expo-keep-awake-55.0.4.tgz#8fe3685b75bda28e15268821a384e069f0395fab"
   integrity sha512-vwfdMtMS5Fxaon8gC0AiE70SpxTsHJ+rjeoVJl8kdfdbxczF7OIaVmfjFJ5Gfigd/WZiLqxhfZk34VAkXF4PNg==
 
+expo-linear-gradient@~55.0.8:
+  version "55.0.8"
+  resolved "https://registry.yarnpkg.com/expo-linear-gradient/-/expo-linear-gradient-55.0.8.tgz#e98cb6a83ed34598f4aefa06c43ae6f83a582d13"
+  integrity sha512-nCMgZXcHesnFslH1TUFMdqlDiE4jYTTTSHb97g1jq1gyGX2xDEOyqBxQJmiIVGrZJ+kTWH6RljJ5tYyva9mrAg==
+
 expo-linking@~55.0.7:
   version "55.0.7"
   resolved "https://registry.yarnpkg.com/expo-linking/-/expo-linking-55.0.7.tgz#9583e283dc1de25722675abda2a376fcc94e1e8f"
   integrity sha512-MiGCedere1vzQTEi2aGrkzd7eh/rPSz4w6F3GMBuAJzYl+/0VhIuyhozpEGrueyDIXWfzaUVOcn3SfxVi+kwQQ==
   dependencies:
     expo-constants "~55.0.7"
+    invariant "^2.2.4"
+
+expo-local-authentication@^55.0.8:
+  version "55.0.8"
+  resolved "https://registry.yarnpkg.com/expo-local-authentication/-/expo-local-authentication-55.0.8.tgz#7718085759862702c8c87640364336906303bc56"
+  integrity sha512-Rv0mv8z8yvTMm+oR7Q0DmpN/FIjdEV5z9NJoZNVI7CyUVV9vFkCALjF95mcCO4VCmuPHDbzKPD50IzM1c5vNQg==
+  dependencies:
     invariant "^2.2.4"
 
 expo-modules-autolinking@55.0.9:
@@ -2587,6 +2599,11 @@ expo-router@~55.0.5:
     shallowequal "^1.1.0"
     use-latest-callback "^0.2.1"
     vaul "^1.1.2"
+
+expo-secure-store@^55.0.8:
+  version "55.0.8"
+  resolved "https://registry.yarnpkg.com/expo-secure-store/-/expo-secure-store-55.0.8.tgz#741eb2c074cc6754e650f35f4e33df8213c95f0d"
+  integrity sha512-8w9tQe8U6oRo5YIzqCqVhRrOnfoODNDoitBtLXEx+zS6WLUnkRq5kH7ViJuOgiM7PzLr9pvAliRiDOKyvFbTuQ==
 
 expo-server@^55.0.6:
   version "55.0.6"
@@ -4952,3 +4969,8 @@ zod@^3.25.76:
   version "3.25.76"
   resolved "https://registry.yarnpkg.com/zod/-/zod-3.25.76.tgz#26841c3f6fd22a6a2760e7ccb719179768471e34"
   integrity sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==
+
+zustand@^5.0.12:
+  version "5.0.12"
+  resolved "https://registry.yarnpkg.com/zustand/-/zustand-5.0.12.tgz#ed36f647aa89965c4019b671dfc23ef6c6e3af8c"
+  integrity sha512-i77ae3aZq4dhMlRhJVCYgMLKuSiZAaUPAct2AksxQ+gOtimhGMdXljRT21P5BNpeT4kXlLIckvkPM029OljD7g==
