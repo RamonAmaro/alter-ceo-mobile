@@ -10,12 +10,14 @@ import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
 import { useAuthStore } from "@/stores/auth-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const checkBiometricsStatus = useAuthStore((s) => s.checkBiometricsStatus);
+  const loadOnboarding = useOnboardingStore((s) => s.load);
 
   const [fontsLoaded] = useFonts({
     Montserrat: require("@/assets/fonts/Montserrat-VariableFont_wght.ttf"),
@@ -26,6 +28,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded) {
       checkBiometricsStatus();
+      loadOnboarding();
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);

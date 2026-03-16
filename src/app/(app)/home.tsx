@@ -5,15 +5,18 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Fonts, Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useTheme } from "@/hooks/use-theme";
 import { router } from "expo-router";
 
 export default function HomeScreen() {
   const signOut = useAuthStore((s) => s.signOut);
+  const resetOnboarding = useOnboardingStore((s) => s.reset);
   const theme = useTheme();
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await resetOnboarding();
+    await signOut();
     router.replace("/(auth)/login");
   };
 

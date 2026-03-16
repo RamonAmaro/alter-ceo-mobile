@@ -4,6 +4,7 @@ import { Input } from "@/components/input";
 import { Fonts, Spacing } from "@/constants/theme";
 import { isBiometricsAvailable } from "@/services/biometrics-service";
 import { useAuthStore } from "@/stores/auth-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -21,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const { signIn, enableBiometrics, tryBiometricLogin } = useAuthStore();
+  const onboardingCompleted = useOnboardingStore((s) => s.completed);
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,10 +32,18 @@ export default function LoginScreen() {
     attemptBiometricLogin();
   }, []);
 
+  function navigateAfterLogin() {
+    if (onboardingCompleted) {
+      router.replace("/(app)/home");
+    } else {
+      router.replace("/(onboarding)/welcome");
+    }
+  }
+
   async function attemptBiometricLogin() {
     const success = await tryBiometricLogin();
     if (success) {
-      router.replace("/(app)/home");
+      navigateAfterLogin();
     }
   }
 
@@ -60,19 +70,19 @@ export default function LoginScreen() {
           {
             text: "No, gracias",
             style: "cancel",
-            onPress: () => router.replace("/(app)/home"),
+            onPress: navigateAfterLogin,
           },
           {
             text: "Sí, activar",
             onPress: async () => {
               await enableBiometrics(email, password);
-              router.replace("/(app)/home");
+              navigateAfterLogin();
             },
           },
-        ]
+        ],
       );
     } else {
-      router.replace("/(app)/home");
+      navigateAfterLogin();
     }
   }
 
@@ -150,6 +160,8 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          <View style={styles.spacer} />
+
           {/* Tagline */}
           <View style={styles.taglineContainer}>
             <View style={styles.taglineAccent} />
@@ -169,7 +181,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
     paddingHorizontal: Spacing.four,
     gap: Spacing.five,
   },
@@ -214,6 +225,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#E8731A",
     textAlign: "center",
+  },
+  spacer: {
+    flexGrow: 1,
   },
   taglineContainer: {
     flexDirection: "row",
