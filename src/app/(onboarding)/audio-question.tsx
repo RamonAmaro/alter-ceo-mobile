@@ -3,6 +3,10 @@ import { CountdownOverlay } from "@/components/countdown-overlay";
 import { RecordButton } from "@/components/record-button";
 import { Fonts, Spacing } from "@/constants/theme";
 import {
+  getExpressQuestions,
+  getProfessionalQuestions,
+} from "@/constants/onboarding-questions";
+import {
   MAX_DURATION_MS,
   RecordingPresets,
   enableRecordingMode,
@@ -13,8 +17,8 @@ import { useOnboardingStore } from "@/stores/onboarding-store";
 import { formatTimer } from "@/utils/format-timer";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type RecordingState = "idle" | "recording" | "paused" | "countdown";
@@ -26,7 +30,22 @@ interface AudioRecorderViewProps {
 
 function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
   const insets = useSafeAreaInsets();
-  const planType = useOnboardingStore((s) => s.planType);
+  const {
+    planType,
+    currentQuestionIndex,
+    setAnswer,
+    addAudioRecord,
+    nextQuestion,
+    previousQuestion,
+  } = useOnboardingStore();
+
+  const questions = useMemo(() => {
+    return planType === "professional"
+      ? getProfessionalQuestions()
+      : getExpressQuestions();
+  }, [planType]);
+
+  const question = questions[currentQuestionIndex];
 
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -52,7 +71,11 @@ function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
       if (elapsed >= MAX_DURATION_MS) {
         setElapsedMs(MAX_DURATION_MS);
         stopTimer();
-        try { recorder.stop(); } catch { /* already stopped */ }
+        try {
+          recorder.stop();
+        } catch {
+          /* already stopped */
+        }
         setRecordState("idle");
         handleRecordingComplete();
       } else {
@@ -70,7 +93,7 @@ function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
     handleRecord();
   }, []);
 
-  async function handleRecord() {
+  async function handleRecord(): Promise<void> {
     const granted = await requestAudioPermission();
     if (!granted) {
       Alert.alert(
@@ -94,53 +117,76 @@ function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
     }
   }
 
-  function handlePause() {
+  function handlePause(): void {
     recorder.pause();
     stopTimer();
     accumulatedRef.current += Date.now() - startTimeRef.current;
     setRecordState("paused");
   }
 
-  function handleResume() {
+  function handleResume(): void {
     recorder.record();
     setRecordState("recording");
     startTimer();
   }
 
-  function handleFinish() {
+  function handleFinish(): void {
     stopTimer();
-    try { recorder.stop(); } catch { /* already stopped */ }
+    try {
+      recorder.stop();
+    } catch {
+      /* already stopped */
+    }
     setRecordState("idle");
     handleRecordingComplete();
   }
 
-  function handleRestart() {
+  function handleRestartRecording(): void {
     stopTimer();
-    try { recorder.stop(); } catch { /* already stopped */ }
+    try {
+      recorder.stop();
+    } catch {
+      /* already stopped */
+    }
     setElapsedMs(0);
     accumulatedRef.current = 0;
     setRecordState("countdown");
   }
 
-  function handleCountdownComplete() {
-    // Signal parent to remount this component with autoStart
+  function handleCountdownComplete(): void {
     onRestart?.();
   }
 
-  function handleRecordingComplete() {
-    Alert.alert(
-      "¡Audio grabado!",
-      "Tu respuesta ha sido registrada correctamente.",
-      [
-        {
-          text: "Continuar",
-          onPress: () => router.push("/(onboarding)/completion"),
-        },
-      ],
-    );
+  function handleRecordingComplete(): void {
+    const uri = recorder.uri ?? "";
+    setAnswer(currentQuestionIndex, `[audio_recorded]:${uri}`);
+    addAudioRecord({
+      uri,
+      origin: planType as "express" | "professional",
+      questionIndex: currentQuestionIndex,
+      question: question?.question ?? "",
+    });
+
+    const nextIndex = currentQuestionIndex + 1;
+
+    if (nextIndex < questions.length) {
+      const nextQ = questions[nextIndex];
+      nextQuestion();
+      if (nextQ.type !== "audio") {
+        router.back();
+      }
+    } else {
+      if (planType === "express") {
+        router.replace("/(onboarding)/express-complete");
+      } else {
+        router.replace("/(onboarding)/report-loading");
+      }
+    }
   }
 
   const showControls = recordState === "recording" || recordState === "paused";
+
+  if (!question) return null;
 
   return (
     <AppBackground>
@@ -154,21 +200,30 @@ function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
         ]}
       >
         <View style={styles.topSection}>
-          <Text style={styles.planLabel}>
-            {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
-          </Text>
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              onPress={() => {
+                previousQuestion();
+                router.back();
+              }}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={styles.backArrow}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.planLabel}>
+              {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
+            </Text>
+          </View>
 
           <Text style={styles.instruction}>
-            Graba un audio de un máximo de 30 segundos contestando a la
-            siguiente pregunta:
+            {question.instruction ||
+              "Graba un audio de un máximo de 30 segundos contestando a la siguiente pregunta:"}
           </Text>
 
-          <Text style={styles.question}>
-            ¿Cuál es tu producto o servicio principal y cuál es el precio
-            aproximado de venta?
-          </Text>
+          <Text style={styles.question}>{question.question}</Text>
 
-          <Text style={styles.progress}>(75%)</Text>
+          <Text style={styles.progress}>({question.progress}%)</Text>
         </View>
 
         <View style={styles.recordWrapper}>
@@ -193,7 +248,7 @@ function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
               onPause={handlePause}
               onResume={handleResume}
               onFinish={handleFinish}
-              onRestart={handleRestart}
+              onRestart={handleRestartRecording}
             />
           </LinearGradient>
         </View>
@@ -210,7 +265,7 @@ export default function AudioQuestionScreen() {
   const [key, setKey] = useState(0);
   const [autoStart, setAutoStart] = useState(false);
 
-  function handleRestart() {
+  function handleRestart(): void {
     setAutoStart(true);
     setKey((k) => k + 1);
   }
@@ -232,13 +287,22 @@ const styles = StyleSheet.create({
   topSection: {
     flex: 1,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.three,
+    gap: Spacing.two,
+  },
+  backArrow: {
+    fontSize: 22,
+    color: "#ffffff",
+  },
   planLabel: {
     fontFamily: Fonts.montserrat,
     fontSize: 16,
     fontWeight: "700",
     color: "#ffffff",
     lineHeight: 20,
-    marginBottom: Spacing.three,
   },
   instruction: {
     fontFamily: Fonts.montserrat,

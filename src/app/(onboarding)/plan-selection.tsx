@@ -51,7 +51,7 @@ export default function PlanSelectionScreen() {
           <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
             <Button
               label="Continuar"
-              onPress={() => router.push("/(onboarding)/audio-question")}
+              onPress={() => router.push("/(onboarding)/questions")}
             />
           </View>
         )}
