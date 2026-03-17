@@ -31,12 +31,12 @@ export function Button({ label, style, ...rest }: ButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    width: 198,
+    width: 278,
     borderRadius: 98,
     overflow: "hidden",
   },
   gradient: {
-    height: 31,
+    height: 43,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 98,
