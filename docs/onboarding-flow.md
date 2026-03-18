@@ -1,4 +1,4 @@
-# Onboarding Flow — AlterCEO
+# Onboarding Flow — alter-ceo
 
 ## Visão geral
 

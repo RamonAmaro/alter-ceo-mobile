@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "AlterCEO",
-    "slug": "AlterCEO",
+    "name": "alter-ceo",
+    "slug": "alter-ceo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "alterceo",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.ramonamaro.AlterCEO",
+      "bundleIdentifier": "com.ramonamaro.alter-ceo",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Necesitamos acceso al micrófono para grabar tus respuestas de audio."
       }
@@ -24,15 +24,19 @@
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "package": "com.ramonamaro.AlterCEO"
+      "package": "com.ramonamaro.alterceo"
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/with-async-storage-maven",
       "expo-router",
       [
         "expo-splash-screen",
@@ -60,6 +64,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "75fe4230-fac6-489c-a74e-ab20340aba52"
+      }
     }
   }
 }

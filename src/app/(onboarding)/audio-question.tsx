@@ -26,9 +26,10 @@ type RecordingState = "idle" | "recording" | "paused" | "countdown";
 interface AudioRecorderViewProps {
   autoStart?: boolean;
   onRestart?: () => void;
+  onNextAudio?: () => void;
 }
 
-function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
+function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderViewProps) {
   const insets = useSafeAreaInsets();
   const {
     planType,
@@ -172,7 +173,10 @@ function AudioRecorderView({ autoStart, onRestart }: AudioRecorderViewProps) {
     if (nextIndex < questions.length) {
       const nextQ = questions[nextIndex];
       nextQuestion();
-      if (nextQ.type !== "audio") {
+      if (nextQ.type === "audio") {
+        // Force remount to reset recorder state for next audio question
+        onNextAudio?.();
+      } else {
         router.back();
       }
     } else {
@@ -265,8 +269,8 @@ export default function AudioQuestionScreen() {
   const [key, setKey] = useState(0);
   const [autoStart, setAutoStart] = useState(false);
 
-  function handleRestart(): void {
-    setAutoStart(true);
+  function handleRestart(shouldAutoStart = true): void {
+    setAutoStart(shouldAutoStart);
     setKey((k) => k + 1);
   }
 
@@ -275,6 +279,7 @@ export default function AudioQuestionScreen() {
       key={key}
       autoStart={autoStart}
       onRestart={handleRestart}
+      onNextAudio={() => handleRestart(false)}
     />
   );
 }

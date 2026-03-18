@@ -1,8 +1,8 @@
-# CLAUDE.md — AlterCEO
+# CLAUDE.md — alter-ceo
 
 ## Project Overview
 
-AlterCEO is a mobile application built with **Expo (SDK 55)** + **React Native 0.83** + **TypeScript (strict)** targeting iOS, Android, and Web. The app uses **Expo Router** for file-based routing and targets the **Spanish market** (Spain).
+alter-ceo is a mobile application built with **Expo (SDK 55)** + **React Native 0.83** + **TypeScript (strict)** targeting iOS, Android, and Web. The app uses **Expo Router** for file-based routing and targets the **Spanish market** (Spain).
 
 ## Language Rules
 
@@ -57,9 +57,12 @@ src/
 │   ├── _layout.tsx         # Root layout (providers, font loading)
 │   ├── (app)/              # Authenticated routes (Tab navigator)
 │   │   ├── _layout.tsx     # Tab layout with bottom tab bar
-│   │   └── home.tsx
+│   │   ├── home.tsx        # Screen file (thin — imports from components/)
+│   │   └── components/     # Components used ONLY by this screen group
+│   │       ├── premium-chart.tsx
+│   │       └── glass-card.tsx
 │   └── (auth)/             # Auth routes (Stack, no tab bar)
-├── components/             # Reusable UI components
+├── components/             # Shared/reusable UI components (used across 2+ screens)
 ├── stores/                 # Zustand stores (global state)
 ├── services/               # API calls, external integrations
 ├── utils/                  # Pure utility/helper functions
@@ -70,6 +73,29 @@ src/
 assets/
 ├── fonts/
 └── images/
+```
+
+### Component Organization Rules
+
+- **Always break down** screens into small, focused sub-components. Each component should have a single responsibility
+- **Screen files** (e.g., `home.tsx`) should be thin orchestrators — they compose sub-components, not implement UI details
+- **Page-local components**: If a component is used only within one screen/group, place it in a `components/` folder next to the screen file (e.g., `src/app/(app)/components/premium-chart.tsx`)
+- **Shared components**: If a component is used across 2+ screens, move it to `src/components/`
+- **Max ~150 lines per file**. If a file grows beyond this, split it into sub-components
+- **One component per file. One responsibility per function**
+
+```
+# Example: Home screen broken into sub-components
+src/app/(app)/
+├── home.tsx                     # Thin screen — composes sub-components
+└── components/
+    ├── cerebro-card.tsx         # "El Cerebro ALTER CEO" card
+    ├── rentability-card.tsx     # Rentabilidad card
+    ├── machines-card.tsx        # Sala de Máquinas + chart
+    ├── premium-chart.tsx        # SVG chart component
+    ├── reunion-card.tsx         # Grabar Reunión card
+    ├── glass-card.tsx           # Reusable glass card wrapper
+    └── chat-input-bar.tsx       # Bottom chat input
 ```
 
 ## Naming Conventions
@@ -209,6 +235,17 @@ function formatPrice(value: number): string {
 - Commit messages in **English**
 - Use conventional commits: `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `style:`, `test:`
 - Keep commits small and focused
+
+## Cross-Platform Compatibility (iOS & Android)
+
+- Always verify that styles and APIs work on **both iOS and Android**
+- **Shadows**: Use `shadowColor/shadowOffset/shadowOpacity/shadowRadius` for iOS and `elevation` for Android — use `Platform.select()` when both are needed
+- **`overflow: "hidden"` + `borderRadius`**: Works on both, but test nested views on Android (may need `borderRadius` on parent AND child)
+- Prefer **Expo APIs** over bare RN modules — they handle platform differences internally
+- Never use platform-specific imports (e.g., `.ios.tsx`) without providing the counterpart (`.android.tsx`)
+- Test gradients (`expo-linear-gradient`), blur effects, and animations on both platforms — rendering can differ
+- When using `Platform.OS` checks, always handle both `"ios"` and `"android"` cases explicitly
+- Avoid iOS-only styling properties (`backdrop-filter`, `textDecorationStyle: "dotted"` on Android < API 28, etc.)
 
 ## Performance
 

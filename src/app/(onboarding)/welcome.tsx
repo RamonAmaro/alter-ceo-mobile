@@ -1,16 +1,31 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { Fonts, Spacing } from "@/constants/theme";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { router } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
+  const complete = useOnboardingStore((s) => s.complete);
+
+  async function handleSkip(): Promise<void> {
+    await complete();
+    router.replace("/(app)/home");
+  }
 
   return (
     <AppBackground>
-      <View style={[styles.container, { paddingTop: insets.top + Spacing.five }]}>
+      <View
+        style={[styles.container, { paddingTop: insets.top + Spacing.five }]}
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -29,11 +44,21 @@ export default function WelcomeScreen() {
           <Text style={styles.greeting}>{"\n"}¡A por ello!</Text>
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
+        <View
+          style={[
+            styles.footer,
+            { paddingBottom: insets.bottom + Spacing.four },
+          ]}
+        >
           <Button
             label="Continuar"
             onPress={() => router.push("/(onboarding)/plan-selection")}
           />
+
+          {/*   TODO: remover depois */}
+          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+            <Text style={styles.skipText}>Saltar onboarding</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </AppBackground>
@@ -65,5 +90,15 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: "center",
     paddingTop: Spacing.three,
+  },
+  skipButton: {
+    marginTop: Spacing.three,
+  },
+  skipText: {
+    fontFamily: Fonts.montserrat,
+    fontSize: 12,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.4)",
+    textDecorationLine: "underline",
   },
 });
