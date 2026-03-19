@@ -1,9 +1,11 @@
 import { AppBackground } from "@/components/app-background";
+import { AuthTagline } from "@/components/auth-tagline";
 import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { hasErrors, validateRequiredFields } from "@/utils/validate-auth-form";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -35,13 +37,9 @@ export default function SignUpScreen() {
   });
 
   function validate(): boolean {
-    const newErrors: FormErrors = {
-      name: name.trim().length === 0,
-      email: email.trim().length === 0,
-      password: password.trim().length === 0,
-    };
+    const newErrors = validateRequiredFields({ name, email, password });
     setErrors(newErrors);
-    return !newErrors.name && !newErrors.email && !newErrors.password;
+    return !hasErrors(newErrors);
   }
 
   function handleSignUp() {
@@ -140,12 +138,7 @@ export default function SignUpScreen() {
             </View>
           </View>
 
-          <View style={styles.taglineContainer}>
-            <View style={styles.taglineAccent} />
-            <ThemedText type="headingMd" style={{ color: "#ffffff", flex: 1 }}>
-              Todo el control que necesitas, con la simplicidad que mereces
-            </ThemedText>
-          </View>
+          <AuthTagline text={"Todo el control que\nnecesitas, con la simplicidad\nque mereces"} />
         </ScrollView>
       </KeyboardAvoidingView>
     </AppBackground>
@@ -180,17 +173,5 @@ const styles = StyleSheet.create({
   loginContainer: {
     alignItems: "center",
     marginTop: Spacing.four,
-  },
-  taglineContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingHorizontal: Spacing.two,
-  },
-  taglineAccent: {
-    width: 4,
-    height: 74,
-    backgroundColor: "#D9D9D9",
-    borderRadius: 2,
-    marginRight: Spacing.three,
   },
 });

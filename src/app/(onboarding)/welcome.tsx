@@ -55,7 +55,6 @@ export default function WelcomeScreen() {
             onPress={() => router.push("/(onboarding)/plan-selection")}
           />
 
-          {/*   TODO: remover depois */}
           <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
             <ThemedText type="caption" style={{ color: "rgba(255,255,255,0.4)", textDecorationLine: "underline" }}>Saltar onboarding</ThemedText>
           </TouchableOpacity>

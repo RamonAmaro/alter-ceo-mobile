@@ -6,8 +6,8 @@ import type {
   UserLatestPlanResponse,
 } from "@/types/plan";
 import * as planService from "@/services/plan-service";
-
-const POLL_INTERVAL = 3_000;
+import { createPoller } from "@/utils/create-poller";
+import { POLL_INTERVAL } from "@/constants/api";
 
 interface PlanState {
   currentRun: { run_id: string; status: RunStatus } | null;
@@ -44,12 +44,13 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   },
 
   pollRunStatus: (runId: string) => {
-    const poll = async (): Promise<void> => {
-      try {
-        const status: PlanRunStatusResponse =
-          await planService.getRunStatus(runId);
+    const poller = createPoller<PlanRunStatusResponse>({
+      fn: () => planService.getRunStatus(runId),
+      interval: POLL_INTERVAL,
+      shouldStop: (status) =>
+        status.status === "COMPLETED" || status.status === "FAILED",
+      onUpdate: (status) => {
         set({ currentRun: { run_id: runId, status: status.status } });
-
         if (status.status === "COMPLETED" || status.status === "FAILED") {
           set({
             isGenerating: false,
@@ -58,19 +59,17 @@ export const usePlanStore = create<PlanState>((set, get) => ({
                 ? status.error_message ?? "Error al generar el plan"
                 : null,
           });
-          return;
         }
-
-        setTimeout(poll, POLL_INTERVAL);
-      } catch (err) {
+      },
+      onError: (err) => {
         set({
           isGenerating: false,
           error: (err as Error).message,
         });
-      }
-    };
+      },
+    });
 
-    poll();
+    poller.start();
   },
 
   fetchLatestPlan: async (userId: string) => {

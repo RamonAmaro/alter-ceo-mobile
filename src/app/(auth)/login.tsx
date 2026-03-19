@@ -1,4 +1,5 @@
 import { AppBackground } from "@/components/app-background";
+import { AuthTagline } from "@/components/auth-tagline";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { ThemedText } from "@/components/themed-text";
@@ -6,6 +7,7 @@ import { Fonts, Spacing } from "@/constants/theme";
 import { isBiometricsAvailable } from "@/services/biometrics-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { hasErrors, validateRequiredFields } from "@/utils/validate-auth-form";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -48,12 +50,12 @@ export default function LoginScreen() {
   }
 
   function validate(): boolean {
-    const newErrors = {
-      email: email.trim().length === 0,
-      password: password.trim().length === 0,
+    const newErrors = validateRequiredFields({ email, password }) as {
+      email: boolean;
+      password: boolean;
     };
     setErrors(newErrors);
-    return !newErrors.email && !newErrors.password;
+    return !hasErrors(newErrors);
   }
 
   async function handleLogin() {
@@ -162,14 +164,7 @@ export default function LoginScreen() {
 
           <View style={styles.spacer} />
 
-          {/* Tagline */}
-          <View style={styles.taglineContainer}>
-            <View style={styles.taglineAccent} />
-            <ThemedText type="headingMd" style={{ color: "#ffffff", flex: 1 }}>
-              Todo el control que{`\n`}necesitas, con la simplicidad{`\n`}que
-              mereces
-            </ThemedText>
-          </View>
+          <AuthTagline text={"Todo el control que\nnecesitas, con la simplicidad\nque mereces"} />
         </ScrollView>
       </KeyboardAvoidingView>
     </AppBackground>
@@ -207,17 +202,5 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flexGrow: 1,
-  },
-  taglineContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingHorizontal: Spacing.two,
-  },
-  taglineAccent: {
-    width: 4,
-    height: 74,
-    backgroundColor: "#D9D9D9",
-    borderRadius: 2,
-    marginRight: Spacing.three,
   },
 });

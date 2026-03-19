@@ -4,8 +4,8 @@ import type {
   MeetingSummaryResponse,
 } from "@/types/meeting";
 import * as meetingService from "@/services/meeting-service";
-
-const POLL_INTERVAL = 3_000;
+import { createPoller } from "@/utils/create-poller";
+import { POLL_INTERVAL } from "@/constants/api";
 
 type UploadStage = "uploading" | "processing" | "completed" | "failed";
 
@@ -108,15 +108,13 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         duration_seconds: durationSeconds,
       });
 
-      const poll = async (): Promise<void> => {
-        try {
-          const meeting = await meetingService.getMeeting(
-            created.meeting_id,
-          );
-          if (
-            meeting.status === "COMPLETED" ||
-            meeting.status === "FAILED"
-          ) {
+      const poller = createPoller<MeetingResponse>({
+        fn: () => meetingService.getMeeting(created.meeting_id),
+        interval: POLL_INTERVAL,
+        shouldStop: (meeting) =>
+          meeting.status === "COMPLETED" || meeting.status === "FAILED",
+        onUpdate: (meeting) => {
+          if (meeting.status === "COMPLETED" || meeting.status === "FAILED") {
             set({
               uploadProgress: {
                 meeting_id: created.meeting_id,
@@ -125,10 +123,9 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
               },
               activeMeeting: meeting,
             });
-            return;
           }
-          setTimeout(poll, POLL_INTERVAL);
-        } catch (err) {
+        },
+        onError: (err) => {
           set({
             uploadProgress: {
               meeting_id: created.meeting_id,
@@ -136,10 +133,10 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
               error: (err as Error).message,
             },
           });
-        }
-      };
+        },
+      });
 
-      poll();
+      poller.start();
     } catch (err) {
       set({
         uploadProgress: get().uploadProgress

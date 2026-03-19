@@ -8,6 +8,8 @@ import {
   getProfessionalQuestions,
 } from "@/constants/onboarding-questions";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { getKeyboardType } from "@/utils/get-keyboard-type";
+import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
@@ -85,14 +87,7 @@ export default function QuestionsScreen() {
   }
 
   function isNextEnabled(): boolean {
-    if (question.type === "audio") return false;
-    if (question.type === "text") {
-      return typeof currentAnswer === "string" && currentAnswer.trim() !== "";
-    }
-    if (question.type === "multi") {
-      return Array.isArray(currentAnswer) && currentAnswer.length > 0;
-    }
-    return typeof currentAnswer === "string" && currentAnswer !== "";
+    return validateQuestionAnswer(question.type, currentAnswer);
   }
 
   function animateTransition(callback: () => void): void {
@@ -193,11 +188,7 @@ export default function QuestionsScreen() {
                     onChangeText={handleTextChange}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    keyboardType={
-                      question.placeholder?.startsWith("http")
-                        ? "url"
-                        : "default"
-                    }
+                    keyboardType={getKeyboardType(question.placeholder)}
                   />
                 ) : (
                   (question.options || []).map((option) => {

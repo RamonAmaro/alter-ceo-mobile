@@ -1,4 +1,5 @@
 import { AppBackground } from "@/components/app-background";
+import { MenuItem } from "@/components/menu-item";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
@@ -12,6 +13,12 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const MENU_ITEMS = [
+  { icon: "person-outline", label: "Editar perfil" },
+  { icon: "shield-outline", label: "Seguridad" },
+  { icon: "help-circle-outline", label: "Ayuda" },
+];
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -51,47 +58,9 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.content}>
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-            <Ionicons
-              name="person-outline"
-              size={20}
-              color="rgba(255,255,255,0.6)"
-            />
-            <ThemedText type="labelSm" style={styles.menuLabel}>Editar perfil</ThemedText>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color="rgba(255,255,255,0.3)"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-            <Ionicons
-              name="shield-outline"
-              size={20}
-              color="rgba(255,255,255,0.6)"
-            />
-            <ThemedText type="labelSm" style={styles.menuLabel}>Seguridad</ThemedText>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color="rgba(255,255,255,0.3)"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-            <Ionicons
-              name="help-circle-outline"
-              size={20}
-              color="rgba(255,255,255,0.6)"
-            />
-            <ThemedText type="labelSm" style={styles.menuLabel}>Ayuda</ThemedText>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color="rgba(255,255,255,0.3)"
-            />
-          </TouchableOpacity>
+          {MENU_ITEMS.map((item) => (
+            <MenuItem key={item.icon} icon={item.icon} label={item.label} />
+          ))}
         </View>
 
         <View
@@ -166,20 +135,6 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.one,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 14,
-    gap: Spacing.three,
-  },
-  menuLabel: {
-    flex: 1,
-    fontSize: 15,
-    color: "rgba(255,255,255,0.8)",
   },
   signOutWrap: {
     flex: 1,
