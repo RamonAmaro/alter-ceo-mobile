@@ -1,12 +1,14 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { QuestionOption } from "@/components/question-option";
+import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
 import {
   getExpressQuestions,
   getProfessionalQuestions,
 } from "@/constants/onboarding-questions";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
 import {
@@ -15,7 +17,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -161,11 +162,11 @@ export default function QuestionsScreen() {
                 activeOpacity={0.7}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Text style={styles.backArrow}>←</Text>
+                <Ionicons name="arrow-back" size={22} color="#ffffff" />
               </TouchableOpacity>
-              <Text style={styles.planLabel}>
+              <ThemedText type="labelMd" style={{ color: "#ffffff" }}>
                 {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
-              </Text>
+              </ThemedText>
             </View>
 
             <Animated.View
@@ -174,13 +175,13 @@ export default function QuestionsScreen() {
                 transform: [{ translateY: slideAnim }],
               }}
             >
-              <Text style={styles.question}>{question.question}</Text>
+              <ThemedText type="headingLg" style={{ color: "#ffffff" }}>{question.question}</ThemedText>
 
               {question.instruction ? (
-                <Text style={styles.instruction}>{question.instruction}</Text>
+                <ThemedText type="bodyMd" style={{ color: "rgba(255,255,255,0.7)", marginTop: Spacing.two }}>{question.instruction}</ThemedText>
               ) : null}
 
-              <Text style={styles.progress}>({question.progress}%)</Text>
+              <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>({question.progress}%)</ThemedText>
 
               <View style={styles.optionsContainer}>
                 {question.type === "text" ? (
@@ -257,39 +258,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.three,
     gap: Spacing.two,
-  },
-  backArrow: {
-    fontSize: 22,
-    color: "#ffffff",
-  },
-  planLabel: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#ffffff",
-    lineHeight: 20,
-  },
-  question: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#ffffff",
-    lineHeight: 29,
-  },
-  instruction: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 14,
-    fontWeight: "400",
-    color: "rgba(255,255,255,0.7)",
-    marginTop: Spacing.two,
-  },
-  progress: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#00FF84",
-    lineHeight: 26,
-    marginTop: Spacing.two,
   },
   optionsContainer: {
     marginTop: Spacing.four,

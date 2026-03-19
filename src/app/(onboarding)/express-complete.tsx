@@ -1,9 +1,10 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { router } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ExpressCompleteScreen() {
@@ -33,12 +34,12 @@ export default function ExpressCompleteScreen() {
         ]}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>¡INICIO EXPRESS COMPLETADO!</Text>
-          <Text style={styles.body}>
+          <ThemedText type="headingLg" style={{ color: "#ffffff", textAlign: "center", marginBottom: Spacing.four }}>¡INICIO EXPRESS COMPLETADO!</ThemedText>
+          <ThemedText type="bodyLg" style={{ color: "rgba(255,255,255,0.85)", textAlign: "center", paddingHorizontal: Spacing.two }}>
             ¿Quieres enviar la información para que diseñemos tu Plan para
             Duplicar tus Ventas y Trabajar la Mitad o quieres continuar con el
             Inicio Profesional (aprox 3 minutos más)?
-          </Text>
+          </ThemedText>
         </View>
 
         <View style={styles.footer}>
@@ -49,7 +50,7 @@ export default function ExpressCompleteScreen() {
             onPress={handleContinue}
             activeOpacity={0.7}
           >
-            <Text style={styles.continueText}>Continuar</Text>
+            <ThemedText type="labelSm" style={{ color: "#E8731A", textDecorationLine: "underline" }}>Continuar</ThemedText>
           </TouchableOpacity>
         </View>
       </View>
@@ -66,23 +67,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  title: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#ffffff",
-    textAlign: "center",
-    marginBottom: Spacing.four,
-  },
-  body: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "400",
-    color: "rgba(255,255,255,0.85)",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: Spacing.two,
-  },
   footer: {
     alignItems: "center",
     gap: Spacing.three,
@@ -90,12 +74,5 @@ const styles = StyleSheet.create({
   continueButton: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.five,
-  },
-  continueText: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#E8731A",
-    textDecorationLine: "underline",
   },
 });

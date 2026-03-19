@@ -1,5 +1,7 @@
-import { Fonts, Spacing } from "@/constants/theme";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface QuestionOptionProps {
   label: string;
@@ -30,7 +32,7 @@ export function QuestionOption({
           ]}
         >
           {selected && multi ? (
-            <Text style={styles.checkmark}>✓</Text>
+            <Ionicons name="checkmark" size={14} color="#ffffff" />
           ) : null}
           {selected && !multi ? (
             <View style={styles.radioDot} />
@@ -38,15 +40,19 @@ export function QuestionOption({
         </View>
 
         <View style={styles.textContainer}>
-          <Text style={[styles.label, selected && styles.labelSelected]}>
+          <ThemedText
+            type="labelSm"
+            style={[styles.label, selected && styles.labelSelected]}
+          >
             {label}
-          </Text>
+          </ThemedText>
           {subtitle ? (
-            <Text
+            <ThemedText
+              type="bodySm"
               style={[styles.subtitle, selected && styles.subtitleSelected]}
             >
               {subtitle}
-            </Text>
+            </ThemedText>
           ) : null}
         </View>
       </View>
@@ -103,29 +109,17 @@ const styles = StyleSheet.create({
     borderColor: "#ffffff",
     backgroundColor: "rgba(255,255,255,0.2)",
   },
-  checkmark: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#ffffff",
-    marginTop: -1,
-  },
   textContainer: {
     flex: 1,
     flexDirection: "column",
   },
   label: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 14,
-    fontWeight: "600",
     color: "#ffffff",
   },
   labelSelected: {
     color: "#ffffff",
   },
   subtitle: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 12,
-    fontWeight: "400",
     color: "rgba(255,255,255,0.7)",
     marginTop: 2,
   },

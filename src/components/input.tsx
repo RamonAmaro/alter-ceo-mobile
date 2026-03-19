@@ -31,8 +31,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     paddingHorizontal: Spacing.four,
     color: "#ffffff",
-    fontFamily: Fonts.montserrat,
-    fontWeight: "600",
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 13,
   },
   inputError: {

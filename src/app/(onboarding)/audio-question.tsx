@@ -1,7 +1,9 @@
 import { AppBackground } from "@/components/app-background";
 import { CountdownOverlay } from "@/components/countdown-overlay";
 import { RecordButton } from "@/components/record-button";
+import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
 import {
   getExpressQuestions,
   getProfessionalQuestions,
@@ -54,6 +56,7 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const accumulatedRef = useRef<number>(0);
+  const recorderActiveRef = useRef(false);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -61,6 +64,15 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
       timerRef.current = null;
     }
   }, []);
+
+  const safeStopRecorder = useCallback(() => {
+    if (!recorderActiveRef.current) return;
+    recorderActiveRef.current = false;
+    try {
+      recorder.stop();
+    } catch {
+    }
+  }, [recorder]);
 
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now();
@@ -72,11 +84,7 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
       if (elapsed >= MAX_DURATION_MS) {
         setElapsedMs(MAX_DURATION_MS);
         stopTimer();
-        try {
-          recorder.stop();
-        } catch {
-          /* already stopped */
-        }
+        safeStopRecorder();
         setRecordState("idle");
         handleRecordingComplete();
       } else {
@@ -85,16 +93,28 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
     }, 50);
   }, [stopTimer]);
 
+  const mountedRef = useRef(true);
+
   useEffect(() => {
-    return () => stopTimer();
-  }, [stopTimer]);
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      stopTimer();
+      safeStopRecorder();
+    };
+  }, [stopTimer, safeStopRecorder]);
 
   useEffect(() => {
     if (!autoStart) return;
-    handleRecord();
+    const timeout = setTimeout(() => {
+      if (mountedRef.current) handleRecord();
+    }, 100);
+    return () => clearTimeout(timeout);
   }, []);
 
   async function handleRecord(): Promise<void> {
+    if (!mountedRef.current) return;
+
     const granted = await requestAudioPermission();
     if (!granted) {
       Alert.alert(
@@ -106,15 +126,19 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
 
     try {
       await enableRecordingMode();
+      if (!mountedRef.current) return;
       await recorder.prepareToRecordAsync();
+      if (!mountedRef.current) return;
       recorder.record();
+      recorderActiveRef.current = true;
       accumulatedRef.current = 0;
       setElapsedMs(0);
       setRecordState("recording");
       startTimer();
-    } catch (e) {
-      console.error("Recording error:", e);
-      Alert.alert("Error", "No se pudo iniciar la grabación.");
+    } catch {
+      if (mountedRef.current) {
+        Alert.alert("Error", "No se pudo iniciar la grabación.");
+      }
     }
   }
 
@@ -133,22 +157,14 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
 
   function handleFinish(): void {
     stopTimer();
-    try {
-      recorder.stop();
-    } catch {
-      /* already stopped */
-    }
+    safeStopRecorder();
     setRecordState("idle");
     handleRecordingComplete();
   }
 
   function handleRestartRecording(): void {
     stopTimer();
-    try {
-      recorder.stop();
-    } catch {
-      /* already stopped */
-    }
+    safeStopRecorder();
     setElapsedMs(0);
     accumulatedRef.current = 0;
     setRecordState("countdown");
@@ -174,7 +190,6 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
       const nextQ = questions[nextIndex];
       nextQuestion();
       if (nextQ.type === "audio") {
-        // Force remount to reset recorder state for next audio question
         onNextAudio?.();
       } else {
         router.back();
@@ -213,21 +228,21 @@ function AudioRecorderView({ autoStart, onRestart, onNextAudio }: AudioRecorderV
               activeOpacity={0.7}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Text style={styles.backArrow}>←</Text>
+              <Ionicons name="arrow-back" size={22} color="#ffffff" />
             </TouchableOpacity>
-            <Text style={styles.planLabel}>
+            <ThemedText type="labelMd" style={{ color: "#ffffff" }}>
               {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
-            </Text>
+            </ThemedText>
           </View>
 
-          <Text style={styles.instruction}>
+          <ThemedText type="headingLg" style={{ color: "#ffffff" }}>
             {question.instruction ||
               "Graba un audio de un máximo de 30 segundos contestando a la siguiente pregunta:"}
-          </Text>
+          </ThemedText>
 
-          <Text style={styles.question}>{question.question}</Text>
+          <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratMedium, color: "#ffffff", marginTop: Spacing.three }}>{question.question}</ThemedText>
 
-          <Text style={styles.progress}>({question.progress}%)</Text>
+          <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>({question.progress}%)</ThemedText>
         </View>
 
         <View style={styles.recordWrapper}>
@@ -298,40 +313,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
     gap: Spacing.two,
   },
-  backArrow: {
-    fontSize: 22,
-    color: "#ffffff",
-  },
-  planLabel: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#ffffff",
-    lineHeight: 20,
-  },
-  instruction: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#ffffff",
-    lineHeight: 29,
-  },
-  question: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#ffffff",
-    lineHeight: 26,
-    marginTop: Spacing.three,
-  },
-  progress: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#00FF84",
-    lineHeight: 26,
-    marginTop: Spacing.two,
-  },
   recordWrapper: {
     marginHorizontal: -Spacing.five,
   },
@@ -345,9 +326,8 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.four,
   },
   timer: {
-    fontFamily: Fonts.montserrat,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 32,
-    fontWeight: "600",
     color: "#ffffff",
     textAlign: "center",
     marginBottom: Spacing.three,

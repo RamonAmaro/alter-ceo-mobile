@@ -1,10 +1,9 @@
 import { AppBackground } from "@/components/app-background";
 import { Spacing } from "@/constants/theme";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   TextInput,
   View,
@@ -41,6 +40,10 @@ export default function ChatScreen() {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleContentSizeChange = useCallback(() => {
+    listRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
   function handleSend(): void {
     const text = inputValue.trim();
     if (!text) return;
@@ -55,32 +58,21 @@ export default function ChatScreen() {
     setInputValue("");
 
     setTimeout(() => {
-      listRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-
-    // Simulate AI response
-    setTimeout(() => {
       const botMessage: Message = {
         id: `bot-${Date.now()}`,
         text: "Gracias por tu mensaje. Estoy analizando tu consulta para darte la mejor respuesta posible.",
         isUser: false,
       };
       setMessages((prev) => [...prev, botMessage]);
-      setTimeout(() => {
-        listRef.current?.scrollToEnd({ animated: true });
-      }, 100);
     }, 1200);
   }
 
   return (
-    <AppBackground>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <View
-          style={[styles.container, { paddingTop: insets.top + Spacing.two }]}
-        >
+    <AppBackground
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+    >
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <View style={[styles.container]}>
           <ChatHeader />
 
           <FlatList
@@ -94,16 +86,15 @@ export default function ChatScreen() {
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="interactive"
             style={styles.flex}
+            onContentSizeChange={handleContentSizeChange}
           />
 
-          <View style={{ paddingBottom: insets.bottom }}>
-            <ChatInput
-              ref={inputRef}
-              value={inputValue}
-              onChangeText={setInputValue}
-              onSend={handleSend}
-            />
-          </View>
+          <ChatInput
+            ref={inputRef}
+            value={inputValue}
+            onChangeText={setInputValue}
+            onSend={handleSend}
+          />
         </View>
       </KeyboardAvoidingView>
     </AppBackground>
@@ -119,6 +110,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
+    justifyContent: "flex-end",
     paddingTop: Spacing.three,
     paddingBottom: Spacing.two,
   },

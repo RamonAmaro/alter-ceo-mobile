@@ -1,5 +1,6 @@
-import { Fonts, Spacing } from "@/constants/theme";
-import { ImageBackground, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
+import { ImageBackground, StyleSheet, TouchableOpacity } from "react-native";
 
 const ACTIVE_BG = require("@/assets/images/card-active-bg.png");
 const INACTIVE_BG = require("@/assets/images/card-inactive-bg.png");
@@ -29,8 +30,8 @@ export function SelectableOption({
         imageStyle={styles.image}
         resizeMode="cover"
       >
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <ThemedText type="labelMd" style={styles.label}>{label}</ThemedText>
+        <ThemedText type="bodySm" style={styles.subtitle}>{subtitle}</ThemedText>
       </ImageBackground>
     </TouchableOpacity>
   );
@@ -56,15 +57,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   label: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "700",
     color: "#ffffff",
   },
   subtitle: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 12,
-    fontWeight: "400",
     color: "rgba(255,255,255,0.8)",
     marginTop: 2,
   },

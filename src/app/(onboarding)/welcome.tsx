@@ -1,12 +1,12 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { router } from "expo-router";
 import {
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -30,8 +30,8 @@ export default function WelcomeScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.greeting}>¡HOLA!</Text>
-          <Text style={styles.body}>
+          <ThemedText type="headingMd" style={{ color: "#ffffff" }}>¡HOLA!</ThemedText>
+          <ThemedText type="bodyLg" style={{ color: "#ffffff" }}>
             {"\n"}Mi nombre es Carlos Delgado y soy el fundador de Alter CEO y
             te quiero dar la bienvenida. Hoy activas a un verdadero copiloto
             estratégico que cambiará los resultados de tu negocio. Se acabó la
@@ -39,9 +39,9 @@ export default function WelcomeScreen() {
             decisiones adecuadas que elevarán tus ventas mientras multiplicas tu
             eficiencia. Este es el punto de inflexión para recuperar tu tiempo y
             transformar tu empresa.
-          </Text>
+          </ThemedText>
 
-          <Text style={styles.greeting}>{"\n"}¡A por ello!</Text>
+          <ThemedText type="headingMd" style={{ color: "#ffffff" }}>{"\n"}¡A por ello!</ThemedText>
         </ScrollView>
 
         <View
@@ -57,7 +57,7 @@ export default function WelcomeScreen() {
 
           {/*   TODO: remover depois */}
           <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>Saltar onboarding</Text>
+            <ThemedText type="caption" style={{ color: "rgba(255,255,255,0.4)", textDecorationLine: "underline" }}>Saltar onboarding</ThemedText>
           </TouchableOpacity>
         </View>
       </View>
@@ -73,32 +73,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.five,
   },
-  greeting: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#ffffff",
-    lineHeight: 20,
-  },
-  body: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "400",
-    color: "#ffffff",
-    lineHeight: 20,
-  },
   footer: {
     alignItems: "center",
     paddingTop: Spacing.three,
   },
   skipButton: {
     marginTop: Spacing.three,
-  },
-  skipText: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 12,
-    fontWeight: "500",
-    color: "rgba(255,255,255,0.4)",
-    textDecorationLine: "underline",
   },
 });

@@ -11,10 +11,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  console.log("isAuthenticated", isAuthenticated);
-
   const signIn = useCallback((_email: string, _password: string) => {
-    // TODO: replace with real backend authentication
     setIsAuthenticated(true);
   }, []);
 

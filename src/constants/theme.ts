@@ -18,10 +18,26 @@ export const Colors = {
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = {
-  montserrat: 'Montserrat',
+  montserratLight: 'Montserrat-Light',
+  montserrat: 'Montserrat-Regular',
+  montserratMedium: 'Montserrat-Medium',
+  montserratSemiBold: 'Montserrat-SemiBold',
+  montserratBold: 'Montserrat-Bold',
+  montserratExtraBold: 'Montserrat-ExtraBold',
   nexaHeavy: 'Nexa-Heavy',
   octosquaresBlack: 'TTOctosquares-Black',
-};
+} as const;
+
+export const Typography = {
+  headingLg: { fontFamily: Fonts.montserratBold, fontSize: 24, lineHeight: 32 },
+  headingMd: { fontFamily: Fonts.montserratBold, fontSize: 20, lineHeight: 26 },
+  bodyLg: { fontFamily: Fonts.montserrat, fontSize: 16, lineHeight: 24 },
+  bodyMd: { fontFamily: Fonts.montserrat, fontSize: 14, lineHeight: 20 },
+  bodySm: { fontFamily: Fonts.montserratMedium, fontSize: 12, lineHeight: 16 },
+  labelMd: { fontFamily: Fonts.montserratBold, fontSize: 16, lineHeight: 22 },
+  labelSm: { fontFamily: Fonts.montserratMedium, fontSize: 14, lineHeight: 18 },
+  caption: { fontFamily: Fonts.montserratMedium, fontSize: 12, lineHeight: 16 },
+} as const;
 
 export const Spacing = {
   half: 2,

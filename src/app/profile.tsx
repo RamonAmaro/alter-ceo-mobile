@@ -1,5 +1,6 @@
 import { AppBackground } from "@/components/app-background";
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +8,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -21,7 +21,7 @@ export default function ProfileScreen() {
 
   async function handleSignOut(): Promise<void> {
     await resetOnboarding();
-    signOut();
+    await signOut();
     router.replace("/");
   }
 
@@ -38,7 +38,7 @@ export default function ProfileScreen() {
           >
             <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Perfil</Text>
+          <ThemedText type="subtitle" style={styles.headerTitle}>Perfil</ThemedText>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -46,8 +46,8 @@ export default function ProfileScreen() {
           <View style={styles.avatarLarge}>
             <Ionicons name="person" size={40} color="rgba(255,255,255,0.5)" />
           </View>
-          <Text style={styles.userName}>(Nombre)</Text>
-          <Text style={styles.userCompany}>(Nombre de Empresa)</Text>
+          <ThemedText type="subtitle" style={styles.userName}>(Nombre)</ThemedText>
+          <ThemedText type="labelSm" style={styles.userCompany}>(Nombre de Empresa)</ThemedText>
         </View>
 
         <View style={styles.content}>
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
               size={20}
               color="rgba(255,255,255,0.6)"
             />
-            <Text style={styles.menuLabel}>Editar perfil</Text>
+            <ThemedText type="labelSm" style={styles.menuLabel}>Editar perfil</ThemedText>
             <Ionicons
               name="chevron-forward"
               size={18}
@@ -71,7 +71,7 @@ export default function ProfileScreen() {
               size={20}
               color="rgba(255,255,255,0.6)"
             />
-            <Text style={styles.menuLabel}>Seguridad</Text>
+            <ThemedText type="labelSm" style={styles.menuLabel}>Seguridad</ThemedText>
             <Ionicons
               name="chevron-forward"
               size={18}
@@ -85,7 +85,7 @@ export default function ProfileScreen() {
               size={20}
               color="rgba(255,255,255,0.6)"
             />
-            <Text style={styles.menuLabel}>Ayuda</Text>
+            <ThemedText type="labelSm" style={styles.menuLabel}>Ayuda</ThemedText>
             <Ionicons
               name="chevron-forward"
               size={18}
@@ -107,7 +107,7 @@ export default function ProfileScreen() {
               style={styles.signOutGradient}
             >
               <Ionicons name="log-out-outline" size={20} color="#FF4444" />
-              <Text style={styles.signOutText}>Cerrar sesión</Text>
+              <ThemedText type="labelSm" style={styles.signOutText}>Cerrar sesión</ThemedText>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -134,7 +134,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: "center",
-    fontFamily: Fonts.nexaHeavy,
     fontSize: 18,
     color: "#ffffff",
   },
@@ -157,14 +156,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
   },
   userName: {
-    fontFamily: Fonts.nexaHeavy,
     fontSize: 22,
     color: "#ffffff",
   },
   userCompany: {
-    fontFamily: Fonts.montserrat,
     fontSize: 14,
-    fontWeight: "500",
     color: "rgba(255,255,255,0.5)",
     marginTop: Spacing.one,
   },
@@ -182,9 +178,7 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     flex: 1,
-    fontFamily: Fonts.montserrat,
     fontSize: 15,
-    fontWeight: "500",
     color: "rgba(255,255,255,0.8)",
   },
   signOutWrap: {
@@ -205,9 +199,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
   },
   signOutText: {
-    fontFamily: Fonts.montserrat,
     fontSize: 15,
-    fontWeight: "600",
     color: "#FF4444",
   },
 });

@@ -14,7 +14,7 @@ interface AuthState {
   biometricsEnabled: boolean;
 
   signIn: (email: string, password: string) => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   tryBiometricLogin: () => Promise<boolean>;
   enableBiometrics: (email: string, password: string) => Promise<void>;
   checkBiometricsStatus: () => Promise<void>;
@@ -26,7 +26,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   biometricsEnabled: false,
 
   signIn: (_email: string, _password: string) => {
-    // TODO: replace with real API call that returns a token
     set({ isAuthenticated: true });
   },
 
@@ -48,7 +47,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const credentials = await getCredentials();
     if (!credentials) return false;
 
-    // TODO: replace with real API call
     get().signIn(credentials.email, credentials.password);
     return true;
   },

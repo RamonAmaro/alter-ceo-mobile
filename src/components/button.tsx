@@ -1,4 +1,4 @@
-import { Fonts } from "@/constants/theme";
+import { Fonts, Typography } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   StyleSheet,
@@ -42,9 +42,8 @@ const styles = StyleSheet.create({
     borderRadius: 98,
   },
   label: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 12,
-    fontWeight: "700",
+    ...Typography.caption,
+    fontFamily: Fonts.montserratBold,
     color: "#000000",
   },
 });

@@ -1,9 +1,10 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
+import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { router } from "expo-router";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CompletionScreen() {
@@ -25,11 +26,11 @@ export default function CompletionScreen() {
             resizeMode="contain"
           />
 
-          <Text style={styles.title}>¡Todo listo!</Text>
-          <Text style={styles.subtitle}>
+          <ThemedText type="headingLg" style={{ fontSize: 28, color: "#ffffff", textAlign: "center", marginBottom: Spacing.three }}>¡Todo listo!</ThemedText>
+          <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratMedium, color: "rgba(255,255,255,0.8)", textAlign: "center", paddingHorizontal: Spacing.three }}>
             Tu configuración inicial está completa. Ahora tienes acceso a todas
             las herramientas para transformar tu negocio.
-          </Text>
+          </ThemedText>
         </View>
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
@@ -54,23 +55,6 @@ const styles = StyleSheet.create({
     width: 150,
     height: 140,
     marginBottom: Spacing.five,
-  },
-  title: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#ffffff",
-    textAlign: "center",
-    marginBottom: Spacing.three,
-  },
-  subtitle: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "rgba(255,255,255,0.8)",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: Spacing.three,
   },
   footer: {
     alignItems: "center",

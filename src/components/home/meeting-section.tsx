@@ -1,7 +1,8 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
 
 export function MeetingSection() {
@@ -13,10 +14,10 @@ export function MeetingSection() {
         onPress={() => {}}
       >
         <View style={styles.header}>
-          <Text style={styles.label}>Grabar</Text>
+          <ThemedText type="labelSm" style={styles.label}>Grabar</ThemedText>
           <Ionicons name="mic" size={16} color="rgba(255,255,255,0.5)" />
         </View>
-        <Text style={styles.title}>Reunión</Text>
+        <ThemedText type="subtitle" style={styles.title}>Reunión</ThemedText>
         <View style={styles.micCircle}>
           <Ionicons
             name="mic-outline"
@@ -70,13 +71,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   label: {
-    fontFamily: Fonts.montserrat,
     fontSize: 16,
-    fontWeight: "500",
     color: "rgba(255,255,255,0.8)",
   },
   title: {
-    fontFamily: Fonts.nexaHeavy,
     fontSize: 24,
     color: "#ffffff",
     letterSpacing: 0.5,

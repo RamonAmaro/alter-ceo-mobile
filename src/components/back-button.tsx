@@ -1,8 +1,9 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
   StyleSheet,
-  Text,
   TouchableOpacity,
   type TouchableOpacityProps,
 } from "react-native";
@@ -22,8 +23,8 @@ export function BackButton({
       onPress={() => router.back()}
       {...rest}
     >
-      <Text style={styles.arrow}>←</Text>
-      <Text style={styles.label}>{label}</Text>
+      <Ionicons name="arrow-back" size={20} color="#ffffff" style={styles.icon} />
+      <ThemedText type="labelSm" style={styles.label}>{label}</ThemedText>
     </TouchableOpacity>
   );
 }
@@ -34,15 +35,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-start",
   },
-  arrow: {
-    fontSize: 20,
-    color: "#ffffff",
+  icon: {
     marginRight: Spacing.two,
   },
   label: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 14,
-    fontWeight: "500",
     color: "#ffffff",
   },
 });

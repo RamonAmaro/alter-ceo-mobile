@@ -77,9 +77,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   number: {
-    fontFamily: Fonts.montserrat,
+    fontFamily: Fonts.montserratBold,
     fontSize: 120,
-    fontWeight: "700",
     color: "#00FF84",
   },
 });

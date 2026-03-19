@@ -1,7 +1,8 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export function HomeHeader() {
   const router = useRouter();
@@ -17,8 +18,8 @@ export function HomeHeader() {
           <Ionicons name="person" size={18} color="rgba(255,255,255,0.5)" />
         </View>
         <View>
-          <Text style={styles.greeting}>Hola, (Nombre)</Text>
-          <Text style={styles.company}>(Nombre de Empresa)</Text>
+          <ThemedText type="bodyMd" style={styles.greeting}>Hola, (Nombre)</ThemedText>
+          <ThemedText type="bodyMd" style={styles.company}>(Nombre de Empresa)</ThemedText>
         </View>
       </TouchableOpacity>
 
@@ -53,16 +54,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   greeting: {
-    fontFamily: Fonts.montserrat,
     fontSize: 13,
-    fontWeight: "400",
     color: "rgba(255,255,255,0.7)",
   },
   company: {
-    fontFamily: Fonts.montserrat,
     fontSize: 13,
-    fontWeight: "700",
     color: "#ffffff",
+    fontWeight: "bold",
   },
   notificationBtn: {
     position: "relative",

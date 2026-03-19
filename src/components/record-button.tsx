@@ -1,9 +1,9 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
 import { useEffect, useRef } from "react";
 import {
   Animated,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -27,6 +27,16 @@ interface RecordButtonProps {
   onRestart: () => void;
 }
 
+interface CircleButtonProps {
+  size?: number;
+  gradientId: string;
+  colors: [string, string];
+  icon: React.ReactNode;
+  label: string;
+  onPress: () => void;
+  pulse?: boolean;
+}
+
 function CircleButton({
   size = 80,
   gradientId,
@@ -35,15 +45,7 @@ function CircleButton({
   label,
   onPress,
   pulse = false,
-}: {
-  size?: number;
-  gradientId: string;
-  colors: [string, string];
-  icon: React.ReactNode;
-  label: string;
-  onPress: () => void;
-  pulse?: boolean;
-}) {
+}: CircleButtonProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -51,13 +53,13 @@ function CircleButton({
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.06,
-            duration: 600,
+            toValue: 1.08,
+            duration: 700,
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim, {
             toValue: 1,
-            duration: 600,
+            duration: 700,
             useNativeDriver: true,
           }),
         ]),
@@ -101,7 +103,12 @@ function CircleButton({
           </Svg>
         </Animated.View>
       </TouchableOpacity>
-      <Text style={styles.actionLabel}>{label}</Text>
+      <ThemedText
+        type="caption"
+        style={{ color: "#ffffff", textAlign: "center" }}
+      >
+        {label}
+      </ThemedText>
     </View>
   );
 }
@@ -141,6 +148,9 @@ const RestartIcon = (
   />
 );
 
+const CONTAINER_HEIGHT = 140;
+const TRANSITION_MS = 200;
+
 export function RecordButton({
   state,
   onRecord,
@@ -149,64 +159,137 @@ export function RecordButton({
   onFinish,
   onRestart,
 }: RecordButtonProps) {
-  if (state === "idle") {
-    return (
-      <CircleButton
-        size={120}
-        gradientId="gradMic"
-        colors={["#00C0EE", "#0060FF"]}
-        icon={MicIcon}
-        label="Grabar ahora"
-        onPress={onRecord}
-      />
-    );
-  }
+  const anim = useRef(new Animated.Value(0)).current;
+  const prevStateRef = useRef(state);
+
+  useEffect(() => {
+    const wasIdle = prevStateRef.current === "idle";
+    const isIdle = state === "idle";
+    prevStateRef.current = state;
+
+    if (wasIdle && !isIdle) {
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: TRANSITION_MS,
+        useNativeDriver: true,
+      }).start();
+    } else if (!wasIdle && isIdle) {
+      Animated.timing(anim, {
+        toValue: 0,
+        duration: TRANSITION_MS,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [state]);
+
+  const idleOpacity = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
+
+  const idleScale = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.7],
+  });
+
+  const controlsOpacity = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const controlsScale = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.85, 1],
+  });
+
+  const isIdle = state === "idle";
 
   return (
-    <View style={styles.controlsRow}>
-      {state === "recording" ? (
+    <View style={styles.buttonContainer}>
+      <Animated.View
+        style={[
+          styles.layer,
+          { opacity: idleOpacity, transform: [{ scale: idleScale }] },
+        ]}
+        pointerEvents={isIdle ? "auto" : "none"}
+      >
         <CircleButton
-          size={70}
-          gradientId="gradPause"
-          colors={["#FF4444", "#CC0000"]}
-          icon={PauseIcon}
-          label="Pausar"
-          onPress={onPause}
-          pulse
-        />
-      ) : (
-        <CircleButton
-          size={70}
-          gradientId="gradResume"
+          size={120}
+          gradientId="gradMic"
           colors={["#00C0EE", "#0060FF"]}
-          icon={PlayIcon}
-          label="Reanudar"
-          onPress={onResume}
+          icon={MicIcon}
+          label="Grabar ahora"
+          onPress={onRecord}
         />
-      )}
+      </Animated.View>
 
-      <CircleButton
-        size={70}
-        gradientId="gradRestart"
-        colors={["#FF9500", "#E68400"]}
-        icon={RestartIcon}
-        label="Reiniciar"
-        onPress={onRestart}
-      />
+      <Animated.View
+        style={[
+          styles.layer,
+          {
+            opacity: controlsOpacity,
+            transform: [{ scale: controlsScale }],
+          },
+        ]}
+        pointerEvents={isIdle ? "none" : "auto"}
+      >
+        <View style={styles.controlsRow}>
+          {state === "recording" || isIdle ? (
+            <CircleButton
+              size={70}
+              gradientId="gradPause"
+              colors={["#E05555", "#B83030"]}
+              icon={PauseIcon}
+              label="Pausar"
+              onPress={onPause}
+              pulse={state === "recording"}
+            />
+          ) : (
+            <CircleButton
+              size={70}
+              gradientId="gradResume"
+              colors={["#00C0EE", "#0060FF"]}
+              icon={PlayIcon}
+              label="Reanudar"
+              onPress={onResume}
+            />
+          )}
 
-      <CircleButton
-        size={70}
-        gradientId="gradFinish"
-        colors={["#00CC66", "#009944"]}
-        icon={StopIcon}
-        label="Finalizar"
-        onPress={onFinish}
-      />
+          <CircleButton
+            size={70}
+            gradientId="gradRestart"
+            colors={["#FF9500", "#E68400"]}
+            icon={RestartIcon}
+            label="Reiniciar"
+            onPress={onRestart}
+          />
+
+          <CircleButton
+            size={70}
+            gradientId="gradFinish"
+            colors={["#00D68F", "#00A86B"]}
+            icon={StopIcon}
+            label="Finalizar"
+            onPress={onFinish}
+          />
+        </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  buttonContainer: {
+    height: CONTAINER_HEIGHT,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  layer: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   controlsRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -220,15 +303,8 @@ const styles = StyleSheet.create({
   circleButton: {
     shadowColor: "#00FFF8",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
     elevation: 6,
-  },
-  actionLabel: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#ffffff",
-    textAlign: "center",
   },
 });

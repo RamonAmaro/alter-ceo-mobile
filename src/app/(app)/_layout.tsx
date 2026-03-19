@@ -2,15 +2,22 @@ import { AlterLogo } from "@/components/alter-logo";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TAB_ICON_SIZE = 22;
+const TAB_BAR_HEIGHT = 70;
 
 export default function AppLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          { height: TAB_BAR_HEIGHT + insets.bottom, paddingBottom: insets.bottom },
+        ],
         tabBarActiveTintColor: "#00FF84",
         tabBarInactiveTintColor: "rgba(255,255,255,0.35)",
         tabBarShowLabel: false,
@@ -83,7 +90,6 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: "rgba(10,15,20,0.95)",
     borderTopWidth: 0,
-    height: Platform.OS === "ios" ? 88 : 70,
     paddingTop: 8,
     elevation: 0,
     ...Platform.select({

@@ -1,6 +1,7 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 interface MessageBubbleProps {
   text: string;
@@ -24,7 +25,7 @@ export function MessageBubble({ text, isUser }: MessageBubbleProps) {
             isUser ? styles.bubbleUser : styles.bubbleBot,
           ]}
         >
-          <Text style={styles.text}>{text}</Text>
+          <ThemedText type="bodyMd" style={styles.text}>{text}</ThemedText>
         </LinearGradient>
       </View>
     </View>
@@ -59,9 +60,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.08)",
   },
   text: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 14,
-    fontWeight: "400",
     color: "rgba(255,255,255,0.85)",
     lineHeight: 20,
   },

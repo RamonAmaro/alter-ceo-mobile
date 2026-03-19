@@ -21,6 +21,7 @@ expo-env.d.ts
 
 .mcp.json
 
+
 # Metro
 .metro-health-check*
 
@@ -44,3 +45,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# docs & claude
+docs/
+CLAUDE.md
+.claude/

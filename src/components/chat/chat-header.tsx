@@ -1,8 +1,9 @@
 import { AlterLogo } from "@/components/alter-logo";
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export function ChatHeader() {
   const router = useRouter();
@@ -19,8 +20,8 @@ export function ChatHeader() {
 
       <View style={styles.titleRow}>
         <AlterLogo size={20} />
-        <Text style={styles.labelItalic}>El Cerebro </Text>
-        <Text style={styles.labelBold}>ALTER CEO</Text>
+        <ThemedText type="labelSm" style={styles.labelItalic}>El Cerebro </ThemedText>
+        <ThemedText type="subtitle" style={styles.labelBold}>ALTER CEO</ThemedText>
       </View>
 
       <View style={styles.spacer} />
@@ -48,14 +49,11 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   labelItalic: {
-    fontFamily: Fonts.montserrat,
     fontSize: 16,
-    fontWeight: "500",
     fontStyle: "italic",
     color: "#00FF84",
   },
   labelBold: {
-    fontFamily: Fonts.nexaHeavy,
     fontSize: 16,
     color: "#ffffff",
     letterSpacing: 0.5,

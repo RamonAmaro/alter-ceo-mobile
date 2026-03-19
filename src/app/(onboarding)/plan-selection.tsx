@@ -1,15 +1,36 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { SelectableOption } from "@/components/selectable-option";
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { router } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function PlanSelectionScreen() {
   const insets = useSafeAreaInsets();
   const { planType, setPlanType } = useOnboardingStore();
+  const footerOpacity = useRef(new Animated.Value(0)).current;
+  const footerTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    if (planType) {
+      Animated.parallel([
+        Animated.timing(footerOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(footerTranslateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [planType]);
 
   return (
     <AppBackground>
@@ -19,8 +40,8 @@ export default function PlanSelectionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.textContainer}>
-            <Text style={styles.title}>ESCOGE EXPRESS{"\n"}O PROFESIONAL</Text>
-            <Text style={styles.body}>
+            <ThemedText type="headingMd" style={{ color: "#ffffff" }}>ESCOGE EXPRESS{"\n"}O PROFESIONAL</ThemedText>
+            <ThemedText type="bodyLg" style={{ color: "#ffffff" }}>
               {"\n"}Para poder ayudarte de forma inmediata, lo primero que vamos
               a diseñar es un Plan para Duplicar tus Ventas y Trabajar la Mitad.
               {"\n\n"}Para ello, te vamos a solicitar algunos datos de tu
@@ -28,7 +49,7 @@ export default function PlanSelectionScreen() {
               Express (3 minutos de tiempo aprox) o Profesional (6 minutos
               aprox). A más información, más podemos afinar en el desarrollo del
               plan.
-            </Text>
+            </ThemedText>
           </View>
 
           <View style={styles.optionsContainer}>
@@ -48,12 +69,21 @@ export default function PlanSelectionScreen() {
         </ScrollView>
 
         {planType && (
-          <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
+          <Animated.View
+            style={[
+              styles.footer,
+              {
+                paddingBottom: insets.bottom + Spacing.four,
+                opacity: footerOpacity,
+                transform: [{ translateY: footerTranslateY }],
+              },
+            ]}
+          >
             <Button
               label="Continuar"
               onPress={() => router.push("/(onboarding)/questions")}
             />
-          </View>
+          </Animated.View>
         )}
       </View>
     </AppBackground>
@@ -70,20 +100,6 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginTop: Spacing.four,
-  },
-  title: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#ffffff",
-    lineHeight: 24,
-  },
-  body: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "400",
-    color: "#ffffff",
-    lineHeight: 22,
   },
   optionsContainer: {
     marginTop: Spacing.five,

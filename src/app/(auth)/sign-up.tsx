@@ -2,6 +2,7 @@ import { AppBackground } from "@/components/app-background";
 import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
+import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -11,7 +12,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -46,7 +46,6 @@ export default function SignUpScreen() {
 
   function handleSignUp() {
     if (!validate()) return;
-    // TODO: call sign-up service
   }
 
   function clearError(field: keyof FormErrors) {
@@ -73,10 +72,8 @@ export default function SignUpScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
           <BackButton />
 
-          {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
               source={require("@/assets/images/logo-alterceo.png")}
@@ -85,9 +82,8 @@ export default function SignUpScreen() {
             />
           </View>
 
-          {/* Form */}
           <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>Crear Cuenta</Text>
+            <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratSemiBold, color: "#ffffff", textAlign: "center", marginBottom: Spacing.three }}>Crear Cuenta</ThemedText>
 
             <Input
               placeholder="Nombre"
@@ -137,19 +133,18 @@ export default function SignUpScreen() {
             />
 
             <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>¿Ya tienes cuenta?</Text>
+              <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratLight, color: "#ffffff", textAlign: "center" }}>¿Ya tienes cuenta?</ThemedText>
               <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.loginLink}>Inicia sesión aquí</Text>
+                <ThemedText type="labelMd" style={{ color: "#E8731A", textAlign: "center" }}>Inicia sesión aquí</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Tagline */}
           <View style={styles.taglineContainer}>
             <View style={styles.taglineAccent} />
-            <Text style={styles.tagline}>
+            <ThemedText type="headingMd" style={{ color: "#ffffff", flex: 1 }}>
               Todo el control que necesitas, con la simplicidad que mereces
-            </Text>
+            </ThemedText>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -176,14 +171,6 @@ const styles = StyleSheet.create({
   formContainer: {
     alignItems: "center",
   },
-  formTitle: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
-    textAlign: "center",
-    marginBottom: Spacing.three,
-  },
   inputSpacing: {
     marginBottom: Spacing.three,
   },
@@ -193,20 +180,6 @@ const styles = StyleSheet.create({
   loginContainer: {
     alignItems: "center",
     marginTop: Spacing.four,
-  },
-  loginText: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "300",
-    color: "#ffffff",
-    textAlign: "center",
-  },
-  loginLink: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#E8731A",
-    textAlign: "center",
   },
   taglineContainer: {
     flexDirection: "row",
@@ -219,13 +192,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#D9D9D9",
     borderRadius: 2,
     marginRight: Spacing.three,
-  },
-  tagline: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 20,
-    fontWeight: "700",
-    lineHeight: 24,
-    color: "#ffffff",
-    flex: 1,
   },
 });

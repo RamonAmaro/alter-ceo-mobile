@@ -1,8 +1,9 @@
 import { AppBackground } from "@/components/app-background";
+import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
@@ -19,9 +20,9 @@ const STEPS = [
   { percent: 100, label: "Plan de acción listo para despegar 🚀" },
 ];
 
-const CIRCLE_SIZE = 200;
-const STROKE_WIDTH = 8;
-const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
+const SVG_SIZE = 200;
+const STROKE_WIDTH = 6;
+const RADIUS = (SVG_SIZE - STROKE_WIDTH * 4) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -77,18 +78,18 @@ export default function ReportLoadingScreen() {
       >
         <View style={styles.content}>
           <View style={styles.circleContainer}>
-            <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE}>
+            <Svg width={SVG_SIZE} height={SVG_SIZE}>
               <Circle
-                cx={CIRCLE_SIZE / 2}
-                cy={CIRCLE_SIZE / 2}
+                cx={SVG_SIZE / 2}
+                cy={SVG_SIZE / 2}
                 r={RADIUS}
                 stroke="rgba(255,255,255,0.15)"
                 strokeWidth={STROKE_WIDTH}
                 fill="transparent"
               />
               <AnimatedCircle
-                cx={CIRCLE_SIZE / 2}
-                cy={CIRCLE_SIZE / 2}
+                cx={SVG_SIZE / 2}
+                cy={SVG_SIZE / 2}
                 r={RADIUS}
                 stroke="#00FF84"
                 strokeWidth={STROKE_WIDTH}
@@ -97,16 +98,16 @@ export default function ReportLoadingScreen() {
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 rotation="-90"
-                origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}
+                origin={`${SVG_SIZE / 2}, ${SVG_SIZE / 2}`}
               />
             </Svg>
 
             <View style={styles.percentContainer}>
-              <Text style={styles.percentText}>{step.percent}%</Text>
+              <ThemedText type="headingLg" style={styles.percentText}>{step.percent}%</ThemedText>
             </View>
           </View>
 
-          <Text style={styles.stepLabel}>{step.label}</Text>
+          <ThemedText type="bodyLg" style={styles.stepLabel}>{step.label}</ThemedText>
         </View>
       </View>
     </AppBackground>
@@ -124,28 +125,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   circleContainer: {
-    width: CIRCLE_SIZE,
-    height: CIRCLE_SIZE,
+    width: SVG_SIZE,
+    height: SVG_SIZE,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "visible",
   },
   percentContainer: {
-    position: "absolute",
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
   },
   percentText: {
-    fontFamily: Fonts.montserrat,
     fontSize: 36,
-    fontWeight: "700",
+    lineHeight: 44,
     color: "#ffffff",
   },
   stepLabel: {
-    fontFamily: Fonts.montserrat,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 18,
-    fontWeight: "600",
     color: "rgba(255,255,255,0.85)",
-    textAlign: "center",
+    textAlign: "center" as const,
     marginTop: Spacing.five,
     paddingHorizontal: Spacing.four,
   },

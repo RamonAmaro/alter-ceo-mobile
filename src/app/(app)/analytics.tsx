@@ -1,6 +1,7 @@
 import { AppBackground } from "@/components/app-background";
-import { Fonts, Spacing } from "@/constants/theme";
-import { StyleSheet, Text, View } from "react-native";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
+import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AnalyticsScreen() {
@@ -9,7 +10,7 @@ export default function AnalyticsScreen() {
   return (
     <AppBackground>
       <View style={[styles.container, { paddingTop: insets.top + Spacing.four }]}>
-        <Text style={styles.title}>Analíticas</Text>
+        <ThemedText type="headingLg" style={styles.title}>Analíticas</ThemedText>
       </View>
     </AppBackground>
   );
@@ -21,9 +22,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
   },
   title: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 24,
-    fontWeight: "700",
     color: "#ffffff",
   },
 });

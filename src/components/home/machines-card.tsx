@@ -1,6 +1,7 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
 import { PerformanceChart } from "./performance-chart";
 
@@ -10,14 +11,14 @@ export function MachinesCard() {
       <View style={styles.header}>
         <View>
           <View style={styles.labelRow}>
-            <Text style={styles.label}>Sala de</Text>
+            <ThemedText type="labelSm" style={styles.label}>Sala de</ThemedText>
             <Ionicons
               name="settings-sharp"
               size={18}
               color="rgba(255,255,255,0.3)"
             />
           </View>
-          <Text style={styles.title}>Máquinas</Text>
+          <ThemedText type="subtitle" style={styles.title}>Máquinas</ThemedText>
         </View>
       </View>
       <View style={styles.chartWrap}>
@@ -42,13 +43,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   label: {
-    fontFamily: Fonts.montserrat,
     fontSize: 16,
-    fontWeight: "500",
     color: "rgba(255,255,255,0.8)",
   },
   title: {
-    fontFamily: Fonts.nexaHeavy,
     fontSize: 28,
     color: "#00FF84",
     letterSpacing: 1,

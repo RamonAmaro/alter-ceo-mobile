@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.montserrat,
     fontSize: 14,
-    fontWeight: "400",
     color: "#ffffff",
   },
   audioBtn: {

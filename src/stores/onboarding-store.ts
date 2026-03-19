@@ -86,11 +86,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     set({ currentQuestionIndex: index });
   },
 
-  // Express→Professional: preserve all answers + audios.
-  // Express 0-8   → Professional 0-8  (identical choice questions)
-  // Express 9     → Professional 16   (web)
-  // Express 10    → Professional 17   (Instagram)
-  // Express audios are kept in audioRecords with origin: "express"
   upgradeToProfessional: () => {
     const currentAnswers = get().answers;
     const preserved = new Map<number, Answer>();
@@ -106,7 +101,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     const instagram = currentAnswers.get(10);
     if (instagram !== undefined) preserved.set(17, instagram);
 
-    // audioRecords already contain Express audios — they persist as-is
     set({
       planType: "professional",
       currentQuestionIndex: 9,

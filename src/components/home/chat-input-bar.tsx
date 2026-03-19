@@ -1,8 +1,9 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export function ChatInputBar() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export function ChatInputBar() {
           end={{ x: 1, y: 0 }}
           style={styles.inputGradient}
         >
-          <Text style={styles.placeholder}>Escribe tu mensaje...</Text>
+          <ThemedText type="bodyMd" style={styles.placeholder}>Escribe tu mensaje...</ThemedText>
           <Ionicons
             name="radio-outline"
             size={20}
@@ -71,9 +72,6 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     flex: 1,
-    fontFamily: Fonts.montserrat,
-    fontSize: 14,
-    fontWeight: "400",
     color: "rgba(255,255,255,0.4)",
   },
   sendBtn: {

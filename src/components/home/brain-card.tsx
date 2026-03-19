@@ -1,6 +1,7 @@
 import { AlterLogo } from "@/components/alter-logo";
-import { Fonts, Spacing } from "@/constants/theme";
-import { StyleSheet, Text, View } from "react-native";
+import { ThemedText } from "@/components/themed-text";
+import { Spacing } from "@/constants/theme";
+import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
 
 export function BrainCard() {
@@ -11,16 +12,16 @@ export function BrainCard() {
       onPress={() => {}}
       highlight
     >
-      <Text style={styles.label}>El Cerebro</Text>
+      <ThemedText type="labelSm" style={styles.label}>El Cerebro</ThemedText>
       <View style={styles.titleRow}>
-        <Text style={styles.title}>ALTER CEO</Text>
+        <ThemedText type="subtitle" style={styles.title}>ALTER CEO</ThemedText>
         <View style={styles.logoWrap}>
           <AlterLogo size={18} />
         </View>
       </View>
-      <Text style={styles.description}>
+      <ThemedText type="bodyMd" style={styles.description}>
         Conversa con tu mejor compañero a la hora de hacer crecer tu negocio.
-      </Text>
+      </ThemedText>
     </GlassCard>
   );
 }
@@ -35,9 +36,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   label: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 14,
-    fontWeight: "500",
     color: "#00FF84",
     fontStyle: "italic",
     letterSpacing: 0.5,
@@ -49,7 +47,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   title: {
-    fontFamily: Fonts.nexaHeavy,
     fontSize: 20,
     color: "#ffffff",
     letterSpacing: 1,
@@ -58,9 +55,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   description: {
-    fontFamily: Fonts.montserrat,
     fontSize: 11,
-    fontWeight: "400",
     color: "rgba(255,255,255,0.55)",
     lineHeight: 16,
     marginTop: Spacing.two,

@@ -1,6 +1,7 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
+import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
 import { isBiometricsAvailable } from "@/services/biometrics-service";
 import { useAuthStore } from "@/stores/auth-store";
@@ -14,7 +15,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -115,7 +115,7 @@ export default function LoginScreen() {
 
           {/* Form */}
           <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>Iniciar Sesión</Text>
+            <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratSemiBold, color: "#ffffff", textAlign: "center", marginBottom: Spacing.three }}>Iniciar Sesión</ThemedText>
 
             <Input
               placeholder="Usuario"
@@ -153,9 +153,9 @@ export default function LoginScreen() {
             />
 
             <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>¿No tienes cuenta?</Text>
+              <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratLight, color: "#ffffff", textAlign: "center" }}>¿No tienes cuenta?</ThemedText>
               <TouchableOpacity onPress={() => router.push("/(auth)/sign-up")}>
-                <Text style={styles.registerLink}>Regístrate gratis aquí</Text>
+                <ThemedText type="labelMd" style={{ color: "#E8731A", textAlign: "center" }}>Regístrate gratis aquí</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
@@ -165,9 +165,10 @@ export default function LoginScreen() {
           {/* Tagline */}
           <View style={styles.taglineContainer}>
             <View style={styles.taglineAccent} />
-            <Text style={styles.tagline}>
-              Todo el control que necesitas, con la simplicidad que mereces
-            </Text>
+            <ThemedText type="headingMd" style={{ color: "#ffffff", flex: 1 }}>
+              Todo el control que{`\n`}necesitas, con la simplicidad{`\n`}que
+              mereces
+            </ThemedText>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -194,14 +195,6 @@ const styles = StyleSheet.create({
   formContainer: {
     alignItems: "center",
   },
-  formTitle: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
-    textAlign: "center",
-    marginBottom: Spacing.three,
-  },
   inputSpacing: {
     marginBottom: Spacing.three,
   },
@@ -211,20 +204,6 @@ const styles = StyleSheet.create({
   registerContainer: {
     alignItems: "center",
     marginTop: Spacing.four,
-  },
-  registerText: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "300",
-    color: "#ffffff",
-    textAlign: "center",
-  },
-  registerLink: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#E8731A",
-    textAlign: "center",
   },
   spacer: {
     flexGrow: 1,
@@ -240,13 +219,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#D9D9D9",
     borderRadius: 2,
     marginRight: Spacing.three,
-  },
-  tagline: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 20,
-    fontWeight: "700",
-    lineHeight: 24,
-    color: "#ffffff",
-    flex: 1,
   },
 });
