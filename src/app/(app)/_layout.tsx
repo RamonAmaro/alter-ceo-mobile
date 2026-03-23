@@ -1,150 +1,210 @@
 import { AlterLogo } from "@/components/alter-logo";
+import { ThemedText } from "@/components/themed-text";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
-import { Platform, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TAB_ICON_SIZE = 22;
-const TAB_BAR_HEIGHT = 70;
+const CENTER_LOGO_SIZE = 34;
+const ACTIVE_COLOR = "#00FF84";
+const INACTIVE_COLOR = "rgba(0,255,132,0.25)";
+const LABEL_ACTIVE = ACTIVE_COLOR;
+const LABEL_INACTIVE = "rgba(255,255,255,0.35)";
+const INDICATOR_WIDTH = 40;
+const TAB_COUNT = 5;
 
-export default function AppLayout() {
+interface TabItemConfig {
+  key: string;
+  label: string;
+  icon: (color: string) => React.ReactNode;
+}
+
+const TAB_ITEMS: TabItemConfig[] = [
+  {
+    key: "home",
+    label: "Inicio",
+    icon: (color) => <Ionicons name="mic" size={TAB_ICON_SIZE} color={color} />,
+  },
+  {
+    key: "settings",
+    label: "Ajustes",
+    icon: (color) => (
+      <Ionicons name="settings" size={TAB_ICON_SIZE} color={color} />
+    ),
+  },
+  {
+    key: "alter",
+    label: "",
+    icon: (color) => (
+      <View style={{ opacity: color === ACTIVE_COLOR ? 1 : 0.3 }}>
+        <AlterLogo size={CENTER_LOGO_SIZE} />
+      </View>
+    ),
+  },
+  {
+    key: "notifications",
+    label: "Tareas",
+    icon: (color) => (
+      <MaterialCommunityIcons
+        name="file-document-edit"
+        size={TAB_ICON_SIZE}
+        color={color}
+      />
+    ),
+  },
+  {
+    key: "analytics",
+    label: "Datos",
+    icon: (color) => (
+      <Ionicons name="trending-up" size={TAB_ICON_SIZE} color={color} />
+    ),
+  },
+];
+
+function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const translateX = useRef(new Animated.Value(0)).current;
+  const [tabWidth, setTabWidth] = useState(0);
+
+  const handleLayout = useCallback(
+    (e: { nativeEvent: { layout: { width: number } } }) => {
+      setTabWidth(e.nativeEvent.layout.width / TAB_COUNT);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (tabWidth === 0) return;
+    const targetX = state.index * tabWidth + (tabWidth - INDICATOR_WIDTH) / 2;
+    Animated.spring(translateX, {
+      toValue: targetX,
+      useNativeDriver: true,
+      tension: 68,
+      friction: 10,
+    }).start();
+  }, [state.index, tabWidth]);
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: [
-          styles.tabBar,
-          { height: TAB_BAR_HEIGHT + insets.bottom, paddingBottom: insets.bottom },
-        ],
-        tabBarActiveTintColor: "#00FF84",
-        tabBarInactiveTintColor: "rgba(255,255,255,0.35)",
-        tabBarShowLabel: false,
-        tabBarItemStyle: styles.tabItem,
-      }}
+    <View
+      style={[styles.tabBar, { paddingBottom: insets.bottom }]}
+      onLayout={handleLayout}
     >
-      <Tabs.Screen
-        name="home"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="mic-outline" size={TAB_ICON_SIZE} color={color} />
-          ),
-        }}
+      <Animated.View
+        style={[styles.indicator, { transform: [{ translateX }] }]}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <Ionicons
-              name="settings-outline"
-              size={TAB_ICON_SIZE}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="alter"
-        options={{
-          tabBarIcon: () => (
-            <View style={styles.centerOuter}>
-              <View style={styles.centerGlowOuter} />
-              <View style={styles.centerGlow} />
-              <View style={styles.centerTab}>
-                <AlterLogo size={24} color="#000000" />
-              </View>
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons
-              name="bell-outline"
-              size={TAB_ICON_SIZE}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <Ionicons
-              name="bar-chart-outline"
-              size={TAB_ICON_SIZE}
-              color={color}
-            />
-          ),
-        }}
-      />
+      <View style={styles.tabsRow}>
+        {TAB_ITEMS.map((item, index) => {
+          const focused = state.index === index;
+          const color = focused ? ACTIVE_COLOR : INACTIVE_COLOR;
+          const labelColor = focused ? LABEL_ACTIVE : LABEL_INACTIVE;
+
+          return (
+            <Pressable
+              key={item.key}
+              style={styles.tabButton}
+              onPress={() => {
+                const event = navigation.emit({
+                  type: "tabPress",
+                  target: state.routes[index].key,
+                  canPreventDefault: true,
+                });
+                if (!event.defaultPrevented) {
+                  navigation.navigate(item.key);
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: focused }}
+              accessibilityLabel={item.label}
+            >
+              {item.icon(color)}
+              {item?.label !== "" && item?.label ? (
+                <ThemedText
+                  type="caption"
+                  numberOfLines={1}
+                  style={[styles.tabLabel, { color: labelColor }]}
+                >
+                  {item.label}
+                </ThemedText>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const MemoizedTabBar = React.memo(CustomTabBar);
+
+export default function AppLayout() {
+  return (
+    <Tabs
+      tabBar={(props) => <MemoizedTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tabs.Screen name="home" />
+      <Tabs.Screen name="settings" />
+      <Tabs.Screen name="alter" />
+      <Tabs.Screen name="notifications" />
+      <Tabs.Screen name="analytics" />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: "rgba(10,15,20,0.95)",
-    borderTopWidth: 0,
-    paddingTop: 8,
-    elevation: 0,
+    backgroundColor: "rgba(10,15,20,0.98)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.06)",
     ...Platform.select({
       ios: {
         shadowColor: "#000000",
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 12,
+        elevation: 8,
       },
     }),
   },
-  tabItem: {
-    paddingTop: 4,
-  },
-  centerOuter: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -28,
-  },
-  centerGlowOuter: {
+  indicator: {
     position: "absolute",
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(0,255,132,0.06)",
-  },
-  centerGlow: {
-    position: "absolute",
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: "rgba(0,255,132,0.12)",
-  },
-  centerTab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#00FF84",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: "rgba(0,255,132,0.3)",
+    top: 0,
+    left: 0,
+    width: INDICATOR_WIDTH,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: ACTIVE_COLOR,
+    zIndex: 1,
     ...Platform.select({
       ios: {
-        shadowColor: "#00FF84",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.5,
-        shadowRadius: 12,
+        shadowColor: ACTIVE_COLOR,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.8,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 12,
+        elevation: 4,
       },
     }),
+  },
+  tabsRow: {
+    flexDirection: "row",
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    gap: 4,
+  },
+  tabLabel: {
+    fontSize: 10,
+    lineHeight: 14,
+    textAlign: "center",
   },
 });

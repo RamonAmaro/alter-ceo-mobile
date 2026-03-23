@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AudioRecorderView } from "./components/audio-recorder-view";
+import { AudioRecorderView } from "@/components/onboarding/audio-recorder-view";
 
 export default function AudioQuestionScreen() {
   const [key, setKey] = useState(0);

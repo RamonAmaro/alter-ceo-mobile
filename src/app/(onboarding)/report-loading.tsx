@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ProgressCircle } from "./components/progress-circle";
+import { ProgressCircle } from "@/components/onboarding/progress-circle";
 
 export default function ReportLoadingScreen() {
   const insets = useSafeAreaInsets();
