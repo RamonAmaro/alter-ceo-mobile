@@ -76,16 +76,22 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     [],
   );
 
+  const activeRouteName = state.routes[state.index].name;
+  const activeVisualIndex = TAB_ITEMS.findIndex(
+    (t) => t.key === activeRouteName,
+  );
+
   useEffect(() => {
-    if (tabWidth === 0) return;
-    const targetX = state.index * tabWidth + (tabWidth - INDICATOR_WIDTH) / 2;
+    if (tabWidth === 0 || activeVisualIndex < 0) return;
+    const targetX =
+      activeVisualIndex * tabWidth + (tabWidth - INDICATOR_WIDTH) / 2;
     Animated.spring(translateX, {
       toValue: targetX,
       useNativeDriver: true,
       tension: 68,
       friction: 10,
     }).start();
-  }, [state.index, tabWidth]);
+  }, [activeVisualIndex, tabWidth]);
 
   return (
     <View
@@ -96,10 +102,13 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         style={[styles.indicator, { transform: [{ translateX }] }]}
       />
       <View style={styles.tabsRow}>
-        {TAB_ITEMS.map((item, index) => {
-          const focused = state.index === index;
+        {TAB_ITEMS.map((item) => {
+          const focused = activeRouteName === item.key;
           const color = focused ? ACTIVE_COLOR : INACTIVE_COLOR;
           const labelColor = focused ? LABEL_ACTIVE : LABEL_INACTIVE;
+          const routeIndex = state.routes.findIndex(
+            (r) => r.name === item.key,
+          );
 
           return (
             <Pressable
@@ -108,7 +117,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               onPress={() => {
                 const event = navigation.emit({
                   type: "tabPress",
-                  target: state.routes[index].key,
+                  target: state.routes[routeIndex].key,
                   canPreventDefault: true,
                 });
                 if (!event.defaultPrevented) {
@@ -117,10 +126,10 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               }}
               accessibilityRole="button"
               accessibilityState={{ selected: focused }}
-              accessibilityLabel={item.label}
+              accessibilityLabel={item.label || item.key}
             >
               {item.icon(color)}
-              {item?.label !== "" && item?.label ? (
+              {item.label !== "" && (
                 <ThemedText
                   type="caption"
                   numberOfLines={1}
@@ -128,7 +137,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 >
                   {item.label}
                 </ThemedText>
-              ) : null}
+              )}
             </Pressable>
           );
         })}
@@ -145,9 +154,9 @@ export default function AppLayout() {
       tabBar={(props) => <MemoizedTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
+      <Tabs.Screen name="alter" />
       <Tabs.Screen name="home" />
       <Tabs.Screen name="settings" />
-      <Tabs.Screen name="alter" />
       <Tabs.Screen name="notifications" />
       <Tabs.Screen name="analytics" />
     </Tabs>

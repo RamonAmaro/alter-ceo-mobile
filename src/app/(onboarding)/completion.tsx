@@ -13,7 +13,7 @@ export default function CompletionScreen() {
 
   async function handleFinish() {
     await complete();
-    router.replace("/(app)/home");
+    router.replace("/(app)/alter");
   }
 
   return (

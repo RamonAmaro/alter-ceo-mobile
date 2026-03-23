@@ -36,7 +36,7 @@ export default function LoginScreen() {
 
   function navigateAfterLogin() {
     if (onboardingCompleted) {
-      router.replace("/(app)/home");
+      router.replace("/(app)/alter");
     } else {
       router.replace("/(onboarding)/welcome");
     }

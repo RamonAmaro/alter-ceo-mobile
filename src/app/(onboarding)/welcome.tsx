@@ -18,7 +18,7 @@ export default function WelcomeScreen() {
 
   async function handleSkip(): Promise<void> {
     await complete();
-    router.replace("/(app)/home");
+    router.replace("/(app)/alter");
   }
 
   return (

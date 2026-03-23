@@ -1,54 +1,83 @@
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
 
 export function ProfitabilityColumn() {
   return (
-    <View style={styles.column}>
-      <GlassCard style={styles.card}>
-        <ThemedText type="bodySm" style={styles.label}>Rentabilidad</ThemedText>
-        <ThemedText type="bodySm" style={styles.sub}>actual</ThemedText>
-        <ThemedText type="headingMd" style={styles.value}>1.000.500 €</ThemedText>
-      </GlassCard>
-      <GlassCard style={styles.card}>
-        <ThemedText type="bodySm" style={styles.label}>Rentabilidad</ThemedText>
-        <ThemedText type="bodySm" style={styles.estimated}>estimada 2026</ThemedText>
-        <ThemedText type="headingMd" style={styles.value}>1.000.500 €</ThemedText>
-      </GlassCard>
-    </View>
+    <GlassCard style={styles.card} outerStyle={styles.outer}>
+      <View style={styles.section}>
+        <ThemedText type="caption" style={styles.label}>
+          RENTABILIDAD
+        </ThemedText>
+        <ThemedText type="caption" style={styles.sub}>actual</ThemedText>
+        <ThemedText type="headingMd" style={styles.value}>
+          1.000.500$
+        </ThemedText>
+      </View>
+
+      <View style={styles.separatorWrap}>
+        <LinearGradient
+          colors={["#00EFDE", "#CCFF00"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.separator}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={styles.label}>
+          RENTABILIDAD
+        </ThemedText>
+        <ThemedText type="caption" style={styles.estimated}>
+          estimada 2026
+        </ThemedText>
+        <ThemedText type="headingMd" style={styles.value}>
+          1.000.500$
+        </ThemedText>
+      </View>
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
-  column: {
-    flex: 0.9,
-    gap: Spacing.three,
+  outer: {
+    flex: 1,
   },
   card: {
     flex: 1,
-    padding: Spacing.three,
+    padding: Spacing.two,
+    justifyContent: "space-evenly",
   },
+  section: {},
   label: {
-    fontSize: 10,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 9,
     color: "rgba(255,255,255,0.5)",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   sub: {
-    fontSize: 10,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 9,
     color: "rgba(255,255,255,0.5)",
   },
   estimated: {
-    fontSize: 10,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 9,
     color: "#00FF84",
-    fontWeight: "bold",
+  },
+  separatorWrap: {
+    marginVertical: 2,
+  },
+  separator: {
+    height: 3,
+    borderRadius: 1.5,
   },
   value: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 18,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
     color: "#ffffff",
-    marginTop: 4,
-    letterSpacing: 0.3,
+    marginTop: 2,
   },
 });

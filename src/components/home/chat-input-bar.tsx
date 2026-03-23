@@ -25,7 +25,9 @@ export function ChatInputBar() {
           end={{ x: 1, y: 0 }}
           style={styles.inputGradient}
         >
-          <ThemedText type="bodyMd" style={styles.placeholder}>Escribe tu mensaje...</ThemedText>
+          <ThemedText type="bodyMd" style={styles.placeholder}>
+            Escribe tu mensaje...
+          </ThemedText>
           <Ionicons
             name="radio-outline"
             size={20}
@@ -55,8 +57,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.three,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.four,
+    paddingBottom: Spacing.three,
   },
   inputWrap: {
     flex: 1,
@@ -64,20 +65,21 @@ const styles = StyleSheet.create({
   inputGradient: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 26,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: "rgba(0,255,132,0.2)",
     paddingHorizontal: Spacing.three,
-    height: 48,
+    height: 43,
   },
   placeholder: {
     flex: 1,
     color: "rgba(255,255,255,0.4)",
+    fontSize: 12,
   },
   sendBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     overflow: "hidden",
   },
   sendGradient: {

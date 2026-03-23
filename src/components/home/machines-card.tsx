@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
@@ -7,20 +7,23 @@ import { PerformanceChart } from "./performance-chart";
 
 export function MachinesCard() {
   return (
-    <GlassCard style={styles.card} onPress={() => {}} highlight>
-      <View style={styles.header}>
-        <View>
-          <View style={styles.labelRow}>
-            <ThemedText type="labelSm" style={styles.label}>Sala de</ThemedText>
-            <Ionicons
-              name="settings-sharp"
-              size={18}
-              color="rgba(255,255,255,0.3)"
-            />
-          </View>
-          <ThemedText type="subtitle" style={styles.title}>Máquinas</ThemedText>
-        </View>
+    <GlassCard
+      style={styles.card}
+      outerStyle={styles.outer}
+      onPress={() => {}}
+      highlight
+    >
+      <View style={styles.labelRow}>
+        <ThemedText type="headingMd" style={styles.label}>
+          Sala de
+        </ThemedText>
+        <Ionicons
+          name="settings-sharp"
+          size={14}
+          color="rgba(255,255,255,0.3)"
+        />
       </View>
+      <ThemedText type="headingMd" style={styles.title}>Máquinas</ThemedText>
       <View style={styles.chartWrap}>
         <PerformanceChart />
       </View>
@@ -29,29 +32,34 @@ export function MachinesCard() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    padding: Spacing.four,
+  outer: {
+    flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+  card: {
+    flex: 1,
+    padding: Spacing.three,
   },
   labelRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.two,
+    gap: Spacing.one,
   },
   label: {
-    fontSize: 16,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 20,
+    lineHeight: 20,
     color: "rgba(255,255,255,0.8)",
   },
   title: {
-    fontSize: 28,
-    color: "#00FF84",
-    letterSpacing: 1,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 20,
+    lineHeight: 20,
+    color: "#00FF73",
   },
   chartWrap: {
-    marginTop: Spacing.three,
+    flex: 1,
+    marginTop: Spacing.two,
+    marginHorizontal: -Spacing.three,
+    marginBottom: -Spacing.three,
   },
 });

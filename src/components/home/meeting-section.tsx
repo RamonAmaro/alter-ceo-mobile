@@ -1,104 +1,70 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
+
 import { GlassCard } from "./glass-card";
 
 export function MeetingSection() {
   return (
     <View style={styles.row}>
       <GlassCard
-        style={styles.recordCard}
-        outerStyle={styles.recordOuter}
+        style={styles.card}
+        outerStyle={styles.cardOuter}
         onPress={() => {}}
       >
-        <View style={styles.header}>
-          <ThemedText type="labelSm" style={styles.label}>Grabar</ThemedText>
-          <Ionicons name="mic" size={16} color="rgba(255,255,255,0.5)" />
+        <View>
+          <ThemedText type="bodyLg" style={styles.label}>
+            Grabar
+          </ThemedText>
+          <ThemedText type="headingMd" style={styles.title}>
+            Reunión
+          </ThemedText>
         </View>
-        <ThemedText type="subtitle" style={styles.title}>Reunión</ThemedText>
-        <View style={styles.micCircle}>
-          <Ionicons
-            name="mic-outline"
-            size={32}
-            color="rgba(255,255,255,0.4)"
-          />
+        <View style={styles.micArea}>
+          <Ionicons name="mic" size={64} color="rgba(255,255,255,0.15)" />
         </View>
       </GlassCard>
 
-      <View style={styles.miniColumn}>
-        <GlassCard
-          style={styles.miniCard}
-          outerStyle={styles.miniOuter}
-          onPress={() => {}}
-        >
-          <LinearGradient
-            colors={["rgba(0,255,132,0.05)", "transparent"]}
-            style={StyleSheet.absoluteFill}
-          />
-        </GlassCard>
-        <GlassCard
-          style={styles.miniCard}
-          outerStyle={styles.miniOuter}
-          onPress={() => {}}
-        >
-          <LinearGradient
-            colors={["rgba(0,255,132,0.05)", "transparent"]}
-            style={StyleSheet.absoluteFill}
-          />
-        </GlassCard>
-      </View>
+      <GlassCard
+        style={styles.card}
+        outerStyle={styles.cardOuterLarge}
+        onPress={() => {}}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: {
+    flex: 1,
     flexDirection: "row",
     gap: Spacing.three,
   },
-  recordOuter: {
-    flex: 1,
+  cardOuter: {
+    flex: 4,
   },
-  recordCard: {
+  cardOuterLarge: {
+    flex: 5,
+  },
+  card: {
     flex: 1,
     padding: Spacing.three,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+    justifyContent: "space-between",
   },
   label: {
+    fontFamily: Fonts.montserratBold,
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
+    color: "#ffffff",
   },
   title: {
-    fontSize: 24,
-    color: "#ffffff",
-    letterSpacing: 0.5,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 20,
+    color: "#00FF84",
   },
-  micCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+  micArea: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Spacing.three,
-  },
-  miniColumn: {
-    flex: 1,
-    gap: Spacing.three,
-  },
-  miniOuter: {
-    flex: 1,
-  },
-  miniCard: {
-    flex: 1,
-    minHeight: 70,
   },
 });

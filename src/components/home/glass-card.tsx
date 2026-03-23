@@ -9,7 +9,7 @@ import {
 } from "react-native";
 
 interface GlassCardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   style?: ViewStyle;
   outerStyle?: ViewStyle;
   onPress?: () => void;
@@ -83,8 +83,8 @@ export function GlassCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 26,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     overflow: "hidden",
