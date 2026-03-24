@@ -2,7 +2,7 @@ import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,19 +14,20 @@ const INACTIVE_COLOR = "rgba(0,255,132,0.25)";
 const LABEL_ACTIVE = ACTIVE_COLOR;
 const LABEL_INACTIVE = "rgba(255,255,255,0.35)";
 const INDICATOR_WIDTH = 40;
-const TAB_COUNT = 5;
 
 interface TabItemConfig {
   key: string;
   label: string;
   icon: (color: string) => React.ReactNode;
+  pushRoute?: string;
 }
 
 const TAB_ITEMS: TabItemConfig[] = [
   {
-    key: "home",
-    label: "Inicio",
+    key: "grabar",
+    label: "Grabar",
     icon: (color) => <Ionicons name="mic" size={TAB_ICON_SIZE} color={color} />,
+    pushRoute: "/grabar",
   },
   {
     key: "settings",
@@ -64,10 +65,14 @@ const TAB_ITEMS: TabItemConfig[] = [
   },
 ];
 
+const TAB_COUNT = TAB_ITEMS.length;
+
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const translateX = useRef(new Animated.Value(0)).current;
   const [tabWidth, setTabWidth] = useState(0);
+
+  const activeRouteName = state.routes[state.index].name;
 
   const handleLayout = useCallback(
     (e: { nativeEvent: { layout: { width: number } } }) => {
@@ -76,7 +81,6 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     [],
   );
 
-  const activeRouteName = state.routes[state.index].name;
   const activeVisualIndex = TAB_ITEMS.findIndex(
     (t) => t.key === activeRouteName,
   );
@@ -106,15 +110,20 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           const focused = activeRouteName === item.key;
           const color = focused ? ACTIVE_COLOR : INACTIVE_COLOR;
           const labelColor = focused ? LABEL_ACTIVE : LABEL_INACTIVE;
-          const routeIndex = state.routes.findIndex(
-            (r) => r.name === item.key,
-          );
 
           return (
             <Pressable
               key={item.key}
               style={styles.tabButton}
               onPress={() => {
+                if (item.pushRoute) {
+                  router.push(item.pushRoute as never);
+                  return;
+                }
+                const routeIndex = state.routes.findIndex(
+                  (r) => r.name === item.key,
+                );
+                if (routeIndex < 0) return;
                 const event = navigation.emit({
                   type: "tabPress",
                   target: state.routes[routeIndex].key,
@@ -155,7 +164,6 @@ export default function AppLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="alter" />
-      <Tabs.Screen name="home" />
       <Tabs.Screen name="settings" />
       <Tabs.Screen name="notifications" />
       <Tabs.Screen name="analytics" />
