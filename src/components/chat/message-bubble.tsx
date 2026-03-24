@@ -1,32 +1,27 @@
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
-import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 
 interface MessageBubbleProps {
   text: string;
   isUser: boolean;
+  isFirstInGroup?: boolean;
+  isLastInGroup?: boolean;
 }
 
-export function MessageBubble({ text, isUser }: MessageBubbleProps) {
+export function MessageBubble({
+  text,
+  isUser,
+  isLastInGroup = true,
+}: MessageBubbleProps) {
   return (
-    <View style={[styles.row, isUser && styles.rowUser]}>
+    <View style={[styles.row, isUser && styles.rowUser, isLastInGroup && styles.rowGroupEnd]}>
       <View style={styles.bubbleWrap}>
-        <LinearGradient
-          colors={
-            isUser
-              ? ["rgba(0,255,132,0.15)", "rgba(0,255,132,0.05)"]
-              : ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.03)"]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.bubble,
-            isUser ? styles.bubbleUser : styles.bubbleBot,
-          ]}
-        >
-          <ThemedText type="bodyMd" style={styles.text}>{text}</ThemedText>
-        </LinearGradient>
+        <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleBot]}>
+          <ThemedText type="bodyMd" style={[styles.text, isUser && styles.textUser]}>
+            {text}
+          </ThemedText>
+        </View>
       </View>
     </View>
   );
@@ -35,32 +30,36 @@ export function MessageBubble({ text, isUser }: MessageBubbleProps) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    marginBottom: Spacing.three,
+    marginBottom: 2,
     paddingHorizontal: Spacing.three,
   },
   rowUser: {
     justifyContent: "flex-end",
   },
+  rowGroupEnd: {
+    marginBottom: Spacing.three,
+  },
   bubbleWrap: {
-    maxWidth: "80%",
+    maxWidth: "70%",
   },
   bubble: {
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    borderWidth: 1,
+    paddingVertical: Spacing.two,
+    borderRadius: 18,
   },
   bubbleUser: {
-    borderRadius: 20,
-    borderBottomRightRadius: 6,
-    borderColor: "rgba(0,255,132,0.15)",
+    backgroundColor: "#005C4B",
+    borderBottomRightRadius: 4,
   },
   bubbleBot: {
-    borderRadius: 20,
-    borderBottomLeftRadius: 6,
-    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#1F2C34",
+    borderBottomLeftRadius: 4,
   },
   text: {
-    color: "rgba(255,255,255,0.85)",
+    color: "#E9EDEF",
     lineHeight: 20,
+  },
+  textUser: {
+    color: "#E9EDEF",
   },
 });

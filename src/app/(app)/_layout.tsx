@@ -25,7 +25,7 @@ interface TabItemConfig {
 
 const TAB_ITEMS: TabItemConfig[] = [
   {
-    key: "grabar",
+    key: "recording",
     label: "Grabar",
     icon: (color, focused) => (
       <Ionicons
@@ -34,7 +34,7 @@ const TAB_ITEMS: TabItemConfig[] = [
         color={color}
       />
     ),
-    pushRoute: "/grabar",
+    pushRoute: "/recording",
   },
   {
     key: "settings",
@@ -46,6 +46,7 @@ const TAB_ITEMS: TabItemConfig[] = [
         color={color}
       />
     ),
+    pushRoute: "/settings",
   },
   {
     key: "alter",
@@ -66,9 +67,10 @@ const TAB_ITEMS: TabItemConfig[] = [
         color={color}
       />
     ),
+    pushRoute: "/notifications",
   },
   {
-    key: "analytics",
+    key: "strategy",
     label: "Datos",
     icon: (color, focused) => (
       <Ionicons
@@ -77,6 +79,7 @@ const TAB_ITEMS: TabItemConfig[] = [
         color={color}
       />
     ),
+    pushRoute: "/strategy",
   },
 ];
 
@@ -179,9 +182,6 @@ export default function AppLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="alter" />
-      <Tabs.Screen name="settings" />
-      <Tabs.Screen name="notifications" />
-      <Tabs.Screen name="analytics" />
     </Tabs>
   );
 }

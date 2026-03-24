@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ChatHeader } from "@/components/chat/chat-header";
+import { ScreenHeader } from "@/components/screen-header";
 import { ChatInput } from "@/components/chat/chat-input";
 import { MessageBubble } from "@/components/chat/message-bubble";
 
@@ -68,20 +68,31 @@ export default function ChatScreen() {
   }
 
   return (
-    <AppBackground
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
-    >
+    <AppBackground style={{ paddingBottom: insets.bottom }}>
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
-        <View style={[styles.container]}>
-          <ChatHeader />
+        <View style={styles.container}>
+          <ScreenHeader
+            topInset={insets.top}
+            useLogoIcon
+            titlePrefix="El Cerebro"
+            titleAccent="ALTER CEO"
+          />
 
           <FlatList
             ref={listRef}
             data={messages}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <MessageBubble text={item.text} isUser={item.isUser} />
-            )}
+            renderItem={({ item, index }) => {
+              const next = messages[index + 1];
+              const isLastInGroup = !next || next.isUser !== item.isUser;
+              return (
+                <MessageBubble
+                  text={item.text}
+                  isUser={item.isUser}
+                  isLastInGroup={isLastInGroup}
+                />
+              );
+            }}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="interactive"

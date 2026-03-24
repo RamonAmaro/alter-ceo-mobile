@@ -1,6 +1,5 @@
 import { AppBackground } from "@/components/app-background";
-import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { ScreenHeader } from "@/components/screen-header";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -9,8 +8,13 @@ export default function SettingsScreen() {
 
   return (
     <AppBackground>
-      <View style={[styles.container, { paddingTop: insets.top + Spacing.four }]}>
-        <ThemedText type="headingLg" style={styles.title}>Ajustes</ThemedText>
+      <View style={styles.container}>
+        <ScreenHeader
+          topInset={insets.top}
+          icon="settings"
+          titlePrefix="Sala de"
+          titleAccent="Máquinas"
+        />
       </View>
     </AppBackground>
   );
@@ -19,9 +23,5 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-  },
-  title: {
-    color: "#ffffff",
   },
 });

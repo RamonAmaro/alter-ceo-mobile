@@ -1,5 +1,5 @@
 import { RecordingScreen } from "@/components/recording/recording-screen";
 
-export default function GrabarScreen() {
+export default function RecordingPageScreen() {
   return <RecordingScreen />;
 }

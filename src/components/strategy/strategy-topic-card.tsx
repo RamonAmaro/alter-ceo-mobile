@@ -1,0 +1,97 @@
+import { ThemedText } from "@/components/themed-text";
+import { Fonts, Spacing } from "@/constants/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  Image,
+  ImageSourcePropType,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+interface StrategyTopicCardProps {
+  label: string;
+  image: ImageSourcePropType;
+  onPress: () => void;
+}
+
+export function StrategyTopicCard({
+  label,
+  image,
+  onPress,
+}: StrategyTopicCardProps) {
+  return (
+    <TouchableOpacity
+      style={styles.outer}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <LinearGradient
+        colors={["rgba(255,255,255,0.22)", "rgba(255,255,255,0)"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View style={styles.content}>
+        <ThemedText style={styles.label} numberOfLines={2}>
+          {label}
+        </ThemedText>
+
+        <View style={styles.imageWrap}>
+          <Image source={image} style={styles.image} resizeMode="contain" />
+        </View>
+
+        <View style={styles.divider} />
+        <ThemedText style={styles.buttonLabel}>Comenzar</ThemedText>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  outer: {
+    flex: 1,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: "rgba(0,255,132,0.24)",
+    overflow: "hidden",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.two,
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  label: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 20,
+    lineHeight: 22,
+    textAlign: "center",
+    color: "#00FF84",
+    textTransform: "uppercase",
+  },
+  imageWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  image: {
+    width: 96,
+    height: 96,
+  },
+  divider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "rgba(0,255,132,0.15)",
+    marginBottom: Spacing.two,
+  },
+  buttonLabel: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 12,
+    lineHeight: 15,
+    color: "#2AF0E1",
+  },
+});

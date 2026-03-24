@@ -9,8 +9,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
+import { ScreenHeader } from "@/components/screen-header";
 
-import { RecordingHeader } from "./recording-header";
 import { RecordingMotto } from "./recording-motto";
 import { RecordingPage } from "./recording-page";
 import { MeetingsPage } from "./meetings-page";
@@ -44,8 +44,13 @@ export function RecordingScreen() {
 
   return (
     <AppBackground>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <RecordingHeader />
+      <View style={styles.container}>
+        <ScreenHeader
+          topInset={insets.top}
+          icon="mic"
+          titlePrefix="Grabar"
+          titleAccent="Reunión"
+        />
 
         <RecordingMotto activeIndex={activeIndex} />
 
