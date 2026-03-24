@@ -1,5 +1,4 @@
 import { AlterLogo } from "@/components/alter-logo";
-import { ThemedText } from "@/components/themed-text";
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { router, Tabs } from "expo-router";
@@ -7,13 +6,15 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const TAB_ICON_SIZE = 22;
+// const TAB_ICON_SIZE = 22;
+const TAB_ICON_SIZE = 26;
+
 const CENTER_LOGO_SIZE = 34;
 const ACTIVE_COLOR = "#00FF84";
 const INACTIVE_COLOR = "rgba(0,255,132,0.5)";
-const LABEL_ACTIVE = ACTIVE_COLOR;
-const LABEL_INACTIVE = "rgba(255,255,255,0.6)";
 const INDICATOR_WIDTH = 40;
+// const LABEL_ACTIVE = ACTIVE_COLOR;
+// const LABEL_INACTIVE = "rgba(255,255,255,0.6)";
 
 interface TabItemConfig {
   key: string;
@@ -123,7 +124,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         {TAB_ITEMS.map((item) => {
           const focused = activeRouteName === item.key;
           const color = focused ? ACTIVE_COLOR : INACTIVE_COLOR;
-          const labelColor = focused ? LABEL_ACTIVE : LABEL_INACTIVE;
+          // const labelColor = focused ? LABEL_ACTIVE : LABEL_INACTIVE;
 
           return (
             <Pressable
@@ -152,7 +153,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityLabel={item.label || item.key}
             >
               {item.icon(color, focused)}
-              {item.label !== "" && (
+              {/* {item.label !== "" && (
                 <ThemedText
                   type="caption"
                   numberOfLines={1}
@@ -160,7 +161,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 >
                   {item.label}
                 </ThemedText>
-              )}
+              )} */}
             </Pressable>
           );
         })}
