@@ -1,93 +1,93 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { useRecordingsStore } from "@/stores/recordings-store";
+import { formatDuration } from "@/utils/format-duration";
 
 import { MeetingListItem, type MeetingItem } from "./meeting-list-item";
-import { MeetingPlayerBar } from "./meeting-player-bar";
 
 interface MeetingsPageProps {
   width: number;
+  height: number;
+  playerBarHeight: number;
+  activeId: string | null;
+  isPlaying: boolean;
+  onPlay: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-const MOCK_MEETINGS: MeetingItem[] = [
-  { id: "1", title: "Reunión comercial", date: "12/03/26", duration: "1:59:30" },
-  { id: "2", title: "Reunión comercial", date: "12/03/26", duration: "1:59:30" },
-  { id: "3", title: "Reunión comercial", date: "12/03/26", duration: "1:59:30" },
-  { id: "4", title: "Reunión comercial", date: "12/03/26", duration: "1:59:30" },
-];
+export function MeetingsPage({
+  width,
+  height,
+  playerBarHeight,
+  activeId,
+  isPlaying,
+  onPlay,
+  onDelete,
+}: MeetingsPageProps) {
+  const { recordings, loadRecordings } = useRecordingsStore();
 
-export function MeetingsPage({ width }: MeetingsPageProps) {
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  const activeMeeting = MOCK_MEETINGS.find((m) => m.id === activeId);
-
-  const handlePlay = useCallback((id: string) => {
-    setActiveId(id);
-    setIsPlaying(true);
-  }, []);
+  useEffect(() => {
+    loadRecordings();
+  }, [loadRecordings]);
 
   const handleShare = useCallback((_id: string) => {}, []);
   const handleDownload = useCallback((_id: string) => {}, []);
   const handleFavorite = useCallback((_id: string) => {}, []);
-  const handleDelete = useCallback((_id: string) => {}, []);
 
-  const handleTogglePlay = useCallback(() => {
-    setIsPlaying((prev) => !prev);
-  }, []);
+  const meetingItems: MeetingItem[] = recordings.map((r) => ({
+    id: r.id,
+    title: r.title,
+    date: r.date,
+    duration: formatDuration(r.durationMs),
+  }));
 
   return (
-    <View style={[styles.container, { width }]}>
+    <View style={{ width, height }}>
       <View style={styles.listContainer}>
-        <ThemedText
-          type="bodySm"
-          style={styles.sectionTitle}
-        >
+        <ThemedText type="bodySm" style={styles.sectionTitle}>
           TODAS TUS REUNIONES
         </ThemedText>
 
         <View style={styles.divider} />
 
-        <FlatList
-          data={MOCK_MEETINGS}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <MeetingListItem
-              item={item}
-              onPlay={handlePlay}
-              onShare={handleShare}
-              onDownload={handleDownload}
-              onFavorite={handleFavorite}
-              onDelete={handleDelete}
-            />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        />
+        {recordings.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <ThemedText type="bodyMd" style={styles.emptyText}>
+              No hay reuniones guardadas
+            </ThemedText>
+          </View>
+        ) : (
+          <FlatList
+            data={meetingItems}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <MeetingListItem
+                item={item}
+                isActive={item.id === activeId}
+                isPlaying={item.id === activeId && isPlaying}
+                onPlay={onPlay}
+                onShare={handleShare}
+                onDownload={handleDownload}
+                onFavorite={handleFavorite}
+                onDelete={onDelete}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: playerBarHeight + Spacing.three },
+            ]}
+          />
+        )}
       </View>
-
-      {activeMeeting && (
-        <MeetingPlayerBar
-          title={activeMeeting.title}
-          date={activeMeeting.date}
-          duration={activeMeeting.duration}
-          progress={0.4}
-          isPlaying={isPlaying}
-          onTogglePlay={handleTogglePlay}
-          onShare={() => handleShare(activeMeeting.id)}
-          onFavorite={() => handleFavorite(activeMeeting.id)}
-        />
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   listContainer: {
     flex: 1,
     paddingHorizontal: Spacing.four,
@@ -100,11 +100,20 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   divider: {
-    height: 1,
-    backgroundColor: "rgba(0, 255, 132, 0.2)",
+    height: 2,
+    backgroundColor: "#43BCB8",
     marginTop: Spacing.two,
   },
   listContent: {
     paddingBottom: Spacing.three,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: Spacing.six,
+  },
+  emptyText: {
+    color: "rgba(255, 255, 255, 0.4)",
   },
 });

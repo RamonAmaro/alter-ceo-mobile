@@ -10,14 +10,19 @@ import {
   requestAudioPermission,
   useAudioRecorder,
 } from "@/services/audio-service";
+import { useRecordingsStore } from "@/stores/recordings-store";
+import { formatShortDate } from "@/utils/format-date";
 
+import { AudioWave } from "./audio-wave";
 import { RecordingControls } from "./recording-controls";
 import { RecordingTimer } from "./recording-timer";
+import { SavedToast } from "./saved-toast";
 
-type RecordingState = "idle" | "recording";
+type RecordingState = "idle" | "recording" | "paused";
 
 interface RecordingPageProps {
   width: number;
+  height: number;
 }
 
 const RECORDING_OPTIONS = {
@@ -25,16 +30,22 @@ const RECORDING_OPTIONS = {
   isMeteringEnabled: true,
 };
 
-export function RecordingPage({ width }: RecordingPageProps) {
+export function RecordingPage({ width, height }: RecordingPageProps) {
   const insets = useSafeAreaInsets();
   const [state, setState] = useState<RecordingState>("idle");
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [showToast, setShowToast] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef(0);
   const preparedRef = useRef(false);
+  const elapsedRef = useRef(0);
 
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
-  const isRecording = state === "recording";
+  const addRecording = useRecordingsStore((s) => s.addRecording);
+
+  useEffect(() => {
+    elapsedRef.current = elapsedMs;
+  }, [elapsedMs]);
 
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now() - elapsedMs;
@@ -50,6 +61,13 @@ export function RecordingPage({ width }: RecordingPageProps) {
     }
   }, []);
 
+  const reset = useCallback(() => {
+    preparedRef.current = false;
+    stopTimer();
+    setState("idle");
+    setElapsedMs(0);
+  }, [stopTimer]);
+
   const handleRecord = useCallback(async () => {
     if (state === "idle") {
       const granted = await requestAudioPermission();
@@ -62,41 +80,62 @@ export function RecordingPage({ width }: RecordingPageProps) {
       recorder.record();
       setState("recording");
       startTimer();
-    } else {
-      recorder.stop();
-      preparedRef.current = false;
+    } else if (state === "recording") {
+      recorder.pause();
       stopTimer();
-      setState("idle");
+      setState("paused");
+    } else if (state === "paused") {
+      recorder.record();
+      setState("recording");
+      startTimer();
     }
   }, [state, recorder, startTimer, stopTimer]);
 
   const handleDelete = useCallback(async () => {
-    if (isRecording) {
+    if (state === "recording" || state === "paused") {
       recorder.stop();
-      preparedRef.current = false;
-      stopTimer();
     }
-    setElapsedMs(0);
-    setState("idle");
-  }, [isRecording, recorder, stopTimer]);
+    reset();
+  }, [state, recorder, reset]);
 
   const handleSave = useCallback(async () => {
-    if (isRecording) {
-      recorder.stop();
-      preparedRef.current = false;
-      stopTimer();
-      setState("idle");
+    if (state === "idle") return;
+    recorder.stop();
+    preparedRef.current = false;
+    stopTimer();
+    setState("idle");
+
+    const uri = recorder.uri;
+    const savedMs = elapsedRef.current;
+
+    if (uri) {
+      const now = new Date();
+      await addRecording({
+        id: Date.now().toString(),
+        uri,
+        title: `Reunión ${formatShortDate(now)}`,
+        date: formatShortDate(now),
+        durationMs: savedMs,
+        createdAt: now.toISOString(),
+      });
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
     }
-  }, [isRecording, recorder, stopTimer]);
+
+    setElapsedMs(0);
+  }, [state, recorder, stopTimer, addRecording]);
 
   useEffect(() => {
     return () => stopTimer();
   }, [stopTimer]);
 
+  const isActive = state === "recording";
+
   return (
-    <View style={[styles.container, { width }]}>
+    <View style={{ width, height }}>
       <View style={styles.content}>
-        <RecordingTimer elapsedMs={elapsedMs} isRecording={isRecording} />
+        <AudioWave isActive={isActive} recorder={recorder} />
+        <RecordingTimer elapsedMs={elapsedMs} isRecording={isActive} />
       </View>
 
       <LinearGradient
@@ -104,10 +143,11 @@ export function RecordingPage({ width }: RecordingPageProps) {
           "transparent",
           "rgba(0, 50, 50, 0.4)",
           "rgba(0, 40, 40, 0.7)",
-          "rgba(0, 30, 30, 0.85)",
+          "rgba(0, 30, 30, 0.9)",
         ]}
         locations={[0, 0.3, 0.6, 1]}
-        style={[styles.bottomGradient, { paddingBottom: insets.bottom + Spacing.two }]}
+        style={[styles.bottomOverlay, { paddingBottom: insets.bottom + Spacing.three }]}
+        pointerEvents="box-none"
       >
         <RecordingControls
           state={state}
@@ -116,21 +156,24 @@ export function RecordingPage({ width }: RecordingPageProps) {
           onSave={handleSave}
         />
       </LinearGradient>
+
+      <SavedToast visible={showToast} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: Spacing.four,
   },
-  bottomGradient: {
+  bottomOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingTop: Spacing.six,
   },
 });
