@@ -2583,6 +2583,11 @@ expo-constants@~55.0.7:
     "@expo/config" "~55.0.8"
     "@expo/env" "~2.1.1"
 
+expo-crypto@^55.0.10:
+  version "55.0.10"
+  resolved "https://registry.yarnpkg.com/expo-crypto/-/expo-crypto-55.0.10.tgz#edf64a9d75fa1757fcae466b26fce9b93031b293"
+  integrity sha512-3emt67pWch07F7DPQutn7CUpaiCJI8OOFxCGiwmzeSqSjuWP9upGOXkLQNVWf+29KZQRTVgf88LhDC2GFshMNA==
+
 expo-dev-client@~55.0.16:
   version "55.0.16"
   resolved "https://registry.yarnpkg.com/expo-dev-client/-/expo-dev-client-55.0.16.tgz#b0978f9b9c7b217a67aea3d6e83a231a39c17602"
@@ -2770,6 +2775,11 @@ expo-updates-interface@~55.1.3:
   version "55.1.3"
   resolved "https://registry.yarnpkg.com/expo-updates-interface/-/expo-updates-interface-55.1.3.tgz#cecc1821a9f5e773739144bea7ad93c6a485baea"
   integrity sha512-UVVIiZqymQZJL+o/jh65kXOI97xdkbqBJJM0LMabaPMNLFnc6/WvOMOzmQs7SPyKb8+0PeBaFd7tj5DzF6JeQg==
+
+expo-web-browser@^55.0.10:
+  version "55.0.10"
+  resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-55.0.10.tgz#f036958e6fafa9fb7ab27e84e134021713a83264"
+  integrity sha512-2d6qVrg/nt0JvW5uAqOMDG/xITIXFe1Prkq1ri+I3PrC0QmV5cMYNSagU9ykfC8S7YKWxF1qO7Qsih9fxNa9dw==
 
 expo@~55.0.6:
   version "55.0.6"

@@ -1,5 +1,11 @@
 import { Fonts, Spacing } from "@/constants/theme";
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps,
+} from "react-native";
 
 interface InputProps extends TextInputProps {
   error?: boolean;
@@ -8,9 +14,9 @@ interface InputProps extends TextInputProps {
 
 export function Input({ style, error, errorMessage, ...rest }: InputProps) {
   return (
-    <View>
+    <View style={style}>
       <TextInput
-        style={[styles.input, error && styles.inputError, style]}
+        style={[styles.input, error && styles.inputError]}
         placeholderTextColor="rgba(255,255,255,0.47)"
         {...rest}
       />
@@ -41,7 +47,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserrat,
     fontSize: 11,
     color: "#E8731A",
-    marginTop: Spacing.one,
-    marginLeft: Spacing.four,
+    marginTop: 3,
+    marginLeft: Spacing.three,
   },
 });
