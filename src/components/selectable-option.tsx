@@ -2,8 +2,8 @@ import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { ImageBackground, StyleSheet, TouchableOpacity } from "react-native";
 
-const ACTIVE_BG = require("@/assets/images/card-active-bg.png");
-const INACTIVE_BG = require("@/assets/images/card-inactive-bg.png");
+const ACTIVE_BG = require("@/assets/ui/card-active-bg.png");
+const INACTIVE_BG = require("@/assets/ui/card-inactive-bg.png");
 
 interface SelectableOptionProps {
   label: string;

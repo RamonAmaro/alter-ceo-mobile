@@ -7,7 +7,7 @@ interface AppBackgroundProps extends ViewProps {
 export function AppBackground({ children, style, ...rest }: AppBackgroundProps) {
   return (
     <ImageBackground
-      source={require("@/assets/images/app-background.png")}
+      source={require("@/assets/ui/app-background.png")}
       style={[styles.background, style]}
       resizeMode="cover"
       {...rest}

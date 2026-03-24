@@ -3,7 +3,7 @@ import { Image, StyleSheet } from "react-native";
 export function PerformanceChart() {
   return (
     <Image
-      source={require("@/assets/images/machines-chart.png")}
+      source={require("@/assets/ui/machines-chart.png")}
       resizeMode="cover"
       style={styles.image}
     />

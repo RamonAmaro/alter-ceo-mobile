@@ -21,7 +21,7 @@ export default function CompletionScreen() {
       <View style={[styles.container, { paddingTop: insets.top + Spacing.five }]}>
         <View style={styles.content}>
           <Image
-            source={require("@/assets/images/logo-alterceo.png")}
+            source={require("@/assets/ui/logo-alterceo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
