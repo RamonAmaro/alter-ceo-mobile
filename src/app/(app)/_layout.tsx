@@ -1,6 +1,6 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { router, Tabs } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -10,15 +10,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const TAB_ICON_SIZE = 22;
 const CENTER_LOGO_SIZE = 34;
 const ACTIVE_COLOR = "#00FF84";
-const INACTIVE_COLOR = "rgba(0,255,132,0.25)";
+const INACTIVE_COLOR = "rgba(0,255,132,0.5)";
 const LABEL_ACTIVE = ACTIVE_COLOR;
-const LABEL_INACTIVE = "rgba(255,255,255,0.35)";
+const LABEL_INACTIVE = "rgba(255,255,255,0.6)";
 const INDICATOR_WIDTH = 40;
 
 interface TabItemConfig {
   key: string;
   label: string;
-  icon: (color: string) => React.ReactNode;
+  icon: (color: string, focused: boolean) => React.ReactNode;
   pushRoute?: string;
 }
 
@@ -26,21 +26,31 @@ const TAB_ITEMS: TabItemConfig[] = [
   {
     key: "grabar",
     label: "Grabar",
-    icon: (color) => <Ionicons name="mic" size={TAB_ICON_SIZE} color={color} />,
+    icon: (color, focused) => (
+      <Ionicons
+        name={focused ? "mic" : "mic-outline"}
+        size={TAB_ICON_SIZE}
+        color={color}
+      />
+    ),
     pushRoute: "/grabar",
   },
   {
     key: "settings",
     label: "Ajustes",
-    icon: (color) => (
-      <Ionicons name="settings" size={TAB_ICON_SIZE} color={color} />
+    icon: (color, focused) => (
+      <Ionicons
+        name={focused ? "settings" : "settings-outline"}
+        size={TAB_ICON_SIZE}
+        color={color}
+      />
     ),
   },
   {
     key: "alter",
     label: "",
     icon: (color) => (
-      <View style={{ opacity: color === ACTIVE_COLOR ? 1 : 0.3 }}>
+      <View style={{ opacity: color === ACTIVE_COLOR ? 1 : 0.55 }}>
         <AlterLogo size={CENTER_LOGO_SIZE} />
       </View>
     ),
@@ -48,9 +58,9 @@ const TAB_ITEMS: TabItemConfig[] = [
   {
     key: "notifications",
     label: "Tareas",
-    icon: (color) => (
-      <MaterialCommunityIcons
-        name="file-document-edit"
+    icon: (color, focused) => (
+      <Ionicons
+        name={focused ? "reader" : "reader-outline"}
         size={TAB_ICON_SIZE}
         color={color}
       />
@@ -59,8 +69,12 @@ const TAB_ITEMS: TabItemConfig[] = [
   {
     key: "analytics",
     label: "Datos",
-    icon: (color) => (
-      <Ionicons name="trending-up" size={TAB_ICON_SIZE} color={color} />
+    icon: (color, focused) => (
+      <Ionicons
+        name={focused ? "bar-chart" : "bar-chart-outline"}
+        size={TAB_ICON_SIZE}
+        color={color}
+      />
     ),
   },
 ];
@@ -137,7 +151,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityState={{ selected: focused }}
               accessibilityLabel={item.label || item.key}
             >
-              {item.icon(color)}
+              {item.icon(color, focused)}
               {item.label !== "" && (
                 <ThemedText
                   type="caption"
