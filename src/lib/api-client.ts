@@ -8,6 +8,19 @@ export function setAuthTokenGetter(getter: TokenGetter): void {
   tokenGetter = getter;
 }
 
+type CookieGetter = () => string | null;
+let cookieGetter: CookieGetter = () => null;
+
+export function setAuthCookieGetter(getter: CookieGetter): void {
+  cookieGetter = getter;
+}
+
+function makeAbortSignal(ms: number): AbortSignal {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
 function buildUrl(path: string, params?: Record<string, string>): string {
   const base = `${API_BASE_URL}/${API_VERSION}${path}`;
   if (!params || Object.keys(params).length === 0) return base;
@@ -19,6 +32,10 @@ function baseHeaders(): Record<string, string> {
   const token = tokenGetter();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  }
+  const cookie = cookieGetter();
+  if (cookie) {
+    headers["Cookie"] = cookie;
   }
   return headers;
 }
@@ -32,10 +49,14 @@ async function throwIfNotOk(response: Response): Promise<void> {
 
   try {
     const parsed = JSON.parse(raw);
-    message = parsed.detail?.[0]?.msg ?? parsed.message ?? message;
-    validationErrors = Array.isArray(parsed.detail)
-      ? parsed.detail
-      : undefined;
+    if (typeof parsed.detail === "string") {
+      message = parsed.detail;
+    } else if (Array.isArray(parsed.detail)) {
+      message = parsed.detail[0]?.msg ?? message;
+      validationErrors = parsed.detail;
+    } else {
+      message = parsed.message ?? message;
+    }
   } catch {
     if (raw) message = raw;
   }
@@ -50,11 +71,25 @@ export async function get<T>(
   const response = await fetch(buildUrl(path, params), {
     method: "GET",
     headers: baseHeaders(),
-    signal: AbortSignal.timeout(API_TIMEOUT),
+    signal: makeAbortSignal(API_TIMEOUT),
   });
 
   await throwIfNotOk(response);
   return response.json() as Promise<T>;
+}
+
+export async function getRaw(
+  path: string,
+  params?: Record<string, string>,
+): Promise<Response> {
+  const response = await fetch(buildUrl(path, params), {
+    method: "GET",
+    headers: baseHeaders(),
+    signal: makeAbortSignal(API_TIMEOUT),
+  });
+
+  await throwIfNotOk(response);
+  return response;
 }
 
 export async function post<T>(path: string, body?: unknown): Promise<T> {
@@ -62,11 +97,26 @@ export async function post<T>(path: string, body?: unknown): Promise<T> {
     method: "POST",
     headers: { "Content-Type": "application/json", ...baseHeaders() },
     body: body != null ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(API_TIMEOUT),
+    signal: makeAbortSignal(API_TIMEOUT),
   });
 
   await throwIfNotOk(response);
   return response.json() as Promise<T>;
+}
+
+export async function postRaw(
+  path: string,
+  body?: unknown,
+): Promise<Response> {
+  const response = await fetch(buildUrl(path), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...baseHeaders() },
+    body: body != null ? JSON.stringify(body) : undefined,
+    signal: makeAbortSignal(API_TIMEOUT),
+  });
+
+  await throwIfNotOk(response);
+  return response;
 }
 
 export async function postFormData<T>(
@@ -77,7 +127,7 @@ export async function postFormData<T>(
     method: "POST",
     headers: baseHeaders(),
     body: formData,
-    signal: AbortSignal.timeout(API_TIMEOUT),
+    signal: makeAbortSignal(API_TIMEOUT),
   });
 
   await throwIfNotOk(response);
@@ -93,7 +143,7 @@ export async function putRaw(
     method: "PUT",
     headers,
     body,
-    signal: AbortSignal.timeout(API_TIMEOUT * 4),
+    signal: makeAbortSignal(API_TIMEOUT * 4),
   });
 
   if (!response.ok) {

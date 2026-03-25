@@ -1,6 +1,7 @@
 import { Fonts, Typography } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -9,13 +10,15 @@ import {
 
 interface ButtonProps extends TouchableOpacityProps {
   label: string;
+  loading?: boolean;
 }
 
-export function Button({ label, style, ...rest }: ButtonProps) {
+export function Button({ label, loading, style, disabled, ...rest }: ButtonProps) {
   return (
     <TouchableOpacity
       style={[styles.button, style]}
       activeOpacity={0.8}
+      disabled={disabled ?? loading}
       {...rest}
     >
       <LinearGradient
@@ -23,7 +26,11 @@ export function Button({ label, style, ...rest }: ButtonProps) {
         locations={[0.35, 0.62, 0.83, 0.95]}
         style={styles.gradient}
       >
-        <Text style={styles.label}>{label}</Text>
+        {loading ? (
+          <ActivityIndicator color="#000000" />
+        ) : (
+          <Text style={styles.label}>{label}</Text>
+        )}
       </LinearGradient>
     </TouchableOpacity>
   );

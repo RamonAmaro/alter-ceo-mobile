@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
@@ -27,6 +28,7 @@ export function MeetingsPage({
   onPlay,
   onDelete,
 }: MeetingsPageProps) {
+  const insets = useSafeAreaInsets();
   const { recordings, loadRecordings } = useRecordingsStore();
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export function MeetingsPage({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: playerBarHeight + Spacing.three },
+              { paddingBottom: playerBarHeight || insets.bottom + Spacing.three },
             ]}
           />
         )}

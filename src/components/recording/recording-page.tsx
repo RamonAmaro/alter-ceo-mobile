@@ -130,11 +130,12 @@ export function RecordingPage({ width, height }: RecordingPageProps) {
   }, [stopTimer]);
 
   const isActive = state === "recording";
+  const isReset = state === "idle";
 
   return (
     <View style={{ width, height }}>
       <View style={styles.content}>
-        <AudioWave isActive={isActive} recorder={recorder} />
+        <AudioWave isActive={isActive} isReset={isReset} recorder={recorder} />
         <RecordingTimer elapsedMs={elapsedMs} isRecording={isActive} />
       </View>
 

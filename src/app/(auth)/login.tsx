@@ -8,6 +8,7 @@ import { isBiometricsAvailable } from "@/services/biometrics-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { hasErrors, validateRequiredFields } from "@/utils/validate-auth-form";
+import { parseAuthError } from "@/utils/parse-auth-error";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -29,6 +30,8 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: false, password: false });
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     attemptBiometricLogin();
@@ -60,31 +63,38 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!validate()) return;
+    setApiError(null);
+    setIsLoading(true);
 
-    signIn(email, password);
+    try {
+      await signIn(email, password);
 
-    const available = await isBiometricsAvailable();
-    if (available) {
-      Alert.alert(
-        "Biometría",
-        "¿Deseas usar biometría para iniciar sesión más rápido?",
-        [
-          {
-            text: "No, gracias",
-            style: "cancel",
-            onPress: navigateAfterLogin,
-          },
-          {
-            text: "Sí, activar",
-            onPress: async () => {
-              await enableBiometrics(email, password);
-              navigateAfterLogin();
+      const available = await isBiometricsAvailable();
+      if (available) {
+        Alert.alert(
+          "Biometría",
+          "¿Deseas usar biometría para iniciar sesión más rápido?",
+          [
+            {
+              text: "No, gracias",
+              style: "cancel",
+              onPress: navigateAfterLogin,
             },
-          },
-        ],
-      );
-    } else {
-      navigateAfterLogin();
+            {
+              text: "Sí, activar",
+              onPress: async () => {
+                await enableBiometrics(email, password);
+                navigateAfterLogin();
+              },
+            },
+          ],
+        );
+      } else {
+        navigateAfterLogin();
+      }
+    } catch (error) {
+      setApiError(parseAuthError(error));
+      setIsLoading(false);
     }
   }
 
@@ -106,7 +116,6 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
               source={require("@/assets/ui/logo-alterceo.png")}
@@ -115,7 +124,6 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Form */}
           <View style={styles.formContainer}>
             <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratSemiBold, color: "#ffffff", textAlign: "center", marginBottom: Spacing.three }}>Iniciar Sesión</ThemedText>
 
@@ -148,9 +156,16 @@ export default function LoginScreen() {
               style={styles.inputSpacing}
             />
 
+            {apiError && (
+              <ThemedText type="bodySm" style={styles.apiError}>
+                {apiError}
+              </ThemedText>
+            )}
+
             <Button
               label="Continuar"
               onPress={handleLogin}
+              loading={isLoading}
               style={styles.buttonSpacing}
             />
 
@@ -192,6 +207,11 @@ const styles = StyleSheet.create({
   },
   inputSpacing: {
     marginBottom: Spacing.three,
+  },
+  apiError: {
+    color: "#FF4444",
+    textAlign: "center",
+    marginBottom: Spacing.two,
   },
   buttonSpacing: {
     marginTop: Spacing.two,

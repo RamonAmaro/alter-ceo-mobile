@@ -17,6 +17,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
+import { initAuthCookie } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 
@@ -25,6 +26,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const checkBiometricsStatus = useAuthStore((s) => s.checkBiometricsStatus);
+  const checkSession = useAuthStore((s) => s.checkSession);
   const loadOnboarding = useOnboardingStore((s) => s.load);
 
   const [fontsLoaded] = useFonts({
@@ -40,9 +42,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded) {
-      checkBiometricsStatus();
-      loadOnboarding();
-      SplashScreen.hideAsync();
+      async function init() {
+        await initAuthCookie();
+        await checkSession();
+        checkBiometricsStatus();
+        loadOnboarding();
+        SplashScreen.hideAsync();
+      }
+      init();
     }
   }, [fontsLoaded]);
 

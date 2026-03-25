@@ -1,3 +1,11 @@
+import { create } from "zustand";
+
+import {
+  getSession,
+  login,
+  logout,
+  register as registerUser,
+} from "@/services/auth-service";
 import {
   authenticateWithBiometrics,
   clearCredentials,
@@ -6,32 +14,47 @@ import {
   isBiometricsAvailable,
   saveCredentials,
 } from "@/services/biometrics-service";
-import { create } from "zustand";
+import type { AuthSession } from "@/types/auth";
 
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   biometricsEnabled: boolean;
+  user: AuthSession | null;
 
-  signIn: (email: string, password: string) => void;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    displayName?: string,
+  ) => Promise<void>;
   tryBiometricLogin: () => Promise<boolean>;
   enableBiometrics: (email: string, password: string) => Promise<void>;
   checkBiometricsStatus: () => Promise<void>;
+  checkSession: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isLoading: true,
   biometricsEnabled: false,
+  user: null,
 
-  signIn: (_email: string, _password: string) => {
-    set({ isAuthenticated: true });
+  signIn: async (email: string, password: string) => {
+    const session = await login(email, password);
+    set({ isAuthenticated: true, user: session });
   },
 
   signOut: async () => {
     await clearCredentials();
-    set({ isAuthenticated: false, biometricsEnabled: false });
+    await logout();
+    set({ isAuthenticated: false, user: null, biometricsEnabled: false });
+  },
+
+  register: async (email: string, password: string, displayName?: string) => {
+    const session = await registerUser(email, password, displayName ?? null);
+    set({ isAuthenticated: true, user: session });
   },
 
   tryBiometricLogin: async () => {
@@ -47,7 +70,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const credentials = await getCredentials();
     if (!credentials) return false;
 
-    get().signIn(credentials.email, credentials.password);
+    const session = await login(credentials.email, credentials.password);
+    set({ isAuthenticated: true, user: session });
     return true;
   },
 
@@ -60,5 +84,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const available = await isBiometricsAvailable();
     const stored = await hasStoredCredentials();
     set({ biometricsEnabled: available && stored, isLoading: false });
+  },
+
+  checkSession: async () => {
+    const session = await getSession();
+    if (session) {
+      set({ isAuthenticated: true, user: session });
+    }
   },
 }));

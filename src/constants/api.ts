@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://api.alterceo.com";
+export const API_BASE_URL = "https://web.alterceo.app";
 
 export const API_VERSION = "v1";
 

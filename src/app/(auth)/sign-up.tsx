@@ -5,6 +5,10 @@ import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { useAuthStore } from "@/stores/auth-store";
+import { ApiError } from "@/types/api";
+import { parseAuthError } from "@/utils/parse-auth-error";
+import { parseValidationErrors } from "@/utils/parse-validation-errors";
 import { hasErrors, validateRequiredFields } from "@/utils/validate-auth-form";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -20,12 +24,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface FormErrors {
-  name: boolean;
-  email: boolean;
-  password: boolean;
+  name: string | false;
+  email: string | false;
+  password: string | false;
 }
 
 export default function SignUpScreen() {
+  const register = useAuthStore((s) => s.register);
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,20 +40,52 @@ export default function SignUpScreen() {
     email: false,
     password: false,
   });
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   function validate(): boolean {
-    const newErrors = validateRequiredFields({ name, email, password });
+    const required = validateRequiredFields({ name, email, password });
+    const newErrors: FormErrors = {
+      name: required.name ? "Introduce tu nombre" : false,
+      email: required.email ? "Introduce tu e-mail" : false,
+      password: required.password ? "Introduce tu contraseña" : false,
+    };
     setErrors(newErrors);
-    return !hasErrors(newErrors);
+    return !hasErrors(required);
   }
 
-  function handleSignUp() {
+  async function handleSignUp() {
     if (!validate()) return;
+    setApiError(null);
+    setIsLoading(true);
+
+    try {
+      await register(email, password, name);
+      router.replace("/(onboarding)/welcome");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 422 && error.validationErrors) {
+        const fieldErrors = parseValidationErrors(error.validationErrors);
+        setErrors((prev) => ({
+          name: fieldErrors.display_name ?? prev.name,
+          email: fieldErrors.email ?? prev.email,
+          password: fieldErrors.password ?? prev.password,
+        }));
+      } else if (error instanceof ApiError && error.status === 409) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "Ya existe una cuenta con este e-mail",
+        }));
+      } else {
+        setApiError(parseAuthError(error));
+      }
+      setIsLoading(false);
+    }
   }
 
   function clearError(field: keyof FormErrors) {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: false }));
+      setApiError(null);
     }
   }
 
@@ -91,8 +128,8 @@ export default function SignUpScreen() {
                 clearError("name");
               }}
               autoCapitalize="words"
-              error={errors.name}
-              errorMessage="Introduce tu nombre"
+              error={!!errors.name}
+              errorMessage={errors.name || undefined}
               style={styles.inputSpacing}
             />
 
@@ -106,8 +143,8 @@ export default function SignUpScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              error={errors.email}
-              errorMessage="Introduce tu e-mail"
+              error={!!errors.email}
+              errorMessage={errors.email || undefined}
               style={styles.inputSpacing}
             />
 
@@ -119,14 +156,21 @@ export default function SignUpScreen() {
                 clearError("password");
               }}
               secureTextEntry
-              error={errors.password}
-              errorMessage="Introduce tu contraseña"
+              error={!!errors.password}
+              errorMessage={errors.password || undefined}
               style={styles.inputSpacing}
             />
+
+            {apiError && (
+              <ThemedText type="bodySm" style={styles.apiError}>
+                {apiError}
+              </ThemedText>
+            )}
 
             <Button
               label="Crear Cuenta"
               onPress={handleSignUp}
+              loading={isLoading}
               style={styles.buttonSpacing}
             />
 
@@ -166,6 +210,11 @@ const styles = StyleSheet.create({
   },
   inputSpacing: {
     marginBottom: Spacing.three,
+  },
+  apiError: {
+    color: "#FF4444",
+    textAlign: "center",
+    marginBottom: Spacing.two,
   },
   buttonSpacing: {
     marginTop: Spacing.two,
