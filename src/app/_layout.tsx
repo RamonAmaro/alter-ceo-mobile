@@ -41,16 +41,17 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
-      async function init() {
-        await initAuthCookie();
-        await checkSession();
-        checkBiometricsStatus();
-        loadOnboarding();
-        SplashScreen.hideAsync();
-      }
-      init();
+    if (!fontsLoaded) return;
+
+    async function init() {
+      await initAuthCookie();
+      await checkSession();
+      checkBiometricsStatus();
+      await loadOnboarding();
+      await SplashScreen.hideAsync();
     }
+
+    void init();
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {

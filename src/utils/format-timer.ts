@@ -1,14 +1,9 @@
 /**
- * Formats elapsed milliseconds as "00 : SS , CC" (seconds and centiseconds).
- * Counts up from 00:00 to max duration.
+ * Formats elapsed milliseconds as "0:SS" (minutes:seconds).
  */
 export function formatTimer(elapsedMs: number): string {
-  const totalCentis = Math.min(3000, Math.floor(elapsedMs / 10));
-  const seconds = Math.floor(totalCentis / 100);
-  const centis = totalCentis % 100;
-
-  const ss = String(seconds).padStart(2, "0");
-  const cc = String(centis).padStart(2, "0");
-
-  return `00 : ${ss} , ${cc}`;
+  const totalSeconds = Math.min(Math.floor(elapsedMs / 1000), 99);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }

@@ -7,12 +7,14 @@ import {
   getExpressQuestions,
   getProfessionalQuestions,
 } from "@/constants/onboarding-questions";
+import { prefetchUrlContext } from "@/services/onboarding-service";
+import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { getKeyboardType } from "@/utils/get-keyboard-type";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   KeyboardAvoidingView,
@@ -25,6 +27,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+const INSTAGRAM_INDEX_EXPRESS = 10;
+const INSTAGRAM_INDEX_PROFESSIONAL = 17;
+const WEBSITE_INDEX_EXPRESS = 9;
+const WEBSITE_INDEX_PROFESSIONAL = 16;
+
 export default function QuestionsScreen() {
   const insets = useSafeAreaInsets();
   const {
@@ -35,6 +42,9 @@ export default function QuestionsScreen() {
     nextQuestion,
     previousQuestion,
   } = useOnboardingStore();
+  const user = useAuthStore((s) => s.user);
+  const [prefetchStatus, setPrefetchStatus] = useState<"ok" | "error" | null>(null);
+  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -98,8 +108,49 @@ export default function QuestionsScreen() {
     }).start(() => callback());
   }
 
+  function triggerUrlPrefetch(): void {
+    if (!user?.userId) return;
+
+    const instagramIndex =
+      planType === "professional"
+        ? INSTAGRAM_INDEX_PROFESSIONAL
+        : INSTAGRAM_INDEX_EXPRESS;
+    const websiteIndex =
+      planType === "professional"
+        ? WEBSITE_INDEX_PROFESSIONAL
+        : WEBSITE_INDEX_EXPRESS;
+
+    const instagram = getAnswer(instagramIndex) as string | undefined;
+    const website = getAnswer(websiteIndex) as string | undefined;
+
+    if (!instagram || !website) return;
+
+    prefetchUrlContext({
+      user_id: user.userId,
+      business_website_url: website,
+      business_instagram: instagram,
+    })
+      .then(() => {
+        setPrefetchStatus("ok");
+        prefetchTimerRef.current = setTimeout(() => setPrefetchStatus(null), 3000);
+      })
+      .catch(() => {
+        setPrefetchStatus("error");
+        prefetchTimerRef.current = setTimeout(() => setPrefetchStatus(null), 3000);
+      });
+  }
+
   function handleNext(): void {
     const nextIndex = currentQuestionIndex + 1;
+
+    const isInstagramQuestion =
+      planType === "professional"
+        ? currentQuestionIndex === INSTAGRAM_INDEX_PROFESSIONAL
+        : currentQuestionIndex === INSTAGRAM_INDEX_EXPRESS;
+
+    if (isInstagramQuestion) {
+      triggerUrlPrefetch();
+    }
 
     if (nextIndex < questions.length) {
       const nextQ = questions[nextIndex];
@@ -163,6 +214,21 @@ export default function QuestionsScreen() {
                 {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
               </ThemedText>
             </View>
+
+            {prefetchStatus !== null && (
+              <View
+                style={[
+                  styles.prefetchBanner,
+                  prefetchStatus === "error" ? styles.prefetchBannerError : styles.prefetchBannerOk,
+                ]}
+              >
+                <ThemedText type="labelSm" style={{ color: "#ffffff" }}>
+                  {prefetchStatus === "ok"
+                    ? "Contexto web cargado correctamente"
+                    : "No se pudo cargar el contexto web (401)"}
+                </ThemedText>
+              </View>
+            )}
 
             <Animated.View
               style={{
@@ -271,5 +337,17 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.4,
+  },
+  prefetchBanner: {
+    borderRadius: 8,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    marginBottom: Spacing.two,
+  },
+  prefetchBannerOk: {
+    backgroundColor: "rgba(0,255,132,0.15)",
+  },
+  prefetchBannerError: {
+    backgroundColor: "rgba(255,80,80,0.2)",
   },
 });

@@ -30,7 +30,7 @@ export function HomeHeader() {
       <TouchableOpacity
         style={styles.bellBtn}
         activeOpacity={0.7}
-        onPress={() => router.push("/(app)/notifications")}
+        onPress={() => router.push("/my-plan")}
       >
         <Ionicons name="notifications-outline" size={19} color="#ffffff" />
       </TouchableOpacity>

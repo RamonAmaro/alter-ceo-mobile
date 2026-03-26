@@ -25,9 +25,10 @@ export async function getRunStatus(
 export function streamRunEvents(
   runId: string,
   onEvent: (event: SSEEvent) => void,
+  onError?: (error: Error) => void,
   afterEventId?: string,
 ): SSEConnection {
-  return connectSSE(`/runs/${runId}/events`, { onEvent, afterEventId });
+  return connectSSE(`/runs/${runId}/events`, { onEvent, onError, afterEventId });
 }
 
 export function streamPlan(

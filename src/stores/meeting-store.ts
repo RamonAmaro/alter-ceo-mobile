@@ -5,7 +5,7 @@ import type {
 } from "@/types/meeting";
 import * as meetingService from "@/services/meeting-service";
 import { createPoller } from "@/utils/create-poller";
-import { POLL_INTERVAL } from "@/constants/api";
+import { POLL_INTERVAL } from "@/constants/env";
 
 type UploadStage = "uploading" | "processing" | "completed" | "failed";
 

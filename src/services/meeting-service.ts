@@ -1,4 +1,4 @@
-import { get, post, putRaw } from "@/lib/api-client";
+import { get, post, putExternal } from "@/lib/api-client";
 import type {
   MeetingCreateRequest,
   MeetingCreateResponse,
@@ -68,5 +68,5 @@ export async function uploadFileToS3(
     ...upload.headers,
   };
 
-  await putRaw(upload.upload_url, bytes.buffer as ArrayBuffer, headers);
+  await putExternal(upload.upload_url, bytes.buffer as ArrayBuffer, headers);
 }

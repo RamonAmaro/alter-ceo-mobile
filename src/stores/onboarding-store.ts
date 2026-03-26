@@ -12,6 +12,7 @@ export interface AudioRecord {
   origin: PlanType;
   questionIndex: number;
   question: string;
+  transcript: string | null;
 }
 
 interface OnboardingState {
@@ -26,6 +27,7 @@ interface OnboardingState {
   setPlanType: (type: PlanType) => void;
   getAnswer: (index: number) => Answer | undefined;
   setAnswer: (index: number, answer: Answer) => void;
+  setAnswers: (answers: Map<number, Answer>) => void;
   addAudioRecord: (record: AudioRecord) => void;
   nextQuestion: () => void;
   previousQuestion: () => void;
@@ -65,6 +67,10 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     const next = new Map(get().answers);
     next.set(index, answer);
     set({ answers: next });
+  },
+
+  setAnswers: (answers: Map<number, Answer>) => {
+    set({ answers: new Map(answers) });
   },
 
   addAudioRecord: (record: AudioRecord) => {

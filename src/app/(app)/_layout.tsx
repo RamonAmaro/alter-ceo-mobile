@@ -59,15 +59,15 @@ const TAB_ITEMS: TabItemConfig[] = [
   },
   {
     key: "notifications",
-    label: "Tareas",
+    label: "Plan",
     icon: (color, focused) => (
       <Ionicons
-        name={focused ? "reader" : "reader-outline"}
+        name={focused ? "trophy" : "trophy-outline"}
         size={TAB_ICON_SIZE}
         color={color}
       />
     ),
-    pushRoute: "/notifications",
+    pushRoute: "/my-plan",
   },
   {
     key: "strategy",
@@ -182,6 +182,7 @@ export default function AppLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="alter" />
+      <Tabs.Screen name="strategy" />
     </Tabs>
   );
 }

@@ -142,7 +142,7 @@ export function RecordButton({
             gradientId="gradFinish"
             colors={["#00D68F", "#00A86B"]}
             icon={StopIcon}
-            label="Finalizar"
+            label="Parar"
             onPress={onFinish}
           />
         </View>

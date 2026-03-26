@@ -5,7 +5,7 @@ import {
   useAudioRecorder,
 } from "expo-audio";
 
-const MAX_DURATION_MS = 30_000;
+export const MAX_DURATION_MS = 30_000;
 
 export async function requestAudioPermission(): Promise<boolean> {
   try {
@@ -23,4 +23,4 @@ export async function enableRecordingMode(): Promise<void> {
   });
 }
 
-export { MAX_DURATION_MS, RecordingPresets, useAudioRecorder };
+export { RecordingPresets, useAudioRecorder };

@@ -34,3 +34,14 @@ export const RestartIcon = (
     fill="white"
   />
 );
+
+export const CheckIcon = (
+  <Path
+    d="M52 70 l14 14 l28 -28"
+    stroke="white"
+    strokeWidth="7"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    fill="none"
+  />
+);

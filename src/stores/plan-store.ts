@@ -7,7 +7,7 @@ import type {
 } from "@/types/plan";
 import * as planService from "@/services/plan-service";
 import { createPoller } from "@/utils/create-poller";
-import { POLL_INTERVAL } from "@/constants/api";
+import { POLL_INTERVAL } from "@/constants/env";
 
 interface PlanState {
   currentRun: { run_id: string; status: RunStatus } | null;

@@ -1,6 +1,8 @@
 import * as SecureStore from "expo-secure-store";
+import CookieManager from "@react-native-cookies/cookies";
 
-import { getRaw, postRaw, setAuthCookieGetter } from "@/lib/api-client";
+import { API_BASE_URL } from "@/constants/env";
+import { apiClient, handleAxiosError, setAuthCookieGetter } from "@/lib/api-client";
 import { SESSION_COOKIE_KEY, type AuthSession } from "@/types/auth";
 import { extractSessionCookie } from "@/utils/extract-session-cookie";
 
@@ -18,23 +20,52 @@ function mapSession(raw: RawAuthSessionResponse): AuthSession {
   };
 }
 
+function saveSession(cookie: string): void {
+  void SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
+  setAuthCookieGetter(() => cookie);
+  const [name, value] = cookie.split("=");
+  if (name && value) {
+    void CookieManager.set(API_BASE_URL, {
+      name: name.trim(),
+      value: value.trim(),
+      path: "/",
+      secure: true,
+      httpOnly: true,
+    });
+  }
+}
+
 export async function initAuthCookie(): Promise<void> {
   const stored = await SecureStore.getItemAsync(SESSION_COOKIE_KEY);
+  if (!stored) {
+    setAuthCookieGetter(() => null);
+    return;
+  }
   setAuthCookieGetter(() => stored);
+  const [name, value] = stored.split("=");
+  if (name && value) {
+    await CookieManager.set(API_BASE_URL, {
+      name: name.trim(),
+      value: value.trim(),
+      path: "/",
+      secure: true,
+      httpOnly: true,
+    });
+  }
 }
 
 export async function login(
   email: string,
   password: string,
 ): Promise<AuthSession> {
-  const response = await postRaw("/auth/login", { email, password });
-  const cookie = extractSessionCookie(response.headers);
-  if (cookie) {
-    await SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
-    setAuthCookieGetter(() => cookie);
+  try {
+    const response = await apiClient.post<RawAuthSessionResponse>("/auth/login", { email, password });
+    const cookie = extractSessionCookie(response.headers);
+    if (cookie) saveSession(cookie);
+    return mapSession(response.data);
+  } catch (err) {
+    return handleAxiosError(err);
   }
-  const raw = (await response.json()) as RawAuthSessionResponse;
-  return mapSession(raw);
 }
 
 export async function register(
@@ -42,25 +73,24 @@ export async function register(
   password: string,
   displayName?: string | null,
 ): Promise<AuthSession> {
-  const response = await postRaw("/auth/register", {
-    email,
-    password,
-    display_name: displayName ?? null,
-  });
-  const cookie = extractSessionCookie(response.headers);
-  if (cookie) {
-    await SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
-    setAuthCookieGetter(() => cookie);
+  try {
+    const response = await apiClient.post<RawAuthSessionResponse>("/auth/register", {
+      email,
+      password,
+      display_name: displayName ?? null,
+    });
+    const cookie = extractSessionCookie(response.headers);
+    if (cookie) saveSession(cookie);
+    return mapSession(response.data);
+  } catch (err) {
+    return handleAxiosError(err);
   }
-  const raw = (await response.json()) as RawAuthSessionResponse;
-  return mapSession(raw);
 }
 
 export async function getSession(): Promise<AuthSession | null> {
   try {
-    const response = await getRaw("/auth/session");
-    const raw = (await response.json()) as RawAuthSessionResponse;
-    return mapSession(raw);
+    const response = await apiClient.get<RawAuthSessionResponse>("/auth/session");
+    return mapSession(response.data);
   } catch {
     return null;
   }
@@ -68,7 +98,7 @@ export async function getSession(): Promise<AuthSession | null> {
 
 export async function logout(): Promise<void> {
   try {
-    await postRaw("/auth/logout");
+    await apiClient.post("/auth/logout");
   } finally {
     await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
     setAuthCookieGetter(() => null);
