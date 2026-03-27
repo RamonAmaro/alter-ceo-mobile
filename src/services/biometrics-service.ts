@@ -26,10 +26,7 @@ export async function authenticateWithBiometrics(): Promise<boolean> {
   return result.success;
 }
 
-export async function saveCredentials(
-  email: string,
-  password: string
-): Promise<void> {
+export async function saveCredentials(email: string, password: string): Promise<void> {
   const data: StoredCredentials = { email, password };
   await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify(data));
 }

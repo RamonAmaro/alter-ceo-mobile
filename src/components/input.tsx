@@ -25,17 +25,10 @@ export function Input({ style, error, errorMessage, ...rest }: InputProps) {
           {...rest}
         />
         {error && (
-          <Ionicons
-            name="alert-circle"
-            size={18}
-            color="#E8731A"
-            style={styles.errorIcon}
-          />
+          <Ionicons name="alert-circle" size={18} color="#E8731A" style={styles.errorIcon} />
         )}
       </View>
-      {error && errorMessage && (
-        <Text style={styles.errorText}>{errorMessage}</Text>
-      )}
+      {error && errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
     </View>
   );
 }

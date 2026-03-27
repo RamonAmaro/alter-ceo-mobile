@@ -40,15 +40,16 @@ export default function PlanSelectionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.textContainer}>
-            <ThemedText type="headingMd" style={{ color: "#ffffff" }}>ESCOGE EXPRESS{"\n"}O PROFESIONAL</ThemedText>
+            <ThemedText type="headingMd" style={{ color: "#ffffff" }}>
+              ESCOGE EXPRESS{"\n"}O PROFESIONAL
+            </ThemedText>
             <ThemedText type="bodyLg" style={{ color: "#ffffff" }}>
-              {"\n"}Para poder ayudarte de forma inmediata, lo primero que vamos
-              a diseñar es un Plan para Duplicar tus Ventas y Trabajar la Mitad.
-              {"\n\n"}Para ello, te vamos a solicitar algunos datos de tu
-              negocio (son muy sencillos, no te preocupes). Elige entre inicio
-              Express (3 minutos de tiempo aprox) o Profesional (6 minutos
-              aprox). A más información, más podemos afinar en el desarrollo del
-              plan.
+              {"\n"}Para poder ayudarte de forma inmediata, lo primero que vamos a diseñar es un
+              Plan para Duplicar tus Ventas y Trabajar la Mitad.
+              {"\n\n"}Para ello, te vamos a solicitar algunos datos de tu negocio (son muy
+              sencillos, no te preocupes). Elige entre inicio Express (3 minutos de tiempo aprox) o
+              Profesional (6 minutos aprox). A más información, más podemos afinar en el desarrollo
+              del plan.
             </ThemedText>
           </View>
 
@@ -79,10 +80,7 @@ export default function PlanSelectionScreen() {
               },
             ]}
           >
-            <Button
-              label="Continuar"
-              onPress={() => router.push("/(onboarding)/questions")}
-            />
+            <Button label="Continuar" onPress={() => router.push("/(onboarding)/questions")} />
           </Animated.View>
         )}
       </View>

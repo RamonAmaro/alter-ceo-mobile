@@ -106,8 +106,7 @@ export function RecordingScreen() {
   }, [player, setActiveId]);
 
   const [playerBarHeight, setPlayerBarHeight] = useState(0);
-  const progress =
-    status.duration > 0 ? status.currentTime / status.duration : 0;
+  const progress = status.duration > 0 ? status.currentTime / status.duration : 0;
   const showPlayer = activeIndex === 1 && !!activeRecording;
 
   useEffect(() => {
@@ -118,13 +117,11 @@ export function RecordingScreen() {
     viewAreaCoveragePercentThreshold: 50,
   }).current;
 
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0 && viewableItems[0].index != null) {
-        setActiveIndex(viewableItems[0].index);
-      }
-    },
-  ).current;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0 && viewableItems[0].index != null) {
+      setActiveIndex(viewableItems[0].index);
+    }
+  }).current;
 
   const onCarouselLayout = useCallback((e: LayoutChangeEvent) => {
     setCarouselHeight(e.nativeEvent.layout.height);
@@ -162,12 +159,7 @@ export function RecordingScreen() {
   return (
     <AppBackground>
       <View style={styles.container}>
-        <ScreenHeader
-          topInset={insets.top}
-          icon="mic"
-          titlePrefix="Grabar"
-          titleAccent="Reunión"
-        />
+        <ScreenHeader topInset={insets.top} icon="mic" titlePrefix="Grabar" titleAccent="Reunión" />
 
         <RecordingMotto activeIndex={activeIndex} />
 

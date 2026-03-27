@@ -71,24 +71,20 @@ export default function LoginScreen() {
 
       const available = await isBiometricsAvailable();
       if (available) {
-        Alert.alert(
-          "Biometría",
-          "¿Deseas usar biometría para iniciar sesión más rápido?",
-          [
-            {
-              text: "No, gracias",
-              style: "cancel",
-              onPress: navigateAfterLogin,
+        Alert.alert("Biometría", "¿Deseas usar biometría para iniciar sesión más rápido?", [
+          {
+            text: "No, gracias",
+            style: "cancel",
+            onPress: navigateAfterLogin,
+          },
+          {
+            text: "Sí, activar",
+            onPress: async () => {
+              await enableBiometrics(email, password);
+              navigateAfterLogin();
             },
-            {
-              text: "Sí, activar",
-              onPress: async () => {
-                await enableBiometrics(email, password);
-                navigateAfterLogin();
-              },
-            },
-          ],
-        );
+          },
+        ]);
       } else {
         navigateAfterLogin();
       }
@@ -125,7 +121,17 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.formContainer}>
-            <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratSemiBold, color: "#ffffff", textAlign: "center", marginBottom: Spacing.three }}>Iniciar Sesión</ThemedText>
+            <ThemedText
+              type="bodyLg"
+              style={{
+                fontFamily: Fonts.montserratSemiBold,
+                color: "#ffffff",
+                textAlign: "center",
+                marginBottom: Spacing.three,
+              }}
+            >
+              Iniciar Sesión
+            </ThemedText>
 
             <Input
               placeholder="Usuario"
@@ -147,8 +153,7 @@ export default function LoginScreen() {
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
-                if (errors.password)
-                  setErrors((e) => ({ ...e, password: false }));
+                if (errors.password) setErrors((e) => ({ ...e, password: false }));
               }}
               secureTextEntry
               error={errors.password}
@@ -170,9 +175,16 @@ export default function LoginScreen() {
             />
 
             <View style={styles.registerContainer}>
-              <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratLight, color: "#ffffff", textAlign: "center" }}>¿No tienes cuenta?</ThemedText>
+              <ThemedText
+                type="bodyLg"
+                style={{ fontFamily: Fonts.montserratLight, color: "#ffffff", textAlign: "center" }}
+              >
+                ¿No tienes cuenta?
+              </ThemedText>
               <TouchableOpacity onPress={() => router.push("/(auth)/sign-up")}>
-                <ThemedText type="labelMd" style={{ color: "#E8731A", textAlign: "center" }}>Regístrate gratis aquí</ThemedText>
+                <ThemedText type="labelMd" style={{ color: "#E8731A", textAlign: "center" }}>
+                  Regístrate gratis aquí
+                </ThemedText>
               </TouchableOpacity>
             </View>
           </View>

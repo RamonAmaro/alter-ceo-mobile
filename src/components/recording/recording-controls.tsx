@@ -47,12 +47,7 @@ function SideButton({ icon, label, onPress, scaleAnim, glowOpacity, glowColor }:
   );
 }
 
-export function RecordingControls({
-  state,
-  onRecord,
-  onDelete,
-  onSave,
-}: RecordingControlsProps) {
+export function RecordingControls({ state, onRecord, onDelete, onSave }: RecordingControlsProps) {
   const deleteScale = useRef(new Animated.Value(1)).current;
   const deleteGlow = useRef(new Animated.Value(0)).current;
   const saveScale = useRef(new Animated.Value(1)).current;

@@ -37,7 +37,9 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
     set({ recordings: next });
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+    } catch {
+      // persisting is best-effort; in-memory state is already updated
+    }
   },
 
   deleteRecording: async (id: string) => {
@@ -45,6 +47,8 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
     set({ recordings: next });
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+    } catch {
+      // persisting is best-effort; in-memory state is already updated
+    }
   },
 }));

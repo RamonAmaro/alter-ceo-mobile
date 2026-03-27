@@ -10,7 +10,15 @@ interface WaveformIconProps {
   isPlaying: boolean;
 }
 
-function WaveBar({ scale, delay, isPlaying }: { scale: number; delay: number; isPlaying: boolean }) {
+function WaveBar({
+  scale,
+  delay,
+  isPlaying,
+}: {
+  scale: number;
+  delay: number;
+  isPlaying: boolean;
+}) {
   const anim = useRef(new Animated.Value(scale * 0.3)).current;
 
   useEffect(() => {
@@ -40,11 +48,7 @@ function WaveBar({ scale, delay, isPlaying }: { scale: number; delay: number; is
     }
   }, [isPlaying, scale, delay, anim]);
 
-  return (
-    <Animated.View
-      style={[styles.bar, { transform: [{ scaleY: anim }] }]}
-    />
-  );
+  return <Animated.View style={[styles.bar, { transform: [{ scaleY: anim }] }]} />;
 }
 
 export function WaveformIcon({ isPlaying }: WaveformIconProps) {

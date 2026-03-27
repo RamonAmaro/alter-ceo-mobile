@@ -11,7 +11,9 @@ export function ProfitabilityColumn() {
         <ThemedText type="caption" style={styles.label}>
           RENTABILIDAD
         </ThemedText>
-        <ThemedText type="caption" style={styles.sub}>actual</ThemedText>
+        <ThemedText type="caption" style={styles.sub}>
+          actual
+        </ThemedText>
         <ThemedText type="headingMd" style={styles.value}>
           1.000.500$
         </ThemedText>

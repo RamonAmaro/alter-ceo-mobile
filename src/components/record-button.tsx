@@ -1,12 +1,6 @@
 import { Spacing } from "@/constants/theme";
 import { CircleButton } from "@/components/circle-button";
-import {
-  MicIcon,
-  PauseIcon,
-  PlayIcon,
-  StopIcon,
-  RestartIcon,
-} from "@/components/recording-icons";
+import { MicIcon, PauseIcon, PlayIcon, StopIcon, RestartIcon } from "@/components/recording-icons";
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
@@ -80,10 +74,7 @@ export function RecordButton({
   return (
     <View style={styles.buttonContainer}>
       <Animated.View
-        style={[
-          styles.layer,
-          { opacity: idleOpacity, transform: [{ scale: idleScale }] },
-        ]}
+        style={[styles.layer, { opacity: idleOpacity, transform: [{ scale: idleScale }] }]}
         pointerEvents={isIdle ? "auto" : "none"}
       >
         <CircleButton

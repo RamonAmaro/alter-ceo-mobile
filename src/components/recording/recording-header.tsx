@@ -13,16 +13,10 @@ export function RecordingHeader() {
 
       <View style={styles.titleSection}>
         <Ionicons name="mic" size={22} color="#00FF84" />
-        <ThemedText
-          type="labelMd"
-          style={{ color: "#ffffff", fontFamily: Fonts.montserratBold }}
-        >
+        <ThemedText type="labelMd" style={{ color: "#ffffff", fontFamily: Fonts.montserratBold }}>
           Grabar{" "}
         </ThemedText>
-        <ThemedText
-          type="labelMd"
-          style={{ color: "#00FF84", fontFamily: Fonts.montserratBold }}
-        >
+        <ThemedText type="labelMd" style={{ color: "#00FF84", fontFamily: Fonts.montserratBold }}>
           Reunión
         </ThemedText>
       </View>

@@ -47,8 +47,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
     const poller = createPoller<PlanRunStatusResponse>({
       fn: () => planService.getRunStatus(runId),
       interval: POLL_INTERVAL,
-      shouldStop: (status) =>
-        status.status === "COMPLETED" || status.status === "FAILED",
+      shouldStop: (status) => status.status === "COMPLETED" || status.status === "FAILED",
       onUpdate: (status) => {
         set({ currentRun: { run_id: runId, status: status.status } });
         if (status.status === "COMPLETED" || status.status === "FAILED") {
@@ -56,7 +55,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
             isGenerating: false,
             error:
               status.status === "FAILED"
-                ? status.error_message ?? "Error al generar el plan"
+                ? (status.error_message ?? "Error al generar el plan")
                 : null,
           });
         }

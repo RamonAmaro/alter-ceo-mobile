@@ -15,7 +15,12 @@ const ANIM_MS = 40;
 
 type AudioWaveProps =
   | { isActive: boolean; isReset: boolean; recorder: AudioRecorder; amplitudeRef?: never }
-  | { isActive: boolean; isReset: boolean; amplitudeRef: React.RefObject<number>; recorder?: never };
+  | {
+      isActive: boolean;
+      isReset: boolean;
+      amplitudeRef: React.RefObject<number>;
+      recorder?: never;
+    };
 
 function normalizeLevel(db: number): number {
   const clamped = Math.max(-60, Math.min(0, db ?? -60));
@@ -24,9 +29,7 @@ function normalizeLevel(db: number): number {
 
 export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWaveProps) {
   const [headIndex, setHeadIndex] = useState(0);
-  const barAnims = useRef(
-    Array.from({ length: N_BARS }, () => new Animated.Value(MIN_BAR_H)),
-  );
+  const barAnims = useRef(Array.from({ length: N_BARS }, () => new Animated.Value(MIN_BAR_H)));
 
   useEffect(() => {
     if (!isReset) return;
@@ -86,7 +89,10 @@ export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWa
         return (
           <Animated.View
             key={i}
-            style={[styles.bar, { left: i * BAR_STEP, height: animH, top: y, backgroundColor: barColor }]}
+            style={[
+              styles.bar,
+              { left: i * BAR_STEP, height: animH, top: y, backgroundColor: barColor },
+            ]}
           />
         );
       })}

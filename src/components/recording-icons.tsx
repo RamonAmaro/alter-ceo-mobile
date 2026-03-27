@@ -20,13 +20,9 @@ export const PauseIcon = (
   </>
 );
 
-export const PlayIcon = (
-  <Path d="M58 48 l30 22 l-30 22 Z" fill="white" />
-);
+export const PlayIcon = <Path d="M58 48 l30 22 l-30 22 Z" fill="white" />;
 
-export const StopIcon = (
-  <Rect x="53" y="53" width="33" height="33" rx="4" fill="white" />
-);
+export const StopIcon = <Rect x="53" y="53" width="33" height="33" rx="4" fill="white" />;
 
 export const RestartIcon = (
   <Path

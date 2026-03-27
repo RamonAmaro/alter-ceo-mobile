@@ -31,7 +31,9 @@ function BarLine({
         {rowLabel}
       </ThemedText>
       <View style={[barStyles.track, { backgroundColor: trackColor }]}>
-        <View style={[barStyles.fill, { width: pct as unknown as number, backgroundColor: color }]} />
+        <View
+          style={[barStyles.fill, { width: pct as unknown as number, backgroundColor: color }]}
+        />
       </View>
       <ThemedText type="caption" style={[barStyles.value, { color }]}>
         {valueLabel}

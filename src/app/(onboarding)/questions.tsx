@@ -4,10 +4,7 @@ import { AudioRecorderView } from "@/components/onboarding/audio-recorder-view";
 import { QuestionOption } from "@/components/question-option";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
-import {
-  getExpressQuestions,
-  getProfessionalQuestions,
-} from "@/constants/onboarding-questions";
+import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
 import { prefetchUrlContext } from "@/services/onboarding-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
@@ -35,14 +32,8 @@ const WEBSITE_INDEX_PROFESSIONAL = 16;
 
 export default function QuestionsScreen() {
   const insets = useSafeAreaInsets();
-  const {
-    planType,
-    currentQuestionIndex,
-    getAnswer,
-    setAnswer,
-    nextQuestion,
-    previousQuestion,
-  } = useOnboardingStore();
+  const { planType, currentQuestionIndex, getAnswer, setAnswer, nextQuestion, previousQuestion } =
+    useOnboardingStore();
   const user = useAuthStore((s) => s.user);
   const [prefetchStatus, setPrefetchStatus] = useState<"ok" | "error" | null>(null);
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,9 +43,7 @@ export default function QuestionsScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   const questions = useMemo(() => {
-    return planType === "professional"
-      ? getProfessionalQuestions()
-      : getExpressQuestions();
+    return planType === "professional" ? getProfessionalQuestions() : getExpressQuestions();
   }, [planType]);
 
   const question = questions[currentQuestionIndex];
@@ -83,10 +72,7 @@ export default function QuestionsScreen() {
   if (question.type === "audio") {
     return (
       <AppBackground>
-        <AudioRecorderView
-          onConfirm={handleConfirmAudio}
-          onBack={handleBack}
-        />
+        <AudioRecorderView onConfirm={handleConfirmAudio} onBack={handleBack} />
       </AppBackground>
     );
   }
@@ -125,13 +111,9 @@ export default function QuestionsScreen() {
     if (!user?.userId) return;
 
     const instagramIndex =
-      planType === "professional"
-        ? INSTAGRAM_INDEX_PROFESSIONAL
-        : INSTAGRAM_INDEX_EXPRESS;
+      planType === "professional" ? INSTAGRAM_INDEX_PROFESSIONAL : INSTAGRAM_INDEX_EXPRESS;
     const websiteIndex =
-      planType === "professional"
-        ? WEBSITE_INDEX_PROFESSIONAL
-        : WEBSITE_INDEX_EXPRESS;
+      planType === "professional" ? WEBSITE_INDEX_PROFESSIONAL : WEBSITE_INDEX_EXPRESS;
 
     const instagram = getAnswer(instagramIndex) as string | undefined;
     const website = getAnswer(websiteIndex) as string | undefined;
@@ -252,13 +234,22 @@ export default function QuestionsScreen() {
                 transform: [{ translateY: slideAnim }],
               }}
             >
-              <ThemedText type="headingLg" style={{ color: "#ffffff" }}>{question.question}</ThemedText>
+              <ThemedText type="headingLg" style={{ color: "#ffffff" }}>
+                {question.question}
+              </ThemedText>
 
               {question.instruction ? (
-                <ThemedText type="bodyMd" style={{ color: "rgba(255,255,255,0.7)", marginTop: Spacing.two }}>{question.instruction}</ThemedText>
+                <ThemedText
+                  type="bodyMd"
+                  style={{ color: "rgba(255,255,255,0.7)", marginTop: Spacing.two }}
+                >
+                  {question.instruction}
+                </ThemedText>
               ) : null}
 
-              <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>({question.progress}%)</ThemedText>
+              <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>
+                ({question.progress}%)
+              </ThemedText>
 
               <View style={styles.optionsContainer}>
                 {question.type === "text" ? (
@@ -276,8 +267,7 @@ export default function QuestionsScreen() {
                   (question.options || []).map((option) => {
                     const selected =
                       question.type === "multi"
-                        ? Array.isArray(currentAnswer) &&
-                          currentAnswer.includes(option.label)
+                        ? Array.isArray(currentAnswer) && currentAnswer.includes(option.label)
                         : currentAnswer === option.label;
 
                     return (

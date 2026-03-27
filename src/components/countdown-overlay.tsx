@@ -7,10 +7,7 @@ interface CountdownOverlayProps {
   seconds?: number;
 }
 
-export function CountdownOverlay({
-  onComplete,
-  seconds = 3,
-}: CountdownOverlayProps) {
+export function CountdownOverlay({ onComplete, seconds = 3 }: CountdownOverlayProps) {
   const [count, setCount] = useState(seconds);
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;

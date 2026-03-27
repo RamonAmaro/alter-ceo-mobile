@@ -34,7 +34,11 @@ const TAB_ITEMS: TabItemConfig[] = [
     key: "settings",
     label: "Ajustes",
     icon: (color, focused) => (
-      <Ionicons name={focused ? "settings" : "settings-outline"} size={TAB_ICON_SIZE} color={color} />
+      <Ionicons
+        name={focused ? "settings" : "settings-outline"}
+        size={TAB_ICON_SIZE}
+        color={color}
+      />
     ),
     pushRoute: "/settings",
   },
@@ -56,21 +60,43 @@ const TAB_ITEMS: TabItemConfig[] = [
     key: "strategy",
     label: "Estrategia",
     icon: (color, focused) => (
-      <Ionicons name={focused ? "bar-chart" : "bar-chart-outline"} size={TAB_ICON_SIZE} color={color} />
+      <Ionicons
+        name={focused ? "bar-chart" : "bar-chart-outline"}
+        size={TAB_ICON_SIZE}
+        color={color}
+      />
     ),
     pushRoute: "/strategy",
   },
 ];
 
-function TabButton({ item, focused, onPress }: { item: TabItemConfig; focused: boolean; onPress: () => void }) {
+function TabButton({
+  item,
+  focused,
+  onPress,
+}: {
+  item: TabItemConfig;
+  focused: boolean;
+  onPress: () => void;
+}) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   function handlePressIn(): void {
-    Animated.spring(scaleAnim, { toValue: 0.88, useNativeDriver: true, tension: 120, friction: 8 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 0.88,
+      useNativeDriver: true,
+      tension: 120,
+      friction: 8,
+    }).start();
   }
 
   function handlePressOut(): void {
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 120, friction: 8 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 120,
+      friction: 8,
+    }).start();
   }
 
   if (item.isCenter) {
@@ -85,9 +111,7 @@ function TabButton({ item, focused, onPress }: { item: TabItemConfig; focused: b
       >
         <Animated.View style={[styles.centerButton, { transform: [{ scale: scaleAnim }] }]}>
           <View style={[styles.centerGlow, focused && styles.centerGlowActive]} />
-          <View style={styles.centerInner}>
-            {item.icon(ACTIVE_COLOR, focused)}
-          </View>
+          <View style={styles.centerInner}>{item.icon(ACTIVE_COLOR, focused)}</View>
         </Animated.View>
       </Pressable>
     );
@@ -124,22 +148,25 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const activeRouteName = state.routes[state.index].name;
 
-  const handlePress = useCallback((item: TabItemConfig) => {
-    if (item.pushRoute) {
-      router.push(item.pushRoute as never);
-      return;
-    }
-    const routeIndex = state.routes.findIndex((r) => r.name === item.key);
-    if (routeIndex < 0) return;
-    const event = navigation.emit({
-      type: "tabPress",
-      target: state.routes[routeIndex].key,
-      canPreventDefault: true,
-    });
-    if (!event.defaultPrevented) {
-      navigation.navigate(item.key);
-    }
-  }, [state, navigation]);
+  const handlePress = useCallback(
+    (item: TabItemConfig) => {
+      if (item.pushRoute) {
+        router.push(item.pushRoute as never);
+        return;
+      }
+      const routeIndex = state.routes.findIndex((r) => r.name === item.key);
+      if (routeIndex < 0) return;
+      const event = navigation.emit({
+        type: "tabPress",
+        target: state.routes[routeIndex].key,
+        canPreventDefault: true,
+      });
+      if (!event.defaultPrevented) {
+        navigation.navigate(item.key);
+      }
+    },
+    [state, navigation],
+  );
 
   return (
     <View style={[styles.tabBar, { paddingBottom: insets.bottom }]}>
@@ -164,10 +191,7 @@ const MemoizedTabBar = React.memo(CustomTabBar);
 
 export default function AppLayout() {
   return (
-    <Tabs
-      tabBar={(props) => <MemoizedTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
+    <Tabs tabBar={(props) => <MemoizedTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="alter" />
     </Tabs>
   );

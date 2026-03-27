@@ -10,15 +10,11 @@ import type {
   UserLatestPlanResponse,
 } from "@/types/plan";
 
-export async function createRun(
-  request: PlanRunCreateRequest,
-): Promise<PlanRunAccepted> {
+export async function createRun(request: PlanRunCreateRequest): Promise<PlanRunAccepted> {
   return post<PlanRunAccepted>("/runs", request);
 }
 
-export async function getRunStatus(
-  runId: string,
-): Promise<PlanRunStatusResponse> {
+export async function getRunStatus(runId: string): Promise<PlanRunStatusResponse> {
   return get<PlanRunStatusResponse>(`/runs/${runId}`);
 }
 
@@ -42,14 +38,10 @@ export function streamPlan(
   });
 }
 
-export async function upsertPlan(
-  request: PlanUpsertRequest,
-): Promise<PlanUpsertResponse> {
+export async function upsertPlan(request: PlanUpsertRequest): Promise<PlanUpsertResponse> {
   return post<PlanUpsertResponse>("/plans", request);
 }
 
-export async function getLatestUserPlan(
-  userId: string,
-): Promise<UserLatestPlanResponse> {
+export async function getLatestUserPlan(userId: string): Promise<UserLatestPlanResponse> {
   return get<UserLatestPlanResponse>(`/users/${userId}/plan`);
 }

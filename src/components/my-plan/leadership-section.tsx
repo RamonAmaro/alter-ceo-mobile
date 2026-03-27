@@ -37,7 +37,7 @@ function getTopDiffCategories(
   current?: RoleSnapshot,
   target?: RoleSnapshot,
   count = 6,
-): Array<{ key: string; current: number; target: number }> {
+): { key: string; current: number; target: number }[] {
   if (!current || !target) return [];
   return Object.keys(current)
     .map((key) => ({ key, current: current[key] ?? 0, target: target[key] ?? 0 }))
@@ -52,7 +52,11 @@ export function LeadershipSection({
   roleEvolution,
   firstStepMessage,
 }: LeadershipSectionProps) {
-  const phaseTexts: Record<"phase1" | "phase2" | "phase3", string | undefined> = { phase1, phase2, phase3 };
+  const phaseTexts: Record<"phase1" | "phase2" | "phase3", string | undefined> = {
+    phase1,
+    phase2,
+    phase3,
+  };
   const activePhases = PHASES.filter((p) => phaseTexts[p.key]);
 
   const topCategories = getTopDiffCategories(
@@ -67,8 +71,12 @@ export function LeadershipSection({
 
       {firstStepMessage && (
         <View style={styles.alertCard}>
-          <ThemedText type="caption" style={styles.alertBadge}>PRIMER PASO</ThemedText>
-          <ThemedText type="bodyMd" style={styles.alertText}>{firstStepMessage}</ThemedText>
+          <ThemedText type="caption" style={styles.alertBadge}>
+            PRIMER PASO
+          </ThemedText>
+          <ThemedText type="bodyMd" style={styles.alertText}>
+            {firstStepMessage}
+          </ThemedText>
         </View>
       )}
 

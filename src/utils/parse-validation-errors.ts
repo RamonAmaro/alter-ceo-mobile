@@ -17,9 +17,7 @@ const FALLBACK_FIELD_MESSAGES: Record<string, string> = {
   display_name: "Nombre no válido",
 };
 
-export function parseValidationErrors(
-  errors: ValidationError[],
-): Record<string, string> {
+export function parseValidationErrors(errors: ValidationError[]): Record<string, string> {
   const result: Record<string, string> = {};
 
   for (const error of errors) {

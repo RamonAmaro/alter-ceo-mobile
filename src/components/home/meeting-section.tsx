@@ -8,11 +8,7 @@ import { GlassCard } from "./glass-card";
 export function MeetingSection() {
   return (
     <View style={styles.row}>
-      <GlassCard
-        style={styles.card}
-        outerStyle={styles.cardOuter}
-        onPress={() => {}}
-      >
+      <GlassCard style={styles.card} outerStyle={styles.cardOuter} onPress={() => {}}>
         <View>
           <ThemedText type="bodyLg" style={styles.label}>
             Grabar
@@ -26,11 +22,7 @@ export function MeetingSection() {
         </View>
       </GlassCard>
 
-      <GlassCard
-        style={styles.card}
-        outerStyle={styles.cardOuterLarge}
-        onPress={() => {}}
-      />
+      <GlassCard style={styles.card} outerStyle={styles.cardOuterLarge} onPress={() => {}} />
     </View>
   );
 }

@@ -1,6 +1,5 @@
-import { AppBackground } from "@/components/app-background";
 import { AlterLogo } from "@/components/alter-logo";
-import { Fonts } from "@/constants/theme";
+import { AppBackground } from "@/components/app-background";
 import { getLatestUserPlan } from "@/services/plan-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
@@ -18,12 +17,32 @@ function LoadingScreen() {
     Animated.loop(
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(scale, { toValue: 1.05, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(scale, {
+            toValue: 1.05,
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 1,
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
         ]),
         Animated.parallel([
-          Animated.timing(scale, { toValue: 0.85, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0.4, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(scale, {
+            toValue: 0.85,
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0.4,
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
         ]),
       ]),
     ).start();

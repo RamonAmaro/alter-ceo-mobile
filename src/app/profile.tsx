@@ -7,11 +7,7 @@ import { useOnboardingStore } from "@/stores/onboarding-store";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import {
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MENU_ITEMS = [
@@ -34,9 +30,7 @@ export default function ProfileScreen() {
 
   return (
     <AppBackground>
-      <View
-        style={[styles.container, { paddingTop: insets.top + Spacing.two }]}
-      >
+      <View style={[styles.container, { paddingTop: insets.top + Spacing.two }]}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -45,7 +39,9 @@ export default function ProfileScreen() {
           >
             <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </TouchableOpacity>
-          <ThemedText type="subtitle" style={styles.headerTitle}>Perfil</ThemedText>
+          <ThemedText type="subtitle" style={styles.headerTitle}>
+            Perfil
+          </ThemedText>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -53,8 +49,12 @@ export default function ProfileScreen() {
           <View style={styles.avatarLarge}>
             <Ionicons name="person" size={40} color="rgba(255,255,255,0.5)" />
           </View>
-          <ThemedText type="subtitle" style={styles.userName}>(Nombre)</ThemedText>
-          <ThemedText type="labelSm" style={styles.userCompany}>(Nombre de Empresa)</ThemedText>
+          <ThemedText type="subtitle" style={styles.userName}>
+            (Nombre)
+          </ThemedText>
+          <ThemedText type="labelSm" style={styles.userCompany}>
+            (Nombre de Empresa)
+          </ThemedText>
         </View>
 
         <View style={styles.content}>
@@ -63,20 +63,16 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <View
-          style={[styles.signOutWrap, { paddingBottom: insets.bottom + Spacing.four }]}
-        >
-          <TouchableOpacity
-            style={styles.signOutBtn}
-            onPress={handleSignOut}
-            activeOpacity={0.8}
-          >
+        <View style={[styles.signOutWrap, { paddingBottom: insets.bottom + Spacing.four }]}>
+          <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.8}>
             <LinearGradient
               colors={["rgba(255,68,68,0.15)", "rgba(255,68,68,0.05)"]}
               style={styles.signOutGradient}
             >
               <Ionicons name="log-out-outline" size={20} color="#FF4444" />
-              <ThemedText type="labelSm" style={styles.signOutText}>Cerrar sesión</ThemedText>
+              <ThemedText type="labelSm" style={styles.signOutText}>
+                Cerrar sesión
+              </ThemedText>
             </LinearGradient>
           </TouchableOpacity>
         </View>

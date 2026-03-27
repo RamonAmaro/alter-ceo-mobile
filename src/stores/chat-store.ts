@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import type { SSEConnection } from "@/lib/sse-client";
-import type {
-  ChatMessageResponse,
-  ChatThreadSummary,
-} from "@/types/chat";
+import type { ChatMessageResponse, ChatThreadSummary } from "@/types/chat";
 import * as chatService from "@/services/chat-service";
 
 interface ChatState {

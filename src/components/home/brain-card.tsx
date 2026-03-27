@@ -6,12 +6,7 @@ import { GlassCard } from "./glass-card";
 
 export function BrainCard() {
   return (
-    <GlassCard
-      style={styles.card}
-      outerStyle={styles.outer}
-      onPress={() => {}}
-      highlight
-    >
+    <GlassCard style={styles.card} outerStyle={styles.outer} onPress={() => {}} highlight>
       <View>
         <ThemedText type="headingMd" style={styles.label}>
           El Cerebro

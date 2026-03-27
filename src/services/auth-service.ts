@@ -54,12 +54,12 @@ export async function initAuthCookie(): Promise<void> {
   }
 }
 
-export async function login(
-  email: string,
-  password: string,
-): Promise<AuthSession> {
+export async function login(email: string, password: string): Promise<AuthSession> {
   try {
-    const response = await apiClient.post<RawAuthSessionResponse>("/auth/login", { email, password });
+    const response = await apiClient.post<RawAuthSessionResponse>("/auth/login", {
+      email,
+      password,
+    });
     const cookie = extractSessionCookie(response.headers);
     if (cookie) await saveSession(cookie);
     return mapSession(response.data);

@@ -31,19 +31,12 @@ export function QuestionOption({
             selected && (multi ? styles.checkboxSelected : styles.radioSelected),
           ]}
         >
-          {selected && multi ? (
-            <Ionicons name="checkmark" size={14} color="#ffffff" />
-          ) : null}
-          {selected && !multi ? (
-            <View style={styles.radioDot} />
-          ) : null}
+          {selected && multi ? <Ionicons name="checkmark" size={14} color="#ffffff" /> : null}
+          {selected && !multi ? <View style={styles.radioDot} /> : null}
         </View>
 
         <View style={styles.textContainer}>
-          <ThemedText
-            type="labelSm"
-            style={[styles.label, selected && styles.labelSelected]}
-          >
+          <ThemedText type="labelSm" style={[styles.label, selected && styles.labelSelected]}>
             {label}
           </ThemedText>
           {subtitle ? (

@@ -6,22 +6,15 @@ import { RecordButton } from "@/components/record-button";
 import { CheckIcon, RestartIcon } from "@/components/recording-icons";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
-import {
-  getExpressQuestions,
-  getProfessionalQuestions,
-} from "@/constants/onboarding-questions";
-import { Ionicons } from "@expo/vector-icons";
-import {
-  MAX_DURATION_MS,
-  requestAudioPermission,
-} from "@/services/audio-service";
+import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
+import { MAX_DURATION_MS } from "@/services/audio-service";
 import { createTranscriptionSession } from "@/services/transcription-service";
 import type { TranscriptionSession } from "@/services/transcription-service";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 import { formatTimer } from "@/utils/format-timer";
 import { useAudioRecorder } from "@siteed/expo-audio-studio";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -31,8 +24,16 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 
-type RecordingState = "idle" | "preparing" | "recording" | "paused" | "finishing" | "done" | "countdown";
+type RecordingState =
+  | "idle"
+  | "preparing"
+  | "recording"
+  | "paused"
+  | "finishing"
+  | "done"
+  | "countdown";
 
 interface RecordingResult {
   uri: string;
@@ -44,14 +45,12 @@ interface AudioRecorderViewProps {
   onBack: () => void;
 }
 
-export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps) {
+export function AudioRecorderView({
+  onConfirm,
+  onBack,
+}: AudioRecorderViewProps): React.ReactElement | null {
   const insets = useSafeAreaInsets();
-  const {
-    planType,
-    currentQuestionIndex,
-    setAnswer,
-    addAudioRecord,
-  } = useOnboardingStore();
+  const { planType, currentQuestionIndex, setAnswer, addAudioRecord } = useOnboardingStore();
 
   const questions = useMemo(
     () => (planType === "professional" ? getProfessionalQuestions() : getExpressQuestions()),
@@ -119,15 +118,6 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
   }, [stopTimer, stopRecording]);
 
   async function startNewRecording(): Promise<void> {
-    const granted = await requestAudioPermission();
-    if (!granted) {
-      Alert.alert(
-        "Permiso necesario",
-        "Necesitamos acceso al micrófono para grabar tu respuesta. Actívalo en Ajustes.",
-      );
-      return;
-    }
-
     sessionRef.current?.close();
     sessionRef.current = null;
     pausedRef.current = false;
@@ -147,12 +137,11 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
 
     try {
       await startRecording({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        sampleRate: 24000 as any,
+        sampleRate: 24000 as never,
         channels: 1,
         encoding: "pcm_16bit",
         interval: 100,
-        onAudioStream: async (event) => {
+        onAudioStream: (event) => {
           if (!pausedRef.current && session) {
             session.sendAudioData(event.data as string | Float32Array);
           }
@@ -168,7 +157,8 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
               const count = Math.floor(binary.length / 2);
               let sum = 0;
               for (let i = 0; i < count; i++) {
-                const s16 = (binary.charCodeAt(i * 2) | (binary.charCodeAt(i * 2 + 1) << 8)) << 16 >> 16;
+                const s16 =
+                  ((binary.charCodeAt(i * 2) | (binary.charCodeAt(i * 2 + 1) << 8)) << 16) >> 16;
                 const norm = s16 / 32768;
                 sum += norm * norm;
               }
@@ -202,7 +192,10 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
     const [recordingResult, transcriptText] = await Promise.all([
       stopRecording().catch(() => null),
       session
-        ? session.stop().catch(() => { session.close(); return ""; })
+        ? session.stop().catch(() => {
+            session.close();
+            return "";
+          })
         : Promise.resolve(""),
     ]);
 
@@ -267,7 +260,12 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
   if (!question) return null;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + Spacing.three, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + Spacing.three, paddingBottom: insets.bottom },
+      ]}
+    >
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={onBack}
@@ -356,8 +354,8 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
               </View>
             )}
 
-            {recordState === "done" && (
-              result?.transcript ? (
+            {recordState === "done" &&
+              (result?.transcript ? (
                 <>
                   <ThemedText type="labelMd" style={styles.transcriptLabel}>
                     Transcripción
@@ -368,8 +366,7 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
                 <ThemedText type="bodySm" style={styles.noTranscriptText}>
                   Audio grabado correctamente
                 </ThemedText>
-              )
-            )}
+              ))}
           </View>
 
           {recordState === "done" && (
@@ -405,10 +402,7 @@ export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps)
           )}
         </LinearGradient>
       </View>
-
-      {recordState === "countdown" && (
-        <CountdownOverlay onComplete={handleCountdownComplete} />
-      )}
+      {recordState === "countdown" && <CountdownOverlay onComplete={handleCountdownComplete} />}
     </View>
   );
 }

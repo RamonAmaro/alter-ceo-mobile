@@ -66,8 +66,7 @@ function buildSSEEventSource(
   return new EventSource<(typeof SSE_EVENT_TYPES)[number]>(url, {
     headers,
     method,
-    body:
-      method === "POST" && body != null ? JSON.stringify(body) : undefined,
+    body: method === "POST" && body != null ? JSON.stringify(body) : undefined,
     pollingInterval: 0,
     withCredentials: true,
   });
@@ -98,10 +97,7 @@ function attachSSEListeners(
   });
 }
 
-export function connectSSE(
-  path: string,
-  options: SSEConnectOptions,
-): SSEConnection {
+export function connectSSE(path: string, options: SSEConnectOptions): SSEConnection {
   const method = options.method ?? "GET";
 
   const params: Record<string, string> = {};
@@ -123,9 +119,7 @@ export function connectSSE(
   const state: { es: ESInstance | null; aborted: boolean } = { es: null, aborted: false };
 
   const cookieHeader = authHeaders["Cookie"];
-  const cookieReady = cookieHeader
-    ? ensureSessionCookieInJar(cookieHeader)
-    : Promise.resolve();
+  const cookieReady = cookieHeader ? ensureSessionCookieInJar(cookieHeader) : Promise.resolve();
 
   void cookieReady.then(() => {
     if (state.aborted) return;

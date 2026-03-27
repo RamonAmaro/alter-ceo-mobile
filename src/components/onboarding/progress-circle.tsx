@@ -11,11 +11,7 @@ interface ProgressCircleProps {
   strokeWidth?: number;
 }
 
-export function ProgressCircle({
-  progress,
-  size = 200,
-  strokeWidth = 6,
-}: ProgressCircleProps) {
+export function ProgressCircle({ progress, size = 200, strokeWidth = 6 }: ProgressCircleProps) {
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   const radius = (size - strokeWidth * 4) / 2;

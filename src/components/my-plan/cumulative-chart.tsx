@@ -14,11 +14,11 @@ const PADDING_RIGHT = 0;
 const PADDING_BOTTOM = LABEL_HEIGHT + 4;
 const AREA_OPACITY = 0.12;
 
-function buildLinePath(points: Array<{ x: number; y: number }>): string {
+function buildLinePath(points: { x: number; y: number }[]): string {
   return points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
 }
 
-function buildAreaPath(points: Array<{ x: number; y: number }>, height: number): string {
+function buildAreaPath(points: { x: number; y: number }[], height: number): string {
   const line = buildLinePath(points);
   const last = points[points.length - 1];
   const first = points[0];
@@ -100,7 +100,7 @@ export function CumulativeChart({ values }: CumulativeChartProps) {
         })}
 
         <Text
-          x={(points[points.length - 1]?.x ?? 0)}
+          x={points[points.length - 1]?.x ?? 0}
           y={Math.max((points[points.length - 1]?.y ?? PADDING_TOP) - 8, PADDING_TOP - 2)}
           fontSize={10}
           fill="rgba(255,255,255,0.8)"

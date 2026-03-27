@@ -9,11 +9,7 @@ import type {
   TeamSizeRange,
 } from "./api";
 
-export type GrossMarginKnowledge =
-  | "exact"
-  | "approximate"
-  | "unknown"
-  | "unknown_and_not_sure_how";
+export type GrossMarginKnowledge = "exact" | "approximate" | "unknown" | "unknown_and_not_sure_how";
 
 export type LiquidityLevel =
   | "cash_over_6_months"
@@ -21,10 +17,7 @@ export type LiquidityLevel =
   | "unsure"
   | "break_even_day_to_day";
 
-export type SalesProcessMaturity =
-  | "intuition_based"
-  | "scripted_process"
-  | "no_defined_protocol";
+export type SalesProcessMaturity = "intuition_based" | "scripted_process" | "no_defined_protocol";
 
 export type TeamPerformanceLevel =
   | "needs_close_supervision"

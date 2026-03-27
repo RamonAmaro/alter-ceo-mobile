@@ -12,9 +12,7 @@ export interface TranscriptionSession {
 type WsMessage = { type: string; text?: string };
 
 function buildWsUrl(): string {
-  const base = API_BASE_URL.replace(/^https?/, (m) =>
-    m === "https" ? "wss" : "ws",
-  );
+  const base = API_BASE_URL.replace(/^https?/, (m) => (m === "https" ? "wss" : "ws"));
   return `${base}/${API_VERSION}/audio/transcribe/ws?language=es`;
 }
 
@@ -51,8 +49,14 @@ function connectWebSocket(url: string): Promise<WebSocket> {
       () => reject(new Error("Timeout conectando al servidor.")),
       WS_CONNECT_TIMEOUT_MS,
     );
-    ws.onopen = () => { clearTimeout(timeout); resolve(ws); };
-    ws.onerror = () => { clearTimeout(timeout); reject(new Error("No se pudo conectar.")); };
+    ws.onopen = () => {
+      clearTimeout(timeout);
+      resolve(ws);
+    };
+    ws.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error("No se pudo conectar."));
+    };
   });
 }
 
@@ -80,18 +84,13 @@ function awaitFinalTranscript(
       resolve(text);
     };
 
-    const timer = setTimeout(
-      () => finish(accumulatedBeforeStop),
-      timeoutMs,
-    );
+    const timer = setTimeout(() => finish(accumulatedBeforeStop), timeoutMs);
 
     ws.onmessage = (event) => {
       const msg = parseWsMessage(event.data);
       if (!msg) return;
       if (msg.type === "transcript_final" && msg.text) {
-        const full = accumulatedBeforeStop
-          ? `${accumulatedBeforeStop} ${msg.text}`
-          : msg.text;
+        const full = accumulatedBeforeStop ? `${accumulatedBeforeStop} ${msg.text}` : msg.text;
         finish(full);
       }
     };
@@ -107,9 +106,7 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
     const msg = parseWsMessage(event.data);
     if (!msg) return;
     if (msg.type === "transcript_final" && msg.text) {
-      accumulated.final = accumulated.final
-        ? `${accumulated.final} ${msg.text}`
-        : msg.text;
+      accumulated.final = accumulated.final ? `${accumulated.final} ${msg.text}` : msg.text;
       accumulated.delta = "";
     } else if (msg.type === "transcript_delta" && msg.text) {
       accumulated.delta = msg.text;

@@ -10,15 +10,9 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ index, title, description, accentColor }: ItemCardProps) {
-  const badgeBg = accentColor === "#FF4444"
-    ? "rgba(255,68,68,0.12)"
-    : "rgba(0,255,132,0.1)";
-  const cardBg = accentColor === "#FF4444"
-    ? "rgba(255,68,68,0.04)"
-    : "rgba(0,255,132,0.03)";
-  const cardBorder = accentColor === "#FF4444"
-    ? "rgba(255,68,68,0.1)"
-    : "rgba(0,255,132,0.08)";
+  const badgeBg = accentColor === "#FF4444" ? "rgba(255,68,68,0.12)" : "rgba(0,255,132,0.1)";
+  const cardBg = accentColor === "#FF4444" ? "rgba(255,68,68,0.04)" : "rgba(0,255,132,0.03)";
+  const cardBorder = accentColor === "#FF4444" ? "rgba(255,68,68,0.1)" : "rgba(0,255,132,0.08)";
 
   return (
     <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
@@ -28,8 +22,12 @@ export function ItemCard({ index, title, description, accentColor }: ItemCardPro
         </ThemedText>
       </View>
       <View style={styles.content}>
-        <ThemedText type="labelSm" style={styles.title}>{title}</ThemedText>
-        <ThemedText type="bodyMd" style={styles.desc}>{description}</ThemedText>
+        <ThemedText type="labelSm" style={styles.title}>
+          {title}
+        </ThemedText>
+        <ThemedText type="bodyMd" style={styles.desc}>
+          {description}
+        </ThemedText>
       </View>
     </View>
   );

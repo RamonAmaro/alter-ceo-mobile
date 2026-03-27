@@ -26,11 +26,7 @@ export type TeamSizeRange =
   | "60_100"
   | "100_plus";
 
-export type DailyHoursDedicated =
-  | "lt_6"
-  | "between_6_8"
-  | "between_8_10"
-  | "gt_10";
+export type DailyHoursDedicated = "lt_6" | "between_6_8" | "between_8_10" | "gt_10";
 
 export type FounderEmotionState =
   | "excited"
@@ -40,10 +36,7 @@ export type FounderEmotionState =
   | "tired_disillusioned"
   | "business_slave";
 
-export type TaskPrioritizationStyle =
-  | "goals_but_day_to_day"
-  | "strategic_data_driven"
-  | "ad_hoc";
+export type TaskPrioritizationStyle = "goals_but_day_to_day" | "strategic_data_driven" | "ad_hoc";
 
 export type AcquisitionChannel =
   | "word_of_mouth"
@@ -54,20 +47,11 @@ export type AcquisitionChannel =
   | "partnerships"
   | "other";
 
-export type ConsumptionPattern =
-  | "one_time"
-  | "sporadic"
-  | "frequent"
-  | "monthly_subscription";
+export type ConsumptionPattern = "one_time" | "sporadic" | "frequent" | "monthly_subscription";
 
 export type RunStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
 
-export type MeetingStatus =
-  | "PENDING_UPLOAD"
-  | "UPLOADED"
-  | "PROCESSING"
-  | "COMPLETED"
-  | "FAILED";
+export type MeetingStatus = "PENDING_UPLOAD" | "UPLOADED" | "PROCESSING" | "COMPLETED" | "FAILED";
 
 export type MeetingProcessingStage =
   | "pending_upload"

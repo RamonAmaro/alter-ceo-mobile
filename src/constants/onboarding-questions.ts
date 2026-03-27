@@ -58,8 +58,7 @@ export function getExpressQuestions(): Question[] {
     {
       type: "single",
       progress: 20,
-      question:
-        "¿Qué situación describe mejor el estado actual de tu negocio?",
+      question: "¿Qué situación describe mejor el estado actual de tu negocio?",
       options: [
         { label: "Negocio estancado pero rentable" },
         { label: "Estancado y poco rentable" },
@@ -86,14 +85,12 @@ export function getExpressQuestions(): Question[] {
     {
       type: "multi",
       progress: 40,
-      question:
-        "¿Cuáles son tus PRINCIPALES dolores de cabeza ahora mismo?",
+      question: "¿Cuáles son tus PRINCIPALES dolores de cabeza ahora mismo?",
       instruction: "(puedes seleccionar más de una)",
       options: [
         {
           label: "Crecimiento:",
-          subtitle:
-            "No consigo cumplir mis expectativas de crecimiento.",
+          subtitle: "No consigo cumplir mis expectativas de crecimiento.",
         },
         {
           label: "Ventas:",
@@ -113,13 +110,11 @@ export function getExpressQuestions(): Question[] {
         },
         {
           label: "Rentabilidad:",
-          subtitle:
-            "Facturo mucho pero me quedan pocos beneficios.",
+          subtitle: "Facturo mucho pero me quedan pocos beneficios.",
         },
         {
           label: "Escalabilidad:",
-          subtitle:
-            "El negocio funciona y quiero escalarlo significativamente.",
+          subtitle: "El negocio funciona y quiero escalarlo significativamente.",
         },
         { label: "Un poco de todo." },
       ],
@@ -143,12 +138,10 @@ export function getExpressQuestions(): Question[] {
         { label: "Principalmente por la ubicación física." },
         { label: "Principalmente con fuerza comercial." },
         {
-          label:
-            "Campañas de marketing / comunicación / publicidad.",
+          label: "Campañas de marketing / comunicación / publicidad.",
         },
         {
-          label:
-            "Mezcla de boca a boca y alguna acción comercial.",
+          label: "Mezcla de boca a boca y alguna acción comercial.",
         },
         { label: "Alianzas / colaboraciones." },
         { label: "Otros." },
@@ -157,8 +150,7 @@ export function getExpressQuestions(): Question[] {
     {
       type: "single",
       progress: 65,
-      question:
-        "¿Qué tipo de consumo es más frecuente en tu negocio?",
+      question: "¿Qué tipo de consumo es más frecuente en tu negocio?",
       options: [
         { label: "El cliente consume una sola vez." },
         { label: "Consumo esporádico." },
@@ -191,8 +183,7 @@ export function getExpressQuestions(): Question[] {
     {
       type: "audio",
       progress: 90,
-      question:
-        "¿Cuál es el mayor obstáculo en el día a día de tu negocio en este momento?",
+      question: "¿Cuál es el mayor obstáculo en el día a día de tu negocio en este momento?",
       instruction:
         "Por último, graba un audio de un máximo de 30 segundos contestando a la siguiente pregunta:",
     },
@@ -243,8 +234,7 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "single",
       progress: 15,
-      question:
-        "¿Qué situación describe mejor el estado actual de tu negocio?",
+      question: "¿Qué situación describe mejor el estado actual de tu negocio?",
       options: [
         { label: "Negocio estancado pero rentable" },
         { label: "Estancado y poco rentable" },
@@ -271,14 +261,12 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "multi",
       progress: 25,
-      question:
-        "¿Cuáles son tus PRINCIPALES dolores de cabeza ahora mismo?",
+      question: "¿Cuáles son tus PRINCIPALES dolores de cabeza ahora mismo?",
       instruction: "(puedes seleccionar más de una)",
       options: [
         {
           label: "Crecimiento:",
-          subtitle:
-            "No consigo cumplir mis expectativas de crecimiento.",
+          subtitle: "No consigo cumplir mis expectativas de crecimiento.",
         },
         {
           label: "Ventas:",
@@ -298,13 +286,11 @@ export function getProfessionalQuestions(): Question[] {
         },
         {
           label: "Rentabilidad:",
-          subtitle:
-            "Facturo mucho pero me quedan pocos beneficios.",
+          subtitle: "Facturo mucho pero me quedan pocos beneficios.",
         },
         {
           label: "Escalabilidad:",
-          subtitle:
-            "El negocio funciona y quiero escalarlo significativamente.",
+          subtitle: "El negocio funciona y quiero escalarlo significativamente.",
         },
       ],
     },
@@ -327,12 +313,10 @@ export function getProfessionalQuestions(): Question[] {
         { label: "Principalmente por la ubicación física." },
         { label: "Principalmente con fuerza comercial." },
         {
-          label:
-            "Campañas de marketing / comunicación / publicidad.",
+          label: "Campañas de marketing / comunicación / publicidad.",
         },
         {
-          label:
-            "Mezcla de boca a boca y alguna acción comercial.",
+          label: "Mezcla de boca a boca y alguna acción comercial.",
         },
         { label: "Alianzas / colaboraciones." },
         { label: "Otros." },
@@ -341,8 +325,7 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "single",
       progress: 40,
-      question:
-        "¿Qué tipo de consumo es más frecuente en tu negocio?",
+      question: "¿Qué tipo de consumo es más frecuente en tu negocio?",
       options: [
         { label: "El cliente consume una sola vez." },
         { label: "Consumo esporádico." },
@@ -353,8 +336,7 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "single",
       progress: 45,
-      question:
-        "¿Conoces el margen bruto real de tus productos o servicios?",
+      question: "¿Conoces el margen bruto real de tus productos o servicios?",
       options: [
         { label: "Sí, al céntimo." },
         { label: "Tengo una idea aproximada." },
@@ -368,19 +350,16 @@ export function getProfessionalQuestions(): Question[] {
       question: "¿Cuál es tu nivel de liquidez actual?",
       options: [
         {
-          label:
-            "Tengo caja suficiente para aguantar más de 6 meses sin ventas.",
+          label: "Tengo caja suficiente para aguantar más de 6 meses sin ventas.",
         },
         {
           label: "Tengo caja suficiente para aguantar 1-3 meses.",
         },
         {
-          label:
-            "No sabría contestar exactamente a la pregunta.",
+          label: "No sabría contestar exactamente a la pregunta.",
         },
         {
-          label:
-            "Vivo al día, lo que entra es más o menos lo que sale.",
+          label: "Vivo al día, lo que entra es más o menos lo que sale.",
         },
       ],
     },
@@ -392,8 +371,7 @@ export function getProfessionalQuestions(): Question[] {
       options: [
         { label: "Vendemos más por experiencia o intuición." },
         {
-          label:
-            "Sí, seguimos scripts basados en procesos de decisión del cliente.",
+          label: "Sí, seguimos scripts basados en procesos de decisión del cliente.",
         },
         { label: "No hay protocolos de ventas definidos." },
       ],
@@ -404,15 +382,13 @@ export function getProfessionalQuestions(): Question[] {
       question: "¿Cómo definirías el rendimiento de tu equipo?",
       options: [
         {
-          label:
-            "Tengo que estar encima para que las cosas salgan bien.",
+          label: "Tengo que estar encima para que las cosas salgan bien.",
         },
         {
           label: "Siento que pasan de todo, estoy frustrado.",
         },
         {
-          label:
-            "Tengo un equipo autosuficiente y de alto rendimiento.",
+          label: "Tengo un equipo autosuficiente y de alto rendimiento.",
         },
         { label: "No tengo equipo en este momento." },
       ],
@@ -420,13 +396,11 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "single",
       progress: 65,
-      question:
-        "¿Haces reuniones de seguimiento con tu equipo?",
+      question: "¿Haces reuniones de seguimiento con tu equipo?",
       options: [
         { label: "Sí, sagradas y productivas." },
         {
-          label:
-            "Hacemos reuniones, pero son una pérdida de tiempo.",
+          label: "Hacemos reuniones, pero son una pérdida de tiempo.",
         },
         { label: "Hacemos reuniones si hace falta." },
         { label: "No solemos hacer." },
@@ -435,14 +409,12 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "single",
       progress: 70,
-      question:
-        "¿Qué pasaría si desaparecieses 3 meses de tu negocio?",
+      question: "¿Qué pasaría si desaparecieses 3 meses de tu negocio?",
       options: [
         { label: "Funcionaría perfectamente sin mí." },
         { label: "Sobreviviría, pero con dificultades." },
         {
-          label:
-            "Los resultados se verían drásticamente afectados.",
+          label: "Los resultados se verían drásticamente afectados.",
         },
         { label: "Se hundiría, sin duda." },
       ],
@@ -450,17 +422,14 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "single",
       progress: 75,
-      question:
-        "¿Dispones de indicadores para medir los resultados de tu negocio regularmente?",
+      question: "¿Dispones de indicadores para medir los resultados de tu negocio regularmente?",
       options: [
         { label: "Sí, tengo un cuadro de mando detallado." },
         {
-          label:
-            "Miro de vez en cuando el banco y la facturación.",
+          label: "Miro de vez en cuando el banco y la facturación.",
         },
         {
-          label:
-            "Tengo una idea aproximada pero no muy concreta.",
+          label: "Tengo una idea aproximada pero no muy concreta.",
         },
         { label: "No entiendo bien la pregunta." },
         { label: "Sinceramente, voy a ciegas." },
@@ -491,8 +460,7 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "audio",
       progress: 95,
-      question:
-        "¿Cuál es el precio aproximado de tu producto o servicio principal?",
+      question: "¿Cuál es el precio aproximado de tu producto o servicio principal?",
       instruction:
         "Por último, graba un audio de un máximo de 30 segundos contestando a la siguiente pregunta:",
     },

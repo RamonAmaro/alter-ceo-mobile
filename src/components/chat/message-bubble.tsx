@@ -9,11 +9,7 @@ interface MessageBubbleProps {
   isLastInGroup?: boolean;
 }
 
-export function MessageBubble({
-  text,
-  isUser,
-  isLastInGroup = true,
-}: MessageBubbleProps) {
+export function MessageBubble({ text, isUser, isLastInGroup = true }: MessageBubbleProps) {
   return (
     <View style={[styles.row, isUser && styles.rowUser, isLastInGroup && styles.rowGroupEnd]}>
       <View style={styles.bubbleWrap}>

@@ -43,8 +43,8 @@ export default function CompletionScreen() {
             ¡Todo listo!
           </ThemedText>
           <ThemedText type="bodyLg" style={styles.subtitle}>
-            Tu configuración inicial está completa. Ahora tienes acceso a todas
-            las herramientas para transformar tu negocio.
+            Tu configuración inicial está completa. Ahora tienes acceso a todas las herramientas
+            para transformar tu negocio.
           </ThemedText>
         </View>
 

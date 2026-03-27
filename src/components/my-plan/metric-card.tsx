@@ -29,7 +29,9 @@ export function MetricCard({ label, value }: MetricCardProps) {
   const color = resolveColor(value);
   return (
     <View style={styles.card}>
-      <ThemedText type="caption" style={styles.label}>{label}</ThemedText>
+      <ThemedText type="caption" style={styles.label}>
+        {label}
+      </ThemedText>
       <ThemedText type="labelSm" style={[styles.value, { color }]}>
         {value ?? "—"}
       </ThemedText>

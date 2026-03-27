@@ -7,23 +7,16 @@ import { PerformanceChart } from "./performance-chart";
 
 export function MachinesCard() {
   return (
-    <GlassCard
-      style={styles.card}
-      outerStyle={styles.outer}
-      onPress={() => {}}
-      highlight
-    >
+    <GlassCard style={styles.card} outerStyle={styles.outer} onPress={() => {}} highlight>
       <View style={styles.labelRow}>
         <ThemedText type="headingMd" style={styles.label}>
           Sala de
         </ThemedText>
-        <Ionicons
-          name="settings-sharp"
-          size={14}
-          color="rgba(255,255,255,0.3)"
-        />
+        <Ionicons name="settings-sharp" size={14} color="rgba(255,255,255,0.3)" />
       </View>
-      <ThemedText type="headingMd" style={styles.title}>Máquinas</ThemedText>
+      <ThemedText type="headingMd" style={styles.title}>
+        Máquinas
+      </ThemedText>
       <View style={styles.chartWrap}>
         <PerformanceChart />
       </View>

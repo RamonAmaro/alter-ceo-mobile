@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import type {
-  MeetingResponse,
-  MeetingSummaryResponse,
-} from "@/types/meeting";
+import type { MeetingResponse, MeetingSummaryResponse } from "@/types/meeting";
 import * as meetingService from "@/services/meeting-service";
 import { createPoller } from "@/utils/create-poller";
 import { POLL_INTERVAL } from "@/constants/env";
@@ -86,11 +83,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         },
       });
 
-      await meetingService.uploadFileToS3(
-        created.upload,
-        fileUri,
-        contentType,
-      );
+      await meetingService.uploadFileToS3(created.upload, fileUri, contentType);
 
       set((state) => ({
         uploadProgress: state.uploadProgress
@@ -111,8 +104,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       const poller = createPoller<MeetingResponse>({
         fn: () => meetingService.getMeeting(created.meeting_id),
         interval: POLL_INTERVAL,
-        shouldStop: (meeting) =>
-          meeting.status === "COMPLETED" || meeting.status === "FAILED",
+        shouldStop: (meeting) => meeting.status === "COMPLETED" || meeting.status === "FAILED",
         onUpdate: (meeting) => {
           if (meeting.status === "COMPLETED" || meeting.status === "FAILED") {
             set({

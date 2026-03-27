@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_TIMEOUT, API_VERSION } from "@/constants/env";
+import { API_BASE_URL, API_VERSION } from "@/constants/env";
 import { buildAuthHeaders } from "@/lib/api-client";
 import { ApiError } from "@/types/api";
 import type { AudioRecordingTranscriptionResponse } from "@/types/audio";
@@ -42,7 +42,6 @@ export async function uploadAudioRecording(
 
   if (!response.ok) {
     const raw = await response.text();
-    console.error("[uploadAudioRecording] error", response.status, raw.slice(0, 300));
     let message = `HTTP ${response.status}`;
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;

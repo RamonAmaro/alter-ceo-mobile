@@ -41,9 +41,7 @@ function parseBlock(block: string): SSEEvent | null {
 
     const field = line.slice(0, colonIndex);
     const value =
-      line[colonIndex + 1] === " "
-        ? line.slice(colonIndex + 2)
-        : line.slice(colonIndex + 1);
+      line[colonIndex + 1] === " " ? line.slice(colonIndex + 2) : line.slice(colonIndex + 1);
 
     switch (field) {
       case "data":

@@ -10,18 +10,18 @@ export function ChatHeader() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => router.back()}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
         <Ionicons name="chevron-back" size={24} color="#ffffff" />
       </TouchableOpacity>
 
       <View style={styles.titleRow}>
         <AlterLogo size={20} />
-        <ThemedText type="labelSm" style={styles.labelItalic}>El Cerebro </ThemedText>
-        <ThemedText type="subtitle" style={styles.labelBold}>ALTER CEO</ThemedText>
+        <ThemedText type="labelSm" style={styles.labelItalic}>
+          El Cerebro{" "}
+        </ThemedText>
+        <ThemedText type="subtitle" style={styles.labelBold}>
+          ALTER CEO
+        </ThemedText>
       </View>
 
       <View style={styles.spacer} />

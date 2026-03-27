@@ -1,13 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  Image,
-  ImageSourcePropType,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, ImageSourcePropType, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface StrategyTopicCardProps {
   label: string;
@@ -15,17 +9,9 @@ interface StrategyTopicCardProps {
   onPress: () => void;
 }
 
-export function StrategyTopicCard({
-  label,
-  image,
-  onPress,
-}: StrategyTopicCardProps) {
+export function StrategyTopicCard({ label, image, onPress }: StrategyTopicCardProps) {
   return (
-    <TouchableOpacity
-      style={styles.outer}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
+    <TouchableOpacity style={styles.outer} onPress={onPress} activeOpacity={0.85}>
       <LinearGradient
         colors={["rgba(255,255,255,0.22)", "rgba(255,255,255,0)"]}
         start={{ x: 0.5, y: 0 }}

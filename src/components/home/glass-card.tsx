@@ -1,12 +1,6 @@
-import { Fonts, Spacing } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef } from "react";
-import {
-  Animated,
-  StyleSheet,
-  TouchableOpacity,
-  type ViewStyle,
-} from "react-native";
+import { Animated, StyleSheet, TouchableOpacity, type ViewStyle } from "react-native";
 
 interface GlassCardProps {
   children?: React.ReactNode;
@@ -16,13 +10,7 @@ interface GlassCardProps {
   highlight?: boolean;
 }
 
-export function GlassCard({
-  children,
-  style,
-  outerStyle,
-  onPress,
-  highlight,
-}: GlassCardProps) {
+export function GlassCard({ children, style, outerStyle, onPress, highlight }: GlassCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   function handlePressIn(): void {

@@ -22,7 +22,9 @@ export function OpportunitiesList({ introduction, opportunities }: Opportunities
       <SectionHeader title="Oportunidades" badge={unique.length} badgeColor="#00FF84" />
 
       {introduction && (
-        <ThemedText type="bodyMd" style={styles.intro}>{introduction}</ThemedText>
+        <ThemedText type="bodyMd" style={styles.intro}>
+          {introduction}
+        </ThemedText>
       )}
 
       {unique.map((o, i) => (

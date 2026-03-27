@@ -11,24 +11,12 @@ interface MenuItemProps {
 
 export function MenuItem({ icon, label, onPress }: MenuItemProps) {
   return (
-    <TouchableOpacity
-      style={styles.menuItem}
-      activeOpacity={0.7}
-      onPress={onPress}
-    >
-      <Ionicons
-        name={icon as any}
-        size={20}
-        color="rgba(255,255,255,0.6)"
-      />
+    <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={onPress}>
+      <Ionicons name={icon as any} size={20} color="rgba(255,255,255,0.6)" />
       <ThemedText type="labelSm" style={styles.menuLabel}>
         {label}
       </ThemedText>
-      <Ionicons
-        name="chevron-forward"
-        size={18}
-        color="rgba(255,255,255,0.3)"
-      />
+      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.3)" />
     </TouchableOpacity>
   );
 }

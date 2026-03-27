@@ -15,16 +15,24 @@ export function PhaseItem({ label, sublabel, text, index, isLast }: PhaseItemPro
     <View style={styles.row}>
       <View style={styles.timeline}>
         <View style={styles.dot}>
-          <ThemedText type="caption" style={styles.dotNum}>{index}</ThemedText>
+          <ThemedText type="caption" style={styles.dotNum}>
+            {index}
+          </ThemedText>
         </View>
         {!isLast && <View style={styles.line} />}
       </View>
       <View style={[styles.content, isLast && styles.contentLast]}>
         <View style={styles.header}>
-          <ThemedText type="labelSm" style={styles.label}>{label}</ThemedText>
-          <ThemedText type="caption" style={styles.sublabel}>{sublabel}</ThemedText>
+          <ThemedText type="labelSm" style={styles.label}>
+            {label}
+          </ThemedText>
+          <ThemedText type="caption" style={styles.sublabel}>
+            {sublabel}
+          </ThemedText>
         </View>
-        <ThemedText type="bodyMd" style={styles.text}>{text}</ThemedText>
+        <ThemedText type="bodyMd" style={styles.text}>
+          {text}
+        </ThemedText>
       </View>
     </View>
   );

@@ -9,9 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ExpressCompleteScreen() {
   const insets = useSafeAreaInsets();
-  const upgradeToProfessional = useOnboardingStore(
-    (s) => s.upgradeToProfessional,
-  );
+  const upgradeToProfessional = useOnboardingStore((s) => s.upgradeToProfessional);
 
   function handleSend(): void {
     router.replace("/(onboarding)/report-loading");
@@ -34,11 +32,22 @@ export default function ExpressCompleteScreen() {
         ]}
       >
         <View style={styles.content}>
-          <ThemedText type="headingLg" style={{ color: "#ffffff", textAlign: "center", marginBottom: Spacing.four }}>¡INICIO EXPRESS COMPLETADO!</ThemedText>
-          <ThemedText type="bodyLg" style={{ color: "rgba(255,255,255,0.85)", textAlign: "center", paddingHorizontal: Spacing.two }}>
-            ¿Quieres enviar la información para que diseñemos tu Plan para
-            Duplicar tus Ventas y Trabajar la Mitad o quieres continuar con el
-            Inicio Profesional (aprox 3 minutos más)?
+          <ThemedText
+            type="headingLg"
+            style={{ color: "#ffffff", textAlign: "center", marginBottom: Spacing.four }}
+          >
+            ¡INICIO EXPRESS COMPLETADO!
+          </ThemedText>
+          <ThemedText
+            type="bodyLg"
+            style={{
+              color: "rgba(255,255,255,0.85)",
+              textAlign: "center",
+              paddingHorizontal: Spacing.two,
+            }}
+          >
+            ¿Quieres enviar la información para que diseñemos tu Plan para Duplicar tus Ventas y
+            Trabajar la Mitad o quieres continuar con el Inicio Profesional (aprox 3 minutos más)?
           </ThemedText>
         </View>
 
@@ -50,7 +59,12 @@ export default function ExpressCompleteScreen() {
             onPress={handleContinue}
             activeOpacity={0.7}
           >
-            <ThemedText type="labelSm" style={{ color: "#E8731A", textDecorationLine: "underline" }}>Continuar</ThemedText>
+            <ThemedText
+              type="labelSm"
+              style={{ color: "#E8731A", textDecorationLine: "underline" }}
+            >
+              Continuar
+            </ThemedText>
           </TouchableOpacity>
         </View>
       </View>

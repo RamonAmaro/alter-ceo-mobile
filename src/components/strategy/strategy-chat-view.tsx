@@ -31,11 +31,7 @@ function isResultItem(item: ListItem): item is { id: string; type: "result" } {
 export function StrategyChatView({ messages }: StrategyChatViewProps) {
   const listRef = useRef<FlatList<ListItem>>(null);
 
-  const data: ListItem[] = [
-    ...BOT_GREETING,
-    { id: RESULT_ITEM_ID, type: "result" },
-    ...messages,
-  ];
+  const data: ListItem[] = [...BOT_GREETING, { id: RESULT_ITEM_ID, type: "result" }, ...messages];
 
   function renderItem({ item, index }: { item: ListItem; index: number }) {
     const next = data[index + 1];
@@ -43,22 +39,13 @@ export function StrategyChatView({ messages }: StrategyChatViewProps) {
     const currentIsUser = isResultItem(item) ? false : item.isUser;
     const nextIsUser = next && !isResultItem(next) ? next.isUser : null;
 
-    const isLastInGroup =
-      !next ||
-      isResultItem(next) ||
-      nextIsUser !== currentIsUser;
+    const isLastInGroup = !next || isResultItem(next) || nextIsUser !== currentIsUser;
 
     if (isResultItem(item)) {
       return <StrategyResultCard isUser={false} isLastInGroup={isLastInGroup} />;
     }
 
-    return (
-      <MessageBubble
-        text={item.text}
-        isUser={item.isUser}
-        isLastInGroup={isLastInGroup}
-      />
-    );
+    return <MessageBubble text={item.text} isUser={item.isUser} isLastInGroup={isLastInGroup} />;
   }
 
   return (

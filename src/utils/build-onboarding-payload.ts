@@ -31,7 +31,7 @@ const DAILY_HOURS_MAP: Record<string, DailyHoursDedicated> = {
 };
 
 const TEAM_SIZE_MAP: Record<string, TeamSizeRange> = {
-  "Autónomo": "solo",
+  Autónomo: "solo",
   "De 1 a 3": "1_3",
   "De 4 a 10": "4_10",
   "De 11 a 30": "11_30",
@@ -179,9 +179,7 @@ interface BuildProfessionalPayloadParams {
   userId: string;
 }
 
-export function buildExpressPayload(
-  params: BuildExpressPayloadParams,
-): PlanRunCreateRequest {
+export function buildExpressPayload(params: BuildExpressPayloadParams): PlanRunCreateRequest {
   const { answers, primaryOfferAudio, mainObstacleAudio, userId } = params;
   const a = (i: number) => answers.get(i);
 

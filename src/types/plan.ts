@@ -1,8 +1,5 @@
 import type { RunStatus } from "./api";
-import type {
-  ExpressOnboardingAnswers,
-  ProfessionalOnboardingAnswers,
-} from "./onboarding";
+import type { ExpressOnboardingAnswers, ProfessionalOnboardingAnswers } from "./onboarding";
 
 export type OnboardingMode = "express" | "professional";
 

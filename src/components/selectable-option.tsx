@@ -12,12 +12,7 @@ interface SelectableOptionProps {
   onPress: () => void;
 }
 
-export function SelectableOption({
-  label,
-  subtitle,
-  selected,
-  onPress,
-}: SelectableOptionProps) {
+export function SelectableOption({ label, subtitle, selected, onPress }: SelectableOptionProps) {
   return (
     <TouchableOpacity
       style={[styles.wrapper, selected && styles.wrapperSelected]}
@@ -30,8 +25,12 @@ export function SelectableOption({
         imageStyle={styles.image}
         resizeMode="cover"
       >
-        <ThemedText type="labelMd" style={styles.label}>{label}</ThemedText>
-        <ThemedText type="bodySm" style={styles.subtitle}>{subtitle}</ThemedText>
+        <ThemedText type="labelMd" style={styles.label}>
+          {label}
+        </ThemedText>
+        <ThemedText type="bodySm" style={styles.subtitle}>
+          {subtitle}
+        </ThemedText>
       </ImageBackground>
     </TouchableOpacity>
   );

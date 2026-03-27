@@ -2,21 +2,14 @@ import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { ProgressCircle } from "@/components/onboarding/progress-circle";
 import { ThemedText } from "@/components/themed-text";
-import {
-  STEPS,
-  getStepIndexForStage,
-  type RunStage,
-} from "@/constants/report-loading-steps";
+import { STEPS, getStepIndexForStage, type RunStage } from "@/constants/report-loading-steps";
 import { Spacing } from "@/constants/theme";
 import { createRun, streamRunEvents } from "@/services/plan-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { ApiError } from "@/types/api";
 import type { AudioAnswer } from "@/types/onboarding";
-import {
-  buildExpressPayload,
-  buildProfessionalPayload,
-} from "@/utils/build-onboarding-payload";
+import { buildExpressPayload, buildProfessionalPayload } from "@/utils/build-onboarding-payload";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -56,7 +49,8 @@ export default function ReportLoadingScreen() {
   function advanceToStage(stage: RunStage, progressPct?: number): void {
     const baseIndex = getStepIndexForStage(stage);
     if (progressPct != null && stage === "plan_generating") {
-      const range = getStepIndexForStage("plan_validating") - getStepIndexForStage("plan_generating");
+      const range =
+        getStepIndexForStage("plan_validating") - getStepIndexForStage("plan_generating");
       const computed = baseIndex + Math.floor((progressPct / 100) * range);
       setStepIndex((prev) => Math.max(prev, computed));
     } else {
@@ -121,7 +115,9 @@ export default function ReportLoadingScreen() {
             try {
               const payload = JSON.parse(event.data) as Record<string, unknown>;
               if (typeof payload.progress_pct === "number") progressPct = payload.progress_pct;
-            } catch { /* data not JSON, ignore */ }
+            } catch {
+              /* data not JSON, ignore */
+            }
 
             advanceToStage(stage, progressPct);
           },

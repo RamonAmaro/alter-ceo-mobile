@@ -1,11 +1,6 @@
 import { create } from "zustand";
 
-import {
-  getSession,
-  login,
-  logout,
-  register as registerUser,
-} from "@/services/auth-service";
+import { getSession, login, logout, register as registerUser } from "@/services/auth-service";
 import {
   authenticateWithBiometrics,
   clearCredentials,
@@ -24,11 +19,7 @@ interface AuthState {
 
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  register: (
-    email: string,
-    password: string,
-    displayName?: string,
-  ) => Promise<void>;
+  register: (email: string, password: string, displayName?: string) => Promise<void>;
   tryBiometricLogin: () => Promise<boolean>;
   enableBiometrics: (email: string, password: string) => Promise<void>;
   checkBiometricsStatus: () => Promise<void>;

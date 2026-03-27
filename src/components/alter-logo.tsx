@@ -1,12 +1,4 @@
-import Svg, {
-  ClipPath,
-  Defs,
-  G,
-  LinearGradient,
-  Path,
-  Rect,
-  Stop,
-} from "react-native-svg";
+import Svg, { ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 interface AlterLogoProps {
   size?: number;

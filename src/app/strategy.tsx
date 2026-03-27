@@ -6,13 +6,7 @@ import { StrategyHeader } from "@/components/strategy/strategy-header";
 import { StrategyTopicSelector } from "@/components/strategy/strategy-topic-selector";
 import { Spacing } from "@/constants/theme";
 import { useCallback, useRef, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  type TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, type TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StrategyScreen() {

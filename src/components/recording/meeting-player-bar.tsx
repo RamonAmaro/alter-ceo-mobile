@@ -11,12 +11,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 
-import Svg, {
-  Defs,
-  Rect,
-  Stop,
-  LinearGradient as SvgLinearGradient,
-} from "react-native-svg";
+import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from "react-native-svg";
 
 interface MeetingPlayerBarProps {
   title: string;
@@ -54,9 +49,8 @@ export function MeetingPlayerBar({
 
   const pct = Math.min(Math.max(progress, 0), 1);
   const half = THUMB_SIZE / 2;
-  const thumbX = trackWidth > 0
-    ? Math.min(Math.max(pct * trackWidth, half), trackWidth - half)
-    : half;
+  const thumbX =
+    trackWidth > 0 ? Math.min(Math.max(pct * trackWidth, half), trackWidth - half) : half;
 
   useEffect(() => {
     onSeekRef.current = onSeek;
@@ -67,10 +61,14 @@ export function MeetingPlayerBar({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (e) => {
-        onSeekRef.current(Math.min(Math.max(e.nativeEvent.locationX / trackWidthRef.current, 0), 1));
+        onSeekRef.current(
+          Math.min(Math.max(e.nativeEvent.locationX / trackWidthRef.current, 0), 1),
+        );
       },
       onPanResponderMove: (e) => {
-        onSeekRef.current(Math.min(Math.max(e.nativeEvent.locationX / trackWidthRef.current, 0), 1));
+        onSeekRef.current(
+          Math.min(Math.max(e.nativeEvent.locationX / trackWidthRef.current, 0), 1),
+        );
       },
     }),
   ).current;
@@ -91,37 +89,37 @@ export function MeetingPlayerBar({
         pointerEvents="none"
       />
       <View style={styles.trackContainer} onLayout={onTrackLayout} {...panResponder.panHandlers}>
-          <Svg width="100%" height={THUMB_SIZE} preserveAspectRatio="none">
-            <Defs>
-              <SvgLinearGradient id="pg" x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0" stopColor="#00A4FF" />
-                <Stop offset="0.5" stopColor="#00CEB3" />
-                <Stop offset="1" stopColor="#00E688" />
-              </SvgLinearGradient>
-            </Defs>
-            <Rect
-              x="0"
-              y={(THUMB_SIZE - TRACK_HEIGHT) / 2}
-              width="100%"
-              height={TRACK_HEIGHT}
-              fill="rgba(241,241,241,0.2)"
-            />
-            <Rect
-              x="0"
-              y={(THUMB_SIZE - TRACK_HEIGHT) / 2}
-              width={`${pct * 100}%`}
-              height={TRACK_HEIGHT}
-              fill="url(#pg)"
-            />
-            <Rect
-              x={thumbX - half}
-              y="0"
-              width={THUMB_SIZE}
-              height={THUMB_SIZE}
-              rx={THUMB_SIZE / 2}
-              fill="#01E28F"
-            />
-          </Svg>
+        <Svg width="100%" height={THUMB_SIZE} preserveAspectRatio="none">
+          <Defs>
+            <SvgLinearGradient id="pg" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor="#00A4FF" />
+              <Stop offset="0.5" stopColor="#00CEB3" />
+              <Stop offset="1" stopColor="#00E688" />
+            </SvgLinearGradient>
+          </Defs>
+          <Rect
+            x="0"
+            y={(THUMB_SIZE - TRACK_HEIGHT) / 2}
+            width="100%"
+            height={TRACK_HEIGHT}
+            fill="rgba(241,241,241,0.2)"
+          />
+          <Rect
+            x="0"
+            y={(THUMB_SIZE - TRACK_HEIGHT) / 2}
+            width={`${pct * 100}%`}
+            height={TRACK_HEIGHT}
+            fill="url(#pg)"
+          />
+          <Rect
+            x={thumbX - half}
+            y="0"
+            width={THUMB_SIZE}
+            height={THUMB_SIZE}
+            rx={THUMB_SIZE / 2}
+            fill="#01E28F"
+          />
+        </Svg>
       </View>
 
       <View style={styles.durationRow}>
@@ -133,11 +131,7 @@ export function MeetingPlayerBar({
       <View style={styles.infoRow}>
         <TouchableOpacity onPress={onTogglePlay} activeOpacity={0.7}>
           <View style={[styles.playButton, !isPlaying && { paddingLeft: 3 }]}>
-            <Ionicons
-              name={isPlaying ? "pause" : "play"}
-              size={24}
-              color="#273C57"
-            />
+            <Ionicons name={isPlaying ? "pause" : "play"} size={24} color="#273C57" />
           </View>
         </TouchableOpacity>
 

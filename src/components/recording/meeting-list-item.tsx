@@ -23,13 +23,7 @@ interface MeetingListItemProps {
   onDelete: (id: string) => void;
 }
 
-function ActionButton({
-  icon,
-  onPress,
-}: {
-  icon: React.ReactNode;
-  onPress: () => void;
-}) {
+function ActionButton({ icon, onPress }: { icon: React.ReactNode; onPress: () => void }) {
   return (
     <TouchableOpacity onPress={onPress} hitSlop={8} activeOpacity={0.6}>
       {icon}
@@ -94,7 +88,9 @@ export function MeetingListItem({
           </ThemedText>
           <View style={styles.actions}>
             <ActionButton
-              icon={<Ionicons name="share-social-outline" size={20} color="rgba(255,255,255,0.6)" />}
+              icon={
+                <Ionicons name="share-social-outline" size={20} color="rgba(255,255,255,0.6)" />
+              }
               onPress={() => onShare(item.id)}
             />
             <ActionButton
@@ -106,7 +102,13 @@ export function MeetingListItem({
               onPress={() => onFavorite(item.id)}
             />
             <ActionButton
-              icon={<MaterialCommunityIcons name="delete-outline" size={20} color="rgba(255,255,255,0.6)" />}
+              icon={
+                <MaterialCommunityIcons
+                  name="delete-outline"
+                  size={20}
+                  color="rgba(255,255,255,0.6)"
+                />
+              }
               onPress={() => onDelete(item.id)}
             />
           </View>

@@ -67,10 +67,7 @@ function buildUrl(path: string, params?: Record<string, string>): string {
     : path;
 }
 
-export async function get<T>(
-  path: string,
-  params?: Record<string, string>,
-): Promise<T> {
+export async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
   try {
     const response = await apiClient.get<T>(buildUrl(path, params));
     return response.data;
@@ -88,10 +85,7 @@ export async function post<T>(path: string, body?: unknown): Promise<T> {
   }
 }
 
-export async function postFormData<T>(
-  path: string,
-  formData: FormData,
-): Promise<T> {
+export async function postFormData<T>(path: string, formData: FormData): Promise<T> {
   try {
     const response = await apiClient.post<T>(path, formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -114,10 +108,7 @@ export async function putExternal(
     });
   } catch (err) {
     if (isAxiosError(err) && err.response) {
-      throw new ApiError(
-        err.response.status,
-        `Upload failed with status ${err.response.status}`,
-      );
+      throw new ApiError(err.response.status, `Upload failed with status ${err.response.status}`);
     }
     throw err;
   }

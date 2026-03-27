@@ -14,11 +14,7 @@ export function ChatInputBar() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.inputWrap}
-        onPress={handlePress}
-        activeOpacity={0.8}
-      >
+      <TouchableOpacity style={styles.inputWrap} onPress={handlePress} activeOpacity={0.8}>
         <LinearGradient
           colors={["rgba(0,255,132,0.18)", "rgba(0,255,132,0.03)"]}
           start={{ x: 0, y: 0 }}
@@ -28,23 +24,12 @@ export function ChatInputBar() {
           <ThemedText type="bodyMd" style={styles.placeholder}>
             Escribe tu mensaje...
           </ThemedText>
-          <Ionicons
-            name="radio-outline"
-            size={20}
-            color="rgba(255,255,255,0.5)"
-          />
+          <Ionicons name="radio-outline" size={20} color="rgba(255,255,255,0.5)" />
         </LinearGradient>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.sendBtn}
-        activeOpacity={0.8}
-        onPress={handlePress}
-      >
-        <LinearGradient
-          colors={["#00FF84", "#00CC6A"]}
-          style={styles.sendGradient}
-        >
+      <TouchableOpacity style={styles.sendBtn} activeOpacity={0.8} onPress={handlePress}>
+        <LinearGradient colors={["#00FF84", "#00CC6A"]} style={styles.sendGradient}>
           <Ionicons name="send" size={18} color="#000000" />
         </LinearGradient>
       </TouchableOpacity>

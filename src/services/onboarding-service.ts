@@ -7,8 +7,5 @@ import type {
 export async function prefetchUrlContext(
   request: OnboardingUrlContextPrefetchRequest,
 ): Promise<OnboardingUrlContextPrefetchAccepted> {
-  return post<OnboardingUrlContextPrefetchAccepted>(
-    "/onboarding/url-context/prefetch",
-    request,
-  );
+  return post<OnboardingUrlContextPrefetchAccepted>("/onboarding/url-context/prefetch", request);
 }

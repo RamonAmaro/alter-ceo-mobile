@@ -26,10 +26,7 @@ export function RecordingTimer({ elapsedMs, isRecording }: RecordingTimerProps) 
 
   return (
     <View style={styles.container}>
-      <ThemedText
-        type="headingLg"
-        style={[styles.timer, { fontFamily: Fonts.montserratBold }]}
-      >
+      <ThemedText type="headingLg" style={[styles.timer, { fontFamily: Fonts.montserratBold }]}>
         {timerText}
       </ThemedText>
       <ThemedText type="bodyMd" style={styles.status}>

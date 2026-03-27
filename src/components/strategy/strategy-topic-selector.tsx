@@ -36,9 +36,7 @@ interface StrategyTopicSelectorProps {
   onSelect: (key: string) => void;
 }
 
-export function StrategyTopicSelector({
-  onSelect,
-}: StrategyTopicSelectorProps) {
+export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) {
   const topRow = TOPICS.slice(0, 2);
   const bottomRow = TOPICS.slice(2, 4);
 

@@ -15,12 +15,7 @@ export default function AlterScreen() {
 
   return (
     <AppBackground>
-      <View
-        style={[
-          styles.container,
-          { paddingTop: insets.top + Spacing.three },
-        ]}
-      >
+      <View style={[styles.container, { paddingTop: insets.top + Spacing.three }]}>
         <HomeHeader />
 
         <View style={styles.cardsArea}>

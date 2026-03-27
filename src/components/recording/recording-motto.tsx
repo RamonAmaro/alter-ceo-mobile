@@ -13,15 +13,10 @@ export function RecordingMotto({ activeIndex }: RecordingMottoProps) {
     <View style={styles.container}>
       <View style={styles.dots}>
         {DOTS.map((i) => (
-          <View
-            key={i}
-            style={[styles.dot, i === activeIndex && styles.dotActive]}
-          />
+          <View key={i} style={[styles.dot, i === activeIndex && styles.dotActive]} />
         ))}
       </View>
-      <ThemedText style={styles.motto}>
-        {"TUS MEJORES IDEAS\nESTÁN AQUÍ."}
-      </ThemedText>
+      <ThemedText style={styles.motto}>{"TUS MEJORES IDEAS\nESTÁN AQUÍ."}</ThemedText>
     </View>
   );
 }

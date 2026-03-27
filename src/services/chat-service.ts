@@ -9,9 +9,7 @@ import type {
   UserChatThreadsResponse,
 } from "@/types/chat";
 
-export async function createThread(
-  userId: string,
-): Promise<ChatThreadResponse> {
+export async function createThread(userId: string): Promise<ChatThreadResponse> {
   return post<ChatThreadResponse>("/chat/threads", { user_id: userId });
 }
 
@@ -21,15 +19,10 @@ export async function listUserThreads(
 ): Promise<UserChatThreadsResponse> {
   const params: Record<string, string> = {};
   if (limit != null) params.limit = String(limit);
-  return get<UserChatThreadsResponse>(
-    `/users/${userId}/chat/threads`,
-    params,
-  );
+  return get<UserChatThreadsResponse>(`/users/${userId}/chat/threads`, params);
 }
 
-export async function listMessages(
-  threadId: string,
-): Promise<ChatMessagesResponse> {
+export async function listMessages(threadId: string): Promise<ChatMessagesResponse> {
   return get<ChatMessagesResponse>(`/chat/threads/${threadId}/messages`);
 }
 
@@ -37,10 +30,7 @@ export async function createTurn(
   threadId: string,
   request: ChatTurnCreateRequest,
 ): Promise<ChatTurnCreateResponse> {
-  return post<ChatTurnCreateResponse>(
-    `/chat/threads/${threadId}/turns`,
-    request,
-  );
+  return post<ChatTurnCreateResponse>(`/chat/threads/${threadId}/turns`, request);
 }
 
 export function streamTurnEvents(

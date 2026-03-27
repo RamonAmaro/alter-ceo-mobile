@@ -8,13 +8,15 @@ interface PriorityItemProps {
   index: number;
 }
 
-export function PriorityItem({ text, index }: PriorityItemProps) {
+export function PriorityItem({ text, index: _index }: PriorityItemProps) {
   return (
     <View style={styles.row}>
       <View style={styles.icon}>
         <Ionicons name="checkmark" size={12} color="#00FF84" />
       </View>
-      <ThemedText type="bodyMd" style={styles.text}>{text}</ThemedText>
+      <ThemedText type="bodyMd" style={styles.text}>
+        {text}
+      </ThemedText>
     </View>
   );
 }

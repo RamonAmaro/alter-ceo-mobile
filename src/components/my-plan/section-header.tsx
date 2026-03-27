@@ -9,22 +9,26 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, badge, badgeColor = "#00FF84" }: SectionHeaderProps) {
-  const badgeBg = badgeColor === "#FF4444"
-    ? "rgba(255,68,68,0.12)"
-    : badgeColor === "#A78BFA"
-      ? "rgba(167,139,250,0.12)"
-      : "rgba(0,255,132,0.12)";
-  const badgeBorder = badgeColor === "#FF4444"
-    ? "rgba(255,68,68,0.25)"
-    : badgeColor === "#A78BFA"
-      ? "rgba(167,139,250,0.25)"
-      : "rgba(0,255,132,0.25)";
+  const badgeBg =
+    badgeColor === "#FF4444"
+      ? "rgba(255,68,68,0.12)"
+      : badgeColor === "#A78BFA"
+        ? "rgba(167,139,250,0.12)"
+        : "rgba(0,255,132,0.12)";
+  const badgeBorder =
+    badgeColor === "#FF4444"
+      ? "rgba(255,68,68,0.25)"
+      : badgeColor === "#A78BFA"
+        ? "rgba(167,139,250,0.25)"
+        : "rgba(0,255,132,0.25)";
 
   return (
     <View style={styles.row}>
       <View style={styles.titleGroup}>
         <View style={[styles.accent, { backgroundColor: badgeColor }]} />
-        <ThemedText type="headingMd" style={styles.title}>{title}</ThemedText>
+        <ThemedText type="headingMd" style={styles.title}>
+          {title}
+        </ThemedText>
       </View>
       {badge !== undefined && (
         <View style={[styles.badge, { backgroundColor: badgeBg, borderColor: badgeBorder }]}>

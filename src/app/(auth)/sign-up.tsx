@@ -118,7 +118,17 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.formContainer}>
-            <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratSemiBold, color: "#ffffff", textAlign: "center", marginBottom: Spacing.three }}>Crear Cuenta</ThemedText>
+            <ThemedText
+              type="bodyLg"
+              style={{
+                fontFamily: Fonts.montserratSemiBold,
+                color: "#ffffff",
+                textAlign: "center",
+                marginBottom: Spacing.three,
+              }}
+            >
+              Crear Cuenta
+            </ThemedText>
 
             <Input
               placeholder="Nombre"
@@ -175,9 +185,16 @@ export default function SignUpScreen() {
             />
 
             <View style={styles.loginContainer}>
-              <ThemedText type="bodyLg" style={{ fontFamily: Fonts.montserratLight, color: "#ffffff", textAlign: "center" }}>¿Ya tienes cuenta?</ThemedText>
+              <ThemedText
+                type="bodyLg"
+                style={{ fontFamily: Fonts.montserratLight, color: "#ffffff", textAlign: "center" }}
+              >
+                ¿Ya tienes cuenta?
+              </ThemedText>
               <TouchableOpacity onPress={() => router.back()}>
-                <ThemedText type="labelMd" style={{ color: "#E8731A", textAlign: "center" }}>Inicia sesión aquí</ThemedText>
+                <ThemedText type="labelMd" style={{ color: "#E8731A", textAlign: "center" }}>
+                  Inicia sesión aquí
+                </ThemedText>
               </TouchableOpacity>
             </View>
           </View>

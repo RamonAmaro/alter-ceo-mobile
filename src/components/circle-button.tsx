@@ -1,18 +1,8 @@
 import { Spacing } from "@/constants/theme";
 import { ThemedText } from "@/components/themed-text";
 import { useEffect, useRef } from "react";
-import {
-  Animated,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import Svg, {
-  Circle,
-  Defs,
-  RadialGradient,
-  Stop,
-} from "react-native-svg";
+import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 export interface CircleButtonProps {
   size?: number;
@@ -64,12 +54,7 @@ export function CircleButton({
   return (
     <View style={styles.actionWrapper}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-        <Animated.View
-          style={[
-            styles.circleButton,
-            { transform: [{ scale: pulseAnim }] },
-          ]}
-        >
+        <Animated.View style={[styles.circleButton, { transform: [{ scale: pulseAnim }] }]}>
           <Svg width={size} height={size} viewBox={viewBox} fill="none">
             <Defs>
               <RadialGradient
@@ -90,10 +75,7 @@ export function CircleButton({
           </Svg>
         </Animated.View>
       </TouchableOpacity>
-      <ThemedText
-        type="caption"
-        style={{ color: "#ffffff", textAlign: "center" }}
-      >
+      <ThemedText type="caption" style={{ color: "#ffffff", textAlign: "center" }}>
         {label}
       </ThemedText>
     </View>

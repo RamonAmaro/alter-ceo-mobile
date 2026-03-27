@@ -22,10 +22,13 @@ export function DiagnosisSection({
     financialState?.rentabilidad && { label: "Rentabilidad", value: financialState.rentabilidad },
     financialState?.liquidez && { label: "Liquidez", value: financialState.liquidez },
     financialState?.kpis && { label: "KPIs", value: financialState.kpis },
-    financialState?.planificacion && { label: "Planificación", value: financialState.planificacion },
+    financialState?.planificacion && {
+      label: "Planificación",
+      value: financialState.planificacion,
+    },
     founderDependency && { label: "Depend. fundador", value: founderDependency },
     acquisitionSystem && { label: "Captación", value: acquisitionSystem },
-  ].filter(Boolean) as Array<{ label: string; value: string }>;
+  ].filter(Boolean) as { label: string; value: string }[];
 
   return (
     <View style={styles.container}>

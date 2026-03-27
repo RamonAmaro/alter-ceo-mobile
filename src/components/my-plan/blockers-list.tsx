@@ -22,7 +22,9 @@ export function BlockersList({ introduction, blockers }: BlockersListProps) {
       <SectionHeader title="Bloqueos detectados" badge={unique.length} badgeColor="#FF4444" />
 
       {introduction && (
-        <ThemedText type="bodyMd" style={styles.intro}>{introduction}</ThemedText>
+        <ThemedText type="bodyMd" style={styles.intro}>
+          {introduction}
+        </ThemedText>
       )}
 
       {unique.map((b, i) => (

@@ -31,8 +31,9 @@ export function RevenueChart({ values }: RevenueChartProps) {
   const max = Math.max(...values);
   const svgHeight = CHART_HEIGHT + LABEL_HEIGHT + PADDING_TOP;
 
-  const gridYPositions = Array.from({ length: GRID_LINES }, (_, i) =>
-    PADDING_TOP + (CHART_HEIGHT * (1 - (i + 1) / (GRID_LINES + 1))),
+  const gridYPositions = Array.from(
+    { length: GRID_LINES },
+    (_, i) => PADDING_TOP + CHART_HEIGHT * (1 - (i + 1) / (GRID_LINES + 1)),
   );
 
   function renderBars(width: number) {

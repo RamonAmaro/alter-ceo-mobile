@@ -8,15 +8,9 @@ import type {
   MeetingUploadCompletedRequest,
   UserMeetingsResponse,
 } from "@/types/meeting";
-import {
-  EncodingType,
-  getInfoAsync,
-  readAsStringAsync,
-} from "expo-file-system/legacy";
+import { EncodingType, getInfoAsync, readAsStringAsync } from "expo-file-system/legacy";
 
-export async function createMeeting(
-  request: MeetingCreateRequest,
-): Promise<MeetingCreateResponse> {
+export async function createMeeting(request: MeetingCreateRequest): Promise<MeetingCreateResponse> {
   return post<MeetingCreateResponse>("/meetings", request);
 }
 
@@ -37,10 +31,7 @@ export async function completeUpload(
   meetingId: string,
   request: MeetingUploadCompletedRequest,
 ): Promise<MeetingProcessingAccepted> {
-  return post<MeetingProcessingAccepted>(
-    `/meetings/${meetingId}/upload-complete`,
-    request,
-  );
+  return post<MeetingProcessingAccepted>(`/meetings/${meetingId}/upload-complete`, request);
 }
 
 export async function uploadFileToS3(

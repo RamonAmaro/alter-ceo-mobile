@@ -1,13 +1,7 @@
 import { AppBackground } from "@/components/app-background";
 import { Spacing } from "@/constants/theme";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  FlatList,
-  KeyboardAvoidingView,
-  StyleSheet,
-  type TextInput,
-  View,
-} from "react-native";
+import { FlatList, KeyboardAvoidingView, StyleSheet, type TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/components/screen-header";
