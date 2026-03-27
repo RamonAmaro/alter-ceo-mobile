@@ -1,7 +1,6 @@
-import { API_BASE_URL, API_VERSION, SESSION_COOKIE_NAME } from "@/constants/env";
+import { API_BASE_URL, API_VERSION } from "@/constants/env";
 import { buildAuthHeaders } from "@/lib/api-client";
 import type { SSEEvent } from "@/utils/sse-parser";
-import CookieManager from "@react-native-cookies/cookies";
 import EventSource from "react-native-sse";
 
 const SSE_EVENT_TYPES = [
@@ -38,25 +37,6 @@ function buildSSEUrl(path: string, params?: Record<string, string>): string {
   return `${base}?${new URLSearchParams(params).toString()}`;
 }
 
-function extractCookieValue(cookieHeader: string): string | null {
-  const nameValue = cookieHeader.split(";")[0]?.trim() ?? "";
-  const eqIdx = nameValue.indexOf("=");
-  if (eqIdx === -1) return null;
-  return nameValue.slice(eqIdx + 1).trim() || null;
-}
-
-async function ensureSessionCookieInJar(cookieHeader: string): Promise<void> {
-  const value = extractCookieValue(cookieHeader);
-  if (!value) return;
-  await CookieManager.set(API_BASE_URL, {
-    name: SESSION_COOKIE_NAME,
-    value,
-    path: "/",
-    secure: true,
-    httpOnly: true,
-  });
-}
-
 function buildSSEEventSource(
   url: string,
   method: "GET" | "POST",
@@ -68,7 +48,6 @@ function buildSSEEventSource(
     method,
     body: method === "POST" && body != null ? JSON.stringify(body) : undefined,
     pollingInterval: 0,
-    withCredentials: true,
   });
 }
 
@@ -111,6 +90,9 @@ export function connectSSE(path: string, options: SSEConnectOptions): SSEConnect
   if (authHeaders["Authorization"]) {
     headers["Authorization"] = authHeaders["Authorization"];
   }
+  if (authHeaders["Cookie"]) {
+    headers["Cookie"] = authHeaders["Cookie"];
+  }
   if (method === "POST" && options.body != null) {
     headers["Content-Type"] = "application/json";
   }
@@ -118,14 +100,8 @@ export function connectSSE(path: string, options: SSEConnectOptions): SSEConnect
   type ESInstance = EventSource<(typeof SSE_EVENT_TYPES)[number]>;
   const state: { es: ESInstance | null; aborted: boolean } = { es: null, aborted: false };
 
-  const cookieHeader = authHeaders["Cookie"];
-  const cookieReady = cookieHeader ? ensureSessionCookieInJar(cookieHeader) : Promise.resolve();
-
-  void cookieReady.then(() => {
-    if (state.aborted) return;
-    state.es = buildSSEEventSource(url, method, headers, options.body);
-    attachSSEListeners(state.es, options);
-  });
+  state.es = buildSSEEventSource(url, method, headers, options.body);
+  attachSSEListeners(state.es, options);
 
   return {
     abort: () => {

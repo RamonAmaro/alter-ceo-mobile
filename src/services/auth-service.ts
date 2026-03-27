@@ -1,7 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import CookieManager from "@react-native-cookies/cookies";
 
-import { API_BASE_URL } from "@/constants/env";
 import { apiClient, handleAxiosError, setAuthCookieGetter } from "@/lib/api-client";
 import { SESSION_COOKIE_KEY, type AuthSession } from "@/types/auth";
 import { extractSessionCookie } from "@/utils/extract-session-cookie";
@@ -22,36 +20,12 @@ function mapSession(raw: RawAuthSessionResponse): AuthSession {
 
 async function saveSession(cookie: string): Promise<void> {
   setAuthCookieGetter(() => cookie);
-  const [name, value] = cookie.split("=");
-  if (name && value) {
-    void CookieManager.set(API_BASE_URL, {
-      name: name.trim(),
-      value: value.trim(),
-      path: "/",
-      secure: true,
-      httpOnly: true,
-    });
-  }
   await SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
 }
 
 export async function initAuthCookie(): Promise<void> {
   const stored = await SecureStore.getItemAsync(SESSION_COOKIE_KEY);
-  if (!stored) {
-    setAuthCookieGetter(() => null);
-    return;
-  }
-  setAuthCookieGetter(() => stored);
-  const [name, value] = stored.split("=");
-  if (name && value) {
-    await CookieManager.set(API_BASE_URL, {
-      name: name.trim(),
-      value: value.trim(),
-      path: "/",
-      secure: true,
-      httpOnly: true,
-    });
-  }
+  setAuthCookieGetter(() => stored ?? null);
 }
 
 export async function login(email: string, password: string): Promise<AuthSession> {
@@ -102,6 +76,5 @@ export async function logout(): Promise<void> {
   } finally {
     await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
     setAuthCookieGetter(() => null);
-    await CookieManager.clearAll();
   }
 }

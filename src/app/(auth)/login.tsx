@@ -156,6 +156,8 @@ export default function LoginScreen() {
                 if (errors.password) setErrors((e) => ({ ...e, password: false }));
               }}
               secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
               error={errors.password}
               errorMessage="Introduce tu contraseña"
               style={styles.inputSpacing}
