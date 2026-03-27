@@ -12,7 +12,7 @@ import { getKeyboardType } from "@/utils/get-keyboard-type";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Animated,
   KeyboardAvoidingView,
@@ -48,25 +48,6 @@ export default function QuestionsScreen() {
 
   const question = questions[currentQuestionIndex];
 
-  useEffect(() => {
-    if (!question || question.type === "audio") return;
-    fadeAnim.setValue(0);
-    slideAnim.setValue(20);
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    scrollRef.current?.scrollTo({ y: 0, animated: false });
-  }, [currentQuestionIndex]);
-
   if (!question) return null;
 
   if (question.type === "audio") {
@@ -99,12 +80,25 @@ export default function QuestionsScreen() {
     return validateQuestionAnswer(question.type, currentAnswer);
   }
 
+  function animateIn(): void {
+    fadeAnim.setValue(0);
+    slideAnim.setValue(20);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start();
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }
+
   function animateTransition(callback: () => void): void {
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 150,
       useNativeDriver: true,
-    }).start(() => callback());
+    }).start(() => {
+      callback();
+      animateIn();
+    });
   }
 
   function triggerUrlPrefetch(): void {

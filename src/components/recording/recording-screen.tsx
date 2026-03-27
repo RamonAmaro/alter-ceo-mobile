@@ -28,6 +28,7 @@ export function RecordingScreen() {
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
+  const [playerBarHeight, setPlayerBarHeight] = useState(0);
 
   const { recordings } = useRecordingsStore();
   const { activeId, setActiveId } = useActiveRecordingStore();
@@ -93,6 +94,7 @@ export function RecordingScreen() {
       if (activeId === id) {
         player.pause();
         setActiveId(null);
+        setPlayerBarHeight(0);
       }
     },
     [activeId, player, setActiveId],
@@ -103,15 +105,11 @@ export function RecordingScreen() {
   const handleClose = useCallback(() => {
     player.pause();
     setActiveId(null);
+    setPlayerBarHeight(0);
   }, [player, setActiveId]);
 
-  const [playerBarHeight, setPlayerBarHeight] = useState(0);
   const progress = status.duration > 0 ? status.currentTime / status.duration : 0;
   const showPlayer = activeIndex === 1 && !!activeRecording;
-
-  useEffect(() => {
-    if (!activeRecording) setPlayerBarHeight(0);
-  }, [activeRecording]);
 
   const viewabilityConfig = useRef({
     viewAreaCoveragePercentThreshold: 50,

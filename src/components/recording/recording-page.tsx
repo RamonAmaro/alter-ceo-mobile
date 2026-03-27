@@ -43,9 +43,7 @@ export function RecordingPage({ width, height }: RecordingPageProps) {
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   const addRecording = useRecordingsStore((s) => s.addRecording);
 
-  useEffect(() => {
-    elapsedRef.current = elapsedMs;
-  }, [elapsedMs]);
+  elapsedRef.current = elapsedMs;
 
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now() - elapsedMs;

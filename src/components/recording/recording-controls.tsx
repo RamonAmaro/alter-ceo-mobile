@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { CircleButton } from "@/components/circle-button";
@@ -54,15 +54,6 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
   const saveGlow = useRef(new Animated.Value(0)).current;
   const isActive = state === "recording" || state === "paused";
 
-  useEffect(() => {
-    if (state === "idle") {
-      deleteScale.setValue(1);
-      deleteGlow.setValue(0);
-      saveScale.setValue(1);
-      saveGlow.setValue(0);
-    }
-  }, [state, deleteScale, deleteGlow, saveScale, saveGlow]);
-
   const animateButton = useCallback(
     (scale: Animated.Value, glow: Animated.Value, callback: () => void) => {
       Animated.sequence([
@@ -92,9 +83,15 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
             useNativeDriver: true,
           }),
         ]),
-      ]).start(() => callback());
+      ]).start(() => {
+        callback();
+        deleteScale.setValue(1);
+        deleteGlow.setValue(0);
+        saveScale.setValue(1);
+        saveGlow.setValue(0);
+      });
     },
-    [],
+    [deleteScale, deleteGlow, saveScale, saveGlow],
   );
 
   const handleDelete = useCallback(() => {

@@ -5,7 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { router } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,22 +15,16 @@ export default function PlanSelectionScreen() {
   const footerOpacity = useRef(new Animated.Value(0)).current;
   const footerTranslateY = useRef(new Animated.Value(20)).current;
 
-  useEffect(() => {
-    if (planType) {
+  function handleSelectPlan(type: "express" | "professional"): void {
+    const isFirstSelection = !planType;
+    setPlanType(type);
+    if (isFirstSelection) {
       Animated.parallel([
-        Animated.timing(footerOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(footerTranslateY, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
+        Animated.timing(footerOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(footerTranslateY, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]).start();
     }
-  }, [planType]);
+  }
 
   return (
     <AppBackground>
@@ -58,13 +52,13 @@ export default function PlanSelectionScreen() {
               label="EXPRESS"
               subtitle="3 minutos de tiempo aprox"
               selected={planType === "express"}
-              onPress={() => setPlanType("express")}
+              onPress={() => handleSelectPlan("express")}
             />
             <SelectableOption
               label="PROFESIONAL"
               subtitle="6 minutos de tiempo aprox"
               selected={planType === "professional"}
-              onPress={() => setPlanType("professional")}
+              onPress={() => handleSelectPlan("professional")}
             />
           </View>
         </ScrollView>
