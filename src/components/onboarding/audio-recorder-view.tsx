@@ -1,19 +1,20 @@
 import { CircleButton } from "@/components/circle-button";
 import { CountdownOverlay } from "@/components/countdown-overlay";
 import { LiveTranscriptBox } from "@/components/onboarding/live-transcript-box";
-import { AudioWave } from "@/components/recording/audio-wave";
 import { RecordButton } from "@/components/record-button";
 import { CheckIcon, RestartIcon } from "@/components/recording-icons";
+import { AudioWave } from "@/components/recording/audio-wave";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
 import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
-import { MAX_DURATION_MS } from "@/services/audio-service";
-import { createTranscriptionSession } from "@/services/transcription-service";
+import { Fonts, Spacing } from "@/constants/theme";
+import { MAX_DURATION_MS, requestAudioPermission } from "@/services/audio-service";
 import type { TranscriptionSession } from "@/services/transcription-service";
+import { createTranscriptionSession } from "@/services/transcription-service";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { formatTimer } from "@/utils/format-timer";
+import { Ionicons } from "@expo/vector-icons";
 import { useAudioRecorder } from "@siteed/expo-audio-studio";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,7 +25,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 
 type RecordingState =
   | "idle"
@@ -118,6 +118,12 @@ export function AudioRecorderView({
   }, [stopTimer, stopRecording]);
 
   async function startNewRecording(): Promise<void> {
+    const granted = await requestAudioPermission();
+    if (!granted) {
+      Alert.alert("Permiso requerido", "Necesitamos acceso al micrófono para grabar tu respuesta.");
+      return;
+    }
+
     sessionRef.current?.close();
     sessionRef.current = null;
     pausedRef.current = false;
@@ -137,11 +143,11 @@ export function AudioRecorderView({
 
     try {
       await startRecording({
-        sampleRate: 24000 as never,
+        sampleRate: 16000 as never,
         channels: 1,
         encoding: "pcm_16bit",
         interval: 100,
-        onAudioStream: (event) => {
+        onAudioStream: async (event) => {
           if (!pausedRef.current && session) {
             session.sendAudioData(event.data as string | Float32Array);
           }
@@ -231,6 +237,7 @@ export function AudioRecorderView({
     stopTimer();
     sessionRef.current?.close();
     sessionRef.current = null;
+    void stopRecording().catch(() => {});
     setRecordState("countdown");
   }
 
