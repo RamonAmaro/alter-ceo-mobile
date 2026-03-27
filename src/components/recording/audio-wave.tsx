@@ -13,28 +13,26 @@ const MIN_BAR_H = 3;
 const POLL_MS = 60;
 const ANIM_MS = 40;
 
-interface AudioWaveProps {
-  isActive: boolean;
-  isReset: boolean;
-  recorder: AudioRecorder;
-}
+type AudioWaveProps =
+  | { isActive: boolean; isReset: boolean; recorder: AudioRecorder; amplitudeRef?: never }
+  | { isActive: boolean; isReset: boolean; amplitudeRef: React.RefObject<number>; recorder?: never };
 
 function normalizeLevel(db: number): number {
   const clamped = Math.max(-60, Math.min(0, db ?? -60));
   return (clamped + 60) / 60;
 }
 
-export function AudioWave({ isActive, isReset, recorder }: AudioWaveProps) {
+export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWaveProps) {
   const [headIndex, setHeadIndex] = useState(0);
   const barAnims = useRef(
-    Array.from({ length: N_BARS }, () => new Animated.Value(MIN_BAR_H))
+    Array.from({ length: N_BARS }, () => new Animated.Value(MIN_BAR_H)),
   );
 
   useEffect(() => {
     if (!isReset) return;
     setHeadIndex(0);
     barAnims.current.forEach((v) =>
-      Animated.timing(v, { toValue: MIN_BAR_H, duration: 300, useNativeDriver: false }).start()
+      Animated.timing(v, { toValue: MIN_BAR_H, duration: 300, useNativeDriver: false }).start(),
     );
   }, [isReset]);
 
@@ -44,8 +42,10 @@ export function AudioWave({ isActive, isReset, recorder }: AudioWaveProps) {
     let currentIndex = 0;
 
     const id = setInterval(() => {
-      const db = recorder.getStatus().metering ?? -60;
-      const level = normalizeLevel(db);
+      const level = recorder
+        ? normalizeLevel(recorder.getStatus().metering ?? -60)
+        : (amplitudeRef?.current ?? 0);
+
       const targetH = MIN_BAR_H + level * (MAX_BAR_H - MIN_BAR_H);
       const idx = currentIndex % N_BARS;
 
@@ -60,7 +60,7 @@ export function AudioWave({ isActive, isReset, recorder }: AudioWaveProps) {
     }, POLL_MS);
 
     return () => clearInterval(id);
-  }, [isActive, recorder]);
+  }, [isActive, recorder, amplitudeRef]);
 
   const orderedBars = Array.from({ length: N_BARS }, (_, i) => {
     const bufferIndex = (headIndex + i) % N_BARS;
@@ -74,7 +74,7 @@ export function AudioWave({ isActive, isReset, recorder }: AudioWaveProps) {
         const opacity = 0.15 + progress * 0.85;
         const r = Math.round(0 + progress * 30);
         const g = Math.round(140 + progress * 80);
-        const b = Math.round(255);
+        const b = 255;
         const barColor = `rgba(${r},${g},${b},${opacity.toFixed(2)})`;
 
         const y = animH.interpolate({
@@ -82,18 +82,11 @@ export function AudioWave({ isActive, isReset, recorder }: AudioWaveProps) {
           outputRange: [HALF - MIN_BAR_H / 2, HALF - MAX_BAR_H / 2],
           extrapolate: "clamp",
         });
+
         return (
           <Animated.View
             key={i}
-            style={[
-              styles.bar,
-              {
-                left: i * BAR_STEP,
-                height: animH,
-                top: y,
-                backgroundColor: barColor,
-              },
-            ]}
+            style={[styles.bar, { left: i * BAR_STEP, height: animH, top: y, backgroundColor: barColor }]}
           />
         );
       })}

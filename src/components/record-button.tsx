@@ -32,7 +32,7 @@ export function RecordButton({
   onFinish,
   onRestart,
 }: RecordButtonProps) {
-  const anim = useRef(new Animated.Value(0)).current;
+  const anim = useRef(new Animated.Value(state !== "idle" ? 1 : 0)).current;
   const prevStateRef = useRef(state);
 
   useEffect(() => {

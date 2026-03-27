@@ -1,5 +1,6 @@
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
+import { AudioRecorderView } from "@/components/onboarding/audio-recorder-view";
 import { QuestionOption } from "@/components/question-option";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
@@ -59,6 +60,7 @@ export default function QuestionsScreen() {
   const question = questions[currentQuestionIndex];
 
   useEffect(() => {
+    if (!question || question.type === "audio") return;
     fadeAnim.setValue(0);
     slideAnim.setValue(20);
     Animated.parallel([
@@ -77,6 +79,17 @@ export default function QuestionsScreen() {
   }, [currentQuestionIndex]);
 
   if (!question) return null;
+
+  if (question.type === "audio") {
+    return (
+      <AppBackground>
+        <AudioRecorderView
+          onConfirm={handleConfirmAudio}
+          onBack={handleBack}
+        />
+      </AppBackground>
+    );
+  }
 
   const currentAnswer = getAnswer(currentQuestionIndex);
 
@@ -153,13 +166,7 @@ export default function QuestionsScreen() {
     }
 
     if (nextIndex < questions.length) {
-      const nextQ = questions[nextIndex];
-      animateTransition(() => {
-        nextQuestion();
-        if (nextQ.type === "audio") {
-          router.push("/(onboarding)/audio-question");
-        }
-      });
+      animateTransition(() => nextQuestion());
     } else {
       navigateAfterQuestions();
     }
@@ -170,6 +177,15 @@ export default function QuestionsScreen() {
       animateTransition(() => previousQuestion());
     } else {
       router.back();
+    }
+  }
+
+  function handleConfirmAudio(_uri: string, _transcript: string | null): void {
+    const nextIndex = currentQuestionIndex + 1;
+    if (nextIndex < questions.length) {
+      nextQuestion();
+    } else {
+      navigateAfterQuestions();
     }
   }
 

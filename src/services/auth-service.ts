@@ -20,8 +20,7 @@ function mapSession(raw: RawAuthSessionResponse): AuthSession {
   };
 }
 
-function saveSession(cookie: string): void {
-  void SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
+async function saveSession(cookie: string): Promise<void> {
   setAuthCookieGetter(() => cookie);
   const [name, value] = cookie.split("=");
   if (name && value) {
@@ -33,6 +32,7 @@ function saveSession(cookie: string): void {
       httpOnly: true,
     });
   }
+  await SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
 }
 
 export async function initAuthCookie(): Promise<void> {
@@ -61,7 +61,7 @@ export async function login(
   try {
     const response = await apiClient.post<RawAuthSessionResponse>("/auth/login", { email, password });
     const cookie = extractSessionCookie(response.headers);
-    if (cookie) saveSession(cookie);
+    if (cookie) await saveSession(cookie);
     return mapSession(response.data);
   } catch (err) {
     return handleAxiosError(err);
@@ -80,7 +80,7 @@ export async function register(
       display_name: displayName ?? null,
     });
     const cookie = extractSessionCookie(response.headers);
-    if (cookie) saveSession(cookie);
+    if (cookie) await saveSession(cookie);
     return mapSession(response.data);
   } catch (err) {
     return handleAxiosError(err);
@@ -102,5 +102,6 @@ export async function logout(): Promise<void> {
   } finally {
     await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
     setAuthCookieGetter(() => null);
+    await CookieManager.clearAll();
   }
 }

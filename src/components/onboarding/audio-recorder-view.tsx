@@ -1,16 +1,16 @@
-import { AppBackground } from "@/components/app-background";
 import { CircleButton } from "@/components/circle-button";
 import { CountdownOverlay } from "@/components/countdown-overlay";
 import { LiveTranscriptBox } from "@/components/onboarding/live-transcript-box";
+import { AudioWave } from "@/components/recording/audio-wave";
 import { RecordButton } from "@/components/record-button";
 import { CheckIcon, RestartIcon } from "@/components/recording-icons";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
 import {
   getExpressQuestions,
   getProfessionalQuestions,
 } from "@/constants/onboarding-questions";
+import { Ionicons } from "@expo/vector-icons";
 import {
   MAX_DURATION_MS,
   requestAudioPermission,
@@ -21,27 +21,36 @@ import { useOnboardingStore } from "@/stores/onboarding-store";
 import { formatTimer } from "@/utils/format-timer";
 import { useAudioRecorder } from "@siteed/expo-audio-studio";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type RecordingState = "idle" | "recording" | "paused" | "finishing" | "done" | "countdown";
+type RecordingState = "idle" | "preparing" | "recording" | "paused" | "finishing" | "done" | "countdown";
 
 interface RecordingResult {
   uri: string;
   transcript: string | null;
 }
 
-export function AudioRecorderView() {
+interface AudioRecorderViewProps {
+  onConfirm: (uri: string, transcript: string | null) => void;
+  onBack: () => void;
+}
+
+export function AudioRecorderView({ onConfirm, onBack }: AudioRecorderViewProps) {
   const insets = useSafeAreaInsets();
   const {
     planType,
     currentQuestionIndex,
     setAnswer,
     addAudioRecord,
-    nextQuestion,
-    previousQuestion,
   } = useOnboardingStore();
 
   const questions = useMemo(
@@ -61,6 +70,8 @@ export function AudioRecorderView() {
   const accumulatedMsRef = useRef(0);
   const pausedRef = useRef(false);
   const sessionRef = useRef<TranscriptionSession | null>(null);
+  const amplitudeRef = useRef<number>(0);
+  const prevQuestionIndexRef = useRef(currentQuestionIndex);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -88,6 +99,17 @@ export function AudioRecorderView() {
   );
 
   useEffect(() => {
+    if (prevQuestionIndexRef.current === currentQuestionIndex) return;
+    prevQuestionIndexRef.current = currentQuestionIndex;
+    setRecordState("idle");
+    setElapsedMs(0);
+    setResult(null);
+    stopTimer();
+    sessionRef.current?.close();
+    sessionRef.current = null;
+  }, [currentQuestionIndex]);
+
+  useEffect(() => {
     return () => {
       stopTimer();
       sessionRef.current?.close();
@@ -109,6 +131,7 @@ export function AudioRecorderView() {
     sessionRef.current?.close();
     sessionRef.current = null;
     pausedRef.current = false;
+    setRecordState("preparing");
 
     let session: TranscriptionSession | null = null;
     try {
@@ -116,6 +139,10 @@ export function AudioRecorderView() {
       sessionRef.current = session;
     } catch {
       sessionRef.current = null;
+      Alert.alert(
+        "Transcripción no disponible",
+        "Puedes grabar igualmente. Tu respuesta será procesada sin transcripción en tiempo real.",
+      );
     }
 
     try {
@@ -129,6 +156,27 @@ export function AudioRecorderView() {
           if (!pausedRef.current && session) {
             session.sendAudioData(event.data as string | Float32Array);
           }
+          if (event.data instanceof Float32Array && event.data.length > 0) {
+            let sum = 0;
+            for (let i = 0; i < event.data.length; i++) {
+              sum += event.data[i] * event.data[i];
+            }
+            amplitudeRef.current = Math.min(Math.sqrt(sum / event.data.length) * 15, 1);
+          } else if (typeof event.data === "string" && event.data.length > 0) {
+            try {
+              const binary = atob(event.data);
+              const count = Math.floor(binary.length / 2);
+              let sum = 0;
+              for (let i = 0; i < count; i++) {
+                const s16 = (binary.charCodeAt(i * 2) | (binary.charCodeAt(i * 2 + 1) << 8)) << 16 >> 16;
+                const norm = s16 / 32768;
+                sum += norm * norm;
+              }
+              amplitudeRef.current = count > 0 ? Math.min(Math.sqrt(sum / count) * 15, 1) : 0;
+            } catch {
+              amplitudeRef.current = 0;
+            }
+          }
         },
       });
 
@@ -139,6 +187,7 @@ export function AudioRecorderView() {
     } catch {
       session?.close();
       sessionRef.current = null;
+      setRecordState("idle");
       Alert.alert("Error", "No se pudo iniciar la grabación.");
     }
   }
@@ -208,182 +257,159 @@ export function AudioRecorderView() {
       transcript: result.transcript,
     });
 
-    const nextIndex = currentQuestionIndex + 1;
-    if (nextIndex >= questions.length) {
-      router.replace(
-        planType === "express"
-          ? "/(onboarding)/express-complete"
-          : "/(onboarding)/report-loading",
-      );
-      return;
-    }
-
-    nextQuestion();
-    const nextQ = questions[nextIndex];
-    if (nextQ.type === "audio") {
-      setResult(null);
-      setElapsedMs(0);
-      setRecordState("idle");
-    } else {
-      router.back();
-    }
+    onConfirm(result.uri, result.transcript);
   }
 
-  const progressRatio = Math.min(elapsedMs / MAX_DURATION_MS, 1);
   const isRecordingOrPaused = recordState === "recording" || recordState === "paused";
   const isRecordingActive = recordState === "recording";
+  const isPreparing = recordState === "preparing";
 
   if (!question) return null;
 
   return (
-    <AppBackground>
-      <View
-        style={[
-          styles.container,
-          { paddingTop: insets.top + Spacing.three, paddingBottom: insets.bottom },
-        ]}
-      >
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            onPress={() => {
-              previousQuestion();
-              router.back();
-            }}
-            activeOpacity={0.7}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="arrow-back" size={22} color="#ffffff" />
-          </TouchableOpacity>
-          <ThemedText type="labelMd" style={{ color: "#ffffff" }}>
-            {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
-          </ThemedText>
-        </View>
-
-        <ScrollView
-          style={styles.topSection}
-          contentContainerStyle={styles.topContent}
-          showsVerticalScrollIndicator={false}
+    <View style={[styles.container, { paddingTop: insets.top + Spacing.three, paddingBottom: insets.bottom }]}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={onBack}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <ThemedText type="headingLg" style={{ color: "#ffffff" }}>
-            {question.instruction ||
-              "Graba un audio de un máximo de 30 segundos contestando a la siguiente pregunta:"}
-          </ThemedText>
+          <Ionicons name="arrow-back" size={22} color="#ffffff" />
+        </TouchableOpacity>
+        <ThemedText type="labelMd" style={{ color: "#ffffff" }}>
+          {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
+        </ThemedText>
+      </View>
 
-          <ThemedText
-            type="bodyLg"
-            style={{ fontFamily: Fonts.montserratMedium, color: "#ffffff", marginTop: Spacing.three }}
-          >
-            {question.question}
-          </ThemedText>
+      <ScrollView
+        style={styles.topSection}
+        contentContainerStyle={styles.topContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <ThemedText type="headingLg" style={{ color: "#ffffff" }}>
+          {question.instruction ||
+            "Graba un audio de un máximo de 30 segundos contestando a la siguiente pregunta:"}
+        </ThemedText>
 
-          <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>
-            ({question.progress}%)
-          </ThemedText>
-        </ScrollView>
+        <ThemedText
+          type="bodyLg"
+          style={{ fontFamily: Fonts.montserratMedium, color: "#ffffff", marginTop: Spacing.three }}
+        >
+          {question.question}
+        </ThemedText>
 
-        <View style={styles.recordWrapper}>
-          <View style={styles.separator} />
-          <LinearGradient
-            colors={["rgba(0,255,255,0.15)", "transparent"]}
-            style={styles.recordGradient}
-          >
-            <View style={styles.topArea}>
-              {isRecordingOrPaused && (
-                <>
-                  <View style={styles.timerRow}>
-                    <ThemedText
-                      type="headingMd"
-                      style={[
-                        styles.timerText,
-                        isRecordingActive && styles.timerRecording,
-                        recordState === "paused" && styles.timerPaused,
-                      ]}
-                    >
-                      {formatTimer(elapsedMs)}
-                    </ThemedText>
-                    <ThemedText type="bodyMd" style={styles.timerLimit}>
-                      / {formatTimer(MAX_DURATION_MS)}
-                    </ThemedText>
-                  </View>
+        <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>
+          ({question.progress}%)
+        </ThemedText>
+      </ScrollView>
 
-                  <View style={styles.progressBarTrack}>
-                    <View
-                      style={[
-                        styles.progressBarFill,
-                        { width: `${progressRatio * 100}%` as unknown as number },
-                      ]}
-                    />
-                  </View>
-                </>
-              )}
-
-              {recordState === "finishing" && (
-                <View style={styles.finishingBlock}>
-                  <ActivityIndicator color="#00FF84" size="large" />
-                  <ThemedText type="labelMd" style={styles.finishingTitle}>
-                    Transcribiendo audio...
-                  </ThemedText>
-                  <ThemedText type="bodySm" style={styles.finishingSubtitle}>
-                    Espera un momento, estamos procesando tu respuesta
-                  </ThemedText>
-                </View>
-              )}
-
-              {recordState === "done" && (
-                result?.transcript ? (
-                  <>
-                    <ThemedText type="labelMd" style={styles.transcriptLabel}>
-                      Transcripción
-                    </ThemedText>
-                    <LiveTranscriptBox text={result.transcript} />
-                  </>
-                ) : (
-                  <ThemedText type="bodySm" style={styles.noTranscriptText}>
-                    Audio grabado correctamente
-                  </ThemedText>
-                )
-              )}
-            </View>
-
-            {recordState === "done" && (
-              <View style={styles.doneActions}>
-                <CircleButton
-                  size={120}
-                  gradientId="gradRestart"
-                  colors={["#FF9500", "#E68400"]}
-                  icon={RestartIcon}
-                  label="Reintentar"
-                  onPress={handleRestart}
-                />
-                <CircleButton
-                  size={120}
-                  gradientId="gradConfirm"
-                  colors={["#00D68F", "#00A86B"]}
-                  icon={CheckIcon}
-                  label="Confirmar"
-                  onPress={handleConfirm}
-                  pulse
-                />
+      <View style={styles.recordWrapper}>
+        <View style={styles.separator} />
+        <LinearGradient
+          colors={["rgba(0,255,255,0.15)", "transparent"]}
+          style={styles.recordGradient}
+        >
+          <View style={styles.topArea}>
+            {isPreparing && (
+              <View style={styles.preparingBlock}>
+                <ActivityIndicator color="#00CFFF" size="large" />
+                <ThemedText type="labelMd" style={styles.preparingTitle}>
+                  Preparando grabación...
+                </ThemedText>
               </View>
             )}
-            {recordState !== "done" && recordState !== "finishing" && (
-              <RecordButton
-                state={isRecordingOrPaused ? recordState : "idle"}
-                onRecord={handleRecord}
-                onPause={handlePause}
-                onResume={handleResume}
-                onFinish={handleFinish}
-                onRestart={handleRestart}
-              />
+
+            {isRecordingOrPaused && (
+              <>
+                <AudioWave
+                  isActive={isRecordingActive}
+                  isReset={false}
+                  amplitudeRef={amplitudeRef}
+                />
+                <View style={styles.timerRow}>
+                  <ThemedText
+                    type="headingMd"
+                    style={[
+                      styles.timerText,
+                      isRecordingActive && styles.timerRecording,
+                      recordState === "paused" && styles.timerPaused,
+                    ]}
+                  >
+                    {formatTimer(elapsedMs)}
+                  </ThemedText>
+                  <ThemedText type="bodyMd" style={styles.timerLimit}>
+                    / {formatTimer(MAX_DURATION_MS)}
+                  </ThemedText>
+                </View>
+              </>
             )}
-          </LinearGradient>
-        </View>
+
+            {recordState === "finishing" && (
+              <View style={styles.finishingBlock}>
+                <ActivityIndicator color="#00FF84" size="large" />
+                <ThemedText type="labelMd" style={styles.finishingTitle}>
+                  Transcribiendo audio...
+                </ThemedText>
+                <ThemedText type="bodySm" style={styles.finishingSubtitle}>
+                  Espera un momento, estamos procesando tu respuesta
+                </ThemedText>
+              </View>
+            )}
+
+            {recordState === "done" && (
+              result?.transcript ? (
+                <>
+                  <ThemedText type="labelMd" style={styles.transcriptLabel}>
+                    Transcripción
+                  </ThemedText>
+                  <LiveTranscriptBox text={result.transcript} />
+                </>
+              ) : (
+                <ThemedText type="bodySm" style={styles.noTranscriptText}>
+                  Audio grabado correctamente
+                </ThemedText>
+              )
+            )}
+          </View>
+
+          {recordState === "done" && (
+            <View style={styles.doneActions}>
+              <CircleButton
+                size={120}
+                gradientId="gradRestart"
+                colors={["#FF9500", "#E68400"]}
+                icon={RestartIcon}
+                label="Reintentar"
+                onPress={handleRestart}
+              />
+              <CircleButton
+                size={120}
+                gradientId="gradConfirm"
+                colors={["#00D68F", "#00A86B"]}
+                icon={CheckIcon}
+                label="Confirmar"
+                onPress={handleConfirm}
+                pulse
+              />
+            </View>
+          )}
+          {!isPreparing && recordState !== "done" && recordState !== "finishing" && (
+            <RecordButton
+              state={isRecordingOrPaused ? recordState : "idle"}
+              onRecord={handleRecord}
+              onPause={handlePause}
+              onResume={handleResume}
+              onFinish={handleFinish}
+              onRestart={handleRestart}
+            />
+          )}
+        </LinearGradient>
       </View>
 
       {recordState === "countdown" && (
         <CountdownOverlay onComplete={handleCountdownComplete} />
       )}
-    </AppBackground>
+    </View>
   );
 }
 
@@ -425,6 +451,15 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     marginBottom: Spacing.two,
   },
+  preparingBlock: {
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+  },
+  preparingTitle: {
+    color: "#00CFFF",
+    textAlign: "center",
+  },
   timerRow: {
     flexDirection: "row",
     alignItems: "baseline",
@@ -444,18 +479,6 @@ const styles = StyleSheet.create({
   timerLimit: {
     color: "rgba(255,255,255,0.4)",
     fontVariant: ["tabular-nums"],
-  },
-  progressBarTrack: {
-    width: "100%",
-    height: 3,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#00FF84",
-    borderRadius: 2,
   },
   finishingBlock: {
     alignItems: "center",

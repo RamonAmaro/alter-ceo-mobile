@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function CompletionScreen() {
   const insets = useSafeAreaInsets();
   const complete = useOnboardingStore((s) => s.complete);
+  const clearAnswers = useOnboardingStore((s) => s.clearAnswers);
   const fetchLatestPlan = usePlanStore((s) => s.fetchLatestPlan);
   const user = useAuthStore((s) => s.user);
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ export default function CompletionScreen() {
       await fetchLatestPlan(user.userId);
     }
     await complete();
+    clearAnswers();
     router.replace("/(app)/alter");
   }
 

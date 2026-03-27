@@ -44,10 +44,10 @@ export default function ReportLoadingScreen() {
     };
   }, []);
 
-  function getAudioAnswer(questionIndex: number, recordingId: string): AudioAnswer {
+  function getAudioAnswer(questionIndex: number): AudioAnswer {
     const record = audioRecords.find((r) => r.questionIndex === questionIndex);
     return {
-      audio_url: `https://example.com/onboarding/${recordingId}.mp3`,
+      audio_url: "https://alterceo.com/audio/placeholder.mp3",
       duration_seconds: 1,
       transcript: record?.transcript ?? null,
     };
@@ -76,8 +76,8 @@ export default function ReportLoadingScreen() {
       let runRequest;
 
       if (planType === "express") {
-        const primaryOffer = getAudioAnswer(EXPRESS_AUDIO_INDICES.primaryOffer, "express-primary-offer");
-        const mainObstacle = getAudioAnswer(EXPRESS_AUDIO_INDICES.mainObstacle, "express-main-obstacle");
+        const primaryOffer = getAudioAnswer(EXPRESS_AUDIO_INDICES.primaryOffer);
+        const mainObstacle = getAudioAnswer(EXPRESS_AUDIO_INDICES.mainObstacle);
         runRequest = buildExpressPayload({
           answers,
           primaryOfferAudio: primaryOffer,
@@ -85,8 +85,8 @@ export default function ReportLoadingScreen() {
           userId: user.userId,
         });
       } else {
-        const offerAndSales = getAudioAnswer(PROFESSIONAL_AUDIO_INDICES.offerAndSales, "pro-offer-sales");
-        const primaryOfferPrice = getAudioAnswer(PROFESSIONAL_AUDIO_INDICES.primaryOfferPrice, "pro-offer-price");
+        const offerAndSales = getAudioAnswer(PROFESSIONAL_AUDIO_INDICES.offerAndSales);
+        const primaryOfferPrice = getAudioAnswer(PROFESSIONAL_AUDIO_INDICES.primaryOfferPrice);
         runRequest = buildProfessionalPayload({
           answers,
           offerAndSalesAudio: offerAndSales,
@@ -113,8 +113,7 @@ export default function ReportLoadingScreen() {
             }
 
             if (stage === "error") {
-              console.error("[report-loading] SSE run error event:", event.data);
-              setError(`Error al generar el plan: ${event.data || "error desconocido"}`);
+              setError("Error al generar el plan. Por favor, inténtalo de nuevo.");
               return;
             }
 
@@ -126,13 +125,12 @@ export default function ReportLoadingScreen() {
 
             advanceToStage(stage, progressPct);
           },
-          (err) => {
-            console.error("[report-loading] SSE stream error:", err);
+          () => {
             if (retryCountRef.current < MAX_RETRIES) {
               retryCountRef.current += 1;
               setTimeout(() => connectToRun(runId), 1500 * retryCountRef.current);
             } else {
-              setError(`No se pudo conectar con el servidor después de ${MAX_RETRIES} intentos.\n\n[${err.message}]`);
+              setError("No se pudo conectar con el servidor. Por favor, inténtalo de nuevo.");
             }
           },
           lastEventIdRef.current,
@@ -142,13 +140,10 @@ export default function ReportLoadingScreen() {
 
       connectToRun(accepted.run_id);
     } catch (err) {
-      console.error("[report-loading] startGeneration error:", err);
       if (err instanceof ApiError) {
-        setError(`Error ${err.status}: ${err.message}`);
-      } else if (err instanceof Error) {
-        setError(`Error inesperado: ${err.message}`);
+        setError(`Error al crear el plan (${err.status}). Por favor, inténtalo de nuevo.`);
       } else {
-        setError(`Error desconocido: ${String(err)}`);
+        setError("Error inesperado. Por favor, inténtalo de nuevo.");
       }
     }
   }

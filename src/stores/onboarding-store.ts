@@ -34,6 +34,7 @@ interface OnboardingState {
   setCurrentQuestionIndex: (index: number) => void;
   upgradeToProfessional: () => void;
   complete: () => Promise<void>;
+  clearAnswers: () => void;
   reset: () => Promise<void>;
 }
 
@@ -117,6 +118,15 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   complete: async () => {
     await SecureStore.setItemAsync(ONBOARDING_KEY, "true");
     set({ completed: true });
+  },
+
+  clearAnswers: () => {
+    set({
+      planType: null,
+      currentQuestionIndex: 0,
+      answers: new Map(),
+      audioRecords: [],
+    });
   },
 
   reset: async () => {
