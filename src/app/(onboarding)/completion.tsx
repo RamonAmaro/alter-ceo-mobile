@@ -26,6 +26,7 @@ export default function CompletionScreen() {
     await complete();
     clearAnswers();
     router.replace("/(app)/alter");
+    setTimeout(() => router.push("/my-plan"), 300);
   }
 
   return (
