@@ -1,0 +1,147 @@
+import { ThemedText } from "@/components/themed-text";
+import { Fonts, Spacing } from "@/constants/theme";
+import { useCallback, useEffect, useRef } from "react";
+import {
+  Animated,
+  type LayoutChangeEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+
+export interface PlanTab {
+  key: string;
+  label: string;
+}
+
+interface PlanNavTabsProps {
+  tabs: PlanTab[];
+  activeKey: string;
+  onPress: (key: string) => void;
+}
+
+interface TabLayout {
+  x: number;
+  width: number;
+}
+
+export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
+  const scrollRef = useRef<ScrollView>(null);
+  const tabLayouts = useRef<Record<string, TabLayout>>({});
+  const indicatorX = useRef(new Animated.Value(0)).current;
+  const indicatorScaleX = useRef(new Animated.Value(60)).current;
+
+  const animateIndicator = useCallback(
+    (key: string) => {
+      const layout = tabLayouts.current[key];
+      if (!layout) return;
+
+      Animated.spring(indicatorX, {
+        toValue: layout.x + layout.width / 2,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 14,
+      }).start();
+
+      Animated.spring(indicatorScaleX, {
+        toValue: layout.width,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 14,
+      }).start();
+    },
+    [indicatorX, indicatorScaleX],
+  );
+
+  useEffect(() => {
+    animateIndicator(activeKey);
+    const layout = tabLayouts.current[activeKey];
+    if (layout && scrollRef.current) {
+      scrollRef.current.scrollTo({ x: Math.max(0, layout.x - 40), animated: true });
+    }
+  }, [activeKey, animateIndicator]);
+
+  const handleTabLayout = useCallback(
+    (key: string, e: LayoutChangeEvent) => {
+      const { x, width } = e.nativeEvent.layout;
+      tabLayouts.current[key] = { x, width };
+      if (key === activeKey) {
+        animateIndicator(activeKey);
+      }
+    },
+    [activeKey, animateIndicator],
+  );
+
+  return (
+    <View style={styles.wrapper}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {tabs.map((tab) => {
+          const isActive = tab.key === activeKey;
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => onPress(tab.key)}
+              onLayout={(e) => handleTabLayout(tab.key, e)}
+              style={styles.tab}
+            >
+              <ThemedText
+                type="caption"
+                style={[styles.tabText, isActive && styles.tabTextActive]}
+                numberOfLines={1}
+              >
+                {tab.label}
+              </ThemedText>
+            </Pressable>
+          );
+        })}
+
+        <Animated.View
+          style={[
+            styles.indicator,
+            {
+              transform: [{ translateX: indicatorX }, { scaleX: indicatorScaleX }],
+            },
+          ]}
+        />
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrapper: {
+    backgroundColor: "#202F3F",
+  },
+  scrollContent: {
+    paddingHorizontal: Spacing.three,
+  },
+  tab: {
+    paddingHorizontal: Spacing.three,
+    paddingTop: 4,
+    paddingBottom: 10,
+  },
+  tabText: {
+    color: "rgba(255,255,255,0.35)",
+    fontSize: 13,
+    fontFamily: Fonts.montserratMedium,
+  },
+  tabTextActive: {
+    color: "#ffffff",
+    fontFamily: Fonts.montserratBold,
+  },
+  indicator: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    width: 1,
+    height: 3,
+    borderRadius: 99,
+    backgroundColor: "#00FF84",
+  },
+});

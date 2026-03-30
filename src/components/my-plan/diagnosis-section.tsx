@@ -1,5 +1,5 @@
-import { MetricCard } from "@/components/my-plan/metric-card";
 import { SectionHeader } from "@/components/my-plan/section-header";
+import { StatusRing, statusToColor, statusToValue } from "@/components/my-plan/status-ring";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import type { PlanFinancialState } from "@/types/plan-data";
@@ -18,17 +18,20 @@ export function DiagnosisSection({
   founderDependency,
   acquisitionSystem,
 }: DiagnosisSectionProps) {
-  const metrics = [
-    financialState?.rentabilidad && { label: "Rentabilidad", value: financialState.rentabilidad },
-    financialState?.liquidez && { label: "Liquidez", value: financialState.liquidez },
-    financialState?.kpis && { label: "KPIs", value: financialState.kpis },
-    financialState?.planificacion && {
-      label: "Planificación",
-      value: financialState.planificacion,
+  const rings = [
+    financialState?.rentabilidad && {
+      label: financialState.rentabilidad,
+      caption: "Rentabilidad",
     },
-    founderDependency && { label: "Depend. fundador", value: founderDependency },
-    acquisitionSystem && { label: "Captación", value: acquisitionSystem },
-  ].filter(Boolean) as { label: string; value: string }[];
+    financialState?.liquidez && { label: financialState.liquidez, caption: "Liquidez" },
+    financialState?.kpis && { label: financialState.kpis, caption: "KPIs" },
+    financialState?.planificacion && {
+      label: financialState.planificacion,
+      caption: "Planificación",
+    },
+    founderDependency && { label: founderDependency, caption: "Depend." },
+    acquisitionSystem && { label: acquisitionSystem, caption: "Captación" },
+  ].filter(Boolean) as { label: string; caption: string }[];
 
   return (
     <View style={styles.container}>
@@ -38,10 +41,16 @@ export function DiagnosisSection({
         {introduction}
       </ThemedText>
 
-      {metrics.length > 0 && (
-        <View style={styles.grid}>
-          {metrics.map((m) => (
-            <MetricCard key={m.label} label={m.label} value={m.value} />
+      {rings.length > 0 && (
+        <View style={styles.ringRow}>
+          {rings.map((r) => (
+            <StatusRing
+              key={r.caption}
+              value={statusToValue(r.label)}
+              color={statusToColor(r.label)}
+              label={r.label}
+              caption={r.caption}
+            />
           ))}
         </View>
       )}
@@ -57,9 +66,16 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     lineHeight: 24,
   },
-  grid: {
+  ringRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.two,
+    justifyContent: "space-evenly",
+    rowGap: Spacing.four,
+    columnGap: Spacing.two,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    padding: Spacing.four,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
   },
 });

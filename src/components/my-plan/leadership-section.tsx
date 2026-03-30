@@ -11,7 +11,6 @@ interface LeadershipSectionProps {
   phase2?: string;
   phase3?: string;
   roleEvolution?: PlanLeadership["evolucion_rol"];
-  firstStepMessage?: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -50,7 +49,6 @@ export function LeadershipSection({
   phase2,
   phase3,
   roleEvolution,
-  firstStepMessage,
 }: LeadershipSectionProps) {
   const phaseTexts: Record<"phase1" | "phase2" | "phase3", string | undefined> = {
     phase1,
@@ -68,17 +66,6 @@ export function LeadershipSection({
   return (
     <View style={styles.container}>
       <SectionHeader title="Plan de liderazgo" />
-
-      {firstStepMessage && (
-        <View style={styles.alertCard}>
-          <ThemedText type="caption" style={styles.alertBadge}>
-            PRIMER PASO
-          </ThemedText>
-          <ThemedText type="bodyMd" style={styles.alertText}>
-            {firstStepMessage}
-          </ThemedText>
-        </View>
-      )}
 
       {activePhases.length > 0 && (
         <View style={styles.phasesBlock}>
@@ -118,26 +105,6 @@ export function LeadershipSection({
 const styles = StyleSheet.create({
   container: {
     gap: Spacing.four,
-  },
-  alertCard: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 14,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    gap: Spacing.two,
-    borderLeftWidth: 3,
-    borderLeftColor: "#00FF84",
-  },
-  alertBadge: {
-    color: "#00FF84",
-    fontFamily: Fonts.montserratBold,
-    letterSpacing: 1,
-    fontSize: 10,
-  },
-  alertText: {
-    color: "rgba(255,255,255,0.75)",
-    lineHeight: 22,
   },
   phasesBlock: {
     gap: 0,
