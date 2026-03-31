@@ -1,3 +1,18 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { Ionicons } from "@expo/vector-icons";
+import { useAudioRecorder } from "@siteed/expo-audio-studio";
+import { LinearGradient } from "expo-linear-gradient";
+
 import { CircleButton } from "@/components/circle-button";
 import { CountdownOverlay } from "@/components/countdown-overlay";
 import { LiveTranscriptBox } from "@/components/onboarding/live-transcript-box";
@@ -12,19 +27,6 @@ import type { TranscriptionSession } from "@/services/transcription-service";
 import { createTranscriptionSession } from "@/services/transcription-service";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { formatTimer } from "@/utils/format-timer";
-import { Ionicons } from "@expo/vector-icons";
-import { useAudioRecorder } from "@siteed/expo-audio-studio";
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type RecordingState =
   | "idle"
@@ -281,7 +283,7 @@ export function AudioRecorderView({
         >
           <Ionicons name="arrow-back" size={22} color="#ffffff" />
         </TouchableOpacity>
-        <ThemedText type="labelMd" style={{ color: "#ffffff" }}>
+        <ThemedText type="labelMd" style={styles.headerLabel}>
           {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
         </ThemedText>
       </View>
@@ -291,19 +293,16 @@ export function AudioRecorderView({
         contentContainerStyle={styles.topContent}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="headingLg" style={{ color: "#ffffff" }}>
+        <ThemedText type="headingLg" style={styles.whiteText}>
           {question.instruction ||
             "Graba un audio de un máximo de 30 segundos contestando a la siguiente pregunta:"}
         </ThemedText>
 
-        <ThemedText
-          type="bodyLg"
-          style={{ fontFamily: Fonts.montserratMedium, color: "#ffffff", marginTop: Spacing.three }}
-        >
+        <ThemedText type="bodyLg" style={styles.questionText}>
           {question.question}
         </ThemedText>
 
-        <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>
+        <ThemedText type="labelMd" style={styles.progressText}>
           ({question.progress}%)
         </ThemedText>
       </ScrollView>
@@ -425,11 +424,26 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
     gap: Spacing.two,
   },
+  headerLabel: {
+    color: "#ffffff",
+  },
   topSection: {
     flex: 1,
   },
   topContent: {
     paddingBottom: Spacing.three,
+  },
+  whiteText: {
+    color: "#ffffff",
+  },
+  questionText: {
+    fontFamily: Fonts.montserratMedium,
+    color: "#ffffff",
+    marginTop: Spacing.three,
+  },
+  progressText: {
+    color: "#00FF84",
+    marginTop: Spacing.two,
   },
   recordWrapper: {
     marginHorizontal: -Spacing.five,

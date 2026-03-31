@@ -14,9 +14,7 @@ function encodeBase32(value: bigint, length: number): string {
 export function ulid(): string {
   const timestampMs = BigInt(Date.now());
   const randomBytes = new Uint8Array(10);
-  for (let i = 0; i < randomBytes.length; i += 1) {
-    randomBytes[i] = Math.floor(Math.random() * 256);
-  }
+  crypto.getRandomValues(randomBytes);
 
   let randomness = 0n;
   for (const byte of randomBytes) {
