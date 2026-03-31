@@ -1,20 +1,20 @@
-import { Fonts, Spacing } from "@/constants/theme";
+import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { forwardRef } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+
+import { Fonts, Spacing } from "@/constants/theme";
 
 interface ChatInputProps {
   value: string;
   onChangeText: (text: string) => void;
   onSend: () => void;
+  disabled?: boolean;
 }
 
-export const ChatInput = forwardRef<TextInput, ChatInputProps>(function ChatInput(
-  { value, onChangeText, onSend },
-  ref,
-) {
+export function ChatInput({ value, onChangeText, onSend, disabled = false }: ChatInputProps) {
   const hasText = value.trim().length > 0;
+  const canSend = hasText && !disabled;
 
   return (
     <View style={styles.container}>
@@ -26,7 +26,6 @@ export const ChatInput = forwardRef<TextInput, ChatInputProps>(function ChatInpu
           style={styles.inputWrap}
         >
           <TextInput
-            ref={ref}
             style={styles.input}
             placeholder="Escribe tu mensaje..."
             placeholderTextColor="rgba(255,255,255,0.4)"
@@ -35,6 +34,7 @@ export const ChatInput = forwardRef<TextInput, ChatInputProps>(function ChatInpu
             onSubmitEditing={onSend}
             returnKeyType="send"
             multiline={false}
+            editable={!disabled}
           />
           <TouchableOpacity style={styles.audioBtn} activeOpacity={0.6}>
             <Ionicons name="radio-outline" size={20} color="rgba(255,255,255,0.5)" />
@@ -42,24 +42,22 @@ export const ChatInput = forwardRef<TextInput, ChatInputProps>(function ChatInpu
         </LinearGradient>
 
         <TouchableOpacity
-          style={[styles.sendBtn, !hasText && styles.sendBtnDisabled]}
+          style={[styles.sendBtn, !canSend && styles.sendBtnDisabled]}
           activeOpacity={0.8}
           onPress={onSend}
-          disabled={!hasText}
+          disabled={!canSend}
         >
           <LinearGradient
-            colors={
-              hasText ? ["#00FF84", "#00CC6A"] : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]
-            }
+            colors={canSend ? ["#00FF84", "#00CC6A"] : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]}
             style={styles.sendGradient}
           >
-            <Ionicons name="send" size={18} color={hasText ? "#000000" : "rgba(0,0,0,0.4)"} />
+            <Ionicons name="send" size={18} color={canSend ? "#000000" : "rgba(0,0,0,0.4)"} />
           </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   container: {

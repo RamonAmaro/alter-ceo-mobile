@@ -10,64 +10,63 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ index, title, description, accentColor }: ItemCardProps) {
-  const badgeBg = accentColor === "#FF4444" ? "rgba(255,68,68,0.12)" : "rgba(0,255,132,0.1)";
-  const cardBg = accentColor === "#FF4444" ? "rgba(255,68,68,0.04)" : "rgba(0,255,132,0.03)";
-  const cardBorder = accentColor === "#FF4444" ? "rgba(255,68,68,0.1)" : "rgba(0,255,132,0.08)";
-
   return (
-    <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-      <View style={[styles.badge, { backgroundColor: badgeBg, borderColor: `${accentColor}44` }]}>
-        <ThemedText type="caption" style={[styles.badgeNum, { color: accentColor }]}>
-          {index}
-        </ThemedText>
-      </View>
-      <View style={styles.content}>
-        <ThemedText type="labelSm" style={styles.title}>
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <View style={[styles.badge, { backgroundColor: `${accentColor}18` }]}>
+          <ThemedText type="caption" style={[styles.badgeNum, { color: accentColor }]}>
+            #{index}
+          </ThemedText>
+        </View>
+        <ThemedText type="labelSm" style={styles.title} numberOfLines={2}>
           {title}
         </ThemedText>
-        <ThemedText type="bodyMd" style={styles.desc}>
-          {description}
-        </ThemedText>
       </View>
+      <View style={[styles.accentLine, { backgroundColor: `${accentColor}30` }]} />
+      <ThemedText type="bodyMd" style={styles.desc}>
+        {description}
+      </ThemedText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
-    gap: Spacing.three,
-    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
     padding: Spacing.three,
     borderWidth: 1,
-    alignItems: "flex-start",
+    borderColor: "rgba(255,255,255,0.06)",
+    gap: Spacing.two,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
   },
   badge: {
-    width: 30,
-    height: 30,
-    borderRadius: 99,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   badgeNum: {
     fontFamily: Fonts.montserratBold,
-    fontSize: 13,
-  },
-  content: {
-    flex: 1,
-    gap: Spacing.one,
+    fontSize: 11,
   },
   title: {
     color: "#ffffff",
     fontFamily: Fonts.montserratBold,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 19,
+    flex: 1,
+  },
+  accentLine: {
+    height: 1,
+    borderRadius: 1,
   },
   desc: {
-    color: "rgba(255,255,255,0.6)",
-    lineHeight: 20,
+    color: "rgba(255,255,255,0.55)",
+    lineHeight: 21,
     fontSize: 13,
   },
 });

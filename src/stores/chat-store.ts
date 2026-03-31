@@ -1,7 +1,17 @@
 import { create } from "zustand";
+
 import type { SSEConnection } from "@/lib/sse-client";
-import type { ChatMessageResponse, ChatThreadSummary } from "@/types/chat";
 import * as chatService from "@/services/chat-service";
+import type { ChatMessageResponse, ChatThreadSummary } from "@/types/chat";
+import { parseCompleteMessage, parseDeltaText } from "@/utils/parse-sse-chat";
+import { ulid } from "@/utils/ulid";
+
+const ERROR_GENERIC = "No se pudo completar la operación. Inténtalo de nuevo.";
+
+function toErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  return ERROR_GENERIC;
+}
 
 interface ChatState {
   threads: ChatThreadSummary[];
@@ -40,14 +50,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatService.listUserThreads(userId);
       set({ threads: response.threads ?? [], isLoadingThreads: false });
     } catch (err) {
-      set({ error: (err as Error).message, isLoadingThreads: false });
+      set({ error: toErrorMessage(err), isLoadingThreads: false });
     }
   },
 
   createThread: async (userId: string) => {
-    const response = await chatService.createThread(userId);
-    set({ activeThreadId: response.thread_id, messages: [] });
-    return response.thread_id;
+    try {
+      const response = await chatService.createThread(userId);
+      const newThread: ChatThreadSummary = {
+        thread_id: response.thread_id,
+        user_id: response.user_id,
+        created_at: response.created_at,
+        updated_at: response.created_at,
+      };
+      set((state) => ({
+        activeThreadId: response.thread_id,
+        messages: [],
+        threads: [newThread, ...state.threads],
+      }));
+      return response.thread_id;
+    } catch (err) {
+      set({ error: toErrorMessage(err) });
+      throw err;
+    }
   },
 
   selectThread: async (threadId: string) => {
@@ -61,15 +86,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatService.listMessages(threadId);
       set({ messages: response.messages ?? [], isLoadingMessages: false });
     } catch (err) {
-      set({ error: (err as Error).message, isLoadingMessages: false });
+      set({ error: toErrorMessage(err), isLoadingMessages: false });
     }
   },
 
   sendMessage: async (threadId: string, message: string) => {
-    const turnId = `turn_${Date.now()}`;
+    const turnId = ulid();
 
     const userMsg: ChatMessageResponse = {
-      id: `local_${Date.now()}`,
+      id: ulid(),
       thread_id: threadId,
       role: "user",
       text: message,
@@ -86,34 +111,57 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       await chatService.createTurn(threadId, { turn_id: turnId, message });
 
-      const connection = chatService.streamTurnEvents(turnId, (event) => {
-        if (event.event === "text_delta" || !event.event) {
-          set((state) => ({
-            streamingText: state.streamingText + event.data,
-          }));
-        } else if (event.event === "done") {
-          const assistantMsg: ChatMessageResponse = {
-            id: `assistant_${Date.now()}`,
-            thread_id: threadId,
-            role: "assistant",
-            text: get().streamingText,
-            created_at: new Date().toISOString(),
-          };
-          set((state) => ({
-            messages: [...state.messages, assistantMsg],
+      const connection = chatService.streamTurnEvents(
+        turnId,
+        (event) => {
+          if (event.event === "delta") {
+            const chunk = parseDeltaText(event.data);
+            set((state) => ({
+              streamingText: state.streamingText + chunk,
+            }));
+          } else if (event.event === "complete") {
+            const msg = parseCompleteMessage(
+              event.data,
+              threadId,
+              get().streamingText,
+            );
+            set((state) => ({
+              messages: [...state.messages, msg],
+              isStreaming: false,
+              streamingText: "",
+              _sseConnection: null,
+            }));
+          } else if (event.event === "error") {
+            set({
+              isStreaming: false,
+              streamingText: "",
+              _sseConnection: null,
+              error: "Error en la respuesta del asistente",
+            });
+          }
+        },
+        undefined,
+        () => {
+          if (get().isStreaming) {
+            set({ isStreaming: false, streamingText: "", _sseConnection: null });
+          }
+        },
+        (err) => {
+          set({
             isStreaming: false,
             streamingText: "",
             _sseConnection: null,
-          }));
-        }
-      });
+            error: toErrorMessage(err),
+          });
+        },
+      );
 
       set({ _sseConnection: connection });
     } catch (err) {
       set({
         isStreaming: false,
         streamingText: "",
-        error: (err as Error).message,
+        error: toErrorMessage(err),
       });
     }
   },

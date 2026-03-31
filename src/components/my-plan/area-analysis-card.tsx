@@ -12,59 +12,53 @@ interface AreaAnalysisCardProps {
 export function AreaAnalysisCard({ icon, label, value }: AreaAnalysisCardProps) {
   return (
     <View style={styles.card}>
-      <View style={styles.row}>
+      <View style={styles.header}>
         <View style={styles.iconBox}>
-          <Ionicons name={icon} size={18} color="rgba(255,255,255,0.5)" />
+          <Ionicons name={icon} size={16} color="rgba(255,255,255,0.6)" />
         </View>
-        <View style={styles.textArea}>
-          <ThemedText type="caption" style={styles.label}>
-            {label}
-          </ThemedText>
-          <ThemedText type="bodyMd" style={styles.value}>
-            {value}
-          </ThemedText>
-        </View>
+        <ThemedText type="caption" style={styles.label}>
+          {label}
+        </ThemedText>
       </View>
+      <ThemedText type="bodyMd" style={styles.value}>
+        {value}
+      </ThemedText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 14,
     padding: Spacing.three,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
+    borderColor: "rgba(255,255,255,0.06)",
+    gap: Spacing.two,
   },
-  row: {
+  header: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: Spacing.two,
   },
   iconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.06)",
     alignItems: "center",
     justifyContent: "center",
-    flexShrink: 0,
-  },
-  textArea: {
-    flex: 1,
-    gap: 2,
   },
   label: {
-    color: "rgba(255,255,255,0.4)",
+    color: "rgba(255,255,255,0.5)",
     textTransform: "uppercase",
-    letterSpacing: 0.6,
-    fontSize: 10,
+    letterSpacing: 0.8,
+    fontSize: 11,
     fontFamily: Fonts.montserratBold,
   },
   value: {
     color: "rgba(255,255,255,0.75)",
-    lineHeight: 20,
-    fontSize: 13,
+    lineHeight: 21,
+    fontSize: 14,
   },
 });

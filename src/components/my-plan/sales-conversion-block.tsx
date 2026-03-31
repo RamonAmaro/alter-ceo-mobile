@@ -1,3 +1,6 @@
+import { BulletItem } from "@/components/my-plan/bullet-item";
+import { CheckItem } from "@/components/my-plan/check-item";
+import { NoteBlock } from "@/components/my-plan/note-block";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,30 +9,6 @@ import { StyleSheet, View } from "react-native";
 
 interface SalesConversionBlockProps {
   data: PlanConversionImprovement;
-}
-
-function WeakPoint({ text }: { text: string }) {
-  return (
-    <View style={styles.bulletRow}>
-      <View style={styles.redDot} />
-      <ThemedText type="bodyMd" style={styles.bulletText}>
-        {text}
-      </ThemedText>
-    </View>
-  );
-}
-
-function OptimizedStep({ text }: { text: string }) {
-  return (
-    <View style={styles.bulletRow}>
-      <View style={styles.checkIcon}>
-        <Ionicons name="checkmark" size={10} color="#00FF84" />
-      </View>
-      <ThemedText type="bodyMd" style={styles.bulletText}>
-        {text}
-      </ThemedText>
-    </View>
-  );
 }
 
 export function SalesConversionBlock({ data }: SalesConversionBlockProps) {
@@ -51,22 +30,18 @@ export function SalesConversionBlock({ data }: SalesConversionBlockProps) {
       <ThemedText type="caption" style={styles.groupLabel}>
         Puntos débiles actuales
       </ThemedText>
-      {data.puntos_debiles_actuales.map((item) => (
-        <WeakPoint key={item} text={item} />
+      {data.puntos_debiles_actuales.map((item, i) => (
+        <BulletItem key={`debil-${i}`} text={item} color="rgba(255,68,68,0.5)" />
       ))}
 
       <ThemedText type="caption" style={styles.groupLabel}>
         Nueva estructura optimizada
       </ThemedText>
-      {data.estructura_optimizada.map((item) => (
-        <OptimizedStep key={item} text={item} />
+      {data.estructura_optimizada.map((item, i) => (
+        <CheckItem key={`opt-${i}`} text={item} />
       ))}
 
-      <View style={styles.noteCard}>
-        <ThemedText type="bodyMd" style={styles.noteText}>
-          {data.por_que_aumentara_conversion}
-        </ThemedText>
-      </View>
+      <NoteBlock text={data.por_que_aumentara_conversion} />
     </View>
   );
 }
@@ -114,47 +89,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: Fonts.montserratBold,
     marginTop: Spacing.one,
-  },
-  bulletRow: {
-    flexDirection: "row",
-    gap: Spacing.two,
-    alignItems: "flex-start",
-  },
-  redDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 99,
-    backgroundColor: "rgba(255,68,68,0.5)",
-    marginTop: 8,
-    flexShrink: 0,
-  },
-  checkIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 99,
-    backgroundColor: "rgba(0,255,132,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    marginTop: 2,
-  },
-  bulletText: {
-    color: "rgba(255,255,255,0.75)",
-    lineHeight: 22,
-    fontSize: 13,
-    flex: 1,
-  },
-  noteCard: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 12,
-    padding: Spacing.two,
-    borderLeftWidth: 3,
-    borderLeftColor: "rgba(255,255,255,0.15)",
-  },
-  noteText: {
-    color: "rgba(255,255,255,0.6)",
-    lineHeight: 22,
-    fontSize: 13,
-    fontStyle: "italic",
   },
 });

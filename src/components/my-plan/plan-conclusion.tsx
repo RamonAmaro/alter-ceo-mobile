@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
 const DEFAULT_CONCLUSION =
@@ -14,6 +15,10 @@ export function PlanConclusion({ text }: PlanConclusionProps) {
     <View style={styles.container}>
       <View style={styles.dividerLine} />
 
+      <View style={styles.iconBox}>
+        <Ionicons name="flag" size={20} color="#00FF84" />
+      </View>
+
       <ThemedText type="caption" style={styles.label}>
         Has llegado al cierre de tu plan
       </ThemedText>
@@ -22,9 +27,11 @@ export function PlanConclusion({ text }: PlanConclusionProps) {
         Conclusión Express
       </ThemedText>
 
-      <ThemedText type="bodyMd" style={styles.body}>
-        {text ?? DEFAULT_CONCLUSION}
-      </ThemedText>
+      <View style={styles.card}>
+        <ThemedText type="bodyMd" style={styles.body}>
+          {text ?? DEFAULT_CONCLUSION}
+        </ThemedText>
+      </View>
     </View>
   );
 }
@@ -33,12 +40,21 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     gap: Spacing.three,
-    paddingVertical: Spacing.four,
+    paddingVertical: Spacing.five,
   },
   dividerLine: {
     height: 1,
     width: "100%",
     backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 99,
+    backgroundColor: "rgba(0,255,132,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.two,
   },
   label: {
     color: "rgba(255,255,255,0.35)",
@@ -52,8 +68,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratExtraBold,
     textAlign: "center",
   },
+  card: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    padding: Spacing.four,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    width: "100%",
+  },
   body: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.65)",
     lineHeight: 24,
     fontSize: 14,
     textAlign: "center",

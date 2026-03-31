@@ -2,6 +2,7 @@ import { PlanPill } from "@/components/my-plan/plan-pill";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { formatEur } from "@/utils/format-currency";
 import { StyleSheet, View } from "react-native";
 
 interface PlanHeroProps {
@@ -10,16 +11,8 @@ interface PlanHeroProps {
   annualRevenue?: number;
 }
 
-function formatRevenue(value: number): string {
-  return value.toLocaleString("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  });
-}
-
 export function PlanHero({ introduction, sector, annualRevenue }: PlanHeroProps) {
-  const revenueLabel = annualRevenue ? `${formatRevenue(annualRevenue)}/año` : null;
+  const revenueLabel = annualRevenue ? `${formatEur(annualRevenue)}/año` : null;
   const hasPills = Boolean(sector || revenueLabel);
 
   return (
@@ -33,9 +26,11 @@ export function PlanHero({ introduction, sector, annualRevenue }: PlanHeroProps)
         </View>
       )}
 
-      <ThemedText type="bodyLg" style={styles.intro}>
-        {introduction}
-      </ThemedText>
+      <View style={styles.introCard}>
+        <ThemedText type="bodyMd" style={styles.intro}>
+          {introduction}
+        </ThemedText>
+      </View>
     </View>
   );
 }
@@ -49,9 +44,17 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     flexWrap: "wrap",
   },
+  introCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    padding: Spacing.four,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
   intro: {
-    color: "rgba(255,255,255,0.8)",
-    lineHeight: 26,
+    color: "rgba(255,255,255,0.75)",
+    lineHeight: 24,
+    fontSize: 14,
     fontFamily: Fonts.montserratMedium,
   },
 });

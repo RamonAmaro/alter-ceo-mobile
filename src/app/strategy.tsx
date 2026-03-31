@@ -5,13 +5,12 @@ import { StrategyChatView, type ChatMessage } from "@/components/strategy/strate
 import { StrategyHeader } from "@/components/strategy/strategy-header";
 import { StrategyTopicSelector } from "@/components/strategy/strategy-topic-selector";
 import { Spacing } from "@/constants/theme";
-import { useCallback, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, type TextInput, View } from "react-native";
+import { useCallback, useState } from "react";
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StrategyScreen() {
   const insets = useSafeAreaInsets();
-  const inputRef = useRef<TextInput>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -23,7 +22,6 @@ export default function StrategyScreen() {
 
   function handleSelectTopic(topic: string): void {
     setSelectedTopic(topic);
-    setTimeout(() => inputRef.current?.focus(), 150);
   }
 
   function sendMessage(text: string): void {
@@ -63,7 +61,6 @@ export default function StrategyScreen() {
             <View style={[styles.footer, { paddingBottom: insets.bottom || Spacing.three }]}>
               <StrategyCategoryChips onSend={sendMessage} />
               <ChatInput
-                ref={inputRef}
                 value={inputValue}
                 onChangeText={setInputValue}
                 onSend={handleSend}

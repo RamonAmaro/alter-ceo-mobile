@@ -4,22 +4,23 @@ import { RevenueChart } from "@/components/my-plan/revenue-chart";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
+import { formatEur } from "@/utils/format-currency";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
+
+const GRADIENT_COLORS: [string, string, string] = [
+  "rgba(0,255,132,0.1)",
+  "rgba(0,192,238,0.05)",
+  "rgba(0,0,0,0)",
+];
+const GRADIENT_START = { x: 0, y: 0 } as const;
+const GRADIENT_END = { x: 1, y: 1 } as const;
 
 interface SalesSectionProps {
   target: number;
   projectionIntroduction?: string;
   monthlyProjection: number[];
   immediatePriorities: string[];
-}
-
-function formatEur(value: number): string {
-  return value.toLocaleString("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  });
 }
 
 export function SalesSection({
@@ -36,10 +37,10 @@ export function SalesSection({
 
       <View style={styles.targetCard}>
         <LinearGradient
-          colors={["rgba(0,255,132,0.1)", "rgba(0,192,238,0.05)", "rgba(0,0,0,0)"]}
+          colors={GRADIENT_COLORS}
           style={styles.targetGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          start={GRADIENT_START}
+          end={GRADIENT_END}
         >
           <ThemedText type="caption" style={styles.targetCaption}>
             OBJETIVO A 12 MESES
@@ -83,7 +84,7 @@ export function SalesSection({
             PRIORIDADES INMEDIATAS — 30 DÍAS
           </ThemedText>
           {immediatePriorities.map((p, i) => (
-            <PriorityItem key={i} text={p} index={i + 1} />
+            <PriorityItem key={`priority-${i}`} text={p} />
           ))}
         </View>
       )}

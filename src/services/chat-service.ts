@@ -37,9 +37,13 @@ export function streamTurnEvents(
   turnId: string,
   onEvent: (event: SSEEvent) => void,
   afterEventId?: string,
+  onDone?: () => void,
+  onError?: (error: Error) => void,
 ): SSEConnection {
   return connectSSE(`/chat/turns/${turnId}/events`, {
     onEvent,
     afterEventId,
+    onDone,
+    onError,
   });
 }

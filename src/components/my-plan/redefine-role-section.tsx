@@ -1,47 +1,15 @@
+import { BulletItem } from "@/components/my-plan/bullet-item";
+import { CheckItem } from "@/components/my-plan/check-item";
+import { NoteBlock } from "@/components/my-plan/note-block";
 import { RedefineStep } from "@/components/my-plan/redefine-step";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
 import type { PlanRedefineRole } from "@/types/plan-data";
 import { StyleSheet, View } from "react-native";
 
 interface RedefineRoleSectionProps {
   steps: PlanRedefineRole;
-}
-
-function TaskDot({ text }: { text: string }) {
-  return (
-    <View style={styles.bulletRow}>
-      <View style={styles.redDot} />
-      <ThemedText type="bodyMd" style={styles.bulletText}>
-        {text}
-      </ThemedText>
-    </View>
-  );
-}
-
-function FocusCheck({ text }: { text: string }) {
-  return (
-    <View style={styles.bulletRow}>
-      <View style={styles.checkIcon}>
-        <Ionicons name="checkmark" size={10} color="#00FF84" />
-      </View>
-      <ThemedText type="bodyMd" style={styles.bulletText}>
-        {text}
-      </ThemedText>
-    </View>
-  );
-}
-
-function Note({ text }: { text: string }) {
-  return (
-    <View style={styles.noteCard}>
-      <ThemedText type="bodyMd" style={styles.noteText}>
-        {text}
-      </ThemedText>
-    </View>
-  );
 }
 
 export function RedefineRoleSection({ steps }: RedefineRoleSectionProps) {
@@ -51,18 +19,16 @@ export function RedefineRoleSection({ steps }: RedefineRoleSectionProps) {
     <View style={styles.container}>
       <SectionHeader title="3 pasos para redefinir tu rol" />
 
-      {/* Step 1 */}
       <RedefineStep index={1} title={paso_1.titulo} isLast={false}>
         <ThemedText type="bodyMd" style={styles.text}>
           {paso_1.texto_explicativo}
         </ThemedText>
-        {paso_1.tareas_a_reducir.map((t) => (
-          <TaskDot key={t} text={t} />
+        {paso_1.tareas_a_reducir.map((t, i) => (
+          <BulletItem key={`tarea-${i}`} text={t} color="rgba(255,68,68,0.5)" />
         ))}
-        <Note text={paso_1.nota_liberacion_gradual} />
+        <NoteBlock text={paso_1.nota_liberacion_gradual} />
       </RedefineStep>
 
-      {/* Step 2 */}
       <RedefineStep index={2} title={paso_2.titulo} isLast={false}>
         <ThemedText type="bodyMd" style={styles.text}>
           {paso_2.texto_explicativo}
@@ -78,10 +44,9 @@ export function RedefineRoleSection({ steps }: RedefineRoleSectionProps) {
         <ThemedText type="bodyMd" style={styles.text}>
           {paso_2.proceso_inicial_delegacion}
         </ThemedText>
-        <Note text={paso_2.nota_version_inicial} />
+        <NoteBlock text={paso_2.nota_version_inicial} />
       </RedefineStep>
 
-      {/* Step 3 */}
       <RedefineStep index={3} title={paso_3.titulo} isLast>
         <ThemedText type="bodyMd" style={styles.text}>
           {paso_3.texto_explicativo}
@@ -91,8 +56,8 @@ export function RedefineRoleSection({ steps }: RedefineRoleSectionProps) {
             {paso_3.bloques_semanales_minimos} bloques semanales de {paso_3.minutos_por_bloque} min
           </ThemedText>
         </View>
-        {paso_3.focos_estrategicos.map((f) => (
-          <FocusCheck key={f} text={f} />
+        {paso_3.focos_estrategicos.map((f, i) => (
+          <CheckItem key={`foco-${i}`} text={f} />
         ))}
         <ThemedText type="bodyMd" style={styles.closing}>
           {paso_3.cierre}
@@ -110,48 +75,6 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     lineHeight: 22,
     fontSize: 14,
-  },
-  bulletRow: {
-    flexDirection: "row",
-    gap: Spacing.two,
-    alignItems: "flex-start",
-  },
-  redDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 99,
-    backgroundColor: "rgba(255,68,68,0.5)",
-    marginTop: 8,
-    flexShrink: 0,
-  },
-  checkIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 99,
-    backgroundColor: "rgba(0,255,132,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    marginTop: 2,
-  },
-  bulletText: {
-    color: "rgba(255,255,255,0.75)",
-    lineHeight: 22,
-    fontSize: 13,
-    flex: 1,
-  },
-  noteCard: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 12,
-    padding: Spacing.two,
-    borderLeftWidth: 3,
-    borderLeftColor: "rgba(255,255,255,0.15)",
-  },
-  noteText: {
-    color: "rgba(255,255,255,0.6)",
-    lineHeight: 22,
-    fontSize: 13,
-    fontStyle: "italic",
   },
   chosenCard: {
     backgroundColor: "rgba(255,255,255,0.04)",
