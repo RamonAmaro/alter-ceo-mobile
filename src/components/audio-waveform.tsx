@@ -1,123 +1,160 @@
-import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import React, { memo, useEffect, useRef } from "react";
+import { Dimensions, StyleSheet, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
+} from "react-native-reanimated";
 
-const DEFAULT_BARS = 48;
-const DEFAULT_BAR_WIDTH = 3;
-const DEFAULT_GAP = 2.5;
-const DEFAULT_HEIGHT = 140;
-const DEFAULT_TICK_MS = 50;
-const DEFAULT_ENTER_MS = 80;
-const DEFAULT_MIN_SCALE = 0.04;
+// --- Layout constants ----------------------------------------------------
 
-interface AudioWaveformProps {
-  /** Ref to a number 0–1 representing current amplitude. Updated externally. */
-  amplitudeRef: React.RefObject<number>;
-  /** Whether the waveform is actively consuming amplitude data. */
-  active: boolean;
-  /** Increment to force a full reset (clear all bars). */
-  resetKey?: number;
-  /** Number of bars to display. */
-  bars?: number;
-  /** Height of the waveform container in px. */
-  height?: number;
-  /** Width of each bar in px. */
-  barWidth?: number;
-  /** Gap between bars in px. */
-  barGap?: number;
-  /** Color builder — receives progress (0–1, left to right) and returns a color string. */
-  barColor?: (progress: number) => string;
-}
+const BAR_WIDTH = 4;
+const BAR_GAP = 4;
+const HEIGHT = 120;
+const WIDTH_RATIO = 0.75;
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const CONTAINER_WIDTH = Math.floor(SCREEN_WIDTH * WIDTH_RATIO);
+const BAR_COUNT = Math.floor(CONTAINER_WIDTH / (BAR_WIDTH + BAR_GAP));
 
-function defaultBarColor(progress: number): string {
-  const opacity = 0.2 + progress * 0.8;
+// --- Animation constants -------------------------------------------------
+
+const MIN_SCALE = 0.05;
+const TICK_MS = 120;
+const EMA_ALPHA = 0.4;
+
+// --- Pure functions ------------------------------------------------------
+
+function computeBarColor(index: number, total: number): string {
+  const progress = index / (total - 1);
+  const opacity = 0.3 + progress * 0.7;
   const r = Math.round(progress * 30);
   const g = Math.round(140 + progress * 80);
   return `rgba(${r},${g},255,${opacity.toFixed(2)})`;
 }
 
-export function AudioWaveform({
+function smoothAmplitude(previous: number, current: number): number {
+  return previous * (1 - EMA_ALPHA) + current * EMA_ALPHA;
+}
+
+function shiftBufferAndAppend(buffer: Float32Array, value: number): void {
+  buffer.copyWithin(0, 1);
+  buffer[buffer.length - 1] = value;
+}
+
+function applyScalesToSharedValues(scales: SharedValue<number>[], buffer: Float32Array): void {
+  for (let i = 0; i < scales.length; i++) {
+    scales[i].value = MIN_SCALE + buffer[i];
+  }
+}
+
+function resetSharedValues(scales: SharedValue<number>[]): void {
+  for (let i = 0; i < scales.length; i++) {
+    scales[i].value = MIN_SCALE;
+  }
+}
+
+// --- Pre-computed values -------------------------------------------------
+
+const COLORS = Array.from({ length: BAR_COUNT }, (_, i) => computeBarColor(i, BAR_COUNT));
+
+// --- Types ---------------------------------------------------------------
+
+interface AudioWaveformProps {
+  amplitudeRef: React.RefObject<number>;
+  active: boolean;
+  resetKey?: number;
+}
+
+interface WaveBarProps {
+  scale: SharedValue<number>;
+  color: string;
+}
+
+// --- WaveBar (UI thread animation via Reanimated) ------------------------
+
+const WaveBar = memo(function WaveBar({ scale, color }: WaveBarProps) {
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleY: scale.value }],
+  }));
+
+  return <Animated.View style={[styles.bar, { backgroundColor: color }, animStyle]} />;
+});
+
+// --- AudioWaveform -------------------------------------------------------
+
+export const AudioWaveform = memo(function AudioWaveform({
   amplitudeRef,
   active,
   resetKey = 0,
-  bars = DEFAULT_BARS,
-  height = DEFAULT_HEIGHT,
-  barWidth = DEFAULT_BAR_WIDTH,
-  barGap = DEFAULT_GAP,
-  barColor = defaultBarColor,
 }: AudioWaveformProps) {
-  const scaleAnims = useRef(Array.from({ length: bars }, () => new Animated.Value(0))).current;
-  const valuesRef = useRef(new Float32Array(bars));
-  const lastTickRef = useRef(0);
-  const rafRef = useRef(0);
-  const colorsRef = useRef(Array.from({ length: bars }, (_, i) => barColor(i / (bars - 1))));
+  const scaleValues: SharedValue<number>[] = [];
+  for (let i = 0; i < BAR_COUNT; i++) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    scaleValues.push(useSharedValue(MIN_SCALE));
+  }
+
+  const scalesRef = useRef(scaleValues);
+  scalesRef.current = scaleValues;
+
+  const bufferRef = useRef(new Float32Array(BAR_COUNT));
+  const smoothedRef = useRef(0);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    valuesRef.current.fill(0);
-    scaleAnims.forEach((anim) => anim.setValue(0));
-  }, [resetKey, scaleAnims]);
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    bufferRef.current.fill(0);
+    smoothedRef.current = 0;
+    resetSharedValues(scalesRef.current);
+  }, [resetKey]);
 
   useEffect(() => {
     if (!active) return;
 
-    const values = valuesRef.current;
-    lastTickRef.current = 0;
+    const buffer = bufferRef.current;
+    const scales = scalesRef.current;
 
-    function tick(now: number): void {
-      rafRef.current = requestAnimationFrame(tick);
+    const intervalId = setInterval(() => {
+      if (!mountedRef.current) return;
 
-      if (now - lastTickRef.current < DEFAULT_TICK_MS) return;
-      lastTickRef.current = now;
+      const raw = amplitudeRef.current ?? 0;
+      smoothedRef.current = smoothAmplitude(smoothedRef.current, raw);
 
-      const level = amplitudeRef.current ?? 0;
+      shiftBufferAndAppend(buffer, smoothedRef.current);
+      applyScalesToSharedValues(scales, buffer);
+    }, TICK_MS);
 
-      values.copyWithin(0, 1);
-      values[bars - 1] = level;
-
-      for (let i = 0; i < bars - 1; i++) {
-        scaleAnims[i].setValue(values[i]);
-      }
-
-      Animated.timing(scaleAnims[bars - 1], {
-        toValue: level,
-        duration: DEFAULT_ENTER_MS,
-        useNativeDriver: true,
-      }).start();
-    }
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [active, amplitudeRef, bars, scaleAnims]);
-
-  const containerWidth = bars * (barWidth + barGap);
-  const colors = colorsRef.current;
+    return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   return (
-    <View style={[styles.container, { width: containerWidth, height, gap: barGap }]}>
-      {scaleAnims.map((scaleAnim, i) => (
-        <Animated.View
-          key={i}
-          style={[
-            styles.bar,
-            {
-              width: barWidth,
-              height,
-              backgroundColor: colors[i],
-              transform: [{ scaleY: Animated.add(DEFAULT_MIN_SCALE, scaleAnim) }],
-            },
-          ]}
-        />
+    <View style={styles.container}>
+      {scaleValues.map((sv, i) => (
+        <WaveBar key={i} scale={sv} color={COLORS[i]} />
       ))}
     </View>
   );
-}
+});
+
+// --- Styles --------------------------------------------------------------
 
 const styles = StyleSheet.create({
   container: {
+    width: CONTAINER_WIDTH,
+    height: HEIGHT,
+    gap: BAR_GAP,
     flexDirection: "row",
     alignItems: "center",
   },
   bar: {
-    borderRadius: 1.5,
+    width: BAR_WIDTH,
+    height: HEIGHT,
+    borderRadius: 2,
   },
 });

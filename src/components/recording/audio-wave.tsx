@@ -3,8 +3,21 @@ import type { AudioRecorder } from "expo-audio";
 
 import { AudioWaveform } from "@/components/audio-waveform";
 
+// --- Constants -----------------------------------------------------------
+
+const METERING_INTERVAL_MS = 150;
+const DB_FLOOR = -60;
+const DB_CEILING = 0;
+
+// --- Types ---------------------------------------------------------------
+
 type AudioWaveProps =
-  | { isActive: boolean; isReset: boolean; recorder: AudioRecorder; amplitudeRef?: never }
+  | {
+      isActive: boolean;
+      isReset: boolean;
+      recorder: AudioRecorder;
+      amplitudeRef?: never;
+    }
   | {
       isActive: boolean;
       isReset: boolean;
@@ -12,10 +25,15 @@ type AudioWaveProps =
       recorder?: never;
     };
 
-function normalizeLevel(db: number): number {
-  const clamped = Math.max(-60, Math.min(0, db ?? -60));
-  return (clamped + 60) / 60;
+// --- Pure helpers --------------------------------------------------------
+
+/** Converts a dB value (typically -60..0) to a normalized 0-1 amplitude. */
+function normalizeDecibels(db: number): number {
+  const clamped = Math.max(DB_FLOOR, Math.min(DB_CEILING, db));
+  return (clamped - DB_FLOOR) / (DB_CEILING - DB_FLOOR);
 }
+
+// --- Component -----------------------------------------------------------
 
 export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWaveProps) {
   const levelRef = useRef(0);
@@ -24,16 +42,20 @@ export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWa
   useEffect(() => {
     if (!isActive || !recorder) return;
 
-    const id = setInterval(() => {
-      levelRef.current = normalizeLevel(recorder.getStatus().metering ?? -60);
-    }, 50);
+    const rec = recorder;
 
-    return () => clearInterval(id);
+    const intervalId = setInterval(() => {
+      const metering = rec.getStatus().metering ?? DB_FLOOR;
+      levelRef.current = normalizeDecibels(metering);
+    }, METERING_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
   }, [isActive, recorder]);
 
   useEffect(() => {
     if (isReset) {
       resetCountRef.current += 1;
+      levelRef.current = 0;
     }
   }, [isReset]);
 
