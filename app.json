@@ -71,7 +71,8 @@
         {
           "microphonePermission": "Necesitamos acceso al micrófono para grabar tus respuestas de audio."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

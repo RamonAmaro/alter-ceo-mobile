@@ -30,12 +30,22 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
   const scrollRef = useRef<ScrollView>(null);
   const tabLayouts = useRef<Record<string, TabLayout>>({});
   const indicatorX = useRef(new Animated.Value(0)).current;
-  const indicatorScaleX = useRef(new Animated.Value(60)).current;
+  const indicatorScaleX = useRef(new Animated.Value(0)).current;
+  const indicatorOpacity = useRef(new Animated.Value(0)).current;
+  const hasInitialized = useRef(false);
 
   const animateIndicator = useCallback(
     (key: string) => {
       const layout = tabLayouts.current[key];
       if (!layout) return;
+
+      if (!hasInitialized.current) {
+        hasInitialized.current = true;
+        indicatorX.setValue(layout.x + layout.width / 2);
+        indicatorScaleX.setValue(layout.width);
+        indicatorOpacity.setValue(1);
+        return;
+      }
 
       Animated.spring(indicatorX, {
         toValue: layout.x + layout.width / 2,
@@ -51,7 +61,7 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
         friction: 14,
       }).start();
     },
-    [indicatorX, indicatorScaleX],
+    [indicatorX, indicatorScaleX, indicatorOpacity],
   );
 
   useEffect(() => {
@@ -105,6 +115,7 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
           style={[
             styles.indicator,
             {
+              opacity: indicatorOpacity,
               transform: [{ translateX: indicatorX }, { scaleX: indicatorScaleX }],
             },
           ]}

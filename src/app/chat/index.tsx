@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
 import { ChatInput } from "@/components/chat/chat-input";
+import { KeyboardView } from "@/components/keyboard-view";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
@@ -58,10 +59,7 @@ export default function ChatScreen() {
 
   return (
     <AppBackground style={{ paddingBottom: insets.bottom }}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <KeyboardView>
         <View style={styles.flex}>
           <ScreenHeader
             topInset={insets.top}
@@ -91,7 +89,7 @@ export default function ChatScreen() {
             disabled={isStreaming}
           />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardView>
     </AppBackground>
   );
 }
