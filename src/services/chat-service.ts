@@ -1,6 +1,6 @@
 import { get, post } from "@/lib/api-client";
 import { connectSSE, type SSEConnection } from "@/lib/sse-client";
-import type { SSEEvent } from "@/utils/sse-parser";
+import type { SSETypedEvent } from "@/types/sse";
 import type {
   ChatMessagesResponse,
   ChatThreadResponse,
@@ -35,7 +35,7 @@ export async function createTurn(
 
 export function streamTurnEvents(
   turnId: string,
-  onEvent: (event: SSEEvent) => void,
+  onEvent: (event: SSETypedEvent) => void,
   afterEventId?: string,
   onDone?: () => void,
   onError?: (error: Error) => void,

@@ -9,9 +9,7 @@ const ANIMATION_DURATION = 400;
 const STAGGER_DELAY = 150;
 
 export function TypingIndicator(): JSX.Element {
-  const dotAnims = useRef(
-    Array.from({ length: DOT_COUNT }, () => new Animated.Value(0.3)),
-  ).current;
+  const dotAnims = useRef(Array.from({ length: DOT_COUNT }, () => new Animated.Value(0.3))).current;
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -44,10 +42,7 @@ export function TypingIndicator(): JSX.Element {
       <View style={styles.bubble}>
         <View style={styles.dotsContainer}>
           {dotAnims.map((anim, index) => (
-            <Animated.View
-              key={index}
-              style={[styles.dot, { opacity: anim }]}
-            />
+            <Animated.View key={index} style={[styles.dot, { opacity: anim }]} />
           ))}
         </View>
       </View>

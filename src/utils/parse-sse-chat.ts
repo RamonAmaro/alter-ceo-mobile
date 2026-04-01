@@ -1,9 +1,23 @@
 import type { ChatMessageResponse } from "@/types/chat";
 import { ulid } from "@/utils/ulid";
 
+function hasDeltaText(value: unknown): value is { text: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "text" in value &&
+    typeof (value as { text: unknown }).text === "string"
+  );
+}
+
+function hasCompleteMessage(value: unknown): value is { message: ChatMessageResponse } {
+  return typeof value === "object" && value !== null && "message" in value;
+}
+
 export function parseDeltaText(data: string): string {
   try {
-    return (JSON.parse(data) as { text?: string }).text ?? "";
+    const parsed: unknown = JSON.parse(data);
+    return hasDeltaText(parsed) ? parsed.text : "";
   } catch {
     return data;
   }
@@ -22,8 +36,8 @@ export function parseCompleteMessage(
     created_at: new Date().toISOString(),
   };
   try {
-    const parsed = JSON.parse(data) as { message?: ChatMessageResponse };
-    return parsed.message ?? fallback;
+    const parsed: unknown = JSON.parse(data);
+    return hasCompleteMessage(parsed) ? (parsed.message as ChatMessageResponse) : fallback;
   } catch {
     return fallback;
   }

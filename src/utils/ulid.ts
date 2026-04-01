@@ -1,3 +1,5 @@
+import * as ExpoCrypto from "expo-crypto";
+
 const CROCKFORD_BASE32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 function encodeBase32(value: bigint, length: number): string {
@@ -13,8 +15,7 @@ function encodeBase32(value: bigint, length: number): string {
 
 export function ulid(): string {
   const timestampMs = BigInt(Date.now());
-  const randomBytes = new Uint8Array(10);
-  crypto.getRandomValues(randomBytes);
+  const randomBytes = ExpoCrypto.getRandomBytes(10);
 
   let randomness = 0n;
   for (const byte of randomBytes) {

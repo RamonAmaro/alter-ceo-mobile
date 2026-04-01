@@ -1,6 +1,6 @@
 import { get, post } from "@/lib/api-client";
 import { connectSSE, type SSEConnection } from "@/lib/sse-client";
-import type { SSEEvent } from "@/utils/sse-parser";
+import type { SSETypedEvent } from "@/types/sse";
 import type {
   PlanRunAccepted,
   PlanRunCreateRequest,
@@ -20,7 +20,7 @@ export async function getRunStatus(runId: string): Promise<PlanRunStatusResponse
 
 export function streamRunEvents(
   runId: string,
-  onEvent: (event: SSEEvent) => void,
+  onEvent: (event: SSETypedEvent) => void,
   onError?: (error: Error) => void,
   afterEventId?: string,
 ): SSEConnection {
@@ -29,7 +29,7 @@ export function streamRunEvents(
 
 export function streamPlan(
   request: PlanRunCreateRequest,
-  onEvent: (event: SSEEvent) => void,
+  onEvent: (event: SSETypedEvent) => void,
 ): SSEConnection {
   return connectSSE("/plans/stream", {
     onEvent,

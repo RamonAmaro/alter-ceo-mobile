@@ -10,6 +10,9 @@ import type { ChatMessageResponse } from "@/types/chat";
 interface ChatMessageListProps {
   messages: readonly ChatMessageResponse[];
   isStreaming: boolean;
+  userInitial?: string;
+  failedMessageId?: string | null;
+  onRetry?: () => void;
 }
 
 interface DisplayMessage {
@@ -17,11 +20,19 @@ interface DisplayMessage {
   readonly text: string;
   readonly isUser: boolean;
   readonly isLastInGroup: boolean;
+  readonly isFirstInGroup: boolean;
+  readonly timestamp: string;
 }
 
 const SCROLL_THRESHOLD = 150;
 
-export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps) {
+export function ChatMessageList({
+  messages,
+  isStreaming,
+  userInitial,
+  failedMessageId,
+  onRetry,
+}: ChatMessageListProps) {
   const listRef = useRef<FlatList<DisplayMessage>>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
 
@@ -30,28 +41,37 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       const next = messages[i + 1];
+      const prev = messages[i - 1];
       items.push({
         id: msg.id,
         text: msg.text,
         isUser: msg.role === "user",
         isLastInGroup: !next || next.role !== msg.role,
+        isFirstInGroup: !prev || prev.role !== msg.role,
+        timestamp: msg.created_at,
       });
     }
     return items;
   }, [messages]);
 
-  const handleScroll = useCallback(
-    (e: { nativeEvent: { contentOffset: { y: number } } }) => {
-      setIsNearBottom(e.nativeEvent.contentOffset.y < SCROLL_THRESHOLD);
-    },
-    [],
-  );
+  const handleScroll = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    setIsNearBottom(e.nativeEvent.contentOffset.y < SCROLL_THRESHOLD);
+  }, []);
 
   const renderMessage = useCallback(
     ({ item }: { item: DisplayMessage }) => (
-      <MessageBubble text={item.text} isUser={item.isUser} isLastInGroup={item.isLastInGroup} />
+      <MessageBubble
+        text={item.text}
+        isUser={item.isUser}
+        isLastInGroup={item.isLastInGroup}
+        showSender={item.isFirstInGroup}
+        userInitial={userInitial}
+        timestamp={item.isFirstInGroup ? item.timestamp : undefined}
+        failed={item.id === failedMessageId}
+        onRetry={item.id === failedMessageId ? onRetry : undefined}
+      />
     ),
-    [],
+    [userInitial, failedMessageId, onRetry],
   );
 
   const keyExtractor = useCallback((item: DisplayMessage) => item.id, []);
@@ -60,7 +80,7 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }
 
-  const listHeader = isStreaming ? <StreamingBubble /> : null;
+  const listHeader = isStreaming ? <StreamingBubble userInitial={userInitial} /> : null;
 
   return (
     <View style={styles.container}>
@@ -77,6 +97,10 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
         inverted
         onScroll={handleScroll}
         scrollEventThrottle={100}
+        initialNumToRender={12}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+        removeClippedSubviews
       />
       <ScrollToBottomButton visible={!isNearBottom} onPress={scrollToBottom} />
     </View>

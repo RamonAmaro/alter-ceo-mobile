@@ -1,7 +1,7 @@
 export interface SSEEvent {
-  id?: string;
-  event?: string;
-  data: string;
+  readonly id?: string;
+  readonly event?: string;
+  readonly data: string;
 }
 
 export function createSSEParser(onEvent: (event: SSEEvent) => void) {
@@ -19,11 +19,15 @@ export function createSSEParser(onEvent: (event: SSEEvent) => void) {
     }
   }
 
-  function reset(): void {
+  function flush(): void {
+    if (buffer.trim()) {
+      const event = parseBlock(buffer);
+      if (event) onEvent(event);
+    }
     buffer = "";
   }
 
-  return { push, reset };
+  return { push, flush };
 }
 
 function parseBlock(block: string): SSEEvent | null {

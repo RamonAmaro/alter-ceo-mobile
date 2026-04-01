@@ -1,32 +1,45 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
 import { ChatInput } from "@/components/chat/chat-input";
-import { KeyboardView } from "@/components/keyboard-view";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
+import { KeyboardView } from "@/components/keyboard-view";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatStore } from "@/stores/chat-store";
 
+function extractInitial(displayName: string | null, email: string | null): string {
+  const source = displayName ?? email;
+  if (!source) return "?";
+  return source[0].toUpperCase();
+}
+
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const [inputValue, setInputValue] = useState("");
 
   const user = useAuthStore((s) => s.user);
+  const userInitial = useMemo(
+    () => extractInitial(user?.displayName ?? null, user?.email ?? null),
+    [user?.displayName, user?.email],
+  );
   const messages = useChatStore((s) => s.messages);
   const threads = useChatStore((s) => s.threads);
   const activeThreadId = useChatStore((s) => s.activeThreadId);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const isLoadingMessages = useChatStore((s) => s.isLoadingMessages);
   const error = useChatStore((s) => s.error);
+  const failedMessageId = useChatStore((s) => s.failedMessageId);
+
   const fetchThreads = useChatStore((s) => s.fetchThreads);
   const createThread = useChatStore((s) => s.createThread);
   const selectThread = useChatStore((s) => s.selectThread);
   const sendMessage = useChatStore((s) => s.sendMessage);
+  const retryMessage = useChatStore((s) => s.retryMessage);
   const cancelStream = useChatStore((s) => s.cancelStream);
 
   useEffect(() => {
@@ -73,7 +86,13 @@ export default function ChatScreen() {
               <ActivityIndicator size="large" color="#00FF84" />
             </View>
           ) : (
-            <ChatMessageList messages={messages} isStreaming={isStreaming} />
+            <ChatMessageList
+              messages={messages}
+              isStreaming={isStreaming}
+              userInitial={userInitial}
+              failedMessageId={failedMessageId}
+              onRetry={retryMessage}
+            />
           )}
 
           {error != null && (

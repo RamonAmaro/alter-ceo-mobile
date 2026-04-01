@@ -10,10 +10,11 @@ interface RawAuthSessionResponse {
   roles: string[];
 }
 
-function mapSession(raw: RawAuthSessionResponse): AuthSession {
+function mapSession(raw: RawAuthSessionResponse, displayName?: string | null): AuthSession {
   return {
     userId: raw.user_id,
     email: raw.email ?? null,
+    displayName: displayName ?? null,
     roles: raw.roles,
   };
 }

@@ -48,7 +48,9 @@ export function ChatInput({ value, onChangeText, onSend, disabled = false }: Cha
           disabled={!canSend}
         >
           <LinearGradient
-            colors={canSend ? ["#00FF84", "#00CC6A"] : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]}
+            colors={
+              canSend ? ["#00FF84", "#00CC6A"] : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]
+            }
             style={styles.sendGradient}
           >
             <Ionicons name="send" size={18} color={canSend ? "#000000" : "rgba(0,0,0,0.4)"} />

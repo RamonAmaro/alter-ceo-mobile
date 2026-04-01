@@ -1,34 +1,22 @@
 import { API_BASE_URL, API_VERSION } from "@/constants/env";
 import { buildAuthHeaders } from "@/lib/api-client";
-import type { SSEEvent } from "@/utils/sse-parser";
-import EventSource from "react-native-sse";
+import type { SSEEventType, SSETypedEvent } from "@/types/sse";
+import { SSE_EVENT_TYPES } from "@/types/sse";
+import { createSSEParser } from "@/utils/sse-parser";
 
-const SSE_EVENT_TYPES = [
-  "queued",
-  "running",
-  "routing",
-  "business_kernel",
-  "business_kernel_ready",
-  "plan_generating",
-  "delta",
-  "plan_validating",
-  "tool_execution",
-  "persisting",
-  "complete",
-  "error",
-] as const;
+const KNOWN_EVENTS: ReadonlySet<string> = new Set<string>(SSE_EVENT_TYPES);
 
 interface SSEConnectOptions {
-  onEvent: (event: SSEEvent) => void;
-  onDone?: () => void;
-  onError?: (error: Error) => void;
-  afterEventId?: string;
-  method?: "GET" | "POST";
-  body?: unknown;
+  readonly onEvent: (event: SSETypedEvent) => void;
+  readonly onDone?: () => void;
+  readonly onError?: (error: Error) => void;
+  readonly afterEventId?: string;
+  readonly method?: "GET" | "POST";
+  readonly body?: unknown;
 }
 
 export interface SSEConnection {
-  abort: () => void;
+  readonly abort: () => void;
 }
 
 function buildSSEUrl(path: string, params?: Record<string, string>): string {
@@ -37,43 +25,8 @@ function buildSSEUrl(path: string, params?: Record<string, string>): string {
   return `${base}?${new URLSearchParams(params).toString()}`;
 }
 
-function buildSSEEventSource(
-  url: string,
-  method: "GET" | "POST",
-  headers: Record<string, string>,
-  body: unknown,
-): EventSource<(typeof SSE_EVENT_TYPES)[number]> {
-  return new EventSource<(typeof SSE_EVENT_TYPES)[number]>(url, {
-    headers,
-    method,
-    body: method === "POST" && body != null ? JSON.stringify(body) : undefined,
-    pollingInterval: 0,
-  });
-}
-
-function attachSSEListeners(
-  es: EventSource<(typeof SSE_EVENT_TYPES)[number]>,
-  options: SSEConnectOptions,
-): void {
-  for (const eventType of SSE_EVENT_TYPES) {
-    es.addEventListener(eventType, (e) => {
-      const typed = e as { data?: string | null; lastEventId?: string };
-      options.onEvent({
-        event: eventType,
-        data: typed.data ?? "",
-        id: typed.lastEventId ?? undefined,
-      });
-    });
-  }
-
-  es.addEventListener("error", (e) => {
-    const typed = e as { type?: string; message?: string; xhrStatus?: number };
-    if (typed.type === "close") {
-      options.onDone?.();
-    } else {
-      options.onError?.(new Error(typed.message ?? "SSE connection error"));
-    }
-  });
+function isKnownEvent(name: string | undefined): name is SSEEventType {
+  return name != null && KNOWN_EVENTS.has(name);
 }
 
 export function connectSSE(path: string, options: SSEConnectOptions): SSEConnection {
@@ -86,7 +39,10 @@ export function connectSSE(path: string, options: SSEConnectOptions): SSEConnect
   const url = buildSSEUrl(path, params);
   const authHeaders = buildAuthHeaders();
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    Accept: "text/event-stream",
+    "Cache-Control": "no-cache",
+  };
   if (authHeaders["Authorization"]) {
     headers["Authorization"] = authHeaders["Authorization"];
   }
@@ -97,16 +53,64 @@ export function connectSSE(path: string, options: SSEConnectOptions): SSEConnect
     headers["Content-Type"] = "application/json";
   }
 
-  type ESInstance = EventSource<(typeof SSE_EVENT_TYPES)[number]>;
-  const state: { es: ESInstance | null; aborted: boolean } = { es: null, aborted: false };
+  const xhr = new XMLHttpRequest();
+  let lastProcessedIndex = 0;
+  let aborted = false;
 
-  state.es = buildSSEEventSource(url, method, headers, options.body);
-  attachSSEListeners(state.es, options);
+  const parser = createSSEParser((raw) => {
+    if (aborted) return;
+    if (!isKnownEvent(raw.event)) return;
+    options.onEvent({ id: raw.id, event: raw.event, data: raw.data });
+  });
+
+  xhr.open(method, url, true);
+  for (const [key, value] of Object.entries(headers)) {
+    xhr.setRequestHeader(key, value);
+  }
+
+  xhr.onreadystatechange = () => {
+    if (aborted) return;
+
+    if (xhr.readyState !== XMLHttpRequest.LOADING && xhr.readyState !== XMLHttpRequest.DONE) {
+      return;
+    }
+
+    if (xhr.status >= 200 && xhr.status < 400) {
+      const text = xhr.responseText ?? "";
+      if (text.length > lastProcessedIndex) {
+        parser.push(text.slice(lastProcessedIndex));
+        lastProcessedIndex = text.length;
+      }
+
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        parser.flush();
+        options.onDone?.();
+      }
+    } else if (xhr.status !== 0 && xhr.readyState === XMLHttpRequest.DONE) {
+      options.onError?.(new Error(`SSE HTTP ${xhr.status}`));
+    }
+  };
+
+  xhr.onerror = () => {
+    if (aborted) return;
+    options.onError?.(new Error("SSE connection error"));
+  };
+
+  xhr.ontimeout = () => {
+    if (aborted) return;
+    options.onError?.(new Error("SSE connection timeout"));
+  };
+
+  if (method === "POST" && options.body != null) {
+    xhr.send(JSON.stringify(options.body));
+  } else {
+    xhr.send();
+  }
 
   return {
     abort: () => {
-      state.aborted = true;
-      state.es?.close();
+      aborted = true;
+      xhr.abort();
     },
   };
 }

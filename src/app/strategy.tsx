@@ -60,11 +60,7 @@ export default function StrategyScreen() {
           {selectedTopic !== null && (
             <View style={[styles.footer, { paddingBottom: insets.bottom || Spacing.three }]}>
               <StrategyCategoryChips onSend={sendMessage} />
-              <ChatInput
-                value={inputValue}
-                onChangeText={setInputValue}
-                onSend={handleSend}
-              />
+              <ChatInput value={inputValue} onChangeText={setInputValue} onSend={handleSend} />
             </View>
           )}
         </View>
