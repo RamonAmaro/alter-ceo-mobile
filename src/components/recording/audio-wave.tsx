@@ -5,7 +5,7 @@ import { AudioWaveform } from "@/components/audio-waveform";
 
 // --- Constants -----------------------------------------------------------
 
-const METERING_INTERVAL_MS = 150;
+const METERING_INTERVAL_MS = 100;
 const DB_FLOOR = -60;
 const DB_CEILING = 0;
 

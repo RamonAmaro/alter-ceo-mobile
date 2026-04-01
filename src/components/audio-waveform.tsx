@@ -1,8 +1,10 @@
 import React, { memo, useEffect, useRef } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
   type SharedValue,
 } from "react-native-reanimated";
 
@@ -19,8 +21,13 @@ const BAR_COUNT = Math.floor(CONTAINER_WIDTH / (BAR_WIDTH + BAR_GAP));
 // --- Animation constants -------------------------------------------------
 
 const MIN_SCALE = 0.05;
-const TICK_MS = 120;
-const EMA_ALPHA = 0.4;
+const TICK_MS = 100;
+const EMA_ALPHA = 0.5;
+
+const TIMING_CONFIG = {
+  duration: 100,
+  easing: Easing.out(Easing.quad),
+};
 
 // --- Pure functions ------------------------------------------------------
 
@@ -41,13 +48,13 @@ function shiftBufferAndAppend(buffer: Float32Array, value: number): void {
   buffer[buffer.length - 1] = value;
 }
 
-function applyScalesToSharedValues(scales: SharedValue<number>[], buffer: Float32Array): void {
+function animateScales(scales: SharedValue<number>[], buffer: Float32Array): void {
   for (let i = 0; i < scales.length; i++) {
-    scales[i].value = MIN_SCALE + buffer[i];
+    scales[i].value = withTiming(MIN_SCALE + buffer[i], TIMING_CONFIG);
   }
 }
 
-function resetSharedValues(scales: SharedValue<number>[]): void {
+function resetScales(scales: SharedValue<number>[]): void {
   for (let i = 0; i < scales.length; i++) {
     scales[i].value = MIN_SCALE;
   }
@@ -110,7 +117,7 @@ export const AudioWaveform = memo(function AudioWaveform({
   useEffect(() => {
     bufferRef.current.fill(0);
     smoothedRef.current = 0;
-    resetSharedValues(scalesRef.current);
+    resetScales(scalesRef.current);
   }, [resetKey]);
 
   useEffect(() => {
@@ -126,7 +133,7 @@ export const AudioWaveform = memo(function AudioWaveform({
       smoothedRef.current = smoothAmplitude(smoothedRef.current, raw);
 
       shiftBufferAndAppend(buffer, smoothedRef.current);
-      applyScalesToSharedValues(scales, buffer);
+      animateScales(scales, buffer);
     }, TICK_MS);
 
     return () => clearInterval(intervalId);
