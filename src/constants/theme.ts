@@ -39,6 +39,36 @@ export const Typography = {
   caption: { fontFamily: Fonts.montserratMedium, fontSize: 12, lineHeight: 16 },
 } as const;
 
+export const SemanticColors = {
+  success: "#00FF84",
+  successMuted: "rgba(0,255,132,0.15)",
+  warning: "#FF9500",
+  error: "#FF4444",
+  errorMuted: "rgba(255,80,80,0.2)",
+  info: "#00CFFF",
+  accent: "#E8731A",
+  textPrimary: "#ffffff",
+  textSecondaryLight: "rgba(255,255,255,0.7)",
+  textMuted: "rgba(255,255,255,0.5)",
+  textDisabled: "rgba(255,255,255,0.4)",
+  textPlaceholder: "rgba(255,255,255,0.4)",
+  textSubtle: "rgba(255,255,255,0.85)",
+  surfaceDark: "#09090b",
+  surfaceElevated: "rgba(255,255,255,0.04)",
+  surfaceOverlay: "rgba(8,12,18,0.97)",
+  border: "rgba(255,255,255,0.06)",
+  borderLight: "rgba(255,255,255,0.12)",
+  glassBackground: "rgba(255,255,255,0.08)",
+  glassBorder: "rgba(255,255,255,0.04)",
+  glowSuccess: "rgba(0,255,132,0.08)",
+  glowSuccessActive: "rgba(0,255,132,0.18)",
+  surfaceCard: "#202F3F",
+  teal: "#43BCB8",
+  tealLight: "#2AF0E1",
+  iconMuted: "rgba(255,255,255,0.6)",
+  glassBackgroundHover: "rgba(255,255,255,0.1)",
+} as const;
+
 export const Spacing = {
   half: 2,
   one: 4,

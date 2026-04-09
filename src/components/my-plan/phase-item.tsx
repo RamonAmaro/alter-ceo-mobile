@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface PhaseItemProps {
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dotNum: {
-    color: "rgba(255,255,255,0.5)",
+    color: SemanticColors.textMuted,
     fontFamily: Fonts.montserratBold,
     fontSize: 11,
   },
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     paddingTop: 3,
   },
   label: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 13,
   },

@@ -1,4 +1,5 @@
-import { Fonts } from "@/constants/theme";
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { SemanticColors, Fonts } from "@/constants/theme";
 import { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
@@ -11,12 +12,9 @@ export function CountdownOverlay({ onComplete, seconds = 3 }: CountdownOverlayPr
   const [count, setCount] = useState(seconds);
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    animateNumber();
-  }, [count]);
-
-  function animateNumber() {
     scaleAnim.setValue(0.3);
     opacityAnim.setValue(0);
 
@@ -25,19 +23,19 @@ export function CountdownOverlay({ onComplete, seconds = 3 }: CountdownOverlayPr
         toValue: 1,
         friction: 4,
         tension: 80,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
       Animated.timing(opacityAnim, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
     ]).start(() => {
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         Animated.timing(opacityAnim, {
           toValue: 0,
           duration: 200,
-          useNativeDriver: true,
+          useNativeDriver: USE_NATIVE_DRIVER,
         }).start(() => {
           if (count > 1) {
             setCount((c) => c - 1);
@@ -47,7 +45,12 @@ export function CountdownOverlay({ onComplete, seconds = 3 }: CountdownOverlayPr
         });
       }, 600);
     });
-  }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [count]);
 
   return (
     <View style={styles.overlay}>
@@ -76,6 +79,6 @@ const styles = StyleSheet.create({
   number: {
     fontFamily: Fonts.montserratBold,
     fontSize: 120,
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
 });

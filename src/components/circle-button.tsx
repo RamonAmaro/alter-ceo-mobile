@@ -1,7 +1,8 @@
-import { Spacing } from "@/constants/theme";
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { ThemedText } from "@/components/themed-text";
 import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 export interface CircleButtonProps {
@@ -32,12 +33,12 @@ export function CircleButton({
           Animated.timing(pulseAnim, {
             toValue: 1.08,
             duration: 700,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(pulseAnim, {
             toValue: 1,
             duration: 700,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ]),
       ).start();
@@ -75,7 +76,7 @@ export function CircleButton({
           </Svg>
         </Animated.View>
       </TouchableOpacity>
-      <ThemedText type="caption" style={{ color: "#ffffff", textAlign: "center" }}>
+      <ThemedText type="caption" style={styles.labelText}>
         {label}
       </ThemedText>
     </View>
@@ -87,11 +88,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.one,
   },
+  labelText: {
+    color: SemanticColors.textPrimary,
+    textAlign: "center" as const,
+  },
   circleButton: {
-    shadowColor: "#00FFF8",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#00FFF8",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: "0px 2px 6px rgba(0, 255, 248, 0.3)",
+      },
+    }),
   },
 });

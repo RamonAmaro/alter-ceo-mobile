@@ -1,10 +1,11 @@
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { useCallback, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { CircleButton } from "@/components/circle-button";
 import { MicIcon, PauseIcon, PlayIcon } from "@/components/recording-icons";
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 
 type RecordingState = "idle" | "recording" | "paused";
@@ -60,27 +61,27 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
         Animated.parallel([
           Animated.spring(scale, {
             toValue: 1.4,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
             speed: 50,
             bounciness: 6,
           }),
           Animated.timing(glow, {
             toValue: 0.55,
             duration: 120,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ]),
         Animated.parallel([
           Animated.spring(scale, {
             toValue: 1,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
             speed: 20,
             bounciness: 14,
           }),
           Animated.timing(glow, {
             toValue: 0,
             duration: 350,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ]),
       ]).start(() => {
@@ -107,7 +108,7 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
   return (
     <View style={styles.container}>
       <SideButton
-        icon={<Ionicons name="close" size={26} color="#ffffff" />}
+        icon={<Ionicons name="close" size={26} color={SemanticColors.textPrimary} />}
         label="Eliminar"
         onPress={isActive ? handleDelete : onDelete}
         scaleAnim={deleteScale}
@@ -150,7 +151,7 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
       )}
 
       <SideButton
-        icon={<Ionicons name="download-outline" size={26} color="#ffffff" />}
+        icon={<Ionicons name="download-outline" size={26} color={SemanticColors.textPrimary} />}
         label="Guardar"
         onPress={isActive ? handleSave : onSave}
         scaleAnim={saveScale}
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   sideLabel: {
-    color: "rgba(255, 255, 255, 0.7)",
+    color: SemanticColors.textSecondaryLight,
     textAlign: "center",
   },
 });

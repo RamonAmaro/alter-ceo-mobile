@@ -1,5 +1,5 @@
 import * as LocalAuthentication from "expo-local-authentication";
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "@/services/secure-store";
 
 const CREDENTIALS_KEY = "alterceo_credentials";
 

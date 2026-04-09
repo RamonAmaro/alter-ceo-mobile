@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface RoleBarRowProps {
@@ -24,16 +24,14 @@ function BarLine({
   valueLabel: string;
   rowLabel: string;
 }) {
-  const pct = `${Math.max((value / maxValue) * 100, 2)}%`;
+  const pct = Math.max((value / maxValue) * 100, 2);
   return (
     <View style={barStyles.row}>
       <ThemedText type="caption" style={barStyles.rowLabel}>
         {rowLabel}
       </ThemedText>
       <View style={[barStyles.track, { backgroundColor: trackColor }]}>
-        <View
-          style={[barStyles.fill, { width: pct as unknown as number, backgroundColor: color }]}
-        />
+        <View style={[barStyles.fill, { width: `${pct}%`, backgroundColor: color }]} />
       </View>
       <ThemedText type="caption" style={[barStyles.value, { color }]}>
         {valueLabel}
@@ -82,7 +80,7 @@ export function RoleBarRow({ label, current, target, maxValue }: RoleBarRowProps
       <BarLine
         value={current}
         maxValue={maxValue}
-        color="rgba(255,255,255,0.6)"
+        color={SemanticColors.iconMuted}
         trackColor="rgba(255,255,255,0.06)"
         valueLabel={`${current}h`}
         rowLabel="Hoy"
@@ -104,7 +102,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   label: {
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
     fontSize: 12,
     fontFamily: Fonts.montserratSemiBold,
     marginBottom: 2,

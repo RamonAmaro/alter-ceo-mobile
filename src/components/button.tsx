@@ -1,9 +1,9 @@
+import { ThemedText } from "@/components/themed-text";
 import { Fonts, Typography } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   ActivityIndicator,
   StyleSheet,
-  Text,
   TouchableOpacity,
   type TouchableOpacityProps,
 } from "react-native";
@@ -29,7 +29,9 @@ export function Button({ label, loading, style, disabled, ...rest }: ButtonProps
         {loading ? (
           <ActivityIndicator color="#000000" />
         ) : (
-          <Text style={styles.label}>{label}</Text>
+          <ThemedText type="labelMd" style={styles.label}>
+            {label}
+          </ThemedText>
         )}
       </LinearGradient>
     </TouchableOpacity>
@@ -39,6 +41,7 @@ export function Button({ label, loading, style, disabled, ...rest }: ButtonProps
 const styles = StyleSheet.create({
   button: {
     width: 278,
+    alignSelf: "center",
     borderRadius: 98,
     overflow: "hidden",
   },

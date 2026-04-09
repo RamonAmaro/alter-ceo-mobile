@@ -3,7 +3,7 @@ import { PriorityItem } from "@/components/my-plan/priority-item";
 import { RevenueChart } from "@/components/my-plan/revenue-chart";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { formatEur } from "@/utils/format-currency";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
   },
   targetValue: {
-    color: "#00FF84",
+    color: SemanticColors.success,
     fontSize: 36,
     lineHeight: 46,
     fontFamily: Fonts.montserratExtraBold,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
   },
   chartIntro: {
-    color: "rgba(255,255,255,0.6)",
+    color: SemanticColors.iconMuted,
     lineHeight: 22,
     fontSize: 13,
   },

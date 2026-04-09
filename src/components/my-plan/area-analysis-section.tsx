@@ -2,7 +2,7 @@ import { AreaAnalysisCard } from "@/components/my-plan/area-analysis-card";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { Spacing } from "@/constants/theme";
 import type { Ionicons } from "@expo/vector-icons";
-import type { PlanAreaAnalysis } from "@/types/plan-data";
+import type { PlanAreaAnalysis } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 const AREA_CONFIG: {

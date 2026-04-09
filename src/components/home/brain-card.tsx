@@ -1,6 +1,6 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
 
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.montserratBold,
     fontSize: 20,
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
   titleRow: {
     flexDirection: "row",
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Fonts.montserratBold,
     fontSize: 20,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   description: {
     fontFamily: Fonts.montserratMedium,

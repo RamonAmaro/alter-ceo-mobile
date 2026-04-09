@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { useEffect, useRef } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   text: {
-    color: "rgba(255,255,255,0.85)",
+    color: SemanticColors.textSubtle,
     fontStyle: "italic",
     lineHeight: 20,
   },

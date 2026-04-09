@@ -1,13 +1,8 @@
 import { create } from "zustand";
 import type { RunStatus } from "@/types/api";
-import type {
-  PlanRunCreateRequest,
-  PlanRunStatusResponse,
-  UserLatestPlanResponse,
-} from "@/types/plan";
+import type { PlanRunCreateRequest, UserLatestPlanResponse } from "@/types/plan";
 import * as planService from "@/services/plan-service";
-import { createPoller } from "@/utils/create-poller";
-import { POLL_INTERVAL } from "@/constants/env";
+import { toErrorMessage } from "@/utils/to-error-message";
 
 interface PlanState {
   currentRun: { run_id: string; status: RunStatus } | null;
@@ -15,6 +10,7 @@ interface PlanState {
   isGenerating: boolean;
   streamingContent: string;
   error: string | null;
+  _activePoller: { stop: () => void } | null;
 
   startPlanGeneration: (request: PlanRunCreateRequest) => Promise<void>;
   pollRunStatus: (runId: string) => void;
@@ -28,6 +24,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   isGenerating: false,
   streamingContent: "",
   error: null,
+  _activePoller: null,
 
   startPlanGeneration: async (request: PlanRunCreateRequest) => {
     set({ isGenerating: true, error: null, streamingContent: "" });
@@ -38,21 +35,21 @@ export const usePlanStore = create<PlanState>((set, get) => ({
     } catch (err) {
       set({
         isGenerating: false,
-        error: (err as Error).message,
+        error: toErrorMessage(err),
       });
     }
   },
 
   pollRunStatus: (runId: string) => {
-    const poller = createPoller<PlanRunStatusResponse>({
-      fn: () => planService.getRunStatus(runId),
-      interval: POLL_INTERVAL,
-      shouldStop: (status) => status.status === "COMPLETED" || status.status === "FAILED",
-      onUpdate: (status) => {
+    get()._activePoller?.stop();
+    const poller = planService.pollRunUntilDone(
+      runId,
+      (status) => {
         set({ currentRun: { run_id: runId, status: status.status } });
         if (status.status === "COMPLETED" || status.status === "FAILED") {
           set({
             isGenerating: false,
+            _activePoller: null,
             error:
               status.status === "FAILED"
                 ? (status.error_message ?? "Error al generar el plan")
@@ -60,14 +57,9 @@ export const usePlanStore = create<PlanState>((set, get) => ({
           });
         }
       },
-      onError: (err) => {
-        set({
-          isGenerating: false,
-          error: (err as Error).message,
-        });
-      },
-    });
-
+      (err) => set({ isGenerating: false, _activePoller: null, error: toErrorMessage(err) }),
+    );
+    set({ _activePoller: poller });
     poller.start();
   },
 
@@ -76,17 +68,19 @@ export const usePlanStore = create<PlanState>((set, get) => ({
       const plan = await planService.getLatestUserPlan(userId);
       set({ latestPlan: plan });
     } catch (err) {
-      set({ error: (err as Error).message });
+      set({ error: toErrorMessage(err) });
     }
   },
 
   reset: () => {
+    get()._activePoller?.stop();
     set({
       currentRun: null,
       latestPlan: null,
       isGenerating: false,
       streamingContent: "",
       error: null,
+      _activePoller: null,
     });
   },
 }));

@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
@@ -66,17 +66,14 @@ export function MeetingListItem({
               <Circle cx="25" cy="25" r="20.5" fill="#313747" />
             </Svg>
             <View style={styles.playIcon}>
-              <Ionicons name="play" size={18} color="#ffffff" />
+              <Ionicons name="play" size={18} color={SemanticColors.textPrimary} />
             </View>
           </>
         )}
       </TouchableOpacity>
 
       <View style={styles.info}>
-        <ThemedText
-          type="labelSm"
-          style={{ color: "#ffffff", fontFamily: Fonts.montserratSemiBold }}
-        >
+        <ThemedText type="labelSm" style={styles.itemTitle}>
           {item.title}
         </ThemedText>
         <View style={styles.metaRow}>
@@ -89,16 +86,16 @@ export function MeetingListItem({
           <View style={styles.actions}>
             <ActionButton
               icon={
-                <Ionicons name="share-social-outline" size={20} color="rgba(255,255,255,0.6)" />
+                <Ionicons name="share-social-outline" size={20} color={SemanticColors.iconMuted} />
               }
               onPress={() => onShare(item.id)}
             />
             <ActionButton
-              icon={<Ionicons name="download-outline" size={20} color="rgba(255,255,255,0.6)" />}
+              icon={<Ionicons name="download-outline" size={20} color={SemanticColors.iconMuted} />}
               onPress={() => onDownload(item.id)}
             />
             <ActionButton
-              icon={<Ionicons name="star-outline" size={20} color="rgba(255,255,255,0.6)" />}
+              icon={<Ionicons name="star-outline" size={20} color={SemanticColors.iconMuted} />}
               onPress={() => onFavorite(item.id)}
             />
             <ActionButton
@@ -106,7 +103,7 @@ export function MeetingListItem({
                 <MaterialCommunityIcons
                   name="delete-outline"
                   size={20}
-                  color="rgba(255,255,255,0.6)"
+                  color={SemanticColors.iconMuted}
                 />
               }
               onPress={() => onDelete(item.id)}
@@ -124,7 +121,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: Spacing.three,
     borderBottomWidth: 2,
-    borderBottomColor: "#43BCB8",
+    borderBottomColor: SemanticColors.teal,
     gap: Spacing.two,
   },
   waveformWrapper: {
@@ -153,10 +150,10 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   date: {
-    color: "rgba(255, 255, 255, 0.5)",
+    color: SemanticColors.textMuted,
   },
   duration: {
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
   metaRow: {
     flexDirection: "row",
@@ -169,5 +166,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
     gap: Spacing.two,
+  },
+  itemTitle: {
+    color: SemanticColors.textPrimary,
+    fontFamily: Fonts.montserratSemiBold,
   },
 });

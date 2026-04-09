@@ -3,7 +3,7 @@ import { RoleBarRow } from "@/components/my-plan/role-bar-row";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Spacing } from "@/constants/theme";
-import type { PlanLeadership, RoleSnapshot } from "@/types/plan-data";
+import type { PlanLeadership, RoleSnapshot } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface LeadershipSectionProps {

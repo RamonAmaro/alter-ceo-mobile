@@ -6,9 +6,10 @@ import { AppBackground } from "@/components/app-background";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { KeyboardView } from "@/components/keyboard-view";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatStore } from "@/stores/chat-store";
 
@@ -72,43 +73,45 @@ export default function ChatScreen() {
 
   return (
     <AppBackground style={{ paddingBottom: insets.bottom }}>
-      <KeyboardView>
-        <View style={styles.flex}>
-          <ScreenHeader
-            topInset={insets.top}
-            useLogoIcon
-            titlePrefix="El Cerebro"
-            titleAccent="ALTER CEO"
-          />
-
-          {isLoadingMessages ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#00FF84" />
-            </View>
-          ) : (
-            <ChatMessageList
-              messages={messages}
-              isStreaming={isStreaming}
-              userInitial={userInitial}
-              failedMessageId={failedMessageId}
-              onRetry={retryMessage}
+      <ResponsiveContainer maxWidth={740}>
+        <KeyboardView>
+          <View style={styles.flex}>
+            <ScreenHeader
+              topInset={insets.top}
+              useLogoIcon
+              titlePrefix="El Cerebro"
+              titleAccent="ALTER CEO"
             />
-          )}
 
-          {error != null && (
-            <ThemedText type="bodySm" style={styles.errorText}>
-              {error}
-            </ThemedText>
-          )}
+            {isLoadingMessages ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={SemanticColors.success} />
+              </View>
+            ) : (
+              <ChatMessageList
+                messages={messages}
+                isStreaming={isStreaming}
+                userInitial={userInitial}
+                failedMessageId={failedMessageId}
+                onRetry={retryMessage}
+              />
+            )}
 
-          <ChatInput
-            value={inputValue}
-            onChangeText={setInputValue}
-            onSend={handleSend}
-            disabled={isStreaming}
-          />
-        </View>
-      </KeyboardView>
+            {error != null && (
+              <ThemedText type="bodySm" style={styles.errorText}>
+                {error}
+              </ThemedText>
+            )}
+
+            <ChatInput
+              value={inputValue}
+              onChangeText={setInputValue}
+              onSend={handleSend}
+              disabled={isStreaming}
+            />
+          </View>
+        </KeyboardView>
+      </ResponsiveContainer>
     </AppBackground>
   );
 }

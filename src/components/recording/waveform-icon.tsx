@@ -1,3 +1,5 @@
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { SemanticColors } from "@/constants/theme";
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
@@ -28,12 +30,12 @@ function WaveBar({
           Animated.timing(anim, {
             toValue: scale,
             duration: 400 + delay * 80,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(anim, {
             toValue: scale * 0.25,
             duration: 400 + delay * 80,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ]),
       );
@@ -43,7 +45,7 @@ function WaveBar({
       Animated.timing(anim, {
         toValue: scale * 0.3,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }).start();
     }
   }, [isPlaying, scale, delay, anim]);
@@ -55,7 +57,7 @@ export function WaveformIcon({ isPlaying }: WaveformIconProps) {
   return (
     <View style={styles.container}>
       {BARS.map((scale, i) => (
-        <WaveBar key={i} scale={scale} delay={i} isPlaying={isPlaying} />
+        <WaveBar key={`bar-${scale}`} scale={scale} delay={i} isPlaying={isPlaying} />
       ))}
     </View>
   );
@@ -72,6 +74,6 @@ const styles = StyleSheet.create({
     width: BAR_WIDTH,
     height: BAR_HEIGHT,
     borderRadius: BAR_WIDTH / 2,
-    backgroundColor: "#00FF84",
+    backgroundColor: SemanticColors.success,
   },
 });

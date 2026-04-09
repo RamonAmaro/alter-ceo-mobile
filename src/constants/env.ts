@@ -6,7 +6,6 @@ export const API_TIMEOUT = 30_000;
 
 // ─── Realtime ─────────────────────────────────────────────────────────────────
 
-export const SSE_RECONNECT_DELAY = 1_000;
 export const POLL_INTERVAL = 3_000;
 
 // ─── Auth / Session ───────────────────────────────────────────────────────────

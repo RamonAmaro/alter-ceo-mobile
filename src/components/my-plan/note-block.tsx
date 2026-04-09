@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface NoteBlockProps {
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.06)",
   },
   text: {
-    color: "rgba(255,255,255,0.6)",
+    color: SemanticColors.iconMuted,
     lineHeight: 22,
     fontSize: 13,
     fontStyle: "italic",

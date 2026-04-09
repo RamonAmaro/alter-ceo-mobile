@@ -5,7 +5,7 @@ import { MessageBubble } from "@/components/chat/message-bubble";
 import { ScrollToBottomButton } from "@/components/chat/scroll-to-bottom-button";
 import { StreamingBubble } from "@/components/chat/streaming-bubble";
 import { Spacing } from "@/constants/theme";
-import type { ChatMessageResponse } from "@/types/chat";
+import type { ChatMessageResponse, MessageKind } from "@/types/chat";
 
 interface ChatMessageListProps {
   messages: readonly ChatMessageResponse[];
@@ -22,6 +22,7 @@ interface DisplayMessage {
   readonly isLastInGroup: boolean;
   readonly isFirstInGroup: boolean;
   readonly timestamp: string;
+  readonly messageKind?: MessageKind;
 }
 
 const SCROLL_THRESHOLD = 150;
@@ -49,6 +50,7 @@ export function ChatMessageList({
         isLastInGroup: !next || next.role !== msg.role,
         isFirstInGroup: !prev || prev.role !== msg.role,
         timestamp: msg.created_at,
+        messageKind: msg.message_kind,
       });
     }
     return items;
@@ -69,6 +71,7 @@ export function ChatMessageList({
         timestamp={item.isFirstInGroup ? item.timestamp : undefined}
         failed={item.id === failedMessageId}
         onRetry={item.id === failedMessageId ? onRetry : undefined}
+        messageKind={item.messageKind}
       />
     ),
     [userInitial, failedMessageId, onRetry],

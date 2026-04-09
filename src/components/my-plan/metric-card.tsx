@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -12,12 +12,12 @@ const STATUS_COLORS: Record<string, string> = {
   Moderado: "#FF9500",
   Buena: "#00FF84",
   Sólida: "#00FF84",
-  Normal: "rgba(255,255,255,0.7)",
+  Normal: SemanticColors.textSecondaryLight,
 };
 
 function resolveColor(value?: string): string {
   if (!value) return "rgba(255,255,255,0.45)";
-  return STATUS_COLORS[value] ?? "rgba(255,255,255,0.7)";
+  return STATUS_COLORS[value] ?? SemanticColors.textSecondaryLight;
 }
 
 interface MetricCardProps {

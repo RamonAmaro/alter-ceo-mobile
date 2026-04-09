@@ -12,3 +12,7 @@ export interface AudioRecordingTranscriptionResponse {
   language?: string | null;
   duration_seconds?: number | null;
 }
+
+export interface AudioRecorderLike {
+  getStatus: () => { metering?: number };
+}

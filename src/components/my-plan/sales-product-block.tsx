@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import type { PlanProductImprovement } from "@/types/plan-data";
+import type { PlanProductImprovement } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface SalesProductBlockProps {
@@ -26,7 +26,7 @@ export function SalesProductBlock({ data }: SalesProductBlockProps) {
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.iconBox}>
-          <Ionicons name="cube-outline" size={18} color="#00FF84" />
+          <Ionicons name="cube-outline" size={18} color={SemanticColors.success} />
         </View>
         <ThemedText type="labelSm" style={styles.title}>
           1. Mejorar tu producto o servicio
@@ -82,14 +82,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   title: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 14,
     lineHeight: 18,
     flex: 1,
   },
   text: {
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
     lineHeight: 22,
     fontSize: 14,
   },
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   diffLabel: {
-    color: "#00FF84",
+    color: SemanticColors.success,
     fontSize: 10,
     fontFamily: Fonts.montserratBold,
     letterSpacing: 0.6,

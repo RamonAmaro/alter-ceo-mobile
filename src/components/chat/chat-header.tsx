@@ -1,6 +1,6 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -11,7 +11,7 @@ export function ChatHeader() {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-        <Ionicons name="chevron-back" size={24} color="#ffffff" />
+        <Ionicons name="chevron-back" size={24} color={SemanticColors.textPrimary} />
       </TouchableOpacity>
 
       <View style={styles.titleRow}>
@@ -51,11 +51,11 @@ const styles = StyleSheet.create({
   labelItalic: {
     fontSize: 16,
     fontStyle: "italic",
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
   labelBold: {
     fontSize: 16,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     letterSpacing: 0.5,
   },
   spacer: {

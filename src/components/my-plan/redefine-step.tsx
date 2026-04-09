@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   dotText: {
     fontFamily: Fonts.montserratBold,
     fontSize: 13,
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
   },
   line: {
     flex: 1,
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   title: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 14,
     lineHeight: 20,

@@ -132,7 +132,7 @@ export function RecordingPage({ width, height }: RecordingPageProps) {
   const isReset = state === "idle";
 
   return (
-    <View style={{ width, height }}>
+    <View style={[styles.page, { width, height }]}>
       <View style={styles.content}>
         <AudioWave isActive={isActive} isReset={isReset} recorder={recorder} />
         <RecordingTimer isRecording={isActive} isPaused={state === "paused"} />
@@ -160,6 +160,9 @@ export function RecordingPage({ width, height }: RecordingPageProps) {
 // --- Styles --------------------------------------------------------------
 
 const styles = StyleSheet.create({
+  page: {
+    overflow: "hidden",
+  },
   content: {
     flex: 1,
     justifyContent: "center",

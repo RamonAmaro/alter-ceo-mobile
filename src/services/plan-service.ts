@@ -1,5 +1,7 @@
 import { get, post } from "@/lib/api-client";
 import { connectSSE, type SSEConnection } from "@/lib/sse-client";
+import { createPoller } from "@/utils/create-poller";
+import { POLL_INTERVAL } from "@/constants/env";
 import type { SSETypedEvent } from "@/types/sse";
 import type {
   PlanRunAccepted,
@@ -44,4 +46,18 @@ export async function upsertPlan(request: PlanUpsertRequest): Promise<PlanUpsert
 
 export async function getLatestUserPlan(userId: string): Promise<UserLatestPlanResponse> {
   return get<UserLatestPlanResponse>(`/users/${userId}/plan`);
+}
+
+export function pollRunUntilDone(
+  runId: string,
+  onUpdate: (status: PlanRunStatusResponse) => void,
+  onError: (err: unknown) => void,
+): { start: () => void; stop: () => void } {
+  return createPoller<PlanRunStatusResponse>({
+    fn: () => getRunStatus(runId),
+    interval: POLL_INTERVAL,
+    shouldStop: (status) => status.status === "COMPLETED" || status.status === "FAILED",
+    onUpdate,
+    onError,
+  });
 }

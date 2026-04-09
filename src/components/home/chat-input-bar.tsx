@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -9,7 +9,7 @@ export function ChatInputBar() {
   const router = useRouter();
 
   function handlePress(): void {
-    router.push("/chat");
+    router.push("/(app)/chat");
   }
 
   return (
@@ -24,7 +24,7 @@ export function ChatInputBar() {
           <ThemedText type="bodyMd" style={styles.placeholder}>
             Escribe tu mensaje...
           </ThemedText>
-          <Ionicons name="radio-outline" size={20} color="rgba(255,255,255,0.5)" />
+          <Ionicons name="radio-outline" size={20} color={SemanticColors.textMuted} />
         </LinearGradient>
       </TouchableOpacity>
 

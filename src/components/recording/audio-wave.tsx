@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { AudioRecorder } from "expo-audio";
+import type { AudioRecorderLike } from "@/types/audio";
 
 import { AudioWaveform } from "@/components/audio-waveform";
 
@@ -15,7 +15,7 @@ type AudioWaveProps =
   | {
       isActive: boolean;
       isReset: boolean;
-      recorder: AudioRecorder;
+      recorder: AudioRecorderLike;
       amplitudeRef?: never;
     }
   | {

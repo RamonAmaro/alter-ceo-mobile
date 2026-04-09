@@ -1,161 +1,29 @@
-import { AppBackground } from "@/components/app-background";
-import { Button } from "@/components/button";
-import { ProgressCircle } from "@/components/onboarding/progress-circle";
-import { ThemedText } from "@/components/themed-text";
-import { STEPS, getStepIndexForStage, type RunStage } from "@/constants/report-loading-steps";
-import { Spacing } from "@/constants/theme";
-import { createRun, streamRunEvents } from "@/services/plan-service";
-import { useAuthStore } from "@/stores/auth-store";
-import { useOnboardingStore } from "@/stores/onboarding-store";
-import { ApiError } from "@/types/api";
-import type { AudioAnswer } from "@/types/onboarding";
-import { buildExpressPayload, buildProfessionalPayload } from "@/utils/build-onboarding-payload";
-import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
+
+import { router } from "expo-router";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const EXPRESS_AUDIO_INDICES = { primaryOffer: 11, mainObstacle: 12 };
-const PROFESSIONAL_AUDIO_INDICES = { offerAndSales: 18, primaryOfferPrice: 19 };
+import { Button } from "@/components/button";
+import { FooterActionBar } from "@/components/footer-action-bar";
+import { ProgressCircle } from "@/components/onboarding/progress-circle";
+import { ScreenLayout } from "@/components/screen-layout";
+import { ThemedText } from "@/components/themed-text";
+import { STEPS } from "@/constants/report-loading-steps";
+import { SemanticColors, Spacing } from "@/constants/theme";
+import { usePlanGeneration } from "@/hooks/use-plan-generation";
 
 export default function ReportLoadingScreen() {
   const insets = useSafeAreaInsets();
-  const [stepIndex, setStepIndex] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const abortRef = useRef<{ abort: () => void } | null>(null);
-  const lastEventIdRef = useRef<string | undefined>(undefined);
-  const retryCountRef = useRef(0);
-  const MAX_RETRIES = 3;
+  const { stepIndex, error } = usePlanGeneration();
+  const step = STEPS[stepIndex];
 
-  const { planType, answers, audioRecords } = useOnboardingStore();
-  const user = useAuthStore((s) => s.user);
-
-  useEffect(() => {
-    void startGeneration();
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, []);
-
-  function getAudioAnswer(questionIndex: number): AudioAnswer {
-    const record = audioRecords.find((r) => r.questionIndex === questionIndex);
-    return {
-      audio_url: "https://alterceo.com/audio/placeholder.mp3",
-      duration_seconds: 1,
-      transcript: record?.transcript ?? null,
-    };
-  }
-
-  function advanceToStage(stage: RunStage, progressPct?: number): void {
-    const baseIndex = getStepIndexForStage(stage);
-    if (progressPct != null && stage === "plan_generating") {
-      const range =
-        getStepIndexForStage("plan_validating") - getStepIndexForStage("plan_generating");
-      const computed = baseIndex + Math.floor((progressPct / 100) * range);
-      setStepIndex((prev) => Math.max(prev, computed));
-    } else {
-      setStepIndex((prev) => Math.max(prev, baseIndex));
-    }
-  }
-
-  async function startGeneration(): Promise<void> {
-    if (!user?.userId || !planType) {
-      setError("Sesión no válida. Por favor, vuelve a iniciar sesión.");
-      return;
-    }
-
-    try {
-      setStepIndex(0);
-
-      let runRequest;
-
-      if (planType === "express") {
-        const primaryOffer = getAudioAnswer(EXPRESS_AUDIO_INDICES.primaryOffer);
-        const mainObstacle = getAudioAnswer(EXPRESS_AUDIO_INDICES.mainObstacle);
-        runRequest = buildExpressPayload({
-          answers,
-          primaryOfferAudio: primaryOffer,
-          mainObstacleAudio: mainObstacle,
-          userId: user.userId,
-        });
-      } else {
-        const offerAndSales = getAudioAnswer(PROFESSIONAL_AUDIO_INDICES.offerAndSales);
-        const primaryOfferPrice = getAudioAnswer(PROFESSIONAL_AUDIO_INDICES.primaryOfferPrice);
-        runRequest = buildProfessionalPayload({
-          answers,
-          offerAndSalesAudio: offerAndSales,
-          primaryOfferPriceAudio: primaryOfferPrice,
-          userId: user.userId,
-        });
-      }
-
-      const accepted = await createRun(runRequest);
-      advanceToStage("running");
-
-      function connectToRun(runId: string): void {
-        const connection = streamRunEvents(
-          runId,
-          (event) => {
-            if (event.id) lastEventIdRef.current = event.id;
-            const stage = event.event as RunStage;
-
-            if (stage === "complete") {
-              advanceToStage("complete");
-              connection.abort();
-              setTimeout(() => router.replace("/(onboarding)/completion"), 800);
-              return;
-            }
-
-            if (stage === "error") {
-              setError("Error al generar el plan. Por favor, inténtalo de nuevo.");
-              return;
-            }
-
-            let progressPct: number | undefined;
-            try {
-              const payload = JSON.parse(event.data) as Record<string, unknown>;
-              if (typeof payload.progress_pct === "number") progressPct = payload.progress_pct;
-            } catch {
-              /* data not JSON, ignore */
-            }
-
-            advanceToStage(stage, progressPct);
-          },
-          () => {
-            if (retryCountRef.current < MAX_RETRIES) {
-              retryCountRef.current += 1;
-              setTimeout(() => connectToRun(runId), 1500 * retryCountRef.current);
-            } else {
-              setError("No se pudo conectar con el servidor. Por favor, inténtalo de nuevo.");
-            }
-          },
-          lastEventIdRef.current,
-        );
-        abortRef.current = connection;
-      }
-
-      connectToRun(accepted.run_id);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(`Error al crear el plan (${err.status}). Por favor, inténtalo de nuevo.`);
-      } else {
-        setError("Error inesperado. Por favor, inténtalo de nuevo.");
-      }
-    }
-  }
+  const topPadding = { paddingTop: insets.top + Spacing.five };
 
   if (error) {
     return (
-      <AppBackground>
-        <View
-          style={[
-            styles.container,
-            {
-              paddingTop: insets.top + Spacing.five,
-              paddingBottom: insets.bottom + Spacing.four,
-            },
-          ]}
-        >
+      <ScreenLayout>
+        <View style={[styles.inner, topPadding]}>
           <View style={styles.content}>
             <ThemedText type="headingMd" style={styles.errorTitle}>
               Algo salió mal
@@ -164,27 +32,17 @@ export default function ReportLoadingScreen() {
               {error}
             </ThemedText>
           </View>
-          <View style={styles.footer}>
+          <FooterActionBar>
             <Button label="Volver" onPress={() => router.back()} />
-          </View>
+          </FooterActionBar>
         </View>
-      </AppBackground>
+      </ScreenLayout>
     );
   }
 
-  const step = STEPS[stepIndex];
-
   return (
-    <AppBackground>
-      <View
-        style={[
-          styles.container,
-          {
-            paddingTop: insets.top + Spacing.five,
-            paddingBottom: insets.bottom + Spacing.four,
-          },
-        ]}
-      >
+    <ScreenLayout>
+      <View style={[styles.inner, topPadding, { paddingBottom: insets.bottom + Spacing.four }]}>
         <View style={styles.content}>
           <ProgressCircle progress={step.percent} />
           <ThemedText type="bodyLg" style={styles.stepLabel}>
@@ -192,14 +50,13 @@ export default function ReportLoadingScreen() {
           </ThemedText>
         </View>
       </View>
-    </AppBackground>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  inner: {
     flex: 1,
-    paddingHorizontal: Spacing.five,
   },
   content: {
     flex: 1,
@@ -207,13 +64,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stepLabel: {
-    color: "rgba(255,255,255,0.85)",
+    color: SemanticColors.textSubtle,
     textAlign: "center",
     marginTop: Spacing.five,
     paddingHorizontal: Spacing.four,
   },
   errorTitle: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     textAlign: "center",
     marginBottom: Spacing.three,
   },
@@ -221,9 +78,5 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.75)",
     textAlign: "center",
     paddingHorizontal: Spacing.two,
-  },
-  footer: {
-    alignItems: "center",
-    paddingTop: Spacing.three,
   },
 });

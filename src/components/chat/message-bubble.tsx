@@ -5,7 +5,12 @@ import { MarkdownText } from "@/components/chat/markdown-text";
 import { MessageBubbleHeader } from "@/components/chat/message-bubble-header";
 import { RetryBadge } from "@/components/chat/retry-badge";
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import type { MessageKind } from "@/types/chat";
+
+const KIND_LABELS: Record<MessageKind, string> = {
+  assistant_gap_prompt: "COMPLETANDO KERNEL",
+};
 
 interface MessageBubbleProps {
   text: string;
@@ -16,6 +21,7 @@ interface MessageBubbleProps {
   timestamp?: string;
   failed?: boolean;
   onRetry?: () => void;
+  messageKind?: MessageKind;
 }
 
 const AVATAR_SPACER_WIDTH = 28 + Spacing.two;
@@ -29,10 +35,18 @@ export const MessageBubble = memo(function MessageBubble({
   timestamp,
   failed = false,
   onRetry,
+  messageKind,
 }: MessageBubbleProps) {
+  const isGapPrompt = messageKind === "assistant_gap_prompt";
   const bubbleStyle = isUser
     ? [styles.bubble, styles.bubbleUser, isLastInGroup && styles.bubbleUserTail]
-    : [styles.bubble, styles.bubbleBot, isLastInGroup && styles.bubbleBotTail];
+    : [
+        styles.bubble,
+        isGapPrompt ? styles.bubbleGapPrompt : styles.bubbleBot,
+        isLastInGroup && styles.bubbleBotTail,
+      ];
+
+  const kindLabel = messageKind ? KIND_LABELS[messageKind] : undefined;
 
   return (
     <View style={[styles.container, isLastInGroup && styles.containerGroupEnd]}>
@@ -43,6 +57,13 @@ export const MessageBubble = memo(function MessageBubble({
       <View style={[styles.bubbleRow, isUser && styles.bubbleRowUser]}>
         {!isUser && <View style={styles.avatarSpacer} />}
         <View style={isUser ? styles.wrapUser : styles.wrapBot}>
+          {kindLabel && (
+            <View style={styles.kindBadge}>
+              <ThemedText type="caption" style={styles.kindBadgeText}>
+                {kindLabel}
+              </ThemedText>
+            </View>
+          )}
           <View style={bubbleStyle}>
             {isUser ? (
               <ThemedText type="bodyMd" style={styles.textUser}>
@@ -101,11 +122,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
   },
+  bubbleGapPrompt: {
+    backgroundColor: "rgba(232,115,26,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(232,115,26,0.35)",
+  },
   bubbleBotTail: {
     borderBottomLeftRadius: 4,
   },
+  kindBadge: {
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: SemanticColors.accent,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    marginBottom: Spacing.one,
+  },
+  kindBadgeText: {
+    color: SemanticColors.accent,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 10,
+    letterSpacing: 1,
+  },
   textUser: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     lineHeight: 22,
   },
 });

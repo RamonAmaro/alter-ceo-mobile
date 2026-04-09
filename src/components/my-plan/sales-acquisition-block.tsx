@@ -2,9 +2,9 @@ import { BulletItem } from "@/components/my-plan/bullet-item";
 import { CheckItem } from "@/components/my-plan/check-item";
 import { NoteBlock } from "@/components/my-plan/note-block";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import type { PlanCustomerAcquisition } from "@/types/plan-data";
+import type { PlanCustomerAcquisition } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface SalesAcquisitionBlockProps {
@@ -16,7 +16,7 @@ export function SalesAcquisitionBlock({ data }: SalesAcquisitionBlockProps) {
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.iconBox}>
-          <Ionicons name="megaphone-outline" size={18} color="#00FF84" />
+          <Ionicons name="megaphone-outline" size={18} color={SemanticColors.success} />
         </View>
         <ThemedText type="labelSm" style={styles.title}>
           2. Aumentar captación de clientes
@@ -38,7 +38,7 @@ export function SalesAcquisitionBlock({ data }: SalesAcquisitionBlockProps) {
         Acciones de alcance
       </ThemedText>
       {data.acciones_alcance.map((item, i) => (
-        <BulletItem key={`accion-${i}`} text={item} color="#00FF84" />
+        <BulletItem key={`accion-${i}`} text={item} color={SemanticColors.success} />
       ))}
 
       <ThemedText type="caption" style={styles.groupLabel}>
@@ -78,14 +78,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   title: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 14,
     lineHeight: 18,
     flex: 1,
   },
   text: {
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
     lineHeight: 22,
     fontSize: 14,
   },

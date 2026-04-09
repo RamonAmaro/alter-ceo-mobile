@@ -33,12 +33,14 @@ export interface ChatDeltaPayload {
 
 export interface ChatCompletePayload {
   readonly turn_id: string;
+  readonly message_kind?: string;
   readonly message: {
     readonly id: string;
     readonly thread_id: string;
     readonly role: "user" | "assistant";
     readonly text: string;
     readonly created_at: string;
+    readonly message_kind?: string;
   };
 }
 

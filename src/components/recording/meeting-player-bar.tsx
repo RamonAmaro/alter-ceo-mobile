@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
@@ -136,10 +136,7 @@ export function MeetingPlayerBar({
         </TouchableOpacity>
 
         <View style={styles.info}>
-          <ThemedText
-            type="labelSm"
-            style={{ color: "#ffffff", fontFamily: Fonts.montserratExtraBold }}
-          >
+          <ThemedText type="labelSm" style={styles.titleText}>
             {title}
           </ThemedText>
           <ThemedText type="caption" style={styles.date}>
@@ -148,14 +145,18 @@ export function MeetingPlayerBar({
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity onPress={onShare} hitSlop={8}>
-            <Ionicons name="share-social-outline" size={22} color="rgba(255,255,255,0.7)" />
+          <TouchableOpacity onPress={onShare} hitSlop={8} activeOpacity={0.7}>
+            <Ionicons
+              name="share-social-outline"
+              size={22}
+              color={SemanticColors.textSecondaryLight}
+            />
           </TouchableOpacity>
-          <TouchableOpacity onPress={onFavorite} hitSlop={8}>
-            <Ionicons name="star-outline" size={22} color="rgba(255,255,255,0.7)" />
+          <TouchableOpacity onPress={onFavorite} hitSlop={8} activeOpacity={0.7}>
+            <Ionicons name="star-outline" size={22} color={SemanticColors.textSecondaryLight} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} hitSlop={8}>
-            <Ionicons name="close" size={22} color="rgba(255,255,255,0.7)" />
+          <TouchableOpacity onPress={onClose} hitSlop={8} activeOpacity={0.7}>
+            <Ionicons name="close" size={22} color={SemanticColors.textSecondaryLight} />
           </TouchableOpacity>
         </View>
       </View>
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
   },
   durationText: {
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
   infoRow: {
     flexDirection: "row",
@@ -197,10 +198,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   date: {
-    color: "rgba(255, 255, 255, 0.5)",
+    color: SemanticColors.textMuted,
   },
   actions: {
     flexDirection: "row",
     gap: Spacing.three,
+  },
+  titleText: {
+    color: SemanticColors.textPrimary,
+    fontFamily: Fonts.montserratExtraBold,
   },
 });

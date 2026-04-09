@@ -1,4 +1,4 @@
-import type { ChatMessageResponse } from "@/types/chat";
+import type { ChatMessageResponse, MessageKind } from "@/types/chat";
 import { ulid } from "@/utils/ulid";
 
 function hasDeltaText(value: unknown): value is { text: string } {
@@ -10,7 +10,12 @@ function hasDeltaText(value: unknown): value is { text: string } {
   );
 }
 
-function hasCompleteMessage(value: unknown): value is { message: ChatMessageResponse } {
+interface CompletePayload {
+  message: ChatMessageResponse;
+  message_kind?: string;
+}
+
+function hasCompleteMessage(value: unknown): value is CompletePayload {
   return typeof value === "object" && value !== null && "message" in value;
 }
 
@@ -37,7 +42,12 @@ export function parseCompleteMessage(
   };
   try {
     const parsed: unknown = JSON.parse(data);
-    return hasCompleteMessage(parsed) ? (parsed.message as ChatMessageResponse) : fallback;
+    if (!hasCompleteMessage(parsed)) return fallback;
+
+    const msg = parsed.message as ChatMessageResponse;
+    const kind = (msg.message_kind ?? parsed.message_kind) as MessageKind | undefined;
+
+    return kind ? { ...msg, message_kind: kind } : msg;
   } catch {
     return fallback;
   }

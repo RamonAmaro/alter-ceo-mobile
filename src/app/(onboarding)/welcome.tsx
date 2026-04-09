@@ -1,25 +1,30 @@
-import { AppBackground } from "@/components/app-background";
-import { Button } from "@/components/button";
-import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
-import { router } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
+
+import { router } from "expo-router";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { Button } from "@/components/button";
+import { FooterActionBar } from "@/components/footer-action-bar";
+import { ScreenLayout } from "@/components/screen-layout";
+import { ThemedText } from "@/components/themed-text";
+import { SemanticColors, Spacing } from "@/constants/theme";
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <AppBackground>
-      <View style={[styles.container, { paddingTop: insets.top + Spacing.five }]}>
+    <ScreenLayout paddingHorizontal={0}>
+      <View style={[styles.inner, { paddingTop: insets.top + Spacing.five }]}>
         <ScrollView
+          style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <ThemedText type="headingMd" style={{ color: "#ffffff" }}>
+          <ThemedText type="headingMd" style={styles.whiteText}>
             ¡HOLA!
           </ThemedText>
-          <ThemedText type="bodyLg" style={{ color: "#ffffff" }}>
+          <ThemedText type="bodyLg" style={styles.whiteText}>
             {"\n"}Mi nombre es Carlos Delgado y soy el fundador de Alter CEO y te quiero dar la
             bienvenida. Hoy activas a un verdadero copiloto estratégico que cambiará los resultados
             de tu negocio. Se acabó la improvisación: vamos a profesionalizar tu gestión para que
@@ -27,29 +32,31 @@ export default function WelcomeScreen() {
             Este es el punto de inflexión para recuperar tu tiempo y transformar tu empresa.
           </ThemedText>
 
-          <ThemedText type="headingMd" style={{ color: "#ffffff" }}>
+          <ThemedText type="headingMd" style={styles.whiteText}>
             {"\n"}¡A por ello!
           </ThemedText>
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
+        <FooterActionBar>
           <Button label="Continuar" onPress={() => router.push("/(onboarding)/plan-selection")} />
-        </View>
+        </FooterActionBar>
       </View>
-    </AppBackground>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  inner: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.five,
   },
-  footer: {
-    alignItems: "center",
-    paddingTop: Spacing.three,
+  whiteText: {
+    color: SemanticColors.textPrimary,
   },
 });

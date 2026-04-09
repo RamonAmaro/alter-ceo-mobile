@@ -1,4 +1,4 @@
-import { Fonts } from "@/constants/theme";
+import { SemanticColors, Fonts } from "@/constants/theme";
 import { useState } from "react";
 import { View, type LayoutChangeEvent } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Polyline, Stop, Text } from "react-native-svg";
@@ -75,7 +75,7 @@ export function CumulativeChart({ values }: CumulativeChartProps) {
         <Polyline
           points={polylinePoints}
           fill="none"
-          stroke="rgba(255,255,255,0.5)"
+          stroke={SemanticColors.textMuted}
           strokeWidth={1.5}
           strokeLinejoin="round"
           strokeLinecap="round"

@@ -104,6 +104,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isAuthenticated: true, user: session });
       const enriched = await enrichFromProfile(session);
       set({ user: enriched });
+    } else {
+      set({ isAuthenticated: false, user: null });
     }
   },
 }));

@@ -1,11 +1,15 @@
-import { AppBackground } from "@/components/app-background";
-import { Button } from "@/components/button";
-import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
-import { useOnboardingStore } from "@/stores/onboarding-store";
-import { router } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
+
+import { router } from "expo-router";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { Button } from "@/components/button";
+import { FooterActionBar } from "@/components/footer-action-bar";
+import { ScreenLayout } from "@/components/screen-layout";
+import { ThemedText } from "@/components/themed-text";
+import { SemanticColors, Spacing } from "@/constants/theme";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 
 export default function ExpressCompleteScreen() {
   const insets = useSafeAreaInsets();
@@ -21,72 +25,66 @@ export default function ExpressCompleteScreen() {
   }
 
   return (
-    <AppBackground>
-      <View
-        style={[
-          styles.container,
-          {
-            paddingTop: insets.top + Spacing.five,
-            paddingBottom: insets.bottom + Spacing.four,
-          },
-        ]}
-      >
+    <ScreenLayout>
+      <View style={[styles.inner, { paddingTop: insets.top + Spacing.five }]}>
         <View style={styles.content}>
-          <ThemedText
-            type="headingLg"
-            style={{ color: "#ffffff", textAlign: "center", marginBottom: Spacing.four }}
-          >
+          <ThemedText type="headingLg" style={styles.heading}>
             ¡INICIO EXPRESS COMPLETADO!
           </ThemedText>
-          <ThemedText
-            type="bodyLg"
-            style={{
-              color: "rgba(255,255,255,0.85)",
-              textAlign: "center",
-              paddingHorizontal: Spacing.two,
-            }}
-          >
+          <ThemedText type="bodyLg" style={styles.subtitle}>
             ¿Quieres enviar la información para que diseñemos tu Plan para Duplicar tus Ventas y
             Trabajar la Mitad o quieres continuar con el Inicio Profesional (aprox 3 minutos más)?
           </ThemedText>
         </View>
 
-        <View style={styles.footer}>
-          <Button label="Enviar" onPress={handleSend} />
+        <FooterActionBar>
+          <View style={styles.footerContent}>
+            <Button label="Enviar" onPress={handleSend} />
 
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-            activeOpacity={0.7}
-          >
-            <ThemedText
-              type="labelSm"
-              style={{ color: "#E8731A", textDecorationLine: "underline" }}
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
+              activeOpacity={0.7}
             >
-              Continuar
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
+              <ThemedText type="labelSm" style={styles.continueLabel}>
+                Continuar
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </FooterActionBar>
       </View>
-    </AppBackground>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  inner: {
     flex: 1,
-    paddingHorizontal: Spacing.five,
   },
   content: {
     flex: 1,
     justifyContent: "center",
   },
-  footer: {
+  footerContent: {
     alignItems: "center",
     gap: Spacing.three,
   },
   continueButton: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.five,
+  },
+  heading: {
+    color: SemanticColors.textPrimary,
+    textAlign: "center",
+    marginBottom: Spacing.four,
+  },
+  subtitle: {
+    color: SemanticColors.textSubtle,
+    textAlign: "center",
+    paddingHorizontal: Spacing.two,
+  },
+  continueLabel: {
+    color: "#E8731A",
+    textDecorationLine: "underline",
   },
 });

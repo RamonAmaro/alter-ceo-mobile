@@ -1,3 +1,4 @@
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { Spacing } from "@/constants/theme";
 import { CircleButton } from "@/components/circle-button";
 import { MicIcon, PauseIcon, PlayIcon, StopIcon, RestartIcon } from "@/components/recording-icons";
@@ -38,13 +39,13 @@ export function RecordButton({
       Animated.timing(anim, {
         toValue: 1,
         duration: TRANSITION_MS,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }).start();
     } else if (!wasIdle && isIdle) {
       Animated.timing(anim, {
         toValue: 0,
         duration: TRANSITION_MS,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }).start();
     }
   }, [state]);

@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
     fontSize: 20,
     lineHeight: 20,
-    color: "#00FF73",
+    color: SemanticColors.success,
   },
   chartWrap: {
     flex: 1,

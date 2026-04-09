@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import { SemanticColors } from "@/constants/theme";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
@@ -80,6 +81,6 @@ const styles = StyleSheet.create({
   percentText: {
     fontSize: 36,
     lineHeight: 44,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
 });

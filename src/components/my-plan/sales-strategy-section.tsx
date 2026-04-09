@@ -7,7 +7,7 @@ import type {
   PlanConversionImprovement,
   PlanCustomerAcquisition,
   PlanProductImprovement,
-} from "@/types/plan-data";
+} from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface SalesStrategySectionProps {

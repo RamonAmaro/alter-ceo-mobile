@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
@@ -11,7 +11,7 @@ export function PriorityItem({ text }: PriorityItemProps) {
   return (
     <View style={styles.row}>
       <View style={styles.icon}>
-        <Ionicons name="checkmark" size={12} color="#00FF84" />
+        <Ionicons name="checkmark" size={12} color={SemanticColors.success} />
       </View>
       <ThemedText type="bodyMd" style={styles.text}>
         {text}

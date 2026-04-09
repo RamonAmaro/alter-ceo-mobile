@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface PlanPillProps {
@@ -35,6 +35,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   textAccent: {
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
 });

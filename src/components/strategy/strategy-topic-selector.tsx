@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { ImageSourcePropType, StyleSheet, View } from "react-native";
 import { StrategyTopicCard } from "./strategy-topic-card";
 
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     textAlign: "center",
     letterSpacing: 2,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     marginVertical: Spacing.four,
   },
   grid: {
