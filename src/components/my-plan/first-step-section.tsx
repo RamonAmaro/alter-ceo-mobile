@@ -1,6 +1,6 @@
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
@@ -16,7 +16,7 @@ export function FirstStepSection({ message }: FirstStepSectionProps) {
       <View style={styles.card}>
         <View style={styles.iconRow}>
           <View style={styles.iconBox}>
-            <Ionicons name="footsteps-outline" size={18} color="#00FF84" />
+            <Ionicons name="footsteps-outline" size={18} color={SemanticColors.success} />
           </View>
           <ThemedText type="caption" style={styles.badge}>
             Acción inmediata
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   badge: {
-    color: "#00FF84",
+    color: SemanticColors.success,
     fontSize: 11,
     fontFamily: Fonts.montserratBold,
     textTransform: "uppercase",

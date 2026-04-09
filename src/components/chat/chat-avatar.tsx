@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts } from "@/constants/theme";
+import { SemanticColors, Fonts } from "@/constants/theme";
 
 interface ChatAvatarProps {
   isUser: boolean;
@@ -32,7 +32,7 @@ export const ChatAvatar = memo(function ChatAvatar({ isUser, userInitial }: Chat
           {userInitial}
         </ThemedText>
       ) : (
-        <Ionicons name="person" size={14} color="rgba(255,255,255,0.6)" />
+        <Ionicons name="person" size={14} color={SemanticColors.iconMuted} />
       )}
     </View>
   );
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.2)",
   },
   initial: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 12,
     lineHeight: 14,

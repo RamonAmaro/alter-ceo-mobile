@@ -1,10 +1,13 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
+import type { ComponentProps } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, TouchableOpacity } from "react-native";
 
+type IoniconsName = ComponentProps<typeof Ionicons>["name"];
+
 interface MenuItemProps {
-  icon: string;
+  icon: IoniconsName;
   label: string;
   onPress?: () => void;
 }
@@ -12,7 +15,7 @@ interface MenuItemProps {
 export function MenuItem({ icon, label, onPress }: MenuItemProps) {
   return (
     <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={onPress}>
-      <Ionicons name={icon as any} size={20} color="rgba(255,255,255,0.6)" />
+      <Ionicons name={icon} size={20} color={SemanticColors.iconMuted} />
       <ThemedText type="labelSm" style={styles.menuLabel}>
         {label}
       </ThemedText>

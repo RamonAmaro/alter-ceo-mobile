@@ -1,10 +1,11 @@
 import { create } from "zustand";
 import type { MeetingResponse, MeetingSummaryResponse } from "@/types/meeting";
 import * as meetingService from "@/services/meeting-service";
-import { createPoller } from "@/utils/create-poller";
-import { POLL_INTERVAL } from "@/constants/env";
+import { toErrorMessage } from "@/utils/to-error-message";
 
 type UploadStage = "uploading" | "processing" | "completed" | "failed";
+
+const MAX_POLL_ATTEMPTS = 60;
 
 interface UploadProgress {
   meeting_id: string;
@@ -18,6 +19,7 @@ interface MeetingState {
   uploadProgress: UploadProgress | null;
   isLoading: boolean;
   error: string | null;
+  _activePoller: { stop: () => void } | null;
 
   fetchMeetings: (userId: string, limit?: number) => Promise<void>;
   getMeetingDetails: (meetingId: string) => Promise<void>;
@@ -38,6 +40,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   uploadProgress: null,
   isLoading: false,
   error: null,
+  _activePoller: null,
 
   fetchMeetings: async (userId: string, limit?: number) => {
     set({ isLoading: true, error: null });
@@ -45,7 +48,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       const response = await meetingService.listUserMeetings(userId, limit);
       set({ meetings: response.meetings ?? [], isLoading: false });
     } catch (err) {
-      set({ error: (err as Error).message, isLoading: false });
+      set({ error: toErrorMessage(err), isLoading: false });
     }
   },
 
@@ -55,7 +58,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       const meeting = await meetingService.getMeeting(meetingId);
       set({ activeMeeting: meeting, isLoading: false });
     } catch (err) {
-      set({ error: (err as Error).message, isLoading: false });
+      set({ error: toErrorMessage(err), isLoading: false });
     }
   },
 
@@ -67,7 +70,8 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     sizeBytes: number,
     durationSeconds?: number,
   ) => {
-    set({ error: null });
+    get()._activePoller?.stop();
+    set({ _activePoller: null, error: null });
 
     try {
       const created = await meetingService.createMeeting({
@@ -101,13 +105,23 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         duration_seconds: durationSeconds,
       });
 
-      const poller = createPoller<MeetingResponse>({
-        fn: () => meetingService.getMeeting(created.meeting_id),
-        interval: POLL_INTERVAL,
-        shouldStop: (meeting) => meeting.status === "COMPLETED" || meeting.status === "FAILED",
-        onUpdate: (meeting) => {
+      const poller = meetingService.pollMeetingUntilDone(
+        created.meeting_id,
+        MAX_POLL_ATTEMPTS,
+        () => {
+          set({
+            _activePoller: null,
+            uploadProgress: {
+              meeting_id: created.meeting_id,
+              stage: "failed",
+              error: "Tiempo de procesamiento excedido",
+            },
+          });
+        },
+        (meeting) => {
           if (meeting.status === "COMPLETED" || meeting.status === "FAILED") {
             set({
+              _activePoller: null,
               uploadProgress: {
                 meeting_id: created.meeting_id,
                 stage: meeting.status === "COMPLETED" ? "completed" : "failed",
@@ -117,17 +131,19 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
             });
           }
         },
-        onError: (err) => {
+        (err) => {
           set({
+            _activePoller: null,
             uploadProgress: {
               meeting_id: created.meeting_id,
               stage: "failed",
-              error: (err as Error).message,
+              error: toErrorMessage(err),
             },
           });
         },
-      });
+      );
 
+      set({ _activePoller: poller });
       poller.start();
     } catch (err) {
       set({
@@ -135,21 +151,23 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
           ? {
               meeting_id: get().uploadProgress!.meeting_id,
               stage: "failed",
-              error: (err as Error).message,
+              error: toErrorMessage(err),
             }
           : null,
-        error: (err as Error).message,
+        error: toErrorMessage(err),
       });
     }
   },
 
   reset: () => {
+    get()._activePoller?.stop();
     set({
       meetings: [],
       activeMeeting: null,
       uploadProgress: null,
       isLoading: false,
       error: null,
+      _activePoller: null,
     });
   },
 }));

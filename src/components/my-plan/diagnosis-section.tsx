@@ -1,8 +1,8 @@
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { StatusRing, statusToColor, statusToValue } from "@/components/my-plan/status-ring";
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
-import type { PlanFinancialState } from "@/types/plan-data";
+import { SemanticColors, Spacing } from "@/constants/theme";
+import type { PlanFinancialState } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface DiagnosisSectionProps {
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   intro: {
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
     lineHeight: 24,
   },
   ringRow: {

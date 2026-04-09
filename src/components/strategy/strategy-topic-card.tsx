@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image, ImageSourcePropType, StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 22,
     textAlign: "center",
-    color: "#00FF84",
+    color: SemanticColors.success,
     textTransform: "uppercase",
   },
   imageWrap: {
@@ -78,6 +78,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
     fontSize: 12,
     lineHeight: 15,
-    color: "#2AF0E1",
+    color: SemanticColors.tealLight,
   },
 });

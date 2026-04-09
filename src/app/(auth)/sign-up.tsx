@@ -1,27 +1,24 @@
+import { useState } from "react";
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+
+import { router } from "expo-router";
+
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { AppBackground } from "@/components/app-background";
-import { AuthTagline } from "@/components/auth-tagline";
+import { AuthLayout } from "@/components/auth-layout";
 import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
+import { KeyboardView } from "@/components/keyboard-view";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError } from "@/types/api";
 import { parseAuthError } from "@/utils/parse-auth-error";
 import { parseValidationErrors } from "@/utils/parse-validation-errors";
 import { hasErrors, validateRequiredFields } from "@/utils/validate-auth-form";
-import { router } from "expo-router";
-import { useState } from "react";
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface FormErrors {
   name: string | false;
@@ -32,6 +29,7 @@ interface FormErrors {
 export default function SignUpScreen() {
   const register = useAuthStore((s) => s.register);
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsiveLayout();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -91,125 +89,110 @@ export default function SignUpScreen() {
 
   return (
     <AppBackground>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.flex}
-        keyboardVerticalOffset={0}
-      >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingTop: insets.top + Spacing.four,
-              paddingBottom: insets.bottom + Spacing.four,
-            },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <BackButton />
+      <AuthLayout>
+        <KeyboardView>
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingTop: isMobile ? insets.top + Spacing.four : Spacing.five,
+                paddingBottom: isMobile ? insets.bottom + Spacing.four : Spacing.five,
+                justifyContent: isMobile ? undefined : "center",
+              },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {isMobile && <BackButton />}
 
-          <View style={styles.logoContainer}>
-            <Image
-              source={require("@/assets/ui/logo-alterceo.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-
-          <View style={styles.formContainer}>
-            <ThemedText
-              type="bodyLg"
-              style={{
-                fontFamily: Fonts.montserratSemiBold,
-                color: "#ffffff",
-                textAlign: "center",
-                marginBottom: Spacing.three,
-              }}
-            >
-              Crear Cuenta
-            </ThemedText>
-
-            <Input
-              placeholder="Nombre"
-              value={name}
-              onChangeText={(text) => {
-                setName(text);
-                clearError("name");
-              }}
-              autoCapitalize="words"
-              error={!!errors.name}
-              errorMessage={errors.name || undefined}
-              style={styles.inputSpacing}
-            />
-
-            <Input
-              placeholder="E-mail"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                clearError("email");
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              error={!!errors.email}
-              errorMessage={errors.email || undefined}
-              style={styles.inputSpacing}
-            />
-
-            <Input
-              placeholder="Contraseña"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                clearError("password");
-              }}
-              secureTextEntry
-              error={!!errors.password}
-              errorMessage={errors.password || undefined}
-              style={styles.inputSpacing}
-            />
-
-            {apiError && (
-              <ThemedText type="bodySm" style={styles.apiError}>
-                {apiError}
-              </ThemedText>
+            {isMobile && (
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require("@/assets/ui/logo-alterceo.png")}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
             )}
 
-            <Button
-              label="Crear Cuenta"
-              onPress={handleSignUp}
-              loading={isLoading}
-              style={styles.buttonSpacing}
-            />
-
-            <View style={styles.loginContainer}>
-              <ThemedText
-                type="bodyLg"
-                style={{ fontFamily: Fonts.montserratLight, color: "#ffffff", textAlign: "center" }}
-              >
-                ¿Ya tienes cuenta?
+            <View style={styles.formContainer}>
+              <ThemedText type="bodyLg" style={styles.formTitle}>
+                Crear Cuenta
               </ThemedText>
-              <TouchableOpacity onPress={() => router.back()}>
-                <ThemedText type="labelMd" style={{ color: "#E8731A", textAlign: "center" }}>
-                  Inicia sesión aquí
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
 
-          <AuthTagline text={"Todo el control que\nnecesitas, con la simplicidad\nque mereces"} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+              <Input
+                placeholder="Nombre"
+                value={name}
+                onChangeText={(text) => {
+                  setName(text);
+                  clearError("name");
+                }}
+                autoCapitalize="words"
+                error={!!errors.name}
+                errorMessage={errors.name || undefined}
+                style={styles.inputSpacing}
+              />
+
+              <Input
+                placeholder="E-mail"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  clearError("email");
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                error={!!errors.email}
+                errorMessage={errors.email || undefined}
+                style={styles.inputSpacing}
+              />
+
+              <Input
+                placeholder="Contraseña"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  clearError("password");
+                }}
+                secureTextEntry
+                error={!!errors.password}
+                errorMessage={errors.password || undefined}
+                style={styles.inputSpacing}
+              />
+
+              {apiError && (
+                <ThemedText type="bodySm" style={styles.apiError}>
+                  {apiError}
+                </ThemedText>
+              )}
+
+              <Button
+                label="Crear Cuenta"
+                onPress={handleSignUp}
+                loading={isLoading}
+                style={styles.buttonSpacing}
+              />
+
+              <View style={styles.loginContainer}>
+                <ThemedText type="bodyLg" style={styles.loginPromptText}>
+                  ¿Ya tienes cuenta?
+                </ThemedText>
+                <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+                  <ThemedText type="labelMd" style={styles.loginLinkText}>
+                    Inicia sesión aquí
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardView>
+      </AuthLayout>
     </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
@@ -223,13 +206,15 @@ const styles = StyleSheet.create({
     height: 185,
   },
   formContainer: {
+    width: 276,
+    alignSelf: "center",
     alignItems: "center",
   },
   inputSpacing: {
     marginBottom: Spacing.three,
   },
   apiError: {
-    color: "#FF4444",
+    color: SemanticColors.error,
     textAlign: "center",
     marginBottom: Spacing.two,
   },
@@ -239,5 +224,20 @@ const styles = StyleSheet.create({
   loginContainer: {
     alignItems: "center",
     marginTop: Spacing.four,
+  },
+  formTitle: {
+    fontFamily: Fonts.montserratSemiBold,
+    color: SemanticColors.textPrimary,
+    textAlign: "center",
+    marginBottom: Spacing.three,
+  },
+  loginPromptText: {
+    fontFamily: Fonts.montserratLight,
+    color: SemanticColors.textPrimary,
+    textAlign: "center",
+  },
+  loginLinkText: {
+    color: SemanticColors.accent,
+    textAlign: "center",
   },
 });

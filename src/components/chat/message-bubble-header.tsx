@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 
 import { ChatAvatar } from "@/components/chat/chat-avatar";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { formatMessageTime } from "@/utils/format-date";
 
 interface MessageBubbleHeaderProps {
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratSemiBold,
   },
   nameUser: {
-    color: "rgba(255,255,255,0.5)",
+    color: SemanticColors.textMuted,
     fontFamily: Fonts.montserratMedium,
   },
   time: {

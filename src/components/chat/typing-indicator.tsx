@@ -1,3 +1,4 @@
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { type JSX, useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
@@ -20,12 +21,12 @@ export function TypingIndicator(): JSX.Element {
             Animated.timing(anim, {
               toValue: 1,
               duration: ANIMATION_DURATION,
-              useNativeDriver: true,
+              useNativeDriver: USE_NATIVE_DRIVER,
             }),
             Animated.timing(anim, {
               toValue: 0.3,
               duration: ANIMATION_DURATION,
-              useNativeDriver: true,
+              useNativeDriver: USE_NATIVE_DRIVER,
             }),
           ]),
         ),
@@ -42,7 +43,7 @@ export function TypingIndicator(): JSX.Element {
       <View style={styles.bubble}>
         <View style={styles.dotsContainer}>
           {dotAnims.map((anim, index) => (
-            <Animated.View key={index} style={[styles.dot, { opacity: anim }]} />
+            <Animated.View key={`dot-${index}`} style={[styles.dot, { opacity: anim }]} />
           ))}
         </View>
       </View>

@@ -1,14 +1,15 @@
-import { get, post, putExternal } from "@/lib/api-client";
+import { get, post } from "@/lib/api-client";
+import { uploadFileToS3 } from "@/services/file-upload";
+import { createPoller } from "@/utils/create-poller";
+import { POLL_INTERVAL } from "@/constants/env";
 import type {
   MeetingCreateRequest,
   MeetingCreateResponse,
-  MeetingDirectUploadPayload,
   MeetingProcessingAccepted,
   MeetingResponse,
   MeetingUploadCompletedRequest,
   UserMeetingsResponse,
 } from "@/types/meeting";
-import { EncodingType, getInfoAsync, readAsStringAsync } from "expo-file-system/legacy";
 
 export async function createMeeting(request: MeetingCreateRequest): Promise<MeetingCreateResponse> {
   return post<MeetingCreateResponse>("/meetings", request);
@@ -34,30 +35,29 @@ export async function completeUpload(
   return post<MeetingProcessingAccepted>(`/meetings/${meetingId}/upload-complete`, request);
 }
 
-export async function uploadFileToS3(
-  upload: MeetingDirectUploadPayload,
-  fileUri: string,
-  contentType: string,
-): Promise<void> {
-  const fileInfo = await getInfoAsync(fileUri);
-  if (!fileInfo.exists) {
-    throw new Error(`File not found: ${fileUri}`);
-  }
+export { uploadFileToS3 };
 
-  const base64 = await readAsStringAsync(fileUri, {
-    encoding: EncodingType.Base64,
+export function pollMeetingUntilDone(
+  meetingId: string,
+  maxAttempts: number,
+  onMaxAttemptsReached: () => void,
+  onUpdate: (meeting: MeetingResponse) => void,
+  onError: (err: unknown) => void,
+): { start: () => void; stop: () => void } {
+  let attempts = 0;
+  return createPoller<MeetingResponse>({
+    fn: () => getMeeting(meetingId),
+    interval: POLL_INTERVAL,
+    shouldStop: (meeting) => {
+      attempts += 1;
+      if (meeting.status === "COMPLETED" || meeting.status === "FAILED") return true;
+      if (attempts >= maxAttempts) {
+        onMaxAttemptsReached();
+        return true;
+      }
+      return false;
+    },
+    onUpdate,
+    onError,
   });
-
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-
-  const headers: Record<string, string> = {
-    "Content-Type": contentType,
-    ...upload.headers,
-  };
-
-  await putExternal(upload.upload_url, bytes.buffer as ArrayBuffer, headers);
 }

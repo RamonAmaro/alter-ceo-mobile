@@ -1,28 +1,24 @@
-import React, { memo, useEffect, useRef } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
 import Animated, {
   Easing,
+  makeMutable,
   useAnimatedStyle,
-  useSharedValue,
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
 
 // --- Layout constants ----------------------------------------------------
 
-const BAR_WIDTH = 4;
-const BAR_GAP = 4;
+const BAR_WIDTH = 3;
+const BAR_GAP = 2;
 const HEIGHT = 120;
-const WIDTH_RATIO = 0.75;
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const CONTAINER_WIDTH = Math.floor(SCREEN_WIDTH * WIDTH_RATIO);
-const BAR_COUNT = Math.floor(CONTAINER_WIDTH / (BAR_WIDTH + BAR_GAP));
+const MAX_BAR_COUNT = 80;
 
 // --- Animation constants -------------------------------------------------
 
-const MIN_SCALE = 0.05;
-const TICK_MS = 100;
-const EMA_ALPHA = 0.5;
+const MIN_SCALE = 0.04;
+const SHIFT_MS = 80;
 
 const TIMING_CONFIG = {
   duration: 100,
@@ -32,37 +28,21 @@ const TIMING_CONFIG = {
 // --- Pure functions ------------------------------------------------------
 
 function computeBarColor(index: number, total: number): string {
-  const progress = index / (total - 1);
+  const progress = index / (total - 1 || 1);
   const opacity = 0.3 + progress * 0.7;
   const r = Math.round(progress * 30);
   const g = Math.round(140 + progress * 80);
   return `rgba(${r},${g},255,${opacity.toFixed(2)})`;
 }
 
-function smoothAmplitude(previous: number, current: number): number {
-  return previous * (1 - EMA_ALPHA) + current * EMA_ALPHA;
+function computeBarCount(containerWidth: number): number {
+  if (containerWidth <= 0) return MAX_BAR_COUNT;
+  return Math.min(Math.floor(containerWidth / (BAR_WIDTH + BAR_GAP)), MAX_BAR_COUNT);
 }
 
-function shiftBufferAndAppend(buffer: Float32Array, value: number): void {
-  buffer.copyWithin(0, 1);
-  buffer[buffer.length - 1] = value;
-}
+// --- Pre-computed colors -------------------------------------------------
 
-function animateScales(scales: SharedValue<number>[], buffer: Float32Array): void {
-  for (let i = 0; i < scales.length; i++) {
-    scales[i].value = withTiming(MIN_SCALE + buffer[i], TIMING_CONFIG);
-  }
-}
-
-function resetScales(scales: SharedValue<number>[]): void {
-  for (let i = 0; i < scales.length; i++) {
-    scales[i].value = MIN_SCALE;
-  }
-}
-
-// --- Pre-computed values -------------------------------------------------
-
-const COLORS = Array.from({ length: BAR_COUNT }, (_, i) => computeBarColor(i, BAR_COUNT));
+const COLORS = Array.from({ length: MAX_BAR_COUNT }, (_, i) => computeBarColor(i, MAX_BAR_COUNT));
 
 // --- Types ---------------------------------------------------------------
 
@@ -77,14 +57,13 @@ interface WaveBarProps {
   color: string;
 }
 
-// --- WaveBar (UI thread animation via Reanimated) ------------------------
+// --- WaveBar (pure UI-thread animation) ----------------------------------
 
 const WaveBar = memo(function WaveBar({ scale, color }: WaveBarProps) {
-  const animStyle = useAnimatedStyle(() => ({
+  const style = useAnimatedStyle(() => ({
     transform: [{ scaleY: scale.value }],
   }));
-
-  return <Animated.View style={[styles.bar, { backgroundColor: color }, animStyle]} />;
+  return <Animated.View style={[styles.bar, { backgroundColor: color }, style]} />;
 });
 
 // --- AudioWaveform -------------------------------------------------------
@@ -94,55 +73,60 @@ export const AudioWaveform = memo(function AudioWaveform({
   active,
   resetKey = 0,
 }: AudioWaveformProps) {
-  const scaleValues: SharedValue<number>[] = [];
-  for (let i = 0; i < BAR_COUNT; i++) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    scaleValues.push(useSharedValue(MIN_SCALE));
-  }
+  const [visibleCount, setVisibleCount] = useState(MAX_BAR_COUNT);
 
-  const scalesRef = useRef(scaleValues);
-  scalesRef.current = scaleValues;
+  // Stable array of shared values — always MAX_BAR_COUNT, created once
+  const scales = useMemo(
+    () => Array.from({ length: MAX_BAR_COUNT }, () => makeMutable(MIN_SCALE)),
+    [],
+  );
 
-  const bufferRef = useRef(new Float32Array(BAR_COUNT));
-  const smoothedRef = useRef(0);
-  const mountedRef = useRef(true);
+  const scalesRef = useRef(scales);
+  scalesRef.current = scales;
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const bufferRef = useRef(new Float32Array(MAX_BAR_COUNT));
 
+  // Reset
   useEffect(() => {
     bufferRef.current.fill(0);
-    smoothedRef.current = 0;
-    resetScales(scalesRef.current);
+    const s = scalesRef.current;
+    for (let i = 0; i < s.length; i++) {
+      s[i].value = MIN_SCALE;
+    }
   }, [resetKey]);
 
+  // Main animation loop — shift buffer + update shared values directly
   useEffect(() => {
-    if (!active) return;
+    if (!active || visibleCount === 0) return;
 
     const buffer = bufferRef.current;
-    const scales = scalesRef.current;
+    const s = scalesRef.current;
+    const lastIdx = visibleCount - 1;
 
-    const intervalId = setInterval(() => {
-      if (!mountedRef.current) return;
+    const id = setInterval(() => {
+      const level = amplitudeRef.current ?? 0;
 
-      const raw = amplitudeRef.current ?? 0;
-      smoothedRef.current = smoothAmplitude(smoothedRef.current, raw);
+      // Shift buffer left
+      buffer.copyWithin(0, 1);
+      buffer[lastIdx] = level;
 
-      shiftBufferAndAppend(buffer, smoothedRef.current);
-      animateScales(scales, buffer);
-    }, TICK_MS);
+      // Animate each bar with withTiming for smooth transitions
+      for (let i = 0; i <= lastIdx; i++) {
+        s[i].value = withTiming(MIN_SCALE + buffer[i], TIMING_CONFIG);
+      }
+    }, SHIFT_MS);
 
-    return () => clearInterval(intervalId);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [active, visibleCount]);
+
+  function handleLayout(e: LayoutChangeEvent): void {
+    setVisibleCount(computeBarCount(e.nativeEvent.layout.width));
+  }
 
   return (
-    <View style={styles.container}>
-      {scaleValues.map((sv, i) => (
+    <View style={styles.container} onLayout={handleLayout}>
+      {scales.slice(0, visibleCount).map((sv, i) => (
         <WaveBar key={i} scale={sv} color={COLORS[i]} />
       ))}
     </View>
@@ -153,15 +137,16 @@ export const AudioWaveform = memo(function AudioWaveform({
 
 const styles = StyleSheet.create({
   container: {
-    width: CONTAINER_WIDTH,
+    width: "100%",
     height: HEIGHT,
     gap: BAR_GAP,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   bar: {
     width: BAR_WIDTH,
     height: HEIGHT,
-    borderRadius: 2,
+    borderRadius: 1.5,
   },
 });

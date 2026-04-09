@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
@@ -16,7 +16,7 @@ export function PlanConclusion({ text }: PlanConclusionProps) {
       <View style={styles.dividerLine} />
 
       <View style={styles.iconBox}>
-        <Ionicons name="flag" size={20} color="#00FF84" />
+        <Ionicons name="flag" size={20} color={SemanticColors.success} />
       </View>
 
       <ThemedText type="caption" style={styles.label}>
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
   },
   title: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratExtraBold,
     textAlign: "center",
   },

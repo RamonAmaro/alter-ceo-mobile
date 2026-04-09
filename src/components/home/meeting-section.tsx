@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
@@ -47,12 +47,12 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.montserratBold,
     fontSize: 16,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   title: {
     fontFamily: Fonts.montserratBold,
     fontSize: 20,
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
   micArea: {
     flex: 1,

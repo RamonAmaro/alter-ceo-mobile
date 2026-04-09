@@ -1,14 +1,18 @@
-import { AppBackground } from "@/components/app-background";
+import { useState } from "react";
+import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
+
+import { router } from "expo-router";
+
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { Button } from "@/components/button";
+import { FooterActionBar } from "@/components/footer-action-bar";
+import { ScreenLayout } from "@/components/screen-layout";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { usePlanStore } from "@/stores/plan-store";
-import { router } from "expo-router";
-import { useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CompletionScreen() {
   const insets = useSafeAreaInsets();
@@ -25,13 +29,13 @@ export default function CompletionScreen() {
     }
     await complete();
     clearAnswers();
-    router.replace("/(app)/alter");
+    router.replace("/(app)/(tabs)/alter");
     setTimeout(() => router.push("/my-plan"), 300);
   }
 
   return (
-    <AppBackground>
-      <View style={[styles.container, { paddingTop: insets.top + Spacing.five }]}>
+    <ScreenLayout>
+      <View style={[styles.inner, { paddingTop: insets.top + Spacing.five }]}>
         <View style={styles.content}>
           <Image
             source={require("@/assets/ui/logo-alterceo.png")}
@@ -48,22 +52,21 @@ export default function CompletionScreen() {
           </ThemedText>
         </View>
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.four }]}>
+        <FooterActionBar>
           {loading ? (
-            <ActivityIndicator color="#00FF84" size="large" />
+            <ActivityIndicator color={SemanticColors.success} size="large" />
           ) : (
             <Button label="Ver mi plan" onPress={handleFinish} />
           )}
-        </View>
+        </FooterActionBar>
       </View>
-    </AppBackground>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  inner: {
     flex: 1,
-    paddingHorizontal: Spacing.five,
   },
   content: {
     flex: 1,
@@ -77,7 +80,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     textAlign: "center",
     marginBottom: Spacing.three,
   },
@@ -86,9 +89,5 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     textAlign: "center",
     paddingHorizontal: Spacing.three,
-  },
-  footer: {
-    alignItems: "center",
-    paddingTop: Spacing.three,
   },
 });

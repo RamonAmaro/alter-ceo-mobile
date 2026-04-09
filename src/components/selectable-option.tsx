@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { ImageBackground, StyleSheet, TouchableOpacity } from "react-native";
 
 const ACTIVE_BG = require("@/assets/ui/card-active-bg.png");
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   label: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   subtitle: {
     color: "rgba(255,255,255,0.8)",

@@ -1,29 +1,25 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, ScrollView, StyleSheet, View } from "react-native";
+
+import { router } from "expo-router";
+
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { AudioRecorderView } from "@/components/onboarding/audio-recorder-view";
-import { QuestionOption } from "@/components/question-option";
-import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { ScreenLayout } from "@/components/screen-layout";
 import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { Spacing } from "@/constants/theme";
 import { prefetchUrlContext } from "@/services/onboarding-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
-import { getKeyboardType } from "@/utils/get-keyboard-type";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { PrefetchBanner } from "@/components/onboarding/prefetch-banner";
+import { QuestionBody } from "@/components/onboarding/question-body";
+import { QuestionHeader } from "@/components/onboarding/question-header";
 
 const INSTAGRAM_INDEX_EXPRESS = 10;
 const INSTAGRAM_INDEX_PROFESSIONAL = 17;
@@ -32,19 +28,32 @@ const WEBSITE_INDEX_PROFESSIONAL = 16;
 
 export default function QuestionsScreen() {
   const insets = useSafeAreaInsets();
-  const { planType, currentQuestionIndex, getAnswer, setAnswer, nextQuestion, previousQuestion } =
-    useOnboardingStore();
+  const planType = useOnboardingStore((s) => s.planType);
+  const currentQuestionIndex = useOnboardingStore((s) => s.currentQuestionIndex);
+  const answers = useOnboardingStore((s) => s.answers);
+  const setAnswer = useOnboardingStore((s) => s.setAnswer);
+  const nextQuestion = useOnboardingStore((s) => s.nextQuestion);
+  const previousQuestion = useOnboardingStore((s) => s.previousQuestion);
   const user = useAuthStore((s) => s.user);
   const [prefetchStatus, setPrefetchStatus] = useState<"ok" | "error" | null>(null);
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (prefetchTimerRef.current) {
+        clearTimeout(prefetchTimerRef.current);
+      }
+    };
+  }, []);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
-  const questions = useMemo(() => {
-    return planType === "professional" ? getProfessionalQuestions() : getExpressQuestions();
-  }, [planType]);
+  const questions = useMemo(
+    () => (planType === "professional" ? getProfessionalQuestions() : getExpressQuestions()),
+    [planType],
+  );
 
   const question = questions[currentQuestionIndex];
 
@@ -58,34 +67,32 @@ export default function QuestionsScreen() {
     );
   }
 
-  const currentAnswer = getAnswer(currentQuestionIndex);
+  const currentAnswer = answers.get(currentQuestionIndex);
+  const nextEnabled = validateQuestionAnswer(question.type, currentAnswer);
+  const planLabel = planType === "professional" ? "PROFESIONAL" : "EXPRESS";
 
-  function handleSingleSelect(label: string): void {
-    setAnswer(currentQuestionIndex, label);
-  }
-
-  function handleMultiSelect(label: string): void {
-    const current = (currentAnswer as string[]) || [];
-    const updated = current.includes(label)
-      ? current.filter((item) => item !== label)
-      : [...current, label];
-    setAnswer(currentQuestionIndex, updated);
+  function handleOptionPress(label: string): void {
+    if (question.type === "multi") {
+      const current = (currentAnswer as string[]) || [];
+      const updated = current.includes(label)
+        ? current.filter((item) => item !== label)
+        : [...current, label];
+      setAnswer(currentQuestionIndex, updated);
+    } else {
+      setAnswer(currentQuestionIndex, label);
+    }
   }
 
   function handleTextChange(text: string): void {
     setAnswer(currentQuestionIndex, text);
   }
 
-  function isNextEnabled(): boolean {
-    return validateQuestionAnswer(question.type, currentAnswer);
-  }
-
   function animateIn(): void {
     fadeAnim.setValue(0);
     slideAnim.setValue(20);
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: USE_NATIVE_DRIVER }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: USE_NATIVE_DRIVER }),
     ]).start();
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }
@@ -94,7 +101,7 @@ export default function QuestionsScreen() {
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 150,
-      useNativeDriver: true,
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start(() => {
       callback();
       animateIn();
@@ -109,8 +116,8 @@ export default function QuestionsScreen() {
     const websiteIndex =
       planType === "professional" ? WEBSITE_INDEX_PROFESSIONAL : WEBSITE_INDEX_EXPRESS;
 
-    const instagram = getAnswer(instagramIndex) as string | undefined;
-    const website = getAnswer(websiteIndex) as string | undefined;
+    const instagram = answers.get(instagramIndex) as string | undefined;
+    const website = answers.get(websiteIndex) as string | undefined;
 
     if (!instagram || !website) return;
 
@@ -174,162 +181,56 @@ export default function QuestionsScreen() {
   }
 
   return (
-    <AppBackground>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <ScreenLayout withKeyboard>
+      <View
+        style={[
+          styles.inner,
+          {
+            paddingTop: insets.top + Spacing.three,
+            paddingBottom: insets.bottom + Spacing.three,
+          },
+        ]}
       >
-        <View
-          style={[
-            styles.container,
-            {
-              paddingTop: insets.top + Spacing.three,
-              paddingBottom: insets.bottom + Spacing.three,
-            },
-          ]}
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView
-            ref={scrollRef}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.headerRow}>
-              <TouchableOpacity
-                onPress={handleBack}
-                activeOpacity={0.7}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="arrow-back" size={22} color="#ffffff" />
-              </TouchableOpacity>
-              <ThemedText type="labelMd" style={{ color: "#ffffff" }}>
-                {planType === "professional" ? "PROFESIONAL" : "EXPRESS"}
-              </ThemedText>
-            </View>
+          <QuestionHeader planLabel={planLabel} onBack={handleBack} />
 
-            {prefetchStatus !== null && (
-              <View
-                style={[
-                  styles.prefetchBanner,
-                  prefetchStatus === "error" ? styles.prefetchBannerError : styles.prefetchBannerOk,
-                ]}
-              >
-                <ThemedText type="labelSm" style={{ color: "#ffffff" }}>
-                  {prefetchStatus === "ok"
-                    ? "Contexto web cargado correctamente"
-                    : "No se pudo cargar el contexto web (401)"}
-                </ThemedText>
-              </View>
-            )}
+          {prefetchStatus !== null && <PrefetchBanner status={prefetchStatus} />}
 
-            <Animated.View
-              style={{
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              }}
-            >
-              <ThemedText type="headingLg" style={{ color: "#ffffff" }}>
-                {question.question}
-              </ThemedText>
+          <QuestionBody
+            question={question}
+            currentAnswer={currentAnswer}
+            fadeAnim={fadeAnim}
+            slideAnim={slideAnim}
+            onOptionPress={handleOptionPress}
+            onTextChange={handleTextChange}
+          />
+        </ScrollView>
 
-              {question.instruction ? (
-                <ThemedText
-                  type="bodyMd"
-                  style={{ color: "rgba(255,255,255,0.7)", marginTop: Spacing.two }}
-                >
-                  {question.instruction}
-                </ThemedText>
-              ) : null}
-
-              <ThemedText type="labelMd" style={{ color: "#00FF84", marginTop: Spacing.two }}>
-                ({question.progress}%)
-              </ThemedText>
-
-              <View style={styles.optionsContainer}>
-                {question.type === "text" ? (
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={question.placeholder}
-                    placeholderTextColor="rgba(255,255,255,0.4)"
-                    value={(currentAnswer as string) || ""}
-                    onChangeText={handleTextChange}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType={getKeyboardType(question.placeholder)}
-                  />
-                ) : (
-                  (question.options || []).map((option) => {
-                    const selected =
-                      question.type === "multi"
-                        ? Array.isArray(currentAnswer) && currentAnswer.includes(option.label)
-                        : currentAnswer === option.label;
-
-                    return (
-                      <QuestionOption
-                        key={option.label}
-                        label={option.label}
-                        subtitle={option.subtitle}
-                        selected={selected}
-                        multi={question.type === "multi"}
-                        onPress={() =>
-                          question.type === "multi"
-                            ? handleMultiSelect(option.label)
-                            : handleSingleSelect(option.label)
-                        }
-                      />
-                    );
-                  })
-                )}
-              </View>
-            </Animated.View>
-          </ScrollView>
-
-          <View style={styles.footer}>
-            <Button
-              label="Siguiente"
-              onPress={handleNext}
-              disabled={!isNextEnabled()}
-              style={!isNextEnabled() ? styles.buttonDisabled : undefined}
-            />
-          </View>
+        <View style={styles.footer}>
+          <Button
+            label="Siguiente"
+            onPress={handleNext}
+            disabled={!nextEnabled}
+            style={!nextEnabled ? styles.buttonDisabled : undefined}
+          />
         </View>
-      </KeyboardAvoidingView>
-    </AppBackground>
+      </View>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
+  inner: {
     flex: 1,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: Spacing.five,
   },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: Spacing.three,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.three,
-    gap: Spacing.two,
-  },
-  optionsContainer: {
-    marginTop: Spacing.four,
-    gap: Spacing.two,
-  },
-  textInput: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 16,
-    color: "#ffffff",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 14,
   },
   footer: {
     alignItems: "center",
@@ -337,17 +238,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.4,
-  },
-  prefetchBanner: {
-    borderRadius: 8,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    marginBottom: Spacing.two,
-  },
-  prefetchBannerOk: {
-    backgroundColor: "rgba(0,255,132,0.15)",
-  },
-  prefetchBannerError: {
-    backgroundColor: "rgba(255,80,80,0.2)",
   },
 });

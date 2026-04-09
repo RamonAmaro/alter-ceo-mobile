@@ -2,10 +2,6 @@ import type { RunStatus } from "./api";
 
 export type ChatRole = "user" | "assistant";
 
-export interface ChatThreadCreateRequest {
-  user_id: string;
-}
-
 export interface ChatThreadResponse {
   thread_id: string;
   user_id: string;
@@ -24,12 +20,15 @@ export interface UserChatThreadsResponse {
   threads?: ChatThreadSummary[];
 }
 
+export type MessageKind = "assistant_gap_prompt";
+
 export interface ChatMessageResponse {
   id: string;
   thread_id: string;
   role: ChatRole;
   text: string;
   created_at: string;
+  message_kind?: MessageKind;
 }
 
 export interface ChatMessagesResponse {

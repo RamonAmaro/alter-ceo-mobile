@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 
 interface ChatInputProps {
   value: string;
@@ -37,7 +37,7 @@ export function ChatInput({ value, onChangeText, onSend, disabled = false }: Cha
             editable={!disabled}
           />
           <TouchableOpacity style={styles.audioBtn} activeOpacity={0.6}>
-            <Ionicons name="radio-outline" size={20} color="rgba(255,255,255,0.5)" />
+            <Ionicons name="radio-outline" size={20} color={SemanticColors.textMuted} />
           </TouchableOpacity>
         </LinearGradient>
 
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.montserrat,
     fontSize: 14,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   audioBtn: {
     padding: Spacing.two,

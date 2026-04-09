@@ -1,4 +1,3 @@
-import { AppBackground } from "@/components/app-background";
 import { AreaAnalysisSection } from "@/components/my-plan/area-analysis-section";
 import { BlockersList } from "@/components/my-plan/blockers-list";
 import { DiagnosisSection } from "@/components/my-plan/diagnosis-section";
@@ -13,16 +12,11 @@ import { SalesSection } from "@/components/my-plan/sales-section";
 import { SalesStrategySection } from "@/components/my-plan/sales-strategy-section";
 import { SectionBlock, SectionDivider } from "@/components/my-plan/section-layout";
 import { ScreenHeader } from "@/components/screen-header";
-import { Spacing } from "@/constants/theme";
-import type { PlanData } from "@/types/plan-data";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { SemanticColors, Spacing } from "@/constants/theme";
+import { useSectionScroll } from "@/hooks/use-section-scroll";
+import type { PlanData } from "@/types/plan";
+import { useMemo } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 interface PlanContentProps {
   plan: PlanData;
@@ -30,10 +24,6 @@ interface PlanContentProps {
 }
 
 export function PlanContent({ plan, insets }: PlanContentProps) {
-  const scrollRef = useRef<ScrollView>(null);
-  const sectionOffsets = useRef<Record<string, number>>({});
-  const [activeTab, setActiveTab] = useState("intro");
-
   const diagnosis = plan.diagnostico;
   const salesPlan = plan.plan_ventas;
   const leadershipPlan = plan.plan_liderazgo;
@@ -52,18 +42,19 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
   const hasFirstStep = Boolean(leadershipPlan?.primer_paso_trabajar_la_mitad?.mensaje);
 
   const tabs = useMemo(() => {
-    const result: PlanTab[] = [];
-    if (plan.introduccion_general) result.push({ key: "intro", label: "Introducción" });
-    if (diagnosis?.mensaje_introduccion) result.push({ key: "diagnosis", label: "Diagnóstico" });
-    if (hasAreaAnalysis) result.push({ key: "areas", label: "Áreas" });
-    if (hasBlockers) result.push({ key: "blockers", label: "Bloqueos" });
-    if (hasOpportunities) result.push({ key: "opportunities", label: "Oportunidades" });
-    if (hasSalesStrategy) result.push({ key: "strategy", label: "Plan ventas" });
-    if (hasSales) result.push({ key: "sales", label: "Proyección" });
-    if (hasFirstStep) result.push({ key: "firststep", label: "Primer paso" });
-    if (hasRedefineRole) result.push({ key: "redefine", label: "Redefinir rol" });
-    if (hasLeadership) result.push({ key: "leadership", label: "Liderazgo" });
-    return result;
+    const candidates: readonly (readonly [boolean, PlanTab])[] = [
+      [Boolean(plan.introduccion_general), { key: "intro", label: "Introducción" }],
+      [Boolean(diagnosis?.mensaje_introduccion), { key: "diagnosis", label: "Diagnóstico" }],
+      [hasAreaAnalysis, { key: "areas", label: "Áreas" }],
+      [hasBlockers, { key: "blockers", label: "Bloqueos" }],
+      [hasOpportunities, { key: "opportunities", label: "Oportunidades" }],
+      [hasSalesStrategy, { key: "strategy", label: "Plan ventas" }],
+      [hasSales, { key: "sales", label: "Proyección" }],
+      [hasFirstStep, { key: "firststep", label: "Primer paso" }],
+      [hasRedefineRole, { key: "redefine", label: "Redefinir rol" }],
+      [hasLeadership, { key: "leadership", label: "Liderazgo" }],
+    ];
+    return candidates.filter(([visible]) => visible).map(([, tab]) => tab);
   }, [
     plan.introduccion_general,
     diagnosis?.mensaje_introduccion,
@@ -77,64 +68,17 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
     hasLeadership,
   ]);
 
-  const handleSectionLayout = useCallback((key: string, y: number) => {
-    sectionOffsets.current[key] = y;
-  }, []);
-
-  const activeTabRef = useRef(activeTab);
-  activeTabRef.current = activeTab;
-  const isScrollingToTab = useRef(false);
-  const scrollTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    return () => {
-      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-    };
-  }, []);
-
-  const handleTabPress = useCallback((key: string) => {
-    setActiveTab(key);
-    isScrollingToTab.current = true;
-    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-    const offset = sectionOffsets.current[key];
-    if (offset !== undefined && scrollRef.current) {
-      scrollRef.current.scrollTo({ y: offset - 8, animated: true });
-      scrollTimerRef.current = setTimeout(() => {
-        isScrollingToTab.current = false;
-      }, 600);
-    } else {
-      isScrollingToTab.current = false;
-    }
-  }, []);
-
-  const handleScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (isScrollingToTab.current) return;
-      const scrollY = e.nativeEvent.contentOffset.y + 60;
-      const keys = tabs.map((t) => t.key);
-      let current = keys[0];
-      for (const key of keys) {
-        const offset = sectionOffsets.current[key];
-        if (offset !== undefined && scrollY >= offset) {
-          current = key;
-        }
-      }
-      if (current && current !== activeTabRef.current) {
-        setActiveTab(current);
-      }
-    },
-    [tabs],
-  );
+  const { scrollRef, activeTab, handleSectionLayout, handleTabPress, handleScroll } =
+    useSectionScroll(tabs);
 
   return (
-    <AppBackground>
-      <View style={styles.container}>
-        <View style={styles.headerBlock}>
-          <ScreenHeader topInset={insets.top} icon="trophy" titlePrefix="Mi" titleAccent="Plan" />
-          <PlanNavTabs tabs={tabs} activeKey={activeTab} onPress={handleTabPress} />
-        </View>
+    <View style={styles.container}>
+      <View style={styles.headerBlock}>
+        <ScreenHeader topInset={insets.top} icon="trophy" titlePrefix="Mi" titleAccent="Plan" />
+        <PlanNavTabs tabs={tabs} activeKey={activeTab} onPress={handleTabPress} />
+      </View>
 
-        <ScrollView
+      <ScrollView
           ref={scrollRef}
           contentContainerStyle={[
             styles.scrollContent,
@@ -266,8 +210,7 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
 
           <PlanConclusion />
         </ScrollView>
-      </View>
-    </AppBackground>
+    </View>
   );
 }
 
@@ -276,10 +219,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerBlock: {
-    backgroundColor: "#202F3F",
+    backgroundColor: SemanticColors.surfaceCard,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.six,
   },
 });

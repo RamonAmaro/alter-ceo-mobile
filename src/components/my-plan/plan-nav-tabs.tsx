@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useCallback, useEffect, useRef } from "react";
 import {
   Animated,
@@ -49,14 +50,14 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
 
       Animated.spring(indicatorX, {
         toValue: layout.x + layout.width / 2,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
         tension: 120,
         friction: 14,
       }).start();
 
       Animated.spring(indicatorScaleX, {
         toValue: layout.width,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
         tension: 120,
         friction: 14,
       }).start();
@@ -127,7 +128,7 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: "#202F3F",
+    backgroundColor: SemanticColors.surfaceCard,
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratMedium,
   },
   tabTextActive: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
   },
   indicator: {
@@ -153,6 +154,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 3,
     borderRadius: 99,
-    backgroundColor: "#00FF84",
+    backgroundColor: SemanticColors.success,
   },
 });

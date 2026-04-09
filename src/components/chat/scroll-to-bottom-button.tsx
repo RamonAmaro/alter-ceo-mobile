@@ -1,9 +1,10 @@
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 
 interface ScrollToBottomButtonProps {
   visible: boolean;
@@ -17,7 +18,7 @@ export function ScrollToBottomButton({ visible, onPress }: ScrollToBottomButtonP
     Animated.timing(opacity, {
       toValue: visible ? 1 : 0,
       duration: 200,
-      useNativeDriver: true,
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
   }, [visible, opacity]);
 
@@ -27,7 +28,7 @@ export function ScrollToBottomButton({ visible, onPress }: ScrollToBottomButtonP
       pointerEvents={visible ? "auto" : "none"}
     >
       <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.button}>
-        <Ionicons name="chevron-down" size={20} color="#ffffff" />
+        <Ionicons name="chevron-down" size={20} color={SemanticColors.textPrimary} />
       </TouchableOpacity>
     </Animated.View>
   );

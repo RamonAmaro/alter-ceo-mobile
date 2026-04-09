@@ -3,65 +3,9 @@ import { create } from "zustand";
 import type { SSEConnection } from "@/lib/sse-client";
 import * as chatService from "@/services/chat-service";
 import type { ChatMessageResponse, ChatThreadSummary } from "@/types/chat";
-import type { SSETypedEvent } from "@/types/sse";
-import { parseCompleteMessage, parseDeltaText } from "@/utils/parse-sse-chat";
+import { handleStreamDone, handleStreamEvent } from "@/utils/chat-stream-handlers";
+import { toErrorMessage } from "@/utils/to-error-message";
 import { ulid } from "@/utils/ulid";
-
-const ERROR_GENERIC = "No se pudo completar la operación. Inténtalo de nuevo.";
-
-function toErrorMessage(err: unknown): string {
-  if (err instanceof Error && err.message) return err.message;
-  return ERROR_GENERIC;
-}
-
-type SetState = (partial: Partial<ChatState> | ((state: ChatState) => Partial<ChatState>)) => void;
-type GetState = () => ChatState;
-
-function handleStreamEvent(event: SSETypedEvent, threadId: string, set: SetState, get: GetState): void {
-  if (event.event === "delta") {
-    const chunk = parseDeltaText(event.data);
-    if (chunk) {
-      set((state) => ({ streamingText: state.streamingText + chunk }));
-    }
-  } else if (event.event === "complete") {
-    const msg = parseCompleteMessage(event.data, threadId, get().streamingText);
-    set((state) => ({
-      messages: [...state.messages, msg],
-      isStreaming: false,
-      streamingText: "",
-      _sseConnection: null,
-    }));
-  } else if (event.event === "error") {
-    set({
-      isStreaming: false,
-      streamingText: "",
-      _sseConnection: null,
-      error: "Error en la respuesta del asistente",
-    });
-  }
-}
-
-function handleStreamDone(threadId: string, set: SetState, get: GetState): void {
-  if (!get().isStreaming) return;
-  const accumulated = get().streamingText;
-  if (accumulated) {
-    const fallbackMsg: ChatMessageResponse = {
-      id: ulid(),
-      thread_id: threadId,
-      role: "assistant",
-      text: accumulated,
-      created_at: new Date().toISOString(),
-    };
-    set((state) => ({
-      messages: [...state.messages, fallbackMsg],
-      isStreaming: false,
-      streamingText: "",
-      _sseConnection: null,
-    }));
-  } else {
-    set({ isStreaming: false, streamingText: "", _sseConnection: null });
-  }
-}
 
 interface ChatState {
   threads: ChatThreadSummary[];

@@ -1,17 +1,14 @@
 import { ItemCard } from "@/components/my-plan/item-card";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
-import type { PlanOpportunity } from "@/types/plan-data";
+import { SemanticColors, Spacing } from "@/constants/theme";
+import type { PlanOpportunity } from "@/types/plan";
+import { deduplicateByTitle } from "@/utils/deduplicate-by-title";
 import { StyleSheet, View } from "react-native";
 
 interface OpportunitiesListProps {
   introduction?: string;
   opportunities: PlanOpportunity[];
-}
-
-function deduplicateByTitle(items: PlanOpportunity[]): PlanOpportunity[] {
-  return items.filter((o, i, arr) => arr.findIndex((x) => x.titulo === o.titulo) === i);
 }
 
 export function OpportunitiesList({ introduction, opportunities }: OpportunitiesListProps) {
@@ -45,7 +42,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   intro: {
-    color: "rgba(255,255,255,0.6)",
+    color: SemanticColors.iconMuted,
     lineHeight: 22,
   },
 });

@@ -1,3 +1,4 @@
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, type ViewStyle } from "react-native";
@@ -16,7 +17,7 @@ export function GlassCard({ children, style, outerStyle, onPress, highlight }: G
   function handlePressIn(): void {
     Animated.spring(scaleAnim, {
       toValue: 0.97,
-      useNativeDriver: true,
+      useNativeDriver: USE_NATIVE_DRIVER,
       speed: 50,
       bounciness: 4,
     }).start();
@@ -25,7 +26,7 @@ export function GlassCard({ children, style, outerStyle, onPress, highlight }: G
   function handlePressOut(): void {
     Animated.spring(scaleAnim, {
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver: USE_NATIVE_DRIVER,
       speed: 50,
       bounciness: 4,
     }).start();

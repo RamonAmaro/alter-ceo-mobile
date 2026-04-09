@@ -7,9 +7,10 @@ export interface TranscriptionSession {
   readonly sendAudioData: (data: string | Float32Array) => void;
   readonly stop: () => Promise<string>;
   readonly close: () => void;
+  readonly onError: (cb: (message: string) => void) => void;
 }
 
-type WsMessage = { type: string; text?: string };
+type WsMessage = { type: string; text?: string; message?: string };
 
 function buildWsUrl(): string {
   const base = API_BASE_URL.replace(/^https?/, (m) => (m === "https" ? "wss" : "ws"));
@@ -46,10 +47,9 @@ function parseWsMessage(raw: unknown): WsMessage | null {
 function connectWebSocket(url: string): Promise<WebSocket> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
-    const timeout = setTimeout(
-      () => reject(new Error("Timeout conectando al servidor.")),
-      WS_CONNECT_TIMEOUT_MS,
-    );
+    const timeout = setTimeout(() => {
+      reject(new Error("Timeout conectando al servidor."));
+    }, WS_CONNECT_TIMEOUT_MS);
     ws.onopen = () => {
       clearTimeout(timeout);
       resolve(ws);
@@ -102,6 +102,7 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
   const ws = await connectWebSocket(buildWsUrl());
 
   const accumulated = { final: "", delta: "" };
+  let errorCallback: ((message: string) => void) | null = null;
 
   ws.onmessage = (event) => {
     const msg = parseWsMessage(event.data);
@@ -110,8 +111,22 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
       accumulated.final = accumulated.final ? `${accumulated.final} ${msg.text}` : msg.text;
       accumulated.delta = "";
     } else if (msg.type === "transcript_delta" && msg.text) {
-      accumulated.delta = msg.text;
+      accumulated.delta = accumulated.delta + msg.text;
+    } else if (msg.type === "error") {
+      const errorMsg = msg.message ?? msg.text ?? "Error de transcripción desconocido";
+      errorCallback?.(errorMsg);
     }
+  };
+
+  ws.onclose = (e) => {
+    if (e.code !== 1000 && e.code !== 1005) {
+      const reason = e.reason || `Conexión cerrada inesperadamente (código ${e.code})`;
+      errorCallback?.(reason);
+    }
+  };
+
+  ws.onerror = () => {
+    errorCallback?.("Error de conexión con el servidor de transcripción");
   };
 
   return {
@@ -129,5 +144,9 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
     },
 
     close: () => safeClose(ws),
+
+    onError: (cb: (message: string) => void) => {
+      errorCallback = cb;
+    },
   };
 }

@@ -1,4 +1,4 @@
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus } from "@/hooks/use-audio-playback";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -11,7 +11,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useActiveRecordingStore } from "@/stores/active-recording-store";
 import { useRecordingsStore } from "@/stores/recordings-store";
 import { formatDuration } from "@/utils/format-duration";
@@ -25,13 +27,17 @@ const PAGES = ["recording", "meetings"] as const;
 
 export function RecordingScreen() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const windowWidth = useWindowDimensions().width;
+  const { isMobile } = useResponsiveLayout();
+  const [containerWidth, setContainerWidth] = useState(0);
+  const width = containerWidth || windowWidth;
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
   const [playerBarHeight, setPlayerBarHeight] = useState(0);
 
-  const { recordings } = useRecordingsStore();
-  const { activeId, setActiveId } = useActiveRecordingStore();
+  const recordings = useRecordingsStore((s) => s.recordings);
+  const activeId = useActiveRecordingStore((s) => s.activeId);
+  const setActiveId = useActiveRecordingStore((s) => s.setActiveId);
   const activeRecording = recordings.find((r) => r.id === activeId) ?? null;
 
   const player = useAudioPlayer(activeRecording?.uri ?? null, {
@@ -156,51 +162,62 @@ export function RecordingScreen() {
 
   return (
     <AppBackground>
-      <View style={styles.container}>
-        <ScreenHeader topInset={insets.top} icon="mic" titlePrefix="Grabar" titleAccent="Reunión" />
+      <ResponsiveContainer maxWidth={900}>
+        <View
+          style={styles.container}
+          onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+        >
+          <ScreenHeader
+            topInset={insets.top}
+            icon="mic"
+            titlePrefix="Grabar"
+            titleAccent="Reunión"
+            showBack={isMobile}
+          />
 
-        <RecordingMotto activeIndex={activeIndex} />
+          <RecordingMotto activeIndex={activeIndex} />
 
-        <FlatList
-          data={PAGES}
-          keyExtractor={(item) => item}
-          renderItem={renderPage}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          bounces={false}
-          style={styles.carousel}
-          onLayout={onCarouselLayout}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
-          getItemLayout={(_, index) => ({
-            length: width,
-            offset: width * index,
-            index,
-          })}
-        />
+          <FlatList
+            data={PAGES}
+            keyExtractor={(item) => item}
+            renderItem={renderPage}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+            style={styles.carousel}
+            onLayout={onCarouselLayout}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+            getItemLayout={(_, index) => ({
+              length: width,
+              offset: width * index,
+              index,
+            })}
+          />
 
-        {showPlayer && (
-          <View
-            style={styles.playerBar}
-            onLayout={(e) => setPlayerBarHeight(e.nativeEvent.layout.height)}
-          >
-            <MeetingPlayerBar
-              title={activeRecording.title}
-              date={activeRecording.date}
-              duration={formatDuration(activeRecording.durationMs)}
-              progress={progress}
-              isPlaying={status.playing}
-              bottomInset={insets.bottom}
-              onTogglePlay={handleTogglePlay}
-              onClose={handleClose}
-              onSeek={handleSeek}
-              onShare={handleShare}
-              onFavorite={handleFavorite}
-            />
-          </View>
-        )}
-      </View>
+          {showPlayer && (
+            <View
+              style={styles.playerBar}
+              onLayout={(e) => setPlayerBarHeight(e.nativeEvent.layout.height)}
+            >
+              <MeetingPlayerBar
+                title={activeRecording.title}
+                date={activeRecording.date}
+                duration={formatDuration(activeRecording.durationMs)}
+                progress={progress}
+                isPlaying={status.playing}
+                bottomInset={insets.bottom}
+                onTogglePlay={handleTogglePlay}
+                onClose={handleClose}
+                onSeek={handleSeek}
+                onShare={handleShare}
+                onFavorite={handleFavorite}
+              />
+            </View>
+          )}
+        </View>
+      </ResponsiveContainer>
     </AppBackground>
   );
 }

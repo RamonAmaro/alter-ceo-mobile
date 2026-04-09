@@ -41,7 +41,7 @@ export const MarkdownText = memo(function MarkdownText({ text, color }: Markdown
     <ThemedText type="bodyMd" style={[styles.base, { color }]}>
       {segments.map((segment, index) => (
         <ThemedText
-          key={index}
+          key={`${index}-${segment.bold}`}
           type="bodyMd"
           style={segment.bold ? [styles.bold, { color }] : { color }}
         >

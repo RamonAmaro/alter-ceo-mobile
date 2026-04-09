@@ -70,10 +70,6 @@ export interface ValidationError {
   ctx?: Record<string, unknown>;
 }
 
-export interface HTTPValidationError {
-  detail?: ValidationError[];
-}
-
 export class ApiError extends Error {
   constructor(
     public readonly status: number,

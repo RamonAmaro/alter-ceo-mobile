@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -31,7 +31,9 @@ export function QuestionOption({
             selected && (multi ? styles.checkboxSelected : styles.radioSelected),
           ]}
         >
-          {selected && multi ? <Ionicons name="checkmark" size={14} color="#ffffff" /> : null}
+          {selected && multi ? (
+            <Ionicons name="checkmark" size={14} color={SemanticColors.textPrimary} />
+          ) : null}
           {selected && !multi ? <View style={styles.radioDot} /> : null}
         </View>
 
@@ -55,16 +57,16 @@ export function QuestionOption({
 
 const styles = StyleSheet.create({
   option: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: SemanticColors.glassBackground,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: SemanticColors.borderLight,
     paddingHorizontal: Spacing.three,
     paddingVertical: 14,
   },
   optionSelected: {
-    backgroundColor: "#E8731A",
-    borderColor: "#E8731A",
+    backgroundColor: SemanticColors.accent,
+    borderColor: SemanticColors.accent,
   },
   row: {
     flexDirection: "row",
@@ -76,30 +78,30 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.4)",
+    borderColor: SemanticColors.textDisabled,
     alignItems: "center",
     justifyContent: "center",
   },
   radioSelected: {
-    borderColor: "#ffffff",
+    borderColor: SemanticColors.textPrimary,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#ffffff",
+    backgroundColor: SemanticColors.textPrimary,
   },
   checkbox: {
     width: 20,
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.4)",
+    borderColor: SemanticColors.textDisabled,
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxSelected: {
-    borderColor: "#ffffff",
+    borderColor: SemanticColors.textPrimary,
     backgroundColor: "rgba(255,255,255,0.2)",
   },
   textContainer: {
@@ -107,13 +109,13 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   label: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   labelSelected: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   subtitle: {
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
     marginTop: 2,
   },
   subtitleSelected: {

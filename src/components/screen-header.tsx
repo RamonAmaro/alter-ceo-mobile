@@ -1,17 +1,18 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface ScreenHeaderProps {
   topInset: number;
-  icon?: string;
+  icon?: React.ComponentProps<typeof Ionicons>["name"];
   useLogoIcon?: boolean;
   titlePrefix: string;
   titleAccent: string;
   onBack?: () => void;
+  showBack?: boolean;
 }
 
 export function ScreenHeader({
@@ -21,6 +22,7 @@ export function ScreenHeader({
   titlePrefix,
   titleAccent,
   onBack,
+  showBack = true,
 }: ScreenHeaderProps) {
   function handleBack(): void {
     if (onBack) {
@@ -32,14 +34,16 @@ export function ScreenHeader({
 
   return (
     <View style={[styles.container, { paddingTop: topInset + Spacing.two }]}>
-      <TouchableOpacity onPress={handleBack} style={styles.backBtn} activeOpacity={0.7}>
-        <Ionicons name="arrow-back" size={20} color="#ffffff" />
-      </TouchableOpacity>
+      {showBack && (
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={20} color={SemanticColors.textPrimary} />
+        </TouchableOpacity>
+      )}
 
       {useLogoIcon ? (
         <AlterLogo size={20} />
       ) : (
-        <Ionicons name={icon as never} size={18} color="#00FF84" />
+        <Ionicons name={icon} size={18} color={SemanticColors.success} />
       )}
 
       <View style={styles.titleRow}>
@@ -55,7 +59,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-    backgroundColor: "#202F3F",
+    backgroundColor: SemanticColors.surfaceCard,
     paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.three,
     marginBottom: Spacing.three,
@@ -70,12 +74,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
     fontSize: 16,
     lineHeight: 25,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   accent: {
     fontFamily: Fonts.montserratBold,
     fontSize: 16,
     lineHeight: 25,
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
 });

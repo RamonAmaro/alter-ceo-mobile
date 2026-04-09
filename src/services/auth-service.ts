@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "@/services/secure-store";
 
 import { apiClient, handleAxiosError, setAuthCookieGetter } from "@/lib/api-client";
 import { SESSION_COOKIE_KEY, type AuthSession } from "@/types/auth";
@@ -22,6 +22,11 @@ function mapSession(raw: RawAuthSessionResponse, displayName?: string | null): A
 async function saveSession(cookie: string): Promise<void> {
   setAuthCookieGetter(() => cookie);
   await SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
+}
+
+async function clearSession(): Promise<void> {
+  setAuthCookieGetter(() => null);
+  await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
 }
 
 export async function initAuthCookie(): Promise<void> {
@@ -67,6 +72,7 @@ export async function getSession(): Promise<AuthSession | null> {
     const response = await apiClient.get<RawAuthSessionResponse>("/auth/session");
     return mapSession(response.data);
   } catch {
+    await clearSession();
     return null;
   }
 }
@@ -75,7 +81,6 @@ export async function logout(): Promise<void> {
   try {
     await apiClient.post("/auth/logout");
   } finally {
-    await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
-    setAuthCookieGetter(() => null);
+    await clearSession();
   }
 }

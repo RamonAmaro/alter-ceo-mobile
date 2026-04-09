@@ -4,8 +4,8 @@ import { NoteBlock } from "@/components/my-plan/note-block";
 import { RedefineStep } from "@/components/my-plan/redefine-step";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
-import type { PlanRedefineRole } from "@/types/plan-data";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
+import type { PlanRedefineRole } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface RedefineRoleSectionProps {
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   text: {
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
     lineHeight: 22,
     fontSize: 14,
   },
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
   },
   chosenValue: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratMedium,
     lineHeight: 22,
     fontSize: 14,
@@ -107,12 +107,12 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   timeValue: {
-    color: "#00FF84",
+    color: SemanticColors.success,
     fontFamily: Fonts.montserratBold,
     fontSize: 14,
   },
   closing: {
-    color: "rgba(255,255,255,0.6)",
+    color: SemanticColors.iconMuted,
     fontFamily: Fonts.montserratBold,
     lineHeight: 22,
     fontSize: 14,

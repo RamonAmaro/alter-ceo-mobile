@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 
 // --- Constants -----------------------------------------------------------
 
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   timer: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 42,
     lineHeight: 50,
@@ -86,6 +86,6 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   status: {
-    color: "rgba(255, 255, 255, 0.7)",
+    color: SemanticColors.textSecondaryLight,
   },
 });

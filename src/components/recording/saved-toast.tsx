@@ -1,7 +1,9 @@
+import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import { SemanticColors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 
 interface SavedToastProps {
@@ -18,14 +20,14 @@ export function SavedToast({ visible }: SavedToastProps) {
         Animated.parallel([
           Animated.spring(translateY, {
             toValue: 0,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
             speed: 30,
             bounciness: 10,
           }),
           Animated.timing(opacity, {
             toValue: 1,
             duration: 200,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ]),
         Animated.delay(1400),
@@ -33,12 +35,12 @@ export function SavedToast({ visible }: SavedToastProps) {
           Animated.timing(translateY, {
             toValue: -20,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(opacity, {
             toValue: 0,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ]),
       ]).start();
@@ -54,7 +56,7 @@ export function SavedToast({ visible }: SavedToastProps) {
       style={[styles.container, { opacity, transform: [{ translateY }] }]}
     >
       <View style={styles.toast}>
-        <Ionicons name="checkmark-circle" size={18} color="#00FF84" />
+        <Ionicons name="checkmark-circle" size={18} color={SemanticColors.success} />
         <ThemedText type="caption" style={styles.text}>
           Reunión guardada
         </ThemedText>
@@ -83,6 +85,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 255, 132, 0.4)",
   },
   text: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
 });

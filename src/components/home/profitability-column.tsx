@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 import { GlassCard } from "./glass-card";
@@ -56,18 +56,18 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.montserratBold,
     fontSize: 9,
-    color: "rgba(255,255,255,0.5)",
+    color: SemanticColors.textMuted,
     letterSpacing: 0.5,
   },
   sub: {
     fontFamily: Fonts.montserratBold,
     fontSize: 9,
-    color: "rgba(255,255,255,0.5)",
+    color: SemanticColors.textMuted,
   },
   estimated: {
     fontFamily: Fonts.montserratBold,
     fontSize: 9,
-    color: "#00FF84",
+    color: SemanticColors.success,
   },
   separatorWrap: {
     marginVertical: 2,
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   value: {
     fontFamily: Fonts.montserratMedium,
     fontSize: 14,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     marginTop: 2,
   },
 });

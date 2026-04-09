@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts } from "@/constants/theme";
+import { SemanticColors, Fonts } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
@@ -103,7 +103,7 @@ const STATUS_COLOR_MAP: Record<string, string> = {
 
 export function statusToColor(status?: string): string {
   if (!status) return "rgba(255,255,255,0.35)";
-  return STATUS_COLOR_MAP[status] ?? "rgba(255,255,255,0.5)";
+  return STATUS_COLOR_MAP[status] ?? SemanticColors.textMuted;
 }
 
 const styles = StyleSheet.create({

@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useRecordingsStore } from "@/stores/recordings-store";
 import { formatDuration } from "@/utils/format-duration";
 
@@ -29,7 +29,8 @@ export function MeetingsPage({
   onDelete,
 }: MeetingsPageProps) {
   const insets = useSafeAreaInsets();
-  const { recordings, loadRecordings } = useRecordingsStore();
+  const recordings = useRecordingsStore((s) => s.recordings);
+  const loadRecordings = useRecordingsStore((s) => s.loadRecordings);
 
   useEffect(() => {
     loadRecordings();
@@ -47,7 +48,7 @@ export function MeetingsPage({
   }));
 
   return (
-    <View style={{ width, height }}>
+    <View style={[styles.page, { width, height }]}>
       <View style={styles.listContainer}>
         <ThemedText type="bodySm" style={styles.sectionTitle}>
           TODAS TUS REUNIONES
@@ -90,20 +91,23 @@ export function MeetingsPage({
 }
 
 const styles = StyleSheet.create({
+  page: {
+    overflow: "hidden",
+  },
   listContainer: {
     flex: 1,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
   },
   sectionTitle: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     letterSpacing: 1,
     textTransform: "uppercase",
   },
   divider: {
     height: 2,
-    backgroundColor: "#43BCB8",
+    backgroundColor: SemanticColors.teal,
     marginTop: Spacing.two,
   },
   listContent: {

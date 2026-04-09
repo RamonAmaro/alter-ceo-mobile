@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
@@ -14,7 +14,7 @@ export function AreaAnalysisCard({ icon, label, value }: AreaAnalysisCardProps) 
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.iconBox}>
-          <Ionicons name={icon} size={16} color="rgba(255,255,255,0.6)" />
+          <Ionicons name={icon} size={16} color={SemanticColors.iconMuted} />
         </View>
         <ThemedText type="caption" style={styles.label}>
           {label}
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   label: {
-    color: "rgba(255,255,255,0.5)",
+    color: SemanticColors.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.8,
     fontSize: 11,

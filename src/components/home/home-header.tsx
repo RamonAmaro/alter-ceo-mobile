@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -11,11 +11,11 @@ export function HomeHeader() {
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.userInfo}
-        onPress={() => router.push("/profile")}
+        onPress={() => router.push("/(app)/profile")}
         activeOpacity={0.7}
       >
         <View style={styles.avatar}>
-          <Ionicons name="person" size={16} color="rgba(255,255,255,0.5)" />
+          <Ionicons name="person" size={16} color={SemanticColors.textMuted} />
         </View>
         <View>
           <ThemedText type="bodyMd" style={styles.greeting}>
@@ -30,9 +30,9 @@ export function HomeHeader() {
       <TouchableOpacity
         style={styles.bellBtn}
         activeOpacity={0.7}
-        onPress={() => router.push("/my-plan")}
+        onPress={() => router.push("/(app)/my-plan")}
       >
-        <Ionicons name="notifications-outline" size={19} color="#ffffff" />
+        <Ionicons name="notifications-outline" size={19} color={SemanticColors.textPrimary} />
       </TouchableOpacity>
     </View>
   );
@@ -63,13 +63,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
     fontSize: 10,
     lineHeight: 13,
-    color: "rgba(255,255,255,0.7)",
+    color: SemanticColors.textSecondaryLight,
   },
   company: {
     fontFamily: Fonts.montserratBold,
     fontSize: 10,
     lineHeight: 13,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
   },
   bellBtn: {
     padding: Spacing.one,

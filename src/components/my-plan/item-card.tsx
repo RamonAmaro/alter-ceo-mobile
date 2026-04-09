@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface ItemCardProps {
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   title: {
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 14,
     lineHeight: 19,

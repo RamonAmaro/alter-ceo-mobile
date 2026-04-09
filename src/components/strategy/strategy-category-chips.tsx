@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
 interface ChipConfig {
@@ -62,6 +62,6 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Bold",
     fontSize: 10,
     lineHeight: 13,
-    color: "rgba(255,255,255,0.5)",
+    color: SemanticColors.textMuted,
   },
 });

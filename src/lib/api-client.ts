@@ -1,6 +1,9 @@
 import { API_BASE_URL, API_TIMEOUT, API_VERSION } from "@/constants/env";
 import { ApiError, type ValidationError } from "@/types/api";
 import axios, { isAxiosError } from "axios";
+import { Platform } from "react-native";
+
+const IS_WEB = Platform.OS === "web";
 
 type TokenGetter = () => string | null;
 let tokenGetter: TokenGetter = () => null;
@@ -20,15 +23,17 @@ export function buildAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = {};
   const token = tokenGetter();
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const cookie = cookieGetter();
-  if (cookie) headers["Cookie"] = cookie;
+  if (!IS_WEB) {
+    const cookie = cookieGetter();
+    if (cookie) headers["Cookie"] = cookie;
+  }
   return headers;
 }
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/${API_VERSION}`,
   timeout: API_TIMEOUT,
-  withCredentials: false,
+  withCredentials: IS_WEB,
 });
 
 apiClient.interceptors.request.use((config) => {

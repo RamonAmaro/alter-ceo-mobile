@@ -1,16 +1,20 @@
 import { AppBackground } from "@/components/app-background";
 import { PlanContent } from "@/components/my-plan/plan-content";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
+import { SemanticColors } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePlanStore } from "@/stores/plan-store";
-import type { PlanData } from "@/types/plan-data";
+import type { PlanData } from "@/types/plan";
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MyPlanScreen() {
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsiveLayout();
   const user = useAuthStore((s) => s.user);
   const latestPlan = usePlanStore((s) => s.latestPlan);
   const fetchLatestPlan = usePlanStore((s) => s.fetchLatestPlan);
@@ -26,9 +30,15 @@ export default function MyPlanScreen() {
     return (
       <AppBackground>
         <View style={styles.container}>
-          <ScreenHeader topInset={insets.top} icon="trophy" titlePrefix="Mi" titleAccent="Plan" />
+          <ScreenHeader
+            topInset={insets.top}
+            icon="trophy"
+            titlePrefix="Mi"
+            titleAccent="Plan"
+            showBack={isMobile}
+          />
           <View style={styles.centered}>
-            <ActivityIndicator color="#00FF84" size="large" />
+            <ActivityIndicator color={SemanticColors.success} size="large" />
           </View>
         </View>
       </AppBackground>
@@ -39,7 +49,13 @@ export default function MyPlanScreen() {
     return (
       <AppBackground>
         <View style={styles.container}>
-          <ScreenHeader topInset={insets.top} icon="trophy" titlePrefix="Mi" titleAccent="Plan" />
+          <ScreenHeader
+            topInset={insets.top}
+            icon="trophy"
+            titlePrefix="Mi"
+            titleAccent="Plan"
+            showBack={isMobile}
+          />
           <View style={styles.centered}>
             <ThemedText type="bodyMd" style={styles.emptyText}>
               Aún no tienes un plan generado.{"\n"}Completa el onboarding para crearlo.
@@ -50,7 +66,13 @@ export default function MyPlanScreen() {
     );
   }
 
-  return <PlanContent plan={latestPlan.plan as PlanData} insets={insets} />;
+  return (
+    <AppBackground>
+      <ResponsiveContainer maxWidth={900}>
+        <PlanContent plan={latestPlan.plan as PlanData} insets={insets} />
+      </ResponsiveContainer>
+    </AppBackground>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -63,7 +85,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    color: "rgba(255,255,255,0.5)",
+    color: SemanticColors.textMuted,
     textAlign: "center",
     lineHeight: 26,
   },

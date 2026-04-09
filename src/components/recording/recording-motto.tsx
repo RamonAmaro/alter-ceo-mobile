@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface RecordingMottoProps {
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
   motto: {
-    color: "#00FF84",
+    color: SemanticColors.success,
     fontFamily: Fonts.montserratExtraBold,
     fontSize: 18,
     lineHeight: 24,

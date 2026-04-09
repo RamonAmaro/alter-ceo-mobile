@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -54,7 +54,7 @@ export function StrategyResultCard({
           <View style={styles.actions}>
             {ACTION_BUTTONS.map((btn) => (
               <TouchableOpacity key={btn.key} style={styles.actionBtn} activeOpacity={0.7}>
-                <Ionicons name={btn.icon} size={9} color="#00FF84" />
+                <Ionicons name={btn.icon} size={9} color={SemanticColors.success} />
                 <ThemedText style={styles.actionLabel}>{btn.label}</ThemedText>
               </TouchableOpacity>
             ))}
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1F2C34",
   },
   docPreview: {
-    backgroundColor: "#ffffff",
+    backgroundColor: SemanticColors.textPrimary,
     borderRadius: 6,
     padding: Spacing.two,
     gap: 3,
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   pdfLabel: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 8,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     lineHeight: 11,
   },
   pdfMeta: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 8,
-    color: "#ffffff",
+    color: SemanticColors.textPrimary,
     lineHeight: 10,
   },
 });
