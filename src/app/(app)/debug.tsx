@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
 
 import Constants from "expo-constants";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
@@ -70,6 +70,7 @@ function SectionCard({ title, description, children, style }: SectionCardProps) 
 export default function DebugScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ source?: string }>();
   const {
     isUnlocked,
     isHydrated,
@@ -91,6 +92,7 @@ export default function DebugScreen() {
   const [isResettingOnboarding, setIsResettingOnboarding] = useState(false);
   const [profilesError, setProfilesError] = useState<string | null>(null);
   const [availableProfiles, setAvailableProfiles] = useState<DebugDefaultProfileSummary[]>([]);
+  const openedFromOnboarding = params.source === "onboarding";
 
   const selectedProfile = useMemo(
     () => availableProfiles.find((profile) => profile.profile_id === selectedProfileId),
@@ -198,10 +200,12 @@ export default function DebugScreen() {
       await debugApiService.loadDefaultProfile(selectedProfile.profile_id);
       await fetchLatestPlan(user.userId);
 
-      Alert.alert(
-        "Perfil cargado",
-        `Se ha cargado "${selectedProfile.title}" para el usuario actual.`,
-      );
+      if (openedFromOnboarding) {
+        router.replace("/(app)/(tabs)/alter");
+        return;
+      }
+
+      Alert.alert("Perfil cargado", `Se ha cargado "${selectedProfile.title}" para el usuario actual.`);
     } catch (err) {
       Alert.alert("No se pudo cargar el perfil", toErrorMessage(err));
     } finally {
