@@ -84,6 +84,7 @@ export default function DebugScreen() {
 
   const [isProfilePickerOpen, setIsProfilePickerOpen] = useState(false);
   const [isArchetypePickerOpen, setIsArchetypePickerOpen] = useState(false);
+  const [isApplyingCeoArchetype, setIsApplyingCeoArchetype] = useState(false);
   const [isClearingLocalData, setIsClearingLocalData] = useState(false);
   const [isLoadingDefaultProfile, setIsLoadingDefaultProfile] = useState(false);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
@@ -137,7 +138,7 @@ export default function DebugScreen() {
 
   async function handleResetOnboarding(): Promise<void> {
     Alert.alert(
-      "Reset onboarding",
+      "Reiniciar onboarding",
       "Esto borrará el progreso local del onboarding en este dispositivo.",
       [
         { text: "Cancelar", style: "cancel" },
@@ -180,29 +181,51 @@ export default function DebugScreen() {
 
   async function handleLoadDefaultProfile(): Promise<void> {
     if (!user?.userId) {
-      Alert.alert("Sesion no disponible", "No se ha encontrado el usuario autenticado.");
+      Alert.alert("Sesión no disponible", "No se ha encontrado el usuario autenticado.");
       return;
     }
 
     if (!selectedProfile) {
-      Alert.alert("Perfil no disponible", "Selecciona un default profile valido antes de cargar.");
+      Alert.alert(
+        "Perfil no disponible",
+        "Selecciona un perfil por defecto válido antes de cargarlo.",
+      );
       return;
     }
 
     setIsLoadingDefaultProfile(true);
     try {
-      await debugApiService.overrideCeoArchetype(selectedCeoArchetypeId);
       await debugApiService.loadDefaultProfile(selectedProfile.profile_id);
       await fetchLatestPlan(user.userId);
 
       Alert.alert(
         "Perfil cargado",
-        `Se ha cargado "${selectedProfile.title}" con el arquetipo "${selectedArchetype?.label ?? "sin seleccionar"}".`,
+        `Se ha cargado "${selectedProfile.title}" para el usuario actual.`,
       );
     } catch (err) {
       Alert.alert("No se pudo cargar el perfil", toErrorMessage(err));
     } finally {
       setIsLoadingDefaultProfile(false);
+    }
+  }
+
+  async function handleApplyCeoArchetype(): Promise<void> {
+    if (!user?.userId) {
+      Alert.alert("Sesión no disponible", "No se ha encontrado el usuario autenticado.");
+      return;
+    }
+
+    setIsApplyingCeoArchetype(true);
+    try {
+      await debugApiService.overrideCeoArchetype(selectedCeoArchetypeId);
+      Alert.alert(
+        "Arquetipo CEO aplicado",
+        `Se ha aplicado "${selectedArchetype?.label ?? "sin seleccionar"}" al usuario actual.`,
+      );
+    } catch (err) {
+      Alert.alert("No se pudo aplicar el arquetipo CEO", toErrorMessage(err));
+    } finally {
+      setIsApplyingCeoArchetype(false);
     }
   }
 
@@ -235,20 +258,20 @@ export default function DebugScreen() {
           >
             <SectionCard
               title="Entorno"
-              description="Resumen del build y la configuracion activa del cliente."
+              description="Resumen de la configuración activa del cliente."
             >
               <InfoRow label="App" value={Constants.expoConfig?.name ?? "Alter CEO"} />
-              <InfoRow label="Version" value={Constants.expoConfig?.version ?? "n/a"} />
-              <InfoRow label="Dev mode" value={__DEV__ ? "Si" : "No"} />
-              <InfoRow label="API base" value={API_BASE_URL} />
-              <InfoRow label="API version" value={API_VERSION} />
+              <InfoRow label="Versión" value={Constants.expoConfig?.version ?? "n/a"} />
+              <InfoRow label="Modo desarrollo" value={__DEV__ ? "Sí" : "No"} />
+              <InfoRow label="Base de la API" value={API_BASE_URL} />
+              <InfoRow label="Versión de la API" value={API_VERSION} />
             </SectionCard>
 
             <SectionCard
               title="Sesion"
-              description="Estado actual de autenticacion del usuario cargado en la app."
+              description="Estado actual de autenticación del usuario cargado en la app."
             >
-              <InfoRow label="Autenticado" value={isAuthenticated ? "Si" : "No"} />
+              <InfoRow label="Autenticado" value={isAuthenticated ? "Sí" : "No"} />
               <InfoRow label="User ID" value={user?.userId ?? "n/a"} />
               <InfoRow label="Email" value={user?.email ?? "n/a"} />
               <InfoRow label="Nombre" value={user?.displayName ?? "n/a"} />
@@ -257,10 +280,10 @@ export default function DebugScreen() {
 
             <SectionCard
               title="Onboarding"
-              description="Resetea rapido el progreso local del onboarding en este dispositivo."
+              description="Reinicia rápidamente el progreso local del onboarding en este dispositivo."
             >
               <Button
-                label={isResettingOnboarding ? "Reseteando..." : "Reset onboarding"}
+                label={isResettingOnboarding ? "Reiniciando..." : "Reiniciar onboarding"}
                 onPress={() => void handleResetOnboarding()}
                 disabled={isResettingOnboarding}
                 style={styles.actionButton}
@@ -268,11 +291,11 @@ export default function DebugScreen() {
             </SectionCard>
 
             <SectionCard
-              title="Storage local"
+              title="Almacenamiento local"
               description="Borra el estado persistido del dispositivo y te devuelve al login."
             >
               <Button
-                label={isClearingLocalData ? "Borrando..." : "Clear local storage"}
+                label={isClearingLocalData ? "Borrando..." : "Borrar almacenamiento local"}
                 onPress={() => void handleClearLocalData()}
                 disabled={isClearingLocalData}
                 style={styles.actionButton}
@@ -280,8 +303,61 @@ export default function DebugScreen() {
             </SectionCard>
 
             <SectionCard
-              title="Default profiles"
-              description="Selector preparado para cargar business kernel, plan y CEO archetype de prueba cuando el backend lo soporte."
+              title="Arquetipo CEO"
+              description="Aplica manualmente un arquetipo CEO al usuario actual."
+            >
+              <Pressable
+                style={styles.selectTrigger}
+                onPress={() => setIsArchetypePickerOpen((current) => !current)}
+              >
+                <View style={styles.selectContent}>
+                  <ThemedText type="labelSm" style={styles.selectLabel}>
+                    {selectedArchetype?.label ?? "Selecciona un arquetipo CEO"}
+                  </ThemedText>
+                  <ThemedText type="bodySm" style={styles.selectHint}>
+                    Arquetipo detectado por el backend
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  name={isArchetypePickerOpen ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color={SemanticColors.textMuted}
+                />
+              </Pressable>
+
+              {isArchetypePickerOpen ? (
+                <View style={styles.dropdown}>
+                  {CEO_ARCHETYPE_OPTIONS.map((archetype) => {
+                    const selected = archetype.id === selectedCeoArchetypeId;
+                    return (
+                      <Pressable
+                        key={archetype.id}
+                        style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
+                        onPress={() => handleSelectArchetype(archetype.id)}
+                      >
+                        <ThemedText type="labelSm" style={styles.dropdownTitle}>
+                          {archetype.label}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+
+              <Button
+                label={isApplyingCeoArchetype ? "Aplicando..." : "Aplicar arquetipo CEO"}
+                onPress={() => void handleApplyCeoArchetype()}
+                disabled={isApplyingCeoArchetype}
+                style={styles.actionButton}
+              />
+              <ThemedText type="bodySm" style={styles.footnote}>
+                Solo modifica el arquetipo CEO del usuario actual.
+              </ThemedText>
+            </SectionCard>
+
+            <SectionCard
+              title="Perfiles por defecto"
+              description="Carga un business kernel y un plan de prueba para el usuario actual."
             >
               <Pressable
                 style={styles.selectTrigger}
@@ -334,56 +410,18 @@ export default function DebugScreen() {
 
               {profilesError ? (
                 <ThemedText type="bodySm" style={styles.footnote}>
-                  No se pudo refrescar la lista desde backend: {profilesError}
+                  No se pudo actualizar la lista desde el backend: {profilesError}
                 </ThemedText>
               ) : null}
 
               {!isLoadingProfiles && !profilesError && availableProfiles.length === 0 ? (
                 <ThemedText type="bodySm" style={styles.footnote}>
-                  No hay default profiles disponibles en backend.
+                  No hay perfiles por defecto disponibles en el backend.
                 </ThemedText>
               ) : null}
 
-              <Pressable
-                style={styles.selectTrigger}
-                onPress={() => setIsArchetypePickerOpen((current) => !current)}
-              >
-                <View style={styles.selectContent}>
-                  <ThemedText type="labelSm" style={styles.selectLabel}>
-                    {selectedArchetype?.label ?? "Selecciona un CEO Archetype"}
-                  </ThemedText>
-                  <ThemedText type="bodySm" style={styles.selectHint}>
-                    CEO Archetype detectado por backend
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  name={isArchetypePickerOpen ? "chevron-up" : "chevron-down"}
-                  size={18}
-                  color={SemanticColors.textMuted}
-                />
-              </Pressable>
-
-              {isArchetypePickerOpen ? (
-                <View style={styles.dropdown}>
-                  {CEO_ARCHETYPE_OPTIONS.map((archetype) => {
-                    const selected = archetype.id === selectedCeoArchetypeId;
-                    return (
-                      <Pressable
-                        key={archetype.id}
-                        style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
-                        onPress={() => handleSelectArchetype(archetype.id)}
-                      >
-                        <ThemedText type="labelSm" style={styles.dropdownTitle}>
-                          {archetype.label}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ) : null}
-
               <Button
-                label={isLoadingDefaultProfile ? "Loading..." : "Load default profile"}
+                label={isLoadingDefaultProfile ? "Cargando..." : "Cargar perfil por defecto"}
                 onPress={() => void handleLoadDefaultProfile()}
                 disabled={
                   isLoadingDefaultProfile || isLoadingProfiles || availableProfiles.length === 0
@@ -391,7 +429,7 @@ export default function DebugScreen() {
                 style={styles.actionButton}
               />
               <ThemedText type="bodySm" style={styles.footnote}>
-                Carga el plan por defecto y fija el CEO Archetype para el usuario actual.
+                Solo carga el business kernel y el plan desde el backend.
               </ThemedText>
             </SectionCard>
           </ScrollView>
