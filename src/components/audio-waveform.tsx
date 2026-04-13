@@ -10,9 +10,9 @@ import Animated, {
 
 // --- Layout constants ----------------------------------------------------
 
-const BAR_WIDTH = 3;
-const BAR_GAP = 2;
-const HEIGHT = 120;
+const BAR_WIDTH = 2.5;
+const BAR_GAP = 1.8;
+const HEIGHT = 80;
 const MAX_BAR_COUNT = 80;
 
 // --- Animation constants -------------------------------------------------
