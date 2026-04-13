@@ -59,7 +59,7 @@ export default function SignUpScreen() {
 
     try {
       await register(email, password, name);
-      router.replace("/(onboarding)/welcome");
+      router.replace("/");
     } catch (error) {
       if (error instanceof ApiError && error.status === 422 && error.validationErrors) {
         const fieldErrors = parseValidationErrors(error.validationErrors);

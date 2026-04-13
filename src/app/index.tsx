@@ -1,13 +1,17 @@
+import { useEffect, useRef } from "react";
+import { Animated, Easing, StyleSheet, View } from "react-native";
+
+import { Redirect, type Href } from "expo-router";
+
 import { AlterLogo } from "@/components/alter-logo";
 import { AppBackground } from "@/components/app-background";
+import { Button } from "@/components/button";
+import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { SemanticColors, Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { usePlanStore } from "@/stores/plan-store";
-import { Redirect } from "expo-router";
-import type { Href } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, StyleSheet, View } from "react-native";
 
 function LoadingScreen() {
   const scale = useRef(new Animated.Value(0.85)).current;
@@ -46,7 +50,7 @@ function LoadingScreen() {
         ]),
       ]),
     ).start();
-  }, []);
+  }, [opacity, scale]);
 
   return (
     <AppBackground>
@@ -59,58 +63,80 @@ function LoadingScreen() {
   );
 }
 
+function ErrorScreen({ onRetry }: { onRetry: () => void }) {
+  return (
+    <AppBackground>
+      <View style={styles.centered}>
+        <View style={styles.errorCard}>
+          <ThemedText type="headingMd" style={styles.errorTitle}>
+            No hemos podido comprobar tu configuración
+          </ThemedText>
+          <ThemedText type="bodyMd" style={styles.errorMessage}>
+            Revisa tu conexión o inténtalo de nuevo en unos segundos.
+          </ThemedText>
+          <Button label="Reintentar" onPress={onRetry} />
+        </View>
+      </View>
+    </AppBackground>
+  );
+}
+
 export default function Index() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authLoading = useAuthStore((s) => s.isLoading);
   const user = useAuthStore((s) => s.user);
-  const onboardingLoading = useOnboardingStore((s) => s.isLoading);
   const onboardingCompleted = useOnboardingStore((s) => s.completed);
+  const onboardingError = useOnboardingStore((s) => s.error);
+  const onboardingLoading = useOnboardingStore((s) => s.isLoading);
+  const onboardingStatusUserId = useOnboardingStore((s) => s.statusUserId);
+  const resolveCompletionStatus = useOnboardingStore((s) => s.resolveCompletionStatus);
   const fetchLatestPlan = usePlanStore((s) => s.fetchLatestPlan);
 
-  const [ready, setReady] = useState(false);
-  const [destination, setDestination] = useState<string | null>(null);
-  const hasResolved = useRef(false);
+  const currentUserId = user?.userId ?? null;
 
   useEffect(() => {
-    if (authLoading || onboardingLoading) return;
-    if (hasResolved.current) return;
+    if (authLoading || !isAuthenticated || !currentUserId || onboardingLoading) return;
+    if (onboardingStatusUserId === currentUserId) return;
 
-    async function resolve() {
-      hasResolved.current = true;
+    void resolveCompletionStatus(currentUserId);
+  }, [
+    authLoading,
+    isAuthenticated,
+    currentUserId,
+    onboardingLoading,
+    onboardingStatusUserId,
+    resolveCompletionStatus,
+  ]);
 
-      if (!isAuthenticated) {
-        setDestination("/(auth)/login");
-        setReady(true);
-        return;
-      }
+  useEffect(() => {
+    if (!isAuthenticated || !onboardingCompleted || !currentUserId) return;
 
-      if (!onboardingCompleted) {
-        setDestination("/(onboarding)/welcome");
-        setReady(true);
-        return;
-      }
+    void fetchLatestPlan(currentUserId).catch(() => {
+      // Plan no encontrado o error de red — no impide acceso al app
+    });
+  }, [isAuthenticated, onboardingCompleted, currentUserId, fetchLatestPlan]);
 
-      // Sessão ativa + onboarding completo → ir para home. Carregar plan em background.
-      if (user?.userId) {
-        try {
-          await fetchLatestPlan(user.userId);
-        } catch {
-          // Plan não encontrado ou erro de rede — não impede acesso ao app
-        }
-      }
-
-      setDestination("/(app)/(tabs)/alter");
-      setReady(true);
-    }
-
-    void resolve();
-  }, [authLoading, onboardingLoading, isAuthenticated, user?.userId]);
-
-  if (!ready) {
+  if (authLoading) {
     return <LoadingScreen />;
   }
 
-  return <Redirect href={destination as Href} />;
+  if (!isAuthenticated) {
+    return <Redirect href={"/(auth)/login" as Href} />;
+  }
+
+  if (!currentUserId || onboardingLoading || onboardingStatusUserId !== currentUserId) {
+    return <LoadingScreen />;
+  }
+
+  if (onboardingError) {
+    return <ErrorScreen onRetry={() => void resolveCompletionStatus(currentUserId)} />;
+  }
+
+  return (
+    <Redirect
+      href={(onboardingCompleted ? "/(app)/(tabs)/alter" : "/(onboarding)/welcome") as Href}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
@@ -118,5 +144,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  errorCard: {
+    width: "100%",
+    maxWidth: 420,
+    alignItems: "center",
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
+  },
+  errorTitle: {
+    color: SemanticColors.textPrimary,
+    textAlign: "center",
+  },
+  errorMessage: {
+    color: SemanticColors.textSubtle,
+    textAlign: "center",
   },
 });
