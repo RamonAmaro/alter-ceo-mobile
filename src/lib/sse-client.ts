@@ -1,9 +1,9 @@
 import { API_BASE_URL, API_VERSION } from "@/constants/env";
 import { buildAuthHeaders } from "@/lib/api-client";
+import { applyXHRCredentials } from "@/lib/http-credentials";
 import type { SSEEventType, SSETypedEvent } from "@/types/sse";
 import { SSE_EVENT_TYPES } from "@/types/sse";
 import { createSSEParser } from "@/utils/sse-parser";
-import { Platform } from "react-native";
 
 const KNOWN_EVENTS: ReadonlySet<string> = new Set<string>(SSE_EVENT_TYPES);
 
@@ -65,7 +65,7 @@ export function connectSSE(path: string, options: SSEConnectOptions): SSEConnect
   });
 
   xhr.open(method, url, true);
-  if (Platform.OS === "web") xhr.withCredentials = true;
+  applyXHRCredentials(xhr);
   for (const [key, value] of Object.entries(headers)) {
     xhr.setRequestHeader(key, value);
   }
