@@ -1,7 +1,7 @@
 import * as SecureStore from "@/services/secure-store";
 import { create } from "zustand";
 
-const ONBOARDING_KEY = "onboarding_completed";
+export const ONBOARDING_KEY = "onboarding_completed";
 
 type PlanType = "express" | "professional";
 

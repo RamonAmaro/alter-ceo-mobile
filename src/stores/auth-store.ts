@@ -25,6 +25,7 @@ interface AuthState {
   enableBiometrics: (email: string, password: string) => Promise<void>;
   checkBiometricsStatus: () => Promise<void>;
   checkSession: () => Promise<void>;
+  resetLocalState: () => void;
 }
 
 async function enrichFromProfile(session: AuthSession): Promise<AuthSession> {
@@ -107,5 +108,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     } else {
       set({ isAuthenticated: false, user: null });
     }
+  },
+
+  resetLocalState: () => {
+    set({
+      isAuthenticated: false,
+      isLoading: false,
+      biometricsEnabled: false,
+      user: null,
+    });
   },
 }));
