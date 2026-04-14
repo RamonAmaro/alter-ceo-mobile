@@ -1,6 +1,6 @@
 // ─── API ──────────────────────────────────────────────────────────────────────
 
-export const API_BASE_URL = "https://web.alterceo.app";
+export const API_BASE_URL = "https://api.alterceo.app";
 export const API_VERSION = "v1";
 export const API_TIMEOUT = 30_000;
 

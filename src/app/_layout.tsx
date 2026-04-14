@@ -1,4 +1,3 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { KeyboardProvider } from "@/components/keyboard-provider";
 import {
   Montserrat_300Light,
@@ -8,6 +7,7 @@ import {
   Montserrat_700Bold,
   Montserrat_800ExtraBold,
 } from "@expo-google-fonts/montserrat";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -44,11 +44,10 @@ export default function RootLayout() {
 
     async function init() {
       try {
+        await Promise.all([loadDebugState(), loadOnboarding()]);
         await initAuthCookie();
-        await checkSession();
-        checkBiometricsStatus();
-        await loadDebugState();
-        await loadOnboarding();
+        await Promise.race([checkSession(), new Promise((resolve) => setTimeout(resolve, 5000))]);
+        void checkBiometricsStatus();
       } finally {
         await SplashScreen.hideAsync();
       }
