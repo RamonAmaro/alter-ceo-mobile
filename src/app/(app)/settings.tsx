@@ -49,7 +49,7 @@ export default function SettingsScreen() {
 
   return (
     <AppBackground>
-      <ResponsiveContainer maxWidth={600}>
+      <ResponsiveContainer maxWidth={900}>
         <View style={styles.container}>
           <ScreenHeader
             topInset={insets.top}

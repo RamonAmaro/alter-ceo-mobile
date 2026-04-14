@@ -3,6 +3,8 @@ import { create } from "zustand";
 
 export const LOCAL_RECORDINGS_STORAGE_KEY = "local_recordings";
 
+export type UploadStatus = "local_only" | "uploading" | "processing" | "completed" | "failed";
+
 export interface LocalRecording {
   id: string;
   uri: string;
@@ -10,7 +12,14 @@ export interface LocalRecording {
   date: string;
   durationMs: number;
   createdAt: string;
+  meetingId?: string;
+  uploadStatus?: UploadStatus;
+  errorMessage?: string;
 }
+
+type RecordingStatusPatch = Partial<
+  Pick<LocalRecording, "meetingId" | "uploadStatus" | "errorMessage">
+>;
 
 interface RecordingsState {
   recordings: LocalRecording[];
@@ -18,6 +27,7 @@ interface RecordingsState {
   addRecording: (rec: LocalRecording) => Promise<void>;
   deleteRecording: (id: string) => Promise<void>;
   reset: () => Promise<void>;
+  updateRecordingStatus: (id: string, patch: RecordingStatusPatch) => Promise<void>;
 }
 
 export const useRecordingsStore = create<RecordingsState>((set, get) => ({
@@ -58,7 +68,16 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
     try {
       await AsyncStorage.removeItem(LOCAL_RECORDINGS_STORAGE_KEY);
     } catch {
-      // best-effort clear
+      // best-effort clear}
+    }
+  },
+  updateRecordingStatus: async (id: string, patch: RecordingStatusPatch) => {
+    const next = get().recordings.map((r) => (r.id === id ? { ...r, ...patch } : r));
+    set({ recordings: next });
+    try {
+      await AsyncStorage.setItem(LOCAL_RECORDINGS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // persisting is best-effort; in-memory state is already updated
     }
   },
 }));

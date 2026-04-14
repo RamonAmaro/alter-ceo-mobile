@@ -1,5 +1,4 @@
-import { useAudioPlayer, useAudioPlayerStatus } from "@/hooks/use-audio-playback";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -14,11 +13,9 @@ import { AppBackground } from "@/components/app-background";
 import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
-import { useActiveRecordingStore } from "@/stores/active-recording-store";
-import { useRecordingsStore } from "@/stores/recordings-store";
-import { formatDuration } from "@/utils/format-duration";
+import { useAuthStore } from "@/stores/auth-store";
+import { useMeetingStore } from "@/stores/meeting-store";
 
-import { MeetingPlayerBar } from "./meeting-player-bar";
 import { MeetingsPage } from "./meetings-page";
 import { RecordingMotto } from "./recording-motto";
 import { RecordingPage } from "./recording-page";
@@ -33,89 +30,15 @@ export function RecordingScreen() {
   const width = containerWidth || windowWidth;
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
-  const [playerBarHeight, setPlayerBarHeight] = useState(0);
 
-  const recordings = useRecordingsStore((s) => s.recordings);
-  const activeId = useActiveRecordingStore((s) => s.activeId);
-  const setActiveId = useActiveRecordingStore((s) => s.setActiveId);
-  const activeRecording = recordings.find((r) => r.id === activeId) ?? null;
+  const userId = useAuthStore((s) => s.user?.userId);
+  const fetchMeetings = useMeetingStore((s) => s.fetchMeetings);
 
-  const player = useAudioPlayer(activeRecording?.uri ?? null, {
-    updateInterval: 0.1,
-  });
-  const status = useAudioPlayerStatus(player);
-  const pendingPlayRef = useRef(false);
-
-  useEffect(() => {
-    if (pendingPlayRef.current && status.isLoaded) {
-      pendingPlayRef.current = false;
-      player.play();
+  const handleUploadComplete = useCallback(() => {
+    if (userId) {
+      fetchMeetings(userId);
     }
-  }, [status.isLoaded, player]);
-
-  useEffect(() => {
-    if (status.didJustFinish) {
-      player.seekTo(0);
-    }
-  }, [status.didJustFinish, player]);
-
-  const handlePlay = useCallback(
-    (id: string) => {
-      if (id === activeId) {
-        if (status.playing) {
-          player.pause();
-        } else {
-          player.play();
-        }
-        return;
-      }
-      pendingPlayRef.current = true;
-      setActiveId(id);
-    },
-    [activeId, status.playing, player, setActiveId],
-  );
-
-  const handleTogglePlay = useCallback(() => {
-    if (status.playing) {
-      player.pause();
-    } else if (status.duration > 0 && status.currentTime >= status.duration) {
-      player.seekTo(0);
-      player.play();
-    } else {
-      player.play();
-    }
-  }, [status.playing, status.currentTime, status.duration, player]);
-
-  const handleSeek = useCallback(
-    (pct: number) => {
-      if (status.duration > 0) {
-        player.seekTo(pct * status.duration);
-      }
-    },
-    [player, status.duration],
-  );
-
-  const handlePlayerDelete = useCallback(
-    (id: string) => {
-      if (activeId === id) {
-        player.pause();
-        setActiveId(null);
-        setPlayerBarHeight(0);
-      }
-    },
-    [activeId, player, setActiveId],
-  );
-
-  const handleShare = useCallback(() => {}, []);
-  const handleFavorite = useCallback(() => {}, []);
-  const handleClose = useCallback(() => {
-    player.pause();
-    setActiveId(null);
-    setPlayerBarHeight(0);
-  }, [player, setActiveId]);
-
-  const progress = status.duration > 0 ? status.currentTime / status.duration : 0;
-  const showPlayer = activeIndex === 1 && !!activeRecording;
+  }, [userId, fetchMeetings]);
 
   const viewabilityConfig = useRef({
     viewAreaCoveragePercentThreshold: 50,
@@ -135,29 +58,17 @@ export function RecordingScreen() {
     ({ item }: { item: (typeof PAGES)[number] }) => {
       if (carouselHeight === 0) return null;
       if (item === "recording") {
-        return <RecordingPage width={width} height={carouselHeight} />;
+        return (
+          <RecordingPage
+            width={width}
+            height={carouselHeight}
+            onUploadComplete={handleUploadComplete}
+          />
+        );
       }
-      return (
-        <MeetingsPage
-          width={width}
-          height={carouselHeight}
-          playerBarHeight={playerBarHeight}
-          activeId={activeId}
-          isPlaying={status.playing}
-          onPlay={handlePlay}
-          onDelete={handlePlayerDelete}
-        />
-      );
+      return <MeetingsPage width={width} height={carouselHeight} />;
     },
-    [
-      width,
-      carouselHeight,
-      playerBarHeight,
-      activeId,
-      status.playing,
-      handlePlay,
-      handlePlayerDelete,
-    ],
+    [width, carouselHeight, handleUploadComplete],
   );
 
   return (
@@ -195,27 +106,6 @@ export function RecordingScreen() {
               index,
             })}
           />
-
-          {showPlayer && (
-            <View
-              style={styles.playerBar}
-              onLayout={(e) => setPlayerBarHeight(e.nativeEvent.layout.height)}
-            >
-              <MeetingPlayerBar
-                title={activeRecording.title}
-                date={activeRecording.date}
-                duration={formatDuration(activeRecording.durationMs)}
-                progress={progress}
-                isPlaying={status.playing}
-                bottomInset={insets.bottom}
-                onTogglePlay={handleTogglePlay}
-                onClose={handleClose}
-                onSeek={handleSeek}
-                onShare={handleShare}
-                onFavorite={handleFavorite}
-              />
-            </View>
-          )}
         </View>
       </ResponsiveContainer>
     </AppBackground>
@@ -228,12 +118,5 @@ const styles = StyleSheet.create({
   },
   carousel: {
     flex: 1,
-  },
-  playerBar: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#0e1d1b",
   },
 });

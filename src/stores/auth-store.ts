@@ -1,5 +1,6 @@
 import { create } from "zustand";
 
+import { setOnUnauthorizedHandler } from "@/lib/api-client";
 import { getSession, login, logout, register as registerUser } from "@/services/auth-service";
 import { getUser } from "@/services/user-service";
 import {
@@ -119,3 +120,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 }));
+
+// Force sign-out on any 401 response (session expired / invalid)
+setOnUnauthorizedHandler(() => {
+  const { isAuthenticated } = useAuthStore.getState();
+  if (isAuthenticated) {
+    useAuthStore.setState({ isAuthenticated: false, user: null });
+  }
+});

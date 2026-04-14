@@ -36,7 +36,7 @@ export default function ProfileScreen() {
 
   return (
     <AppBackground>
-      <ResponsiveContainer maxWidth={480}>
+      <ResponsiveContainer maxWidth={900}>
         <View style={[styles.container, { paddingTop: insets.top + Spacing.two }]}>
           <View style={styles.header}>
             <TouchableOpacity

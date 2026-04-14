@@ -1,64 +1,95 @@
 import { useCallback, useEffect } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { useRecordingsStore } from "@/stores/recordings-store";
-import { formatDuration } from "@/utils/format-duration";
+import { useAuthStore } from "@/stores/auth-store";
+import { useMeetingStore } from "@/stores/meeting-store";
+import type { MeetingSummaryResponse } from "@/types/meeting";
 
 import { MeetingListItem, type MeetingItem } from "./meeting-list-item";
 
 interface MeetingsPageProps {
   width: number;
   height: number;
-  playerBarHeight: number;
-  activeId: string | null;
-  isPlaying: boolean;
-  onPlay: (id: string) => void;
-  onDelete: (id: string) => void;
 }
 
-export function MeetingsPage({
-  width,
-  height,
-  playerBarHeight,
-  activeId,
-  isPlaying,
-  onPlay,
-  onDelete,
-}: MeetingsPageProps) {
+function toUploadStatus(status: string): "processing" | "completed" | "failed" | undefined {
+  if (status === "COMPLETED") return "completed";
+  if (status === "FAILED" || status === "PENDING_UPLOAD") return "failed";
+  if (status === "PROCESSING" || status === "UPLOADED") return "processing";
+  return undefined;
+}
+
+function toMeetingItem(m: MeetingSummaryResponse): MeetingItem {
+  const durationSec = m.duration_seconds ?? 0;
+  const mins = Math.floor(durationSec / 60);
+  const secs = Math.floor(durationSec % 60);
+  const duration = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  const d = new Date(m.updated_at);
+  const dateStr = d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+
+  return {
+    id: m.meeting_id,
+    title: m.title,
+    date: dateStr,
+    duration,
+    meetingId: m.meeting_id,
+    uploadStatus: toUploadStatus(m.status),
+  };
+}
+
+export function MeetingsPage({ width, height }: MeetingsPageProps) {
   const insets = useSafeAreaInsets();
-  const recordings = useRecordingsStore((s) => s.recordings);
-  const loadRecordings = useRecordingsStore((s) => s.loadRecordings);
+  const router = useRouter();
+  const userId = useAuthStore((s) => s.user?.userId);
+  const meetings = useMeetingStore((s) => s.meetings);
+  const isLoading = useMeetingStore((s) => s.isLoading);
+  const fetchMeetings = useMeetingStore((s) => s.fetchMeetings);
 
   useEffect(() => {
-    loadRecordings();
-  }, [loadRecordings]);
+    if (userId) {
+      fetchMeetings(userId);
+    }
+  }, [userId, fetchMeetings]);
 
-  const handleShare = useCallback((_id: string) => {}, []);
-  const handleDownload = useCallback((_id: string) => {}, []);
-  const handleFavorite = useCallback((_id: string) => {}, []);
+  const handlePress = useCallback(
+    (id: string) => {
+      router.push({
+        pathname: "/(app)/meeting-detail",
+        params: { meetingId: id },
+      });
+    },
+    [router],
+  );
 
-  const meetingItems: MeetingItem[] = recordings.map((r) => ({
-    id: r.id,
-    title: r.title,
-    date: r.date,
-    duration: formatDuration(r.durationMs),
-  }));
+  const handleDelete = useCallback((_id: string) => {}, []);
+
+  const meetingItems: MeetingItem[] = meetings.map(toMeetingItem);
 
   return (
     <View style={[styles.page, { width, height }]}>
       <View style={styles.listContainer}>
-        <ThemedText type="bodySm" style={styles.sectionTitle}>
-          TODAS TUS REUNIONES
-        </ThemedText>
+        <View style={styles.headerRow}>
+          <ThemedText type="caption" style={styles.sectionLabel}>
+            TUS REUNIONES
+          </ThemedText>
+          <ThemedText type="caption" style={styles.countLabel}>
+            {meetings.length}
+          </ThemedText>
+        </View>
 
-        <View style={styles.divider} />
-
-        {recordings.length === 0 ? (
+        {isLoading && meetings.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <ThemedText type="bodyMd" style={styles.emptyText}>
+            <ActivityIndicator size="small" color={SemanticColors.tealLight} />
+          </View>
+        ) : meetings.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="mic-off-outline" size={32} color="rgba(255,255,255,0.15)" />
+            <ThemedText type="bodySm" style={styles.emptyText}>
               No hay reuniones guardadas
             </ThemedText>
           </View>
@@ -67,27 +98,23 @@ export function MeetingsPage({
             data={meetingItems}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <MeetingListItem
-                item={item}
-                isActive={item.id === activeId}
-                isPlaying={item.id === activeId && isPlaying}
-                onPlay={onPlay}
-                onShare={handleShare}
-                onDownload={handleDownload}
-                onFavorite={handleFavorite}
-                onDelete={onDelete}
-              />
+              <MeetingListItem item={item} onPress={handlePress} onDelete={handleDelete} />
             )}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: playerBarHeight || insets.bottom + Spacing.three },
+              { paddingBottom: insets.bottom + Spacing.four },
             ]}
+            ItemSeparatorComponent={Separator}
           />
         )}
       </View>
     </View>
   );
+}
+
+function Separator() {
+  return <View style={styles.separator} />;
 }
 
 const styles = StyleSheet.create({
@@ -99,16 +126,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
   },
-  sectionTitle: {
-    color: SemanticColors.textPrimary,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.three,
+  },
+  sectionLabel: {
+    color: SemanticColors.textMuted,
     fontFamily: Fonts.montserratBold,
     letterSpacing: 1,
-    textTransform: "uppercase",
+    fontSize: 11,
   },
-  divider: {
-    height: 2,
-    backgroundColor: SemanticColors.teal,
-    marginTop: Spacing.two,
+  countLabel: {
+    color: SemanticColors.textDisabled,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 11,
+  },
+  separator: {
+    height: Spacing.two,
   },
   listContent: {
     paddingBottom: Spacing.three,
@@ -117,9 +153,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: Spacing.two,
     paddingTop: Spacing.six,
   },
   emptyText: {
-    color: "rgba(255, 255, 255, 0.4)",
+    color: "rgba(255, 255, 255, 0.3)",
   },
 });

@@ -6,6 +6,7 @@ import { CircleButton } from "@/components/circle-button";
 import { MicIcon, PauseIcon, PlayIcon } from "@/components/recording-icons";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { Ionicons } from "@expo/vector-icons";
 
 type RecordingState = "idle" | "recording" | "paused";
@@ -20,23 +21,30 @@ interface RecordingControlsProps {
 interface SideButtonProps {
   icon: React.ReactNode;
   label: string;
+  size: number;
   onPress: () => void;
   scaleAnim: Animated.Value;
   glowOpacity: Animated.Value;
   glowColor: string;
 }
 
-function SideButton({ icon, label, onPress, scaleAnim, glowOpacity, glowColor }: SideButtonProps) {
+function SideButton({ icon, label, size, onPress, scaleAnim, glowOpacity, glowColor }: SideButtonProps) {
+  const radius = size / 2;
   return (
     <View style={styles.sideWrapper}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-        <Animated.View style={[styles.sideButton, { transform: [{ scale: scaleAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.sideButton,
+            { width: size, height: size, borderRadius: radius, transform: [{ scale: scaleAnim }] },
+          ]}
+        >
           {icon}
           <Animated.View
             pointerEvents="none"
             style={[
               StyleSheet.absoluteFillObject,
-              { borderRadius: 28, backgroundColor: glowColor, opacity: glowOpacity },
+              { borderRadius: radius, backgroundColor: glowColor, opacity: glowOpacity },
             ]}
           />
         </Animated.View>
@@ -49,6 +57,11 @@ function SideButton({ icon, label, onPress, scaleAnim, glowOpacity, glowColor }:
 }
 
 export function RecordingControls({ state, onRecord, onDelete, onSave }: RecordingControlsProps) {
+  const { isMobile } = useResponsiveLayout();
+  const buttonSize = isMobile ? 120 : 80;
+  const sideSize = isMobile ? 56 : 44;
+  const sideIconSize = isMobile ? 26 : 20;
+  const sideBorderRadius = sideSize / 2;
   const deleteScale = useRef(new Animated.Value(1)).current;
   const deleteGlow = useRef(new Animated.Value(0)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
@@ -108,8 +121,9 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
   return (
     <View style={styles.container}>
       <SideButton
-        icon={<Ionicons name="close" size={26} color={SemanticColors.textPrimary} />}
+        icon={<Ionicons name="close" size={sideIconSize} color={SemanticColors.textPrimary} />}
         label="Eliminar"
+        size={sideSize}
         onPress={isActive ? handleDelete : onDelete}
         scaleAnim={deleteScale}
         glowOpacity={deleteGlow}
@@ -118,7 +132,7 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
 
       {state === "idle" && (
         <CircleButton
-          size={120}
+          size={buttonSize}
           gradientId="gradMicRec"
           colors={["#00C0EE", "#0060FF"]}
           icon={MicIcon}
@@ -129,7 +143,7 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
 
       {state === "recording" && (
         <CircleButton
-          size={120}
+          size={buttonSize}
           gradientId="gradPauseRec"
           colors={["#E05555", "#B83030"]}
           icon={PauseIcon}
@@ -141,7 +155,7 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
 
       {state === "paused" && (
         <CircleButton
-          size={120}
+          size={buttonSize}
           gradientId="gradResumeRec"
           colors={["#00C0EE", "#0060FF"]}
           icon={PlayIcon}
@@ -151,8 +165,9 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
       )}
 
       <SideButton
-        icon={<Ionicons name="download-outline" size={26} color={SemanticColors.textPrimary} />}
+        icon={<Ionicons name="download-outline" size={sideIconSize} color={SemanticColors.textPrimary} />}
         label="Guardar"
+        size={sideSize}
         onPress={isActive ? handleSave : onSave}
         scaleAnim={saveScale}
         glowOpacity={saveGlow}
@@ -176,9 +191,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
   },
   sideButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     alignItems: "center",
     justifyContent: "center",

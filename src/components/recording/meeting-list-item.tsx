@@ -1,174 +1,130 @@
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
-import { WaveformIcon } from "./waveform-icon";
+import type { UploadStatus } from "./upload-status-badge";
 
 export interface MeetingItem {
   id: string;
   title: string;
   date: string;
   duration: string;
+  meetingId?: string;
+  uploadStatus?: UploadStatus;
 }
 
 interface MeetingListItemProps {
   item: MeetingItem;
-  isActive: boolean;
-  isPlaying: boolean;
-  onPlay: (id: string) => void;
-  onShare: (id: string) => void;
-  onDownload: (id: string) => void;
-  onFavorite: (id: string) => void;
+  onPress: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-function ActionButton({ icon, onPress }: { icon: React.ReactNode; onPress: () => void }) {
+function statusConfig(status: UploadStatus | undefined): {
+  label: string;
+  color: string;
+} {
+  switch (status) {
+    case "completed":
+      return { label: "Completado", color: SemanticColors.success };
+    case "failed":
+      return { label: "Error", color: SemanticColors.error };
+    case "uploading":
+      return { label: "Subiendo...", color: SemanticColors.warning };
+    case "processing":
+      return { label: "Procesando...", color: SemanticColors.warning };
+    default:
+      return { label: "", color: SemanticColors.textMuted };
+  }
+}
+
+export function MeetingListItem({ item, onPress }: MeetingListItemProps) {
+  const cfg = statusConfig(item.uploadStatus);
+  const isLoading = item.uploadStatus === "uploading" || item.uploadStatus === "processing";
+
   return (
-    <TouchableOpacity onPress={onPress} hitSlop={8} activeOpacity={0.6}>
-      {icon}
+    <TouchableOpacity style={styles.card} activeOpacity={0.65} onPress={() => onPress(item.id)}>
+      <View style={styles.topRow}>
+        <ThemedText type="bodyMd" style={styles.title} numberOfLines={1}>
+          {item.title}
+        </ThemedText>
+        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.15)" />
+      </View>
+
+      <View style={styles.bottomRow}>
+        <ThemedText type="caption" style={styles.meta}>
+          {item.date}
+        </ThemedText>
+        <View style={styles.dot} />
+        <ThemedText type="caption" style={styles.meta}>
+          {item.duration}
+        </ThemedText>
+
+        <View style={styles.spacer} />
+
+        {isLoading ? (
+          <View style={styles.statusRow}>
+            <ActivityIndicator size={10} color={cfg.color} />
+            <ThemedText type="caption" style={[styles.statusText, { color: cfg.color }]}>
+              {cfg.label}
+            </ThemedText>
+          </View>
+        ) : cfg.label ? (
+          <ThemedText type="caption" style={[styles.statusText, { color: cfg.color }]}>
+            {cfg.label}
+          </ThemedText>
+        ) : null}
+      </View>
     </TouchableOpacity>
   );
 }
 
-export function MeetingListItem({
-  item,
-  isActive,
-  isPlaying,
-  onPlay,
-  onShare,
-  onDownload,
-  onFavorite,
-  onDelete,
-}: MeetingListItemProps) {
-  return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => onPlay(item.id)}
-        activeOpacity={0.7}
-        style={styles.playButton}
-      >
-        {isActive ? (
-          <View style={styles.waveformWrapper}>
-            <WaveformIcon isPlaying={isPlaying} />
-          </View>
-        ) : (
-          <>
-            <Svg width={50} height={50} viewBox="0 0 50 50">
-              <Defs>
-                <LinearGradient id="playBorder" x1="0" y1="1" x2="1" y2="0">
-                  <Stop offset="0" stopColor="#59FB77" />
-                  <Stop offset="0.5" stopColor="#59FBA6" />
-                  <Stop offset="1" stopColor="#2AF0E1" />
-                </LinearGradient>
-              </Defs>
-              <Circle cx="25" cy="25" r="24" fill="url(#playBorder)" />
-              <Circle cx="25" cy="25" r="20.5" fill="#313747" />
-            </Svg>
-            <View style={styles.playIcon}>
-              <Ionicons name="play" size={18} color={SemanticColors.textPrimary} />
-            </View>
-          </>
-        )}
-      </TouchableOpacity>
-
-      <View style={styles.info}>
-        <ThemedText type="labelSm" style={styles.itemTitle}>
-          {item.title}
-        </ThemedText>
-        <View style={styles.metaRow}>
-          <ThemedText type="caption" style={styles.date}>
-            {item.date}
-          </ThemedText>
-          <ThemedText type="caption" style={styles.duration}>
-            {item.duration}
-          </ThemedText>
-          <View style={styles.actions}>
-            <ActionButton
-              icon={
-                <Ionicons name="share-social-outline" size={20} color={SemanticColors.iconMuted} />
-              }
-              onPress={() => onShare(item.id)}
-            />
-            <ActionButton
-              icon={<Ionicons name="download-outline" size={20} color={SemanticColors.iconMuted} />}
-              onPress={() => onDownload(item.id)}
-            />
-            <ActionButton
-              icon={<Ionicons name="star-outline" size={20} color={SemanticColors.iconMuted} />}
-              onPress={() => onFavorite(item.id)}
-            />
-            <ActionButton
-              icon={
-                <MaterialCommunityIcons
-                  name="delete-outline"
-                  size={20}
-                  color={SemanticColors.iconMuted}
-                />
-              }
-              onPress={() => onDelete(item.id)}
-            />
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
+  card: {
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
-    borderBottomWidth: 2,
-    borderBottomColor: SemanticColors.teal,
-    gap: Spacing.two,
+    gap: Spacing.one,
   },
-  waveformWrapper: {
-    width: 50,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playButton: {
-    width: 50,
-    height: 50,
-    marginRight: Spacing.one,
-  },
-  playIcon: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: 50,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingLeft: 2,
-  },
-  info: {
-    flex: 1,
-    gap: 2,
-  },
-  date: {
-    color: SemanticColors.textMuted,
-  },
-  duration: {
-    color: SemanticColors.success,
-  },
-  metaRow: {
+  topRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
   },
-  actions: {
+  title: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: Spacing.two,
-  },
-  itemTitle: {
     color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratSemiBold,
+    fontSize: 14,
+  },
+  bottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  meta: {
+    color: SemanticColors.textMuted,
+    fontSize: 11,
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  spacer: {
+    flex: 1,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  statusText: {
+    fontSize: 11,
+    fontFamily: Fonts.montserratMedium,
   },
 });

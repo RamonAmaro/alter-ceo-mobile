@@ -1,29 +1,19 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
-import Animated, {
-  Easing,
-  makeMutable,
-  useAnimatedStyle,
-  withTiming,
-  type SharedValue,
-} from "react-native-reanimated";
 
-// --- Layout constants ----------------------------------------------------
+// --- Layout constants (smaller for web) ----------------------------------
 
-const BAR_WIDTH = 2.5;
-const BAR_GAP = 1.8;
-const HEIGHT = 80;
+const BAR_WIDTH = 2;
+const BAR_GAP = 1.5;
+const HEIGHT = 60;
 const MAX_BAR_COUNT = 80;
 
 // --- Animation constants -------------------------------------------------
 
 const MIN_SCALE = 0.04;
+const AMPLITUDE_SCALE = 0.85;
 const SHIFT_MS = 80;
-
-const TIMING_CONFIG = {
-  duration: 100,
-  easing: Easing.out(Easing.quad),
-};
+const TRANSITION_MS = 140;
 
 // --- Pure functions ------------------------------------------------------
 
@@ -52,21 +42,7 @@ interface AudioWaveformProps {
   resetKey?: number;
 }
 
-interface WaveBarProps {
-  scale: SharedValue<number>;
-  color: string;
-}
-
-// --- WaveBar (pure UI-thread animation) ----------------------------------
-
-const WaveBar = memo(function WaveBar({ scale, color }: WaveBarProps) {
-  const style = useAnimatedStyle(() => ({
-    transform: [{ scaleY: scale.value }],
-  }));
-  return <Animated.View style={[styles.bar, { backgroundColor: color }, style]} />;
-});
-
-// --- AudioWaveform -------------------------------------------------------
+// --- AudioWaveform (web — CSS transitions) -------------------------------
 
 export const AudioWaveform = memo(function AudioWaveform({
   amplitudeRef,
@@ -74,60 +50,62 @@ export const AudioWaveform = memo(function AudioWaveform({
   resetKey = 0,
 }: AudioWaveformProps) {
   const [visibleCount, setVisibleCount] = useState(MAX_BAR_COUNT);
-
-  // Stable array of shared values — always MAX_BAR_COUNT, created once
-  const scales = useMemo(
-    () => Array.from({ length: MAX_BAR_COUNT }, () => makeMutable(MIN_SCALE)),
-    [],
+  const [barScales, setBarScales] = useState<number[]>(() =>
+    new Array(MAX_BAR_COUNT).fill(MIN_SCALE),
   );
-
-  const scalesRef = useRef(scales);
-  scalesRef.current = scales;
 
   const bufferRef = useRef(new Float32Array(MAX_BAR_COUNT));
 
   // Reset
   useEffect(() => {
     bufferRef.current.fill(0);
-    const s = scalesRef.current;
-    for (let i = 0; i < s.length; i++) {
-      s[i].value = MIN_SCALE;
-    }
+    setBarScales(new Array(MAX_BAR_COUNT).fill(MIN_SCALE));
   }, [resetKey]);
 
-  // Main animation loop — shift buffer + update shared values directly
+  // Main animation loop — shift buffer + batch setState
   useEffect(() => {
     if (!active || visibleCount === 0) return;
 
     const buffer = bufferRef.current;
-    const s = scalesRef.current;
     const lastIdx = visibleCount - 1;
 
     const id = setInterval(() => {
       const level = amplitudeRef.current ?? 0;
 
-      // Shift buffer left
       buffer.copyWithin(0, 1);
       buffer[lastIdx] = level;
 
-      // Animate each bar with withTiming for smooth transitions
+      const next = new Array(visibleCount);
       for (let i = 0; i <= lastIdx; i++) {
-        s[i].value = withTiming(MIN_SCALE + buffer[i], TIMING_CONFIG);
+        next[i] = MIN_SCALE + buffer[i] * AMPLITUDE_SCALE;
       }
+      setBarScales(next);
     }, SHIFT_MS);
 
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, visibleCount]);
 
-  function handleLayout(e: LayoutChangeEvent): void {
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
     setVisibleCount(computeBarCount(e.nativeEvent.layout.width));
-  }
+  }, []);
 
   return (
     <View style={styles.container} onLayout={handleLayout}>
-      {scales.slice(0, visibleCount).map((sv, i) => (
-        <WaveBar key={i} scale={sv} color={COLORS[i]} />
+      {barScales.slice(0, visibleCount).map((scale, i) => (
+        <View
+          key={i}
+          style={[
+            styles.bar,
+            {
+              backgroundColor: COLORS[i],
+              transform: [{ scaleY: scale }],
+              transitionProperty: "transform",
+              transitionDuration: `${TRANSITION_MS}ms`,
+              transitionTimingFunction: "ease-out",
+            },
+          ]}
+        />
       ))}
     </View>
   );
@@ -147,6 +125,6 @@ const styles = StyleSheet.create({
   bar: {
     width: BAR_WIDTH,
     height: HEIGHT,
-    borderRadius: 1.5,
+    borderRadius: 1,
   },
 });

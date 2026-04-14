@@ -73,7 +73,7 @@ export default function ChatScreen() {
 
   return (
     <AppBackground style={{ paddingBottom: insets.bottom }}>
-      <ResponsiveContainer maxWidth={740}>
+      <ResponsiveContainer maxWidth={900}>
         <KeyboardView>
           <View style={styles.flex}>
             <ScreenHeader
