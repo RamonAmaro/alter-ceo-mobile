@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
-import { useAudioRecorder } from "@/hooks/use-studio-recorder";
+import { useAudioRecorder } from "@siteed/audio-studio";
+import type { AudioDataEvent } from "@siteed/audio-studio";
+
 import {
   enableRecordingMode,
   MAX_DURATION_MS,
@@ -41,30 +43,28 @@ interface OnboardingRecorder {
 }
 
 export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingRecorder {
-  const { startRecording, stopRecording } = useAudioRecorder();
+  const {
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    durationMs,
+  } = useAudioRecorder();
 
   const [recordState, setRecordState] = useState<RecordingState>("idle");
-  const [elapsedMs, setElapsedMs] = useState(0);
   const [result, setResult] = useState<RecordingResult | null>(null);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef(0);
-  const accumulatedMsRef = useRef(0);
-  const pausedRef = useRef(false);
   const sessionRef = useRef<TranscriptionSession | null>(null);
   const amplitudeRef = useRef<number>(0);
   const prevQuestionIndexRef = useRef(currentQuestionIndex);
+  const finishingRef = useRef(false);
 
-  const stopTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
+  const elapsedMs = Math.min(durationMs, MAX_DURATION_MS);
 
   const finishRecording = useCallback(async (): Promise<void> => {
-    stopTimer();
+    if (finishingRef.current) return;
+    finishingRef.current = true;
     setRecordState("finishing");
 
     const session = sessionRef.current;
@@ -79,50 +79,49 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
           })
         : Promise.resolve(""),
     ]);
+
     setResult({
       uri: recordingResult?.fileUri ?? "",
       transcript: transcriptText || null,
     });
     setRecordState("done");
-  }, [stopTimer, stopRecording]);
+    finishingRef.current = false;
+  }, [stopRecording]);
 
-  const startTimer = useCallback(
-    (accumulated: number) => {
-      accumulatedMsRef.current = accumulated;
-      startTimeRef.current = Date.now();
-      timerRef.current = setInterval(() => {
-        const elapsed = accumulatedMsRef.current + (Date.now() - startTimeRef.current);
-        if (elapsed >= MAX_DURATION_MS) {
-          setElapsedMs(MAX_DURATION_MS);
-          stopTimer();
-          void finishRecording();
-        } else {
-          setElapsedMs(elapsed);
-        }
-      }, 50);
-    },
-    [stopTimer, finishRecording],
-  );
+  // Auto-stop at max duration
+  useEffect(() => {
+    if (durationMs >= MAX_DURATION_MS && recordState === "recording") {
+      void finishRecording();
+    }
+  }, [durationMs, recordState, finishRecording]);
 
+  // Reset when question changes
   useEffect(() => {
     if (prevQuestionIndexRef.current === currentQuestionIndex) return;
     prevQuestionIndexRef.current = currentQuestionIndex;
     setRecordState("idle");
-    setElapsedMs(0);
     setResult(null);
-    stopTimer();
     sessionRef.current?.close();
     sessionRef.current = null;
-  }, [currentQuestionIndex, stopTimer]);
+  }, [currentQuestionIndex]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopTimer();
       sessionRef.current?.close();
       sessionRef.current = null;
       void stopRecording().catch(() => {});
     };
-  }, [stopTimer, stopRecording]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function extractAmplitude(event: AudioDataEvent): void {
+    if (event.data instanceof Float32Array && event.data.length > 0) {
+      amplitudeRef.current = computeAmplitudeFromFloat32(event.data);
+    } else if (typeof event.data === "string" && event.data.length > 0) {
+      amplitudeRef.current = computeAmplitudeFromBase64(event.data);
+    }
+  }
 
   const startNewRecording = useCallback(async (): Promise<void> => {
     const { granted, canAskAgain } = await requestAudioPermission();
@@ -150,7 +149,7 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
 
     sessionRef.current?.close();
     sessionRef.current = null;
-    pausedRef.current = false;
+    finishingRef.current = false;
     setRecordState("preparing");
 
     let session: TranscriptionSession | null = null;
@@ -167,26 +166,20 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
 
     try {
       await startRecording({
-        sampleRate: 24000 as never,
+        sampleRate: 16000,
         channels: 1,
         encoding: "pcm_16bit",
         interval: 50,
-        onAudioStream: async (event) => {
-          if (!pausedRef.current && sessionRef.current) {
+        onAudioStream: async (event: AudioDataEvent) => {
+          if (sessionRef.current) {
             sessionRef.current.sendAudioData(event.data as string | Float32Array);
           }
-          if (event.data instanceof Float32Array && event.data.length > 0) {
-            amplitudeRef.current = computeAmplitudeFromFloat32(event.data);
-          } else if (typeof event.data === "string" && event.data.length > 0) {
-            amplitudeRef.current = computeAmplitudeFromBase64(event.data);
-          }
+          extractAmplitude(event);
         },
       });
 
       setResult(null);
-      setElapsedMs(0);
       setRecordState("recording");
-      startTimer(0);
     } catch {
       session?.close();
       sessionRef.current = null;
@@ -196,36 +189,32 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
         { text: "Cancelar", style: "cancel" },
       ]);
     }
-  }, [startRecording, startTimer]);
+  }, [startRecording]);
 
   const handleRecord = useCallback(() => {
     void startNewRecording();
   }, [startNewRecording]);
 
   const handlePause = useCallback(() => {
-    pausedRef.current = true;
-    stopTimer();
-    accumulatedMsRef.current += Date.now() - startTimeRef.current;
+    void pauseRecording();
     setRecordState("paused");
-  }, [stopTimer]);
+  }, [pauseRecording]);
 
   const handleResume = useCallback(() => {
-    pausedRef.current = false;
+    void resumeRecording();
     setRecordState("recording");
-    startTimer(accumulatedMsRef.current);
-  }, [startTimer]);
+  }, [resumeRecording]);
 
   const handleFinish = useCallback(() => {
     void finishRecording();
   }, [finishRecording]);
 
   const handleRestart = useCallback(() => {
-    stopTimer();
     sessionRef.current?.close();
     sessionRef.current = null;
     void stopRecording().catch(() => {});
     setRecordState("countdown");
-  }, [stopTimer, stopRecording]);
+  }, [stopRecording]);
 
   const handleCountdownComplete = useCallback(() => {
     void startNewRecording();
