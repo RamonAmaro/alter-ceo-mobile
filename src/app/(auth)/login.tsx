@@ -16,7 +16,6 @@ import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { isBiometricsAvailable } from "@/services/biometrics-service";
 import { useAuthStore } from "@/stores/auth-store";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 import { parseAuthError } from "@/utils/parse-auth-error";
 import { hasErrors, validateRequiredFields } from "@/utils/validate-auth-form";
 
@@ -24,7 +23,6 @@ export default function LoginScreen() {
   const signIn = useAuthStore((s) => s.signIn);
   const enableBiometrics = useAuthStore((s) => s.enableBiometrics);
   const tryBiometricLogin = useAuthStore((s) => s.tryBiometricLogin);
-  const onboardingCompleted = useOnboardingStore((s) => s.completed);
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const [email, setEmail] = useState("");
@@ -34,23 +32,15 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    attemptBiometricLogin();
-  }, []);
-
-  function navigateAfterLogin() {
-    if (!onboardingCompleted) {
-      router.replace("/(onboarding)/welcome");
-    } else {
-      router.replace("/(app)/(tabs)/alter");
+    async function attemptBiometricLogin() {
+      const success = await tryBiometricLogin();
+      if (success) {
+        router.replace("/");
+      }
     }
-  }
 
-  async function attemptBiometricLogin() {
-    const success = await tryBiometricLogin();
-    if (success) {
-      navigateAfterLogin();
-    }
-  }
+    void attemptBiometricLogin();
+  }, [tryBiometricLogin]);
 
   function validate(): boolean {
     const newErrors = validateRequiredFields({ email, password }) as {
@@ -75,18 +65,18 @@ export default function LoginScreen() {
           {
             text: "No, gracias",
             style: "cancel",
-            onPress: navigateAfterLogin,
+            onPress: () => router.replace("/"),
           },
           {
             text: "Sí, activar",
             onPress: async () => {
               await enableBiometrics(email, password);
-              navigateAfterLogin();
+              router.replace("/");
             },
           },
         ]);
       } else {
-        navigateAfterLogin();
+        router.replace("/");
       }
     } catch (error) {
       setApiError(parseAuthError(error));

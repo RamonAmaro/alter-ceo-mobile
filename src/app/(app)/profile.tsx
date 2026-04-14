@@ -22,14 +22,14 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const signOut = useAuthStore((s) => s.signOut);
-  const resetOnboarding = useOnboardingStore((s) => s.reset);
+  const resetOnboardingSession = useOnboardingStore((s) => s.resetSession);
 
   function handleGoToOnboarding(): void {
     router.push("/(onboarding)/welcome");
   }
 
   async function handleSignOut(): Promise<void> {
-    await resetOnboarding();
+    resetOnboardingSession();
     await signOut();
     router.replace("/");
   }

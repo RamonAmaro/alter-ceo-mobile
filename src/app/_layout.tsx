@@ -16,6 +16,7 @@ import { useColorScheme } from "react-native";
 
 import { initAuthCookie } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
+import { useDebugStore } from "@/stores/debug-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 
 SplashScreen.preventAutoHideAsync();
@@ -24,6 +25,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const checkBiometricsStatus = useAuthStore((s) => s.checkBiometricsStatus);
   const checkSession = useAuthStore((s) => s.checkSession);
+  const loadDebugState = useDebugStore((s) => s.load);
   const loadOnboarding = useOnboardingStore((s) => s.load);
 
   const [fontsLoaded] = useFonts({
@@ -44,12 +46,13 @@ export default function RootLayout() {
       await initAuthCookie();
       await checkSession();
       checkBiometricsStatus();
+      await loadDebugState();
       await loadOnboarding();
       await SplashScreen.hideAsync();
     }
 
     void init();
-  }, [fontsLoaded]);
+  }, [checkSession, checkBiometricsStatus, fontsLoaded, loadDebugState, loadOnboarding]);
 
   if (!fontsLoaded) {
     return null;

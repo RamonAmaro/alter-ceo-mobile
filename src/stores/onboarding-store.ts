@@ -1,7 +1,8 @@
-import * as SecureStore from "@/services/secure-store";
 import { create } from "zustand";
 
-const ONBOARDING_KEY = "onboarding_completed";
+import { getBusinessKernel } from "@/services/business-kernel-service";
+import { ApiError } from "@/types/api";
+import { toErrorMessage } from "@/utils/to-error-message";
 
 type PlanType = "express" | "professional";
 
@@ -17,13 +18,17 @@ export interface AudioRecord {
 
 interface OnboardingState {
   completed: boolean;
+  error: string | null;
   planType: PlanType | null;
   isLoading: boolean;
+  statusUserId: string | null;
   currentQuestionIndex: number;
   answers: Map<number, Answer>;
   audioRecords: AudioRecord[];
 
   load: () => Promise<void>;
+  resolveCompletionStatus: (userId: string) => Promise<void>;
+  markCompletedForUser: (userId: string) => void;
   setPlanType: (type: PlanType) => void;
   getAnswer: (index: number) => Answer | undefined;
   setAnswer: (index: number, answer: Answer) => void;
@@ -33,22 +38,85 @@ interface OnboardingState {
   previousQuestion: () => void;
   setCurrentQuestionIndex: (index: number) => void;
   upgradeToProfessional: () => void;
-  complete: () => Promise<void>;
   clearAnswers: () => void;
+  resetSession: () => void;
   reset: () => Promise<void>;
+}
+
+function buildEmptyDraftState() {
+  return {
+    planType: null,
+    currentQuestionIndex: 0,
+    answers: new Map<number, Answer>(),
+    audioRecords: [] as AudioRecord[],
+  };
 }
 
 export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   completed: false,
-  planType: null,
+  error: null,
   isLoading: true,
-  currentQuestionIndex: 0,
-  answers: new Map(),
-  audioRecords: [],
+  statusUserId: null,
+  ...buildEmptyDraftState(),
 
   load: async () => {
-    const value = await SecureStore.getItemAsync(ONBOARDING_KEY);
-    set({ completed: value === "true", isLoading: false });
+    set({
+      completed: false,
+      error: null,
+      isLoading: false,
+      statusUserId: null,
+    });
+  },
+
+  resolveCompletionStatus: async (userId: string) => {
+    const normalizedUserId = userId.trim();
+    if (!normalizedUserId) {
+      set({
+        completed: false,
+        error: "Sesión no válida.",
+        isLoading: false,
+        statusUserId: null,
+      });
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+
+    try {
+      await getBusinessKernel(normalizedUserId);
+      set({
+        completed: true,
+        error: null,
+        isLoading: false,
+        statusUserId: normalizedUserId,
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        set({
+          completed: false,
+          error: null,
+          isLoading: false,
+          statusUserId: normalizedUserId,
+        });
+        return;
+      }
+
+      set({
+        completed: false,
+        error: toErrorMessage(err),
+        isLoading: false,
+        statusUserId: normalizedUserId,
+      });
+    }
+  },
+
+  markCompletedForUser: (userId: string) => {
+    set({
+      completed: true,
+      error: null,
+      isLoading: false,
+      statusUserId: userId.trim() || null,
+    });
   },
 
   setPlanType: (type: PlanType) => {
@@ -115,28 +183,27 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     });
   },
 
-  complete: async () => {
-    await SecureStore.setItemAsync(ONBOARDING_KEY, "true");
-    set({ completed: true });
+  clearAnswers: () => {
+    set(buildEmptyDraftState());
   },
 
-  clearAnswers: () => {
+  resetSession: () => {
+    get().clearAnswers();
     set({
-      planType: null,
-      currentQuestionIndex: 0,
-      answers: new Map(),
-      audioRecords: [],
+      completed: false,
+      error: null,
+      isLoading: false,
+      statusUserId: null,
     });
   },
 
   reset: async () => {
-    await SecureStore.deleteItemAsync(ONBOARDING_KEY);
+    get().clearAnswers();
     set({
       completed: false,
-      planType: null,
-      currentQuestionIndex: 0,
-      answers: new Map(),
-      audioRecords: [],
+      error: null,
+      isLoading: false,
+      statusUserId: null,
     });
   },
 }));

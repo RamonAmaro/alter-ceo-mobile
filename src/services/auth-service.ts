@@ -24,7 +24,7 @@ async function saveSession(cookie: string): Promise<void> {
   await SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
 }
 
-async function clearSession(): Promise<void> {
+export async function clearStoredSession(): Promise<void> {
   setAuthCookieGetter(() => null);
   await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
 }
@@ -72,7 +72,7 @@ export async function getSession(): Promise<AuthSession | null> {
     const response = await apiClient.get<RawAuthSessionResponse>("/auth/session");
     return mapSession(response.data);
   } catch {
-    await clearSession();
+    await clearStoredSession();
     return null;
   }
 }
@@ -81,6 +81,6 @@ export async function logout(): Promise<void> {
   try {
     await apiClient.post("/auth/logout");
   } finally {
-    await clearSession();
+    await clearStoredSession();
   }
 }

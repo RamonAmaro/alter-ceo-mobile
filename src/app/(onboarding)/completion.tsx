@@ -16,8 +16,8 @@ import { usePlanStore } from "@/stores/plan-store";
 
 export default function CompletionScreen() {
   const insets = useSafeAreaInsets();
-  const complete = useOnboardingStore((s) => s.complete);
   const clearAnswers = useOnboardingStore((s) => s.clearAnswers);
+  const markCompletedForUser = useOnboardingStore((s) => s.markCompletedForUser);
   const fetchLatestPlan = usePlanStore((s) => s.fetchLatestPlan);
   const user = useAuthStore((s) => s.user);
   const [loading, setLoading] = useState(false);
@@ -25,9 +25,13 @@ export default function CompletionScreen() {
   async function handleFinish() {
     setLoading(true);
     if (user?.userId) {
-      await fetchLatestPlan(user.userId);
+      try {
+        await fetchLatestPlan(user.userId);
+      } catch {
+        // El plan puede seguir estando disponible más tarde; no bloquea la entrada al app.
+      }
+      markCompletedForUser(user.userId);
     }
-    await complete();
     clearAnswers();
     router.replace("/(app)/(tabs)/alter");
     setTimeout(() => router.push("/my-plan"), 300);

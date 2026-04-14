@@ -12,6 +12,7 @@ interface ScreenHeaderProps {
   titlePrefix: string;
   titleAccent: string;
   onBack?: () => void;
+  onIconPress?: () => void;
   showBack?: boolean;
 }
 
@@ -22,6 +23,7 @@ export function ScreenHeader({
   titlePrefix,
   titleAccent,
   onBack,
+  onIconPress,
   showBack = true,
 }: ScreenHeaderProps) {
   function handleBack(): void {
@@ -41,9 +43,23 @@ export function ScreenHeader({
       )}
 
       {useLogoIcon ? (
-        <AlterLogo size={20} />
+        <TouchableOpacity
+          onPress={onIconPress}
+          disabled={!onIconPress}
+          activeOpacity={0.7}
+          style={styles.iconBtn}
+        >
+          <AlterLogo size={20} />
+        </TouchableOpacity>
       ) : (
-        <Ionicons name={icon} size={18} color={SemanticColors.success} />
+        <TouchableOpacity
+          onPress={onIconPress}
+          disabled={!onIconPress}
+          activeOpacity={0.7}
+          style={styles.iconBtn}
+        >
+          <Ionicons name={icon} size={18} color={SemanticColors.success} />
+        </TouchableOpacity>
       )}
 
       <View style={styles.titleRow}>
@@ -69,6 +85,11 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: "row",
+  },
+  iconBtn: {
+    minWidth: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
   prefix: {
     fontFamily: Fonts.montserratBold,
