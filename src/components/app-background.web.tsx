@@ -1,8 +1,4 @@
-import {
-  ImageBackground,
-  StyleSheet,
-  type ViewProps,
-} from "react-native";
+import { ImageBackground, StyleSheet, type ViewProps } from "react-native";
 
 interface AppBackgroundProps extends ViewProps {
   children: React.ReactNode;

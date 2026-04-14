@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -7,6 +7,7 @@ import { Spacing } from "@/constants/theme";
 import { useUploadRecording } from "@/hooks/use-upload-recording";
 import {
   enableRecordingMode,
+  openAppSettings,
   RecordingPresets,
   requestAudioPermission,
   useAudioRecorder,
@@ -65,8 +66,22 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
 
   const handleRecord = useCallback(async () => {
     if (state === "idle") {
-      const granted = await requestAudioPermission();
-      if (!granted) return;
+      const { granted, canAskAgain } = await requestAudioPermission();
+      if (!granted) {
+        if (!canAskAgain) {
+          Alert.alert(
+            "Micrófono desactivado",
+            "Activa el permiso de micrófono en los ajustes de tu dispositivo para poder grabar.",
+            [
+              { text: "Cancelar", style: "cancel" },
+              { text: "Ir a ajustes", onPress: openAppSettings },
+            ],
+          );
+        } else {
+          Alert.alert("Permiso requerido", "Necesitamos acceso al micrófono para grabar.");
+        }
+        return;
+      }
 
       await enableRecordingMode();
 

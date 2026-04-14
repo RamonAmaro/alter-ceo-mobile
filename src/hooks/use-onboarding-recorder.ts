@@ -2,10 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
 import { useAudioRecorder } from "@/hooks/use-studio-recorder";
-import { MAX_DURATION_MS, requestAudioPermission } from "@/services/audio-service";
-import { computeAmplitudeFromBase64, computeAmplitudeFromFloat32 } from "@/utils/compute-amplitude";
+import {
+  enableRecordingMode,
+  MAX_DURATION_MS,
+  openAppSettings,
+  requestAudioPermission,
+} from "@/services/audio-service";
 import type { TranscriptionSession } from "@/services/transcription-service";
 import { createTranscriptionSession } from "@/services/transcription-service";
+import { computeAmplitudeFromBase64, computeAmplitudeFromFloat32 } from "@/utils/compute-amplitude";
 
 export type RecordingState =
   | "idle"
@@ -120,11 +125,28 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
   }, [stopTimer, stopRecording]);
 
   const startNewRecording = useCallback(async (): Promise<void> => {
-    const granted = await requestAudioPermission();
+    const { granted, canAskAgain } = await requestAudioPermission();
+
     if (!granted) {
-      Alert.alert("Permiso requerido", "Necesitamos acceso al micrófono para grabar tu respuesta.");
+      if (!canAskAgain) {
+        Alert.alert(
+          "Micrófono desactivado",
+          "Activa el permiso de micrófono en los ajustes de tu dispositivo para poder grabar.",
+          [
+            { text: "Cancelar", style: "cancel" },
+            { text: "Ir a ajustes", onPress: openAppSettings },
+          ],
+        );
+      } else {
+        Alert.alert(
+          "Permiso requerido",
+          "Necesitamos acceso al micrófono para grabar tu respuesta. Pulsa el botón de grabación para intentarlo de nuevo.",
+        );
+      }
       return;
     }
+
+    await enableRecordingMode();
 
     sessionRef.current?.close();
     sessionRef.current = null;
@@ -141,10 +163,6 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
       sessionRef.current = session;
     } catch {
       sessionRef.current = null;
-      Alert.alert(
-        "Transcripción no disponible",
-        "Puedes grabar igualmente. Tu respuesta será procesada sin transcripción en tiempo real.",
-      );
     }
 
     try {
@@ -173,7 +191,10 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
       session?.close();
       sessionRef.current = null;
       setRecordState("idle");
-      Alert.alert("Error", "No se pudo iniciar la grabación.");
+      Alert.alert("Error al grabar", "No se pudo iniciar la grabación. Inténtalo de nuevo.", [
+        { text: "Reintentar", onPress: () => void startNewRecording() },
+        { text: "Cancelar", style: "cancel" },
+      ]);
     }
   }, [startRecording, startTimer]);
 

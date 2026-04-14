@@ -35,7 +35,12 @@ export function MeetingSummarySection({
 
       {displayItems.map((item, index) => (
         <View key={`${title}-${index}`} style={styles.itemRow}>
-          <View style={[styles.dot, { backgroundColor: isEmpty ? "rgba(255,255,255,0.15)" : iconColor }]} />
+          <View
+            style={[
+              styles.dot,
+              { backgroundColor: isEmpty ? "rgba(255,255,255,0.15)" : iconColor },
+            ]}
+          />
           <ThemedText type="bodySm" style={[styles.itemText, isEmpty && styles.itemTextEmpty]}>
             {item}
           </ThemedText>

@@ -41,14 +41,16 @@ export function useUploadRecording(): {
   uploadStage: string | null;
 } {
   const uploadProgress = useMeetingStore((s) => s.uploadProgress);
-  const isUploading = uploadProgress?.stage === "uploading" || uploadProgress?.stage === "processing";
+  const isUploading =
+    uploadProgress?.stage === "uploading" || uploadProgress?.stage === "processing";
 
   const uploadRecording = useCallback(async ({ uri, title, durationMs }: UploadParams) => {
     const userId = useAuthStore.getState().user?.userId;
     if (!userId) return;
 
     const contentType = getContentType(uri);
-    const ext = contentType === "audio/3gpp" ? "3gp" : contentType === "audio/webm" ? "webm" : "m4a";
+    const ext =
+      contentType === "audio/3gpp" ? "3gp" : contentType === "audio/webm" ? "webm" : "m4a";
     const fileName = `${title.replace(/\s+/g, "-").toLowerCase()}.${ext}`;
     const sizeBytes = await getFileSize(uri);
     const durationSeconds = durationMs / 1000;

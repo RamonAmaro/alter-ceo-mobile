@@ -205,7 +205,10 @@ export default function DebugScreen() {
         return;
       }
 
-      Alert.alert("Perfil cargado", `Se ha cargado "${selectedProfile.title}" para el usuario actual.`);
+      Alert.alert(
+        "Perfil cargado",
+        `Se ha cargado "${selectedProfile.title}" para el usuario actual.`,
+      );
     } catch (err) {
       Alert.alert("No se pudo cargar el perfil", toErrorMessage(err));
     } finally {

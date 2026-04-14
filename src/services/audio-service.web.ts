@@ -2,14 +2,32 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export const MAX_DURATION_MS = 30_000;
 
-export async function requestAudioPermission(): Promise<boolean> {
+export interface AudioPermissionResult {
+  readonly granted: boolean;
+  readonly canAskAgain: boolean;
+}
+
+export async function checkAudioPermission(): Promise<AudioPermissionResult> {
+  try {
+    const status = await navigator.permissions.query({ name: "microphone" as PermissionName });
+    return { granted: status.state === "granted", canAskAgain: status.state !== "denied" };
+  } catch {
+    return { granted: false, canAskAgain: true };
+  }
+}
+
+export async function requestAudioPermission(): Promise<AudioPermissionResult> {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach((t) => t.stop());
-    return true;
+    return { granted: true, canAskAgain: true };
   } catch {
-    return false;
+    return { granted: false, canAskAgain: false };
   }
+}
+
+export function openAppSettings(): void {
+  // Web has no app settings — browser handles permissions natively
 }
 
 export async function enableRecordingMode(): Promise<void> {}

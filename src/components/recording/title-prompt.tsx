@@ -1,12 +1,5 @@
 import { useRef, useState } from "react";
-import {
-  Animated,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Animated, Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
@@ -31,7 +24,12 @@ export function TitlePrompt({ visible, defaultTitle, onConfirm, onCancel }: Titl
     setTitle(defaultTitle);
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: USE_NATIVE_DRIVER }),
-      Animated.spring(scale, { toValue: 1, speed: 28, bounciness: 8, useNativeDriver: USE_NATIVE_DRIVER }),
+      Animated.spring(scale, {
+        toValue: 1,
+        speed: 28,
+        bounciness: 8,
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
     ]).start();
   } else if (!visible && wasVisibleRef.current) {
     wasVisibleRef.current = false;
@@ -76,7 +74,11 @@ export function TitlePrompt({ visible, defaultTitle, onConfirm, onCancel }: Titl
             </ThemedText>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleConfirm} style={styles.confirmButton} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={handleConfirm}
+            style={styles.confirmButton}
+            activeOpacity={0.7}
+          >
             <Ionicons name="cloud-upload-outline" size={16} color={SemanticColors.surfaceDark} />
             <ThemedText type="bodySm" style={styles.confirmText}>
               Guardar y subir

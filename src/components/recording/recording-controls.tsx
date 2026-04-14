@@ -28,7 +28,15 @@ interface SideButtonProps {
   glowColor: string;
 }
 
-function SideButton({ icon, label, size, onPress, scaleAnim, glowOpacity, glowColor }: SideButtonProps) {
+function SideButton({
+  icon,
+  label,
+  size,
+  onPress,
+  scaleAnim,
+  glowOpacity,
+  glowColor,
+}: SideButtonProps) {
   const radius = size / 2;
   return (
     <View style={styles.sideWrapper}>
@@ -61,7 +69,6 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
   const buttonSize = isMobile ? 120 : 80;
   const sideSize = isMobile ? 56 : 44;
   const sideIconSize = isMobile ? 26 : 20;
-  const sideBorderRadius = sideSize / 2;
   const deleteScale = useRef(new Animated.Value(1)).current;
   const deleteGlow = useRef(new Animated.Value(0)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
@@ -165,7 +172,13 @@ export function RecordingControls({ state, onRecord, onDelete, onSave }: Recordi
       )}
 
       <SideButton
-        icon={<Ionicons name="download-outline" size={sideIconSize} color={SemanticColors.textPrimary} />}
+        icon={
+          <Ionicons
+            name="download-outline"
+            size={sideIconSize}
+            color={SemanticColors.textPrimary}
+          />
+        }
         label="Guardar"
         size={sideSize}
         onPress={isActive ? handleSave : onSave}

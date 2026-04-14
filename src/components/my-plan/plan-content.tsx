@@ -79,137 +79,135 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
       </View>
 
       <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: insets.bottom + Spacing.six },
-          ]}
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          {plan.introduccion_general && (
-            <View onLayout={(e) => handleSectionLayout("intro", e.nativeEvent.layout.y)}>
-              <SectionBlock>
-                <PlanHero
-                  introduction={plan.introduccion_general}
-                  sector={diagnosis?.resumen_negocio?.sector}
-                  annualRevenue={diagnosis?.resumen_negocio?.facturacion_anual_aproximada}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        ref={scrollRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + Spacing.six },
+        ]}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {plan.introduccion_general && (
+          <View onLayout={(e) => handleSectionLayout("intro", e.nativeEvent.layout.y)}>
+            <SectionBlock>
+              <PlanHero
+                introduction={plan.introduccion_general}
+                sector={diagnosis?.resumen_negocio?.sector}
+                annualRevenue={diagnosis?.resumen_negocio?.facturacion_anual_aproximada}
+              />
+            </SectionBlock>
+          </View>
+        )}
 
-          {diagnosis?.mensaje_introduccion && (
-            <View onLayout={(e) => handleSectionLayout("diagnosis", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <DiagnosisSection
-                  introduction={diagnosis.mensaje_introduccion}
-                  financialState={diagnosis.estado_financiero}
-                  founderDependency={diagnosis.situacion_actual?.nivel_dependencia_fundador}
-                  acquisitionSystem={diagnosis.situacion_actual?.sistema_captacion}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        {diagnosis?.mensaje_introduccion && (
+          <View onLayout={(e) => handleSectionLayout("diagnosis", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <DiagnosisSection
+                introduction={diagnosis.mensaje_introduccion}
+                financialState={diagnosis.estado_financiero}
+                founderDependency={diagnosis.situacion_actual?.nivel_dependencia_fundador}
+                acquisitionSystem={diagnosis.situacion_actual?.sistema_captacion}
+              />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasAreaAnalysis && (
-            <View onLayout={(e) => handleSectionLayout("areas", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <AreaAnalysisSection areas={diagnosis!.analisis_por_areas!} />
-              </SectionBlock>
-            </View>
-          )}
+        {hasAreaAnalysis && (
+          <View onLayout={(e) => handleSectionLayout("areas", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <AreaAnalysisSection areas={diagnosis!.analisis_por_areas!} />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasBlockers && (
-            <View onLayout={(e) => handleSectionLayout("blockers", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <BlockersList
-                  introduction={diagnosis?.introduccion_bloqueos}
-                  blockers={diagnosis!.bloqueos_detectados!}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        {hasBlockers && (
+          <View onLayout={(e) => handleSectionLayout("blockers", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <BlockersList
+                introduction={diagnosis?.introduccion_bloqueos}
+                blockers={diagnosis!.bloqueos_detectados!}
+              />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasOpportunities && (
-            <View onLayout={(e) => handleSectionLayout("opportunities", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <OpportunitiesList
-                  introduction={diagnosis?.introduccion_oportunidades}
-                  opportunities={diagnosis!.oportunidades_mejora!}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        {hasOpportunities && (
+          <View onLayout={(e) => handleSectionLayout("opportunities", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <OpportunitiesList
+                introduction={diagnosis?.introduccion_oportunidades}
+                opportunities={diagnosis!.oportunidades_mejora!}
+              />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasSalesStrategy && (
-            <View onLayout={(e) => handleSectionLayout("strategy", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <SalesStrategySection
-                  productImprovement={salesPlan?.mejorar_producto_servicio}
-                  customerAcquisition={salesPlan?.aumentar_captacion_clientes}
-                  conversionImprovement={salesPlan?.mejorar_conversion}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        {hasSalesStrategy && (
+          <View onLayout={(e) => handleSectionLayout("strategy", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <SalesStrategySection
+                productImprovement={salesPlan?.mejorar_producto_servicio}
+                customerAcquisition={salesPlan?.aumentar_captacion_clientes}
+                conversionImprovement={salesPlan?.mejorar_conversion}
+              />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasSales && (
-            <View onLayout={(e) => handleSectionLayout("sales", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <SalesSection
-                  target={salesPlan!.objetivo_facturacion_12_meses!}
-                  projectionIntroduction={salesPlan!.introduccion_evolucion_ventas}
-                  monthlyProjection={salesPlan!.proyeccion_mensual_euros ?? []}
-                  immediatePriorities={salesPlan!.prioridad_inmediata_30_dias ?? []}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        {hasSales && (
+          <View onLayout={(e) => handleSectionLayout("sales", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <SalesSection
+                target={salesPlan!.objetivo_facturacion_12_meses!}
+                projectionIntroduction={salesPlan!.introduccion_evolucion_ventas}
+                monthlyProjection={salesPlan!.proyeccion_mensual_euros ?? []}
+                immediatePriorities={salesPlan!.prioridad_inmediata_30_dias ?? []}
+              />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasFirstStep && (
-            <View onLayout={(e) => handleSectionLayout("firststep", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <FirstStepSection
-                  message={leadershipPlan!.primer_paso_trabajar_la_mitad!.mensaje!}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        {hasFirstStep && (
+          <View onLayout={(e) => handleSectionLayout("firststep", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <FirstStepSection message={leadershipPlan!.primer_paso_trabajar_la_mitad!.mensaje!} />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasRedefineRole && (
-            <View onLayout={(e) => handleSectionLayout("redefine", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <RedefineRoleSection steps={leadershipPlan!.tres_pasos_redefinir_rol!} />
-              </SectionBlock>
-            </View>
-          )}
+        {hasRedefineRole && (
+          <View onLayout={(e) => handleSectionLayout("redefine", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <RedefineRoleSection steps={leadershipPlan!.tres_pasos_redefinir_rol!} />
+            </SectionBlock>
+          </View>
+        )}
 
-          {hasLeadership && (
-            <View onLayout={(e) => handleSectionLayout("leadership", e.nativeEvent.layout.y)}>
-              <SectionDivider />
-              <SectionBlock>
-                <LeadershipSection
-                  phase1={leadershipPlan!.fase_1_profesionalizar}
-                  phase2={leadershipPlan!.fase_2_delegacion}
-                  phase3={leadershipPlan!.fase_3_ceo_estrategico}
-                  roleEvolution={leadershipPlan!.evolucion_rol}
-                />
-              </SectionBlock>
-            </View>
-          )}
+        {hasLeadership && (
+          <View onLayout={(e) => handleSectionLayout("leadership", e.nativeEvent.layout.y)}>
+            <SectionDivider />
+            <SectionBlock>
+              <LeadershipSection
+                phase1={leadershipPlan!.fase_1_profesionalizar}
+                phase2={leadershipPlan!.fase_2_delegacion}
+                phase3={leadershipPlan!.fase_3_ceo_estrategico}
+                roleEvolution={leadershipPlan!.evolucion_rol}
+              />
+            </SectionBlock>
+          </View>
+        )}
 
-          <PlanConclusion />
-        </ScrollView>
+        <PlanConclusion />
+      </ScrollView>
     </View>
   );
 }
