@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from "react";
 import {
   Animated,
   type LayoutChangeEvent,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -128,7 +129,10 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: SemanticColors.surfaceCard,
+    ...Platform.select({
+      web: {},
+      default: { backgroundColor: SemanticColors.surfaceCard },
+    }),
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,

@@ -5,7 +5,6 @@ import { router } from "expo-router";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { AudioRecorderView } from "@/components/onboarding/audio-recorder-view";
 import { ScreenLayout } from "@/components/screen-layout";
@@ -60,11 +59,7 @@ export default function QuestionsScreen() {
   if (!question) return null;
 
   if (question.type === "audio") {
-    return (
-      <AppBackground>
-        <AudioRecorderView onConfirm={handleConfirmAudio} onBack={handleBack} />
-      </AppBackground>
-    );
+    return <AudioRecorderView onConfirm={handleConfirmAudio} onBack={handleBack} />;
   }
 
   const currentAnswer = answers.get(currentQuestionIndex);

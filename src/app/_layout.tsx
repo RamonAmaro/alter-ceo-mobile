@@ -12,12 +12,22 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { useColorScheme } from "react-native";
+import { StyleSheet, View, useColorScheme } from "react-native";
 
 import { initAuthCookie } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useDebugStore } from "@/stores/debug-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+
+const TransparentDarkTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: "transparent" },
+};
+
+const TransparentLightTheme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: "transparent" },
+};
 
 SplashScreen.preventAutoHideAsync();
 
@@ -50,6 +60,11 @@ export default function RootLayout() {
         void checkBiometricsStatus();
       } finally {
         await SplashScreen.hideAsync();
+
+        if (typeof document !== "undefined") {
+          document.getElementById("splash-loader")?.classList.add("hidden");
+          setTimeout(() => document.getElementById("splash-loader")?.remove(), 1500);
+        }
       }
     }
 
@@ -57,14 +72,21 @@ export default function RootLayout() {
   }, [checkSession, checkBiometricsStatus, fontsLoaded, loadDebugState, loadOnboarding]);
 
   if (!fontsLoaded) {
-    return null;
+    return <View style={styles.loading} />;
   }
 
   return (
     <KeyboardProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={colorScheme === "dark" ? TransparentDarkTheme : TransparentLightTheme}>
         <Stack screenOptions={{ headerShown: false }} />
       </ThemeProvider>
     </KeyboardProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    backgroundColor: "#09090b",
+  },
+});

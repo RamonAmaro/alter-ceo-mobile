@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet, View, type DimensionValue, type ViewStyle } from "react-native";
 
+import { Layout } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 
 interface ResponsiveContainerProps {
@@ -10,7 +11,7 @@ interface ResponsiveContainerProps {
 
 export function ResponsiveContainer({
   children,
-  maxWidth = 480,
+  maxWidth = Layout.maxContentWidth,
   style,
 }: PropsWithChildren<ResponsiveContainerProps>) {
   const { isMobile } = useResponsiveLayout();

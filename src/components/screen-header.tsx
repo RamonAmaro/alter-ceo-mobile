@@ -3,7 +3,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface ScreenHeaderProps {
   topInset: number;
@@ -75,10 +75,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-    backgroundColor: SemanticColors.surfaceCard,
     paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.three,
     marginBottom: Spacing.three,
+    ...Platform.select({
+      web: {},
+      default: { backgroundColor: SemanticColors.surfaceCard },
+    }),
   },
   backBtn: {
     marginRight: Spacing.one,

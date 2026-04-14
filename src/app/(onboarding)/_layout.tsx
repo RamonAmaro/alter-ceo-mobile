@@ -1,3 +1,5 @@
+import { AppBackground } from "@/components/app-background";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { useAuthStore } from "@/stores/auth-store";
 import { Redirect, Stack } from "expo-router";
 
@@ -9,5 +11,11 @@ export default function OnboardingLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <AppBackground>
+      <ResponsiveContainer>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }} />
+      </ResponsiveContainer>
+    </AppBackground>
+  );
 }

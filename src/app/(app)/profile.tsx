@@ -1,6 +1,4 @@
-import { AppBackground } from "@/components/app-background";
 import { MenuItem } from "@/components/menu-item";
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
@@ -35,62 +33,54 @@ export default function ProfileScreen() {
   }
 
   return (
-    <AppBackground>
-      <ResponsiveContainer maxWidth={900}>
-        <View style={[styles.container, { paddingTop: insets.top + Spacing.two }]}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chevron-back" size={24} color={SemanticColors.textPrimary} />
-            </TouchableOpacity>
-            <ThemedText type="subtitle" style={styles.headerTitle}>
-              Perfil
-            </ThemedText>
-            <View style={styles.headerSpacer} />
-          </View>
+    <View style={[styles.container, { paddingTop: insets.top + Spacing.two }]}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
+          <Ionicons name="chevron-back" size={24} color={SemanticColors.textPrimary} />
+        </TouchableOpacity>
+        <ThemedText type="subtitle" style={styles.headerTitle}>
+          Perfil
+        </ThemedText>
+        <View style={styles.headerSpacer} />
+      </View>
 
-          <View style={styles.profileSection}>
-            <View style={styles.avatarLarge}>
-              <Ionicons name="person" size={40} color={SemanticColors.textMuted} />
-            </View>
-            <ThemedText type="subtitle" style={styles.userName}>
-              (Nombre)
-            </ThemedText>
-            <ThemedText type="labelSm" style={styles.userCompany}>
-              (Nombre de Empresa)
-            </ThemedText>
-          </View>
-
-          <View style={styles.content}>
-            {MENU_ITEMS.map((item) => (
-              <MenuItem
-                key={item.icon}
-                icon={item.icon}
-                label={item.label}
-                onPress={item.key === "onboarding" ? handleGoToOnboarding : undefined}
-              />
-            ))}
-          </View>
-
-          <View style={[styles.signOutWrap, { paddingBottom: insets.bottom + Spacing.four }]}>
-            <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.8}>
-              <LinearGradient
-                colors={["rgba(255,68,68,0.15)", "rgba(255,68,68,0.05)"]}
-                style={styles.signOutGradient}
-              >
-                <Ionicons name="log-out-outline" size={20} color="#FF4444" />
-                <ThemedText type="labelSm" style={styles.signOutText}>
-                  Cerrar sesión
-                </ThemedText>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.profileSection}>
+        <View style={styles.avatarLarge}>
+          <Ionicons name="person" size={40} color={SemanticColors.textMuted} />
         </View>
-      </ResponsiveContainer>
-    </AppBackground>
+        <ThemedText type="subtitle" style={styles.userName}>
+          (Nombre)
+        </ThemedText>
+        <ThemedText type="labelSm" style={styles.userCompany}>
+          (Nombre de Empresa)
+        </ThemedText>
+      </View>
+
+      <View style={styles.content}>
+        {MENU_ITEMS.map((item) => (
+          <MenuItem
+            key={item.icon}
+            icon={item.icon}
+            label={item.label}
+            onPress={item.key === "onboarding" ? handleGoToOnboarding : undefined}
+          />
+        ))}
+      </View>
+
+      <View style={[styles.signOutWrap, { paddingBottom: insets.bottom + Spacing.four }]}>
+        <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.8}>
+          <LinearGradient
+            colors={["rgba(255,68,68,0.15)", "rgba(255,68,68,0.05)"]}
+            style={styles.signOutGradient}
+          >
+            <Ionicons name="log-out-outline" size={20} color="#FF4444" />
+            <ThemedText type="labelSm" style={styles.signOutText}>
+              Cerrar sesión
+            </ThemedText>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 

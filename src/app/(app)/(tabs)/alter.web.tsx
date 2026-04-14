@@ -1,5 +1,3 @@
-import { AppBackground } from "@/components/app-background";
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { Spacing } from "@/constants/theme";
 import { ScrollView, StyleSheet, View } from "react-native";
 
@@ -12,34 +10,30 @@ import { ProfitabilityColumn } from "@/components/home/profitability-column";
 
 export default function AlterScreen() {
   return (
-    <AppBackground>
-      <ResponsiveContainer maxWidth={900}>
-        <View style={styles.container}>
-          <HomeHeader />
+    <View style={styles.container}>
+      <HomeHeader />
 
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.topRow}>
-              <BrainCard />
-              <ProfitabilityColumn />
-            </View>
-
-            <View style={styles.machinesWrap}>
-              <MachinesCard />
-            </View>
-
-            <View style={styles.meetingWrap}>
-              <MeetingSection />
-            </View>
-          </ScrollView>
-
-          <ChatInputBar />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topRow}>
+          <BrainCard />
+          <ProfitabilityColumn />
         </View>
-      </ResponsiveContainer>
-    </AppBackground>
+
+        <View style={styles.machinesWrap}>
+          <MachinesCard />
+        </View>
+
+        <View style={styles.meetingWrap}>
+          <MeetingSection />
+        </View>
+      </ScrollView>
+
+      <ChatInputBar />
+    </View>
   );
 }
 
