@@ -2,7 +2,7 @@ import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 interface ScreenHeaderProps {
   topInset: number;
@@ -11,6 +11,7 @@ interface ScreenHeaderProps {
   titlePrefix: string;
   titleAccent: string;
   onBack?: () => void;
+  onIconPress?: () => void;
   showBack?: boolean;
 }
 
@@ -20,6 +21,7 @@ export function ScreenHeader({
   titlePrefix,
   titleAccent,
   onBack,
+  onIconPress,
   showBack = false,
 }: ScreenHeaderProps) {
   return (
@@ -35,9 +37,21 @@ export function ScreenHeader({
       )}
 
       {useLogoIcon ? (
-        <AlterLogo size={20} />
+        <Pressable
+          onPress={onIconPress}
+          disabled={!onIconPress}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
+        >
+          <AlterLogo size={20} />
+        </Pressable>
       ) : (
-        <Ionicons name={icon} size={18} color={SemanticColors.success} />
+        <Pressable
+          onPress={onIconPress}
+          disabled={!onIconPress}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
+        >
+          <Ionicons name={icon} size={18} color={SemanticColors.success} />
+        </Pressable>
       )}
 
       <View style={styles.titleRow}>
@@ -60,6 +74,16 @@ const styles = StyleSheet.create({
   backButton: {
     cursor: "pointer" as never,
     marginRight: Spacing.one,
+  },
+  iconBtn: {
+    minWidth: 32,
+    minHeight: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer" as never,
+  },
+  iconBtnPressed: {
+    opacity: 0.8,
   },
   titleRow: {
     flexDirection: "row",

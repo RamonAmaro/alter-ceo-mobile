@@ -3,7 +3,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface ScreenHeaderProps {
   topInset: number;
@@ -43,23 +43,23 @@ export function ScreenHeader({
       )}
 
       {useLogoIcon ? (
-        <TouchableOpacity
+        <Pressable
           onPress={onIconPress}
           disabled={!onIconPress}
-          activeOpacity={0.7}
           style={styles.iconBtn}
+          hitSlop={12}
         >
           <AlterLogo size={20} />
-        </TouchableOpacity>
+        </Pressable>
       ) : (
-        <TouchableOpacity
+        <Pressable
           onPress={onIconPress}
           disabled={!onIconPress}
-          activeOpacity={0.7}
           style={styles.iconBtn}
+          hitSlop={12}
         >
           <Ionicons name={icon} size={18} color={SemanticColors.success} />
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       <View style={styles.titleRow}>
@@ -87,7 +87,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   iconBtn: {
-    minWidth: 20,
+    minWidth: 32,
+    minHeight: 32,
     alignItems: "center",
     justifyContent: "center",
   },
