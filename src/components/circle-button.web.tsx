@@ -1,9 +1,9 @@
-import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
-import { Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
-import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
+import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export interface CircleButtonProps {
   size?: number;
@@ -17,7 +17,6 @@ export interface CircleButtonProps {
 
 export function CircleButton({
   size = 80,
-  gradientId,
   colors,
   icon,
   label,
@@ -46,34 +45,54 @@ export function CircleButton({
       pulseAnim.stopAnimation();
       pulseAnim.setValue(1);
     }
-  }, [pulse]);
+  }, [pulse, pulseAnim]);
 
-  const viewBox = "0 0 139 140";
-  const cx = 69.55;
-  const cy = 69.67;
+  const innerSize = size * 0.76;
+  const middleSize = size * 0.81;
 
   return (
     <View style={styles.actionWrapper}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-        <Animated.View style={[styles.circleButton, { transform: [{ scale: pulseAnim }] }]}>
-          <Svg width={size} height={size} viewBox={viewBox} fill="none">
-            <Defs>
-              <RadialGradient
-                id={gradientId}
-                cx={cx}
-                cy={cy}
-                r="37.69"
-                gradientUnits="userSpaceOnUse"
+        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+          <View
+            style={[
+              styles.ring,
+              {
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+                backgroundColor: "#A8A8A8",
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.ring,
+                {
+                  width: middleSize,
+                  height: middleSize,
+                  borderRadius: middleSize / 2,
+                  backgroundColor: "#D8D8D8",
+                },
+              ]}
+            >
+              <LinearGradient
+                colors={[colors[0], colors[1]]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{
+                  width: innerSize,
+                  height: innerSize,
+                  borderRadius: innerSize / 2,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                }}
               >
-                <Stop offset="0" stopColor={colors[0]} />
-                <Stop offset="1" stopColor={colors[1]} />
-              </RadialGradient>
-            </Defs>
-            <Circle cx={cx} cy={cy} r="41.5" fill="#A8A8A8" />
-            <Circle cx={cx} cy={cy} r="39.5" fill="#D8D8D8" />
-            <Circle cx={cx} cy={cy} r="38" fill={`url(#${gradientId})`} />
-            {icon}
-          </Svg>
+                {icon}
+              </LinearGradient>
+            </View>
+          </View>
         </Animated.View>
       </TouchableOpacity>
       <ThemedText type="caption" style={styles.labelText}>
@@ -92,18 +111,8 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
     textAlign: "center" as const,
   },
-  circleButton: {
-    ...Platform.select({
-      ios: {
-        shadowColor: "#00FFF8",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 6,
-      },
-      web: {},
-    }),
+  ring: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

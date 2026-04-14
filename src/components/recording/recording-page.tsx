@@ -4,19 +4,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Spacing } from "@/constants/theme";
+import { useUploadRecording } from "@/hooks/use-upload-recording";
 import {
   enableRecordingMode,
   RecordingPresets,
   requestAudioPermission,
   useAudioRecorder,
 } from "@/services/audio-service";
-import { useRecordingsStore } from "@/stores/recordings-store";
 import { formatShortDate } from "@/utils/format-date";
 
 import { AudioWave } from "./audio-wave";
 import { RecordingControls } from "./recording-controls";
 import { RecordingTimer } from "./recording-timer";
 import { SavedToast } from "./saved-toast";
+import { TitlePrompt } from "./title-prompt";
 
 // --- Constants -----------------------------------------------------------
 
@@ -43,21 +44,24 @@ type RecordingState = "idle" | "recording" | "paused";
 interface RecordingPageProps {
   width: number;
   height: number;
+  onUploadComplete?: () => void;
 }
 
 // --- Component -----------------------------------------------------------
 
-export function RecordingPage({ width, height }: RecordingPageProps) {
+export function RecordingPage({ width, height, onUploadComplete }: RecordingPageProps) {
   const insets = useSafeAreaInsets();
   const [state, setState] = useState<RecordingState>("idle");
   const [showToast, setShowToast] = useState(false);
+  const [showTitlePrompt, setShowTitlePrompt] = useState(false);
 
   const preparedRef = useRef(false);
   const segmentStartRef = useRef(0);
   const accumulatedMsRef = useRef(0);
+  const pendingSaveRef = useRef<{ uri: string; durationMs: number } | null>(null);
 
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
-  const addRecording = useRecordingsStore((s) => s.addRecording);
+  const { uploadRecording } = useUploadRecording();
 
   const handleRecord = useCallback(async () => {
     if (state === "idle") {
@@ -96,7 +100,7 @@ export function RecordingPage({ width, height }: RecordingPageProps) {
     setState("idle");
   }, [state, recorder]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(() => {
     if (state === "idle") return;
 
     if (state === "recording") {
@@ -106,27 +110,46 @@ export function RecordingPage({ width, height }: RecordingPageProps) {
     recorder.stop();
     preparedRef.current = false;
 
-    const durationMs = accumulatedMsRef.current;
+    const uri = recorder.uri;
+    if (!uri) {
+      accumulatedMsRef.current = 0;
+      segmentStartRef.current = 0;
+      setState("idle");
+      return;
+    }
+
+    pendingSaveRef.current = { uri, durationMs: accumulatedMsRef.current };
     accumulatedMsRef.current = 0;
     segmentStartRef.current = 0;
     setState("idle");
+    setShowTitlePrompt(true);
+  }, [state, recorder]);
 
-    const uri = recorder.uri;
-    if (!uri) return;
+  const handleTitleConfirm = useCallback(
+    async (title: string) => {
+      setShowTitlePrompt(false);
+      const pending = pendingSaveRef.current;
+      if (!pending) return;
+      pendingSaveRef.current = null;
 
-    const now = new Date();
-    await addRecording({
-      id: Date.now().toString(),
-      uri,
-      title: `Reunión ${formatShortDate(now)}`,
-      date: formatShortDate(now),
-      durationMs,
-      createdAt: now.toISOString(),
-    });
+      await uploadRecording({
+        uri: pending.uri,
+        title,
+        durationMs: pending.durationMs,
+      });
 
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), TOAST_DURATION_MS);
-  }, [state, recorder, addRecording]);
+      onUploadComplete?.();
+
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), TOAST_DURATION_MS);
+    },
+    [uploadRecording, onUploadComplete],
+  );
+
+  const handleTitleCancel = useCallback(() => {
+    setShowTitlePrompt(false);
+    pendingSaveRef.current = null;
+  }, []);
 
   const isActive = state === "recording";
   const isReset = state === "idle";
@@ -153,6 +176,13 @@ export function RecordingPage({ width, height }: RecordingPageProps) {
       </LinearGradient>
 
       <SavedToast visible={showToast} />
+
+      <TitlePrompt
+        visible={showTitlePrompt}
+        defaultTitle={`Reunión ${formatShortDate(new Date())}`}
+        onConfirm={handleTitleConfirm}
+        onCancel={handleTitleCancel}
+      />
     </View>
   );
 }

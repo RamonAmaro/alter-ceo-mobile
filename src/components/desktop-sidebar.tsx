@@ -1,5 +1,6 @@
 import { router, usePathname } from "expo-router";
 import type { Href } from "expo-router";
+import { useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 
 import { NAV_ITEMS } from "@/components/navigation/nav-items";
@@ -7,12 +8,46 @@ import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 
-const SIDEBAR_WIDTH = 240;
+const SIDEBAR_WIDTH = 220;
 const ACTIVE_COLOR = SemanticColors.success;
 const INACTIVE_COLOR = "rgba(255,255,255,0.45)";
 
+interface SidebarItemProps {
+  label: string;
+  icon: React.ReactNode;
+  focused: boolean;
+  onPress: () => void;
+}
+
+function SidebarItem({ label, icon, focused, onPress }: SidebarItemProps) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Pressable
+      style={[
+        styles.navItem,
+        focused && styles.navItemActive,
+        !focused && hovered && styles.navItemHover,
+      ]}
+      onPress={onPress}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+    >
+      {focused && <View style={styles.activeBar} />}
+      {icon}
+      <ThemedText
+        type="bodySm"
+        style={[styles.navLabel, focused && styles.navLabelActive, hovered && styles.navLabelHover]}
+      >
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
 export function DesktopSidebar() {
   const pathname = usePathname();
+  const [profileHovered, setProfileHovered] = useState(false);
 
   function getActiveKey(): string {
     const clean = pathname.replace(/^\//, "");
@@ -29,57 +64,51 @@ export function DesktopSidebar() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.logoArea}>
+      <Pressable style={styles.logoArea} onPress={() => handleNav("alter")}>
         <Image
           source={require("@/assets/ui/logo-alterceo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
-      </View>
+      </Pressable>
 
       <View style={styles.nav}>
+        <SidebarItem
+          label="Inicio"
+          icon={
+            <Ionicons
+              name={activeKey === "alter" ? "home" : "home-outline"}
+              size={20}
+              color={activeKey === "alter" ? ACTIVE_COLOR : INACTIVE_COLOR}
+            />
+          }
+          focused={activeKey === "alter"}
+          onPress={() => handleNav("alter")}
+        />
+
         {NAV_ITEMS.filter((i) => !i.isCenter).map((item) => {
           const focused = activeKey === item.key;
           return (
-            <Pressable
+            <SidebarItem
               key={item.key}
-              style={[styles.navItem, focused && styles.navItemActive]}
+              label={item.label}
+              icon={item.icon(focused ? ACTIVE_COLOR : INACTIVE_COLOR, focused)}
+              focused={focused}
               onPress={() => handleNav(item.key)}
-            >
-              {focused && <View style={styles.activeBar} />}
-              {item.icon(focused ? ACTIVE_COLOR : INACTIVE_COLOR, focused)}
-              <ThemedText type="bodySm" style={[styles.navLabel, focused && styles.navLabelActive]}>
-                {item.label}
-              </ThemedText>
-            </Pressable>
+            />
           );
         })}
-
-        <View style={styles.divider} />
-
-        <Pressable
-          style={[styles.navItem, activeKey === "alter" && styles.navItemActive]}
-          onPress={() => handleNav("alter")}
-        >
-          {activeKey === "alter" && <View style={styles.activeBar} />}
-          <Ionicons
-            name="home"
-            size={20}
-            color={activeKey === "alter" ? ACTIVE_COLOR : INACTIVE_COLOR}
-          />
-          <ThemedText
-            type="bodySm"
-            style={[styles.navLabel, activeKey === "alter" && styles.navLabelActive]}
-          >
-            Inicio
-          </ThemedText>
-        </Pressable>
       </View>
 
       <View style={styles.footer}>
-        <Pressable style={styles.profileBtn} onPress={() => handleNav("profile")}>
+        <Pressable
+          style={[styles.profileBtn, profileHovered && styles.profileBtnHover]}
+          onPress={() => handleNav("profile")}
+          onHoverIn={() => setProfileHovered(true)}
+          onHoverOut={() => setProfileHovered(false)}
+        >
           <View style={styles.avatar}>
-            <Ionicons name="person" size={18} color={SemanticColors.textPrimary} />
+            <Ionicons name="person" size={14} color={SemanticColors.textPrimary} />
           </View>
           <ThemedText type="bodySm" style={styles.profileLabel}>
             Mi Perfil
@@ -96,41 +125,46 @@ const styles = StyleSheet.create({
     backgroundColor: SemanticColors.surfaceDark,
     borderRightWidth: 1,
     borderRightColor: SemanticColors.border,
-    paddingVertical: Spacing.four,
   },
   logoArea: {
     alignItems: "center",
-    paddingBottom: Spacing.five,
-    borderBottomWidth: 1,
-    borderBottomColor: SemanticColors.border,
-    marginHorizontal: Spacing.three,
+    paddingVertical: Spacing.four,
+    cursor: "pointer" as never,
   },
   logo: {
-    width: 100,
-    height: 94,
+    width: 64,
+    height: 60,
   },
   nav: {
     flex: 1,
+    borderTopWidth: 1,
+    borderTopColor: SemanticColors.border,
     paddingTop: Spacing.three,
-    gap: Spacing.one,
+    gap: 2,
   },
   navItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.three,
-    paddingVertical: Spacing.two + 4,
+    paddingVertical: 10,
     paddingHorizontal: Spacing.four,
     marginHorizontal: Spacing.two,
     borderRadius: 8,
+    cursor: "pointer" as never,
+    transitionProperty: "background-color" as never,
+    transitionDuration: "150ms" as never,
   },
   navItemActive: {
-    backgroundColor: "rgba(0,255,132,0.06)",
+    backgroundColor: "rgba(0,255,132,0.08)",
+  },
+  navItemHover: {
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
   activeBar: {
     position: "absolute",
     left: 0,
-    top: 6,
-    bottom: 6,
+    top: 8,
+    bottom: 8,
     width: 3,
     borderRadius: 2,
     backgroundColor: ACTIVE_COLOR,
@@ -138,41 +172,46 @@ const styles = StyleSheet.create({
   navLabel: {
     color: INACTIVE_COLOR,
     fontFamily: Fonts.montserratMedium,
+    transitionProperty: "color" as never,
+    transitionDuration: "150ms" as never,
   },
   navLabelActive: {
     color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratSemiBold,
   },
-  divider: {
-    height: 1,
-    backgroundColor: SemanticColors.border,
-    marginHorizontal: Spacing.four,
-    marginVertical: Spacing.two,
+  navLabelHover: {
+    color: "rgba(255,255,255,0.7)",
   },
   footer: {
     borderTopWidth: 1,
     borderTopColor: SemanticColors.border,
-    paddingTop: Spacing.three,
-    marginHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.two,
   },
   profileBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.three,
-    paddingHorizontal: Spacing.two,
+    gap: Spacing.two,
     paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
     borderRadius: 8,
+    cursor: "pointer" as never,
+    transitionProperty: "background-color" as never,
+    transitionDuration: "150ms" as never,
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
+  profileBtnHover: {
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
   profileLabel: {
     color: SemanticColors.iconMuted,
     fontFamily: Fonts.montserratMedium,
+  },
+  avatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

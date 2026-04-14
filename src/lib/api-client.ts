@@ -1,39 +1,15 @@
 import { API_BASE_URL, API_TIMEOUT, API_VERSION } from "@/constants/env";
+import { buildAuthHeaders, WITH_CREDENTIALS } from "@/lib/http-credentials";
 import { ApiError, type ValidationError } from "@/types/api";
-import axios, { isAxiosError } from "axios";
-import { Platform } from "react-native";
+import axios, { isAxiosError, type AxiosResponse } from "axios";
 
-const IS_WEB = Platform.OS === "web";
-
-type TokenGetter = () => string | null;
-let tokenGetter: TokenGetter = () => null;
-
-export function setAuthTokenGetter(getter: TokenGetter): void {
-  tokenGetter = getter;
-}
-
-type CookieGetter = () => string | null;
-let cookieGetter: CookieGetter = () => null;
-
-export function setAuthCookieGetter(getter: CookieGetter): void {
-  cookieGetter = getter;
-}
-
-export function buildAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const token = tokenGetter();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (!IS_WEB) {
-    const cookie = cookieGetter();
-    if (cookie) headers["Cookie"] = cookie;
-  }
-  return headers;
-}
+export { setAuthCookieGetter, setAuthTokenGetter } from "@/lib/http-credentials";
+export { buildAuthHeaders };
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/${API_VERSION}`,
   timeout: API_TIMEOUT,
-  withCredentials: IS_WEB,
+  withCredentials: WITH_CREDENTIALS,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -41,6 +17,31 @@ apiClient.interceptors.request.use((config) => {
   Object.assign(config.headers, authHeaders);
   return config;
 });
+
+// ─── 401 interceptor: force sign-out on unauthorized responses ───────────────
+
+type UnauthorizedHandler = () => void;
+let onUnauthorized: UnauthorizedHandler | null = null;
+
+export function setOnUnauthorizedHandler(handler: UnauthorizedHandler): void {
+  onUnauthorized = handler;
+}
+
+const AUTH_PATHS = ["/auth/login", "/auth/register", "/auth/session", "/auth/logout"];
+
+function isAuthPath(url: string | undefined): boolean {
+  return AUTH_PATHS.some((p) => url?.endsWith(p));
+}
+
+apiClient.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: unknown) => {
+    if (isAxiosError(error) && error.response?.status === 401 && !isAuthPath(error.config?.url)) {
+      onUnauthorized?.();
+    }
+    return Promise.reject(error);
+  },
+);
 
 export function handleAxiosError(err: unknown): never {
   if (isAxiosError(err) && err.response) {
