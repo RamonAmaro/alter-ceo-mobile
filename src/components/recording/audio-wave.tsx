@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AudioRecorderLike } from "@/types/audio";
 
 import { AudioWaveform } from "@/components/audio-waveform";
@@ -37,7 +37,7 @@ function normalizeDecibels(db: number): number {
 
 export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWaveProps) {
   const levelRef = useRef(0);
-  const resetCountRef = useRef(0);
+  const [resetCount, setResetCount] = useState(0);
 
   useEffect(() => {
     if (!isActive || !recorder) return;
@@ -54,7 +54,7 @@ export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWa
 
   useEffect(() => {
     if (isReset) {
-      resetCountRef.current += 1;
+      setResetCount((c) => c + 1);
       levelRef.current = 0;
     }
   }, [isReset]);
@@ -65,7 +65,7 @@ export function AudioWave({ isActive, isReset, recorder, amplitudeRef }: AudioWa
     <AudioWaveform
       amplitudeRef={source as React.RefObject<number>}
       active={isActive}
-      resetKey={resetCountRef.current}
+      resetKey={resetCount}
     />
   );
 }

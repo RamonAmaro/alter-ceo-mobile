@@ -19,9 +19,21 @@ export function ScreenHeader({
   useLogoIcon = false,
   titlePrefix,
   titleAccent,
+  onBack,
+  showBack = false,
 }: ScreenHeaderProps) {
   return (
     <View style={styles.container}>
+      {showBack && onBack && (
+        <Ionicons
+          name="arrow-back"
+          size={20}
+          color={SemanticColors.textPrimary}
+          onPress={onBack}
+          style={styles.backButton}
+        />
+      )}
+
       {useLogoIcon ? (
         <AlterLogo size={20} />
       ) : (
@@ -44,6 +56,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.three,
+  },
+  backButton: {
+    cursor: "pointer" as never,
+    marginRight: Spacing.one,
   },
   titleRow: {
     flexDirection: "row",

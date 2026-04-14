@@ -25,6 +25,7 @@ export default function AppLayout() {
           <Stack.Screen name="strategy" />
           <Stack.Screen name="chat" />
           <Stack.Screen name="profile" />
+          <Stack.Screen name="meeting-detail" />
         </Stack>
       </View>
     </View>

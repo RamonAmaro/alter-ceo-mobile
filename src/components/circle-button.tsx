@@ -1,6 +1,6 @@
+import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
-import { ThemedText } from "@/components/themed-text";
 import { useEffect, useRef } from "react";
 import { Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
@@ -69,9 +69,9 @@ export function CircleButton({
                 <Stop offset="1" stopColor={colors[1]} />
               </RadialGradient>
             </Defs>
-            <Circle cx={cx} cy={cy} r="44.62" fill="#A8A8A8" />
-            <Circle cx={cx} cy={cy} r="39.73" fill="#D8D8D8" />
-            <Circle cx={cx} cy={cy} r="37.48" fill={`url(#${gradientId})`} />
+            <Circle cx={cx} cy={cy} r="41.5" fill="#A8A8A8" />
+            <Circle cx={cx} cy={cy} r="39.5" fill="#D8D8D8" />
+            <Circle cx={cx} cy={cy} r="38" fill={`url(#${gradientId})`} />
             {icon}
           </Svg>
         </Animated.View>
