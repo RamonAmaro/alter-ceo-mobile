@@ -1,12 +1,6 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
-import Animated, {
-  Easing,
-  makeMutable,
-  useAnimatedStyle,
-  withTiming,
-  type SharedValue,
-} from "react-native-reanimated";
+import Animated, { makeMutable, useAnimatedStyle, type SharedValue } from "react-native-reanimated";
 
 // --- Layout constants ----------------------------------------------------
 
@@ -18,12 +12,8 @@ const MAX_BAR_COUNT = 80;
 // --- Animation constants -------------------------------------------------
 
 const MIN_SCALE = 0.04;
-const SHIFT_MS = 80;
-
-const TIMING_CONFIG = {
-  duration: 100,
-  easing: Easing.out(Easing.quad),
-};
+const SHIFT_INTERVAL_MS = 80;
+const LERP_FACTOR = 0.18;
 
 // --- Pure functions ------------------------------------------------------
 
@@ -38,6 +28,10 @@ function computeBarColor(index: number, total: number): string {
 function computeBarCount(containerWidth: number): number {
   if (containerWidth <= 0) return MAX_BAR_COUNT;
   return Math.min(Math.floor(containerWidth / (BAR_WIDTH + BAR_GAP)), MAX_BAR_COUNT);
+}
+
+function lerp(current: number, target: number, factor: number): number {
+  return current + (target - current) * factor;
 }
 
 // --- Pre-computed colors -------------------------------------------------
@@ -75,7 +69,6 @@ export const AudioWaveform = memo(function AudioWaveform({
 }: AudioWaveformProps) {
   const [visibleCount, setVisibleCount] = useState(MAX_BAR_COUNT);
 
-  // Stable array of shared values — always MAX_BAR_COUNT, created once
   const scales = useMemo(
     () => Array.from({ length: MAX_BAR_COUNT }, () => makeMutable(MIN_SCALE)),
     [],
@@ -84,39 +77,50 @@ export const AudioWaveform = memo(function AudioWaveform({
   const scalesRef = useRef(scales);
   scalesRef.current = scales;
 
-  const bufferRef = useRef(new Float32Array(MAX_BAR_COUNT));
+  const targetBufferRef = useRef(new Float32Array(MAX_BAR_COUNT));
+  const displayBufferRef = useRef(new Float32Array(MAX_BAR_COUNT));
 
   // Reset
   useEffect(() => {
-    bufferRef.current.fill(0);
+    targetBufferRef.current.fill(0);
+    displayBufferRef.current.fill(0);
     const s = scalesRef.current;
     for (let i = 0; i < s.length; i++) {
       s[i].value = MIN_SCALE;
     }
   }, [resetKey]);
 
-  // Main animation loop — shift buffer + update shared values directly
+  // Animation loop: shifts buffer at fixed intervals + lerps display each frame
   useEffect(() => {
     if (!active || visibleCount === 0) return;
 
-    const buffer = bufferRef.current;
+    const target = targetBufferRef.current;
+    const display = displayBufferRef.current;
     const s = scalesRef.current;
     const lastIdx = visibleCount - 1;
+    let rafId = 0;
+    let lastShiftTime = performance.now();
 
-    const id = setInterval(() => {
-      const level = amplitudeRef.current ?? 0;
+    function tick(): void {
+      const now = performance.now();
 
-      // Shift buffer left
-      buffer.copyWithin(0, 1);
-      buffer[lastIdx] = level;
-
-      // Animate each bar with withTiming for smooth transitions
-      for (let i = 0; i <= lastIdx; i++) {
-        s[i].value = withTiming(MIN_SCALE + buffer[i], TIMING_CONFIG);
+      if (now - lastShiftTime >= SHIFT_INTERVAL_MS) {
+        const level = amplitudeRef.current ?? 0;
+        target.copyWithin(0, 1);
+        target[lastIdx] = level;
+        lastShiftTime = now;
       }
-    }, SHIFT_MS);
 
-    return () => clearInterval(id);
+      for (let i = 0; i < visibleCount; i++) {
+        display[i] = lerp(display[i], target[i], LERP_FACTOR);
+        s[i].value = MIN_SCALE + display[i];
+      }
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, visibleCount]);
 

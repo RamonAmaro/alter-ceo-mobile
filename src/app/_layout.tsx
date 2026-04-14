@@ -43,12 +43,15 @@ export default function RootLayout() {
     if (!fontsLoaded) return;
 
     async function init() {
-      await initAuthCookie();
-      await checkSession();
-      checkBiometricsStatus();
-      await loadDebugState();
-      await loadOnboarding();
-      await SplashScreen.hideAsync();
+      try {
+        await initAuthCookie();
+        await checkSession();
+        checkBiometricsStatus();
+        await loadDebugState();
+        await loadOnboarding();
+      } finally {
+        await SplashScreen.hideAsync();
+      }
     }
 
     void init();
