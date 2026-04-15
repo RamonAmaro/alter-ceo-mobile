@@ -1,8 +1,8 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { goBackOrHome } from "@/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface ScreenHeaderProps {
@@ -29,9 +29,9 @@ export function ScreenHeader({
   function handleBack(): void {
     if (onBack) {
       onBack();
-    } else {
-      router.back();
+      return;
     }
+    goBackOrHome();
   }
 
   return (

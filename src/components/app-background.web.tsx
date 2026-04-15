@@ -1,4 +1,4 @@
-import { ImageBackground, StyleSheet, type ViewProps } from "react-native";
+import { StyleSheet, View, type ViewProps } from "react-native";
 
 interface AppBackgroundProps extends ViewProps {
   children: React.ReactNode;
@@ -6,24 +6,14 @@ interface AppBackgroundProps extends ViewProps {
 
 export function AppBackground({ children, style, ...rest }: AppBackgroundProps) {
   return (
-    <ImageBackground
-      source={require("@/assets/ui/app-background.png")}
-      style={[styles.background, style]}
-      imageStyle={styles.image}
-      resizeMode="cover"
-      {...rest}
-    >
+    <View style={[styles.background, style]} {...rest}>
       {children}
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
   },
 });

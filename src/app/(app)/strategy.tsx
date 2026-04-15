@@ -1,18 +1,19 @@
 import { AppBackground } from "@/components/app-background";
 import { ChatInput } from "@/components/chat/chat-input";
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { StrategyCategoryChips } from "@/components/strategy/strategy-category-chips";
 import { StrategyChatView, type ChatMessage } from "@/components/strategy/strategy-chat-view";
 import { StrategyHeader } from "@/components/strategy/strategy-header";
 import { StrategyTopicSelector } from "@/components/strategy/strategy-topic-selector";
 import { Spacing } from "@/constants/theme";
 import { KeyboardView } from "@/components/keyboard-view";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StrategyScreen() {
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsiveLayout();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -41,31 +42,30 @@ export default function StrategyScreen() {
 
   return (
     <AppBackground>
-      <ResponsiveContainer maxWidth={900}>
-        <KeyboardView>
-          <View style={styles.container}>
-            <StrategyHeader
-              topInset={insets.top}
-              onBack={selectedTopic !== null ? handleBack : undefined}
-            />
+      <KeyboardView>
+        <View style={styles.container}>
+          <StrategyHeader
+            topInset={insets.top}
+            onBack={selectedTopic !== null ? handleBack : undefined}
+            showBack={isMobile || selectedTopic !== null}
+          />
 
-            <View style={[styles.body, selectedTopic !== null && styles.bodyChat]}>
-              {selectedTopic === null ? (
-                <StrategyTopicSelector onSelect={handleSelectTopic} />
-              ) : (
-                <StrategyChatView messages={messages} />
-              )}
-            </View>
-
-            {selectedTopic !== null && (
-              <View style={[styles.footer, { paddingBottom: insets.bottom || Spacing.three }]}>
-                <StrategyCategoryChips onSend={sendMessage} />
-                <ChatInput value={inputValue} onChangeText={setInputValue} onSend={handleSend} />
-              </View>
+          <View style={[styles.body, selectedTopic !== null && styles.bodyChat]}>
+            {selectedTopic === null ? (
+              <StrategyTopicSelector onSelect={handleSelectTopic} />
+            ) : (
+              <StrategyChatView messages={messages} />
             )}
           </View>
-        </KeyboardView>
-      </ResponsiveContainer>
+
+          {selectedTopic !== null && (
+            <View style={[styles.footer, { paddingBottom: insets.bottom || Spacing.three }]}>
+              <StrategyCategoryChips onSend={sendMessage} />
+              <ChatInput value={inputValue} onChangeText={setInputValue} onSend={handleSend} />
+            </View>
+          )}
+        </View>
+      </KeyboardView>
     </AppBackground>
   );
 }

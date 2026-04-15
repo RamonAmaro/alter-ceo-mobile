@@ -10,7 +10,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
@@ -27,7 +26,7 @@ export function RecordingScreen() {
   const windowWidth = useWindowDimensions().width;
   const { isMobile } = useResponsiveLayout();
   const [containerWidth, setContainerWidth] = useState(0);
-  const width = containerWidth || windowWidth;
+  const width = containerWidth || Math.min(windowWidth, 900);
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
 
@@ -73,41 +72,39 @@ export function RecordingScreen() {
 
   return (
     <AppBackground>
-      <ResponsiveContainer maxWidth={900}>
-        <View
-          style={styles.container}
-          onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
-        >
-          <ScreenHeader
-            topInset={insets.top}
-            icon="mic"
-            titlePrefix="Grabar"
-            titleAccent="Reunión"
-            showBack={isMobile}
-          />
+      <View
+        style={styles.container}
+        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      >
+        <ScreenHeader
+          topInset={insets.top}
+          icon="mic"
+          titlePrefix="Grabar"
+          titleAccent="Reunión"
+          showBack={isMobile}
+        />
 
-          <RecordingMotto activeIndex={activeIndex} />
+        <RecordingMotto activeIndex={activeIndex} />
 
-          <FlatList
-            data={PAGES}
-            keyExtractor={(item) => item}
-            renderItem={renderPage}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            bounces={false}
-            style={styles.carousel}
-            onLayout={onCarouselLayout}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
-            getItemLayout={(_, index) => ({
-              length: width,
-              offset: width * index,
-              index,
-            })}
-          />
-        </View>
-      </ResponsiveContainer>
+        <FlatList
+          data={PAGES}
+          keyExtractor={(item) => item}
+          renderItem={renderPage}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
+          style={styles.carousel}
+          onLayout={onCarouselLayout}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
+        />
+      </View>
     </AppBackground>
   );
 }

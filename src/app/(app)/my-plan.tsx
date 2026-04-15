@@ -1,6 +1,5 @@
 import { AppBackground } from "@/components/app-background";
 import { PlanContent } from "@/components/my-plan/plan-content";
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors } from "@/constants/theme";
@@ -68,9 +67,7 @@ export default function MyPlanScreen() {
 
   return (
     <AppBackground>
-      <ResponsiveContainer maxWidth={900}>
-        <PlanContent plan={latestPlan.plan as PlanData} insets={insets} />
-      </ResponsiveContainer>
+      <PlanContent plan={latestPlan.plan as PlanData} insets={insets} />
     </AppBackground>
   );
 }

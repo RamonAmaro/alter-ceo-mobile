@@ -1,16 +1,14 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { goBackOrHome } from "@/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export function ChatHeader() {
-  const router = useRouter();
-
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => goBackOrHome()} activeOpacity={0.7}>
         <Ionicons name="chevron-back" size={24} color={SemanticColors.textPrimary} />
       </TouchableOpacity>
 

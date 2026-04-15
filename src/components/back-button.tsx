@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { goBackOrHome } from "@/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { StyleSheet, TouchableOpacity, type TouchableOpacityProps } from "react-native";
 
 interface BackButtonProps extends TouchableOpacityProps {
@@ -10,7 +10,7 @@ interface BackButtonProps extends TouchableOpacityProps {
 
 export function BackButton({ label = "Volver", style, ...rest }: BackButtonProps) {
   return (
-    <TouchableOpacity style={[styles.container, style]} onPress={() => router.back()} {...rest}>
+    <TouchableOpacity style={[styles.container, style]} onPress={() => goBackOrHome()} {...rest}>
       <Ionicons
         name="arrow-back"
         size={20}
