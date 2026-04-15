@@ -30,11 +30,11 @@ interface QuestionBodyProps {
   validationMessage?: string;
 }
 
-function isOptionSelected(type: string, currentAnswer: Answer | undefined, label: string): boolean {
+function isOptionSelected(type: string, currentAnswer: Answer | undefined, value: string): boolean {
   if (type === "multi") {
-    return Array.isArray(currentAnswer) && currentAnswer.includes(label);
+    return Array.isArray(currentAnswer) && currentAnswer.includes(value);
   }
-  return currentAnswer === label;
+  return currentAnswer === value;
 }
 
 export function QuestionBody({
@@ -103,12 +103,16 @@ export function QuestionBody({
         ) : (
           options.map((option) => (
             <QuestionOption
-              key={option.label}
+              key={option.value ?? option.label}
               label={option.label}
               subtitle={option.subtitle}
-              selected={isOptionSelected(question.type, currentAnswer, option.label)}
+              selected={isOptionSelected(
+                question.type,
+                currentAnswer,
+                option.value ?? option.label,
+              )}
               multi={isMulti}
-              onPress={() => onOptionPress(option.label)}
+              onPress={() => onOptionPress(option.value ?? option.label)}
             />
           ))
         )}
