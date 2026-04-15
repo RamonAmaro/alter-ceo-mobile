@@ -25,7 +25,7 @@ export function ScreenHeader({
   titleAccent,
   onBack,
   onIconPress,
-  showBack,
+  showBack = false,
 }: ScreenHeaderProps) {
   const { isMobile } = useResponsiveLayout();
   const shouldShowBack = showBack ?? isMobile;
@@ -47,11 +47,19 @@ export function ScreenHeader({
       )}
 
       {useLogoIcon ? (
-        <Pressable onPress={onIconPress} disabled={!onIconPress} style={styles.iconBtn}>
+        <Pressable
+          onPress={onIconPress}
+          disabled={!onIconPress}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
+        >
           <AlterLogo size={20} />
         </Pressable>
       ) : (
-        <Pressable onPress={onIconPress} disabled={!onIconPress} style={styles.iconBtn}>
+        <Pressable
+          onPress={onIconPress}
+          disabled={!onIconPress}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
+        >
           <Ionicons name={icon} size={18} color={SemanticColors.success} />
         </Pressable>
       )}
@@ -78,9 +86,14 @@ const styles = StyleSheet.create({
     marginRight: Spacing.one,
   },
   iconBtn: {
-    minWidth: 20,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
+    minWidth: 32,
+    minHeight: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer" as never,
+  },
+  iconBtnPressed: {
+    opacity: 0.8,
   },
   titleRow: {
     flexDirection: "row",
