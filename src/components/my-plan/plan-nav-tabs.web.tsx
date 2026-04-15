@@ -106,12 +106,11 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: SemanticColors.surfaceCard,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.06)",
   },
   scrollContent: {
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.three,
     gap: Spacing.one,
   },
   tab: {

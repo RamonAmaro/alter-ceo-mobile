@@ -9,11 +9,13 @@ interface StoredCredentials {
 }
 
 export async function isBiometricsAvailable(): Promise<boolean> {
-  const compatible = await LocalAuthentication.hasHardwareAsync();
-  if (!compatible) return false;
-
-  const enrolled = await LocalAuthentication.isEnrolledAsync();
-  return enrolled;
+  try {
+    const compatible = await LocalAuthentication.hasHardwareAsync();
+    if (!compatible) return false;
+    return await LocalAuthentication.isEnrolledAsync();
+  } catch {
+    return false;
+  }
 }
 
 export async function authenticateWithBiometrics(): Promise<boolean> {

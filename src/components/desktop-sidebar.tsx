@@ -1,16 +1,18 @@
 import { router, usePathname } from "expo-router";
 import type { Href } from "expo-router";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
+import { AlterLogo } from "@/components/alter-logo";
 import { NAV_ITEMS } from "@/components/navigation/nav-items";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 
-const SIDEBAR_WIDTH = 220;
+const SIDEBAR_WIDTH = 230;
 const ACTIVE_COLOR = SemanticColors.success;
-const INACTIVE_COLOR = "rgba(255,255,255,0.45)";
+const INACTIVE_COLOR = "rgba(255,255,255,0.35)";
+const SIDEBAR_ICON_SIZE = 20;
 
 interface SidebarItemProps {
   label: string;
@@ -33,11 +35,15 @@ function SidebarItem({ label, icon, focused, onPress }: SidebarItemProps) {
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
     >
-      {focused && <View style={styles.activeBar} />}
-      {icon}
+      {focused && <View style={styles.activeIndicator} />}
+      <View style={styles.iconWrap}>{icon}</View>
       <ThemedText
         type="bodySm"
-        style={[styles.navLabel, focused && styles.navLabelActive, hovered && styles.navLabelHover]}
+        style={[
+          styles.navLabel,
+          focused && styles.navLabelActive,
+          !focused && hovered && styles.navLabelHover,
+        ]}
       >
         {label}
       </ThemedText>
@@ -64,21 +70,28 @@ export function DesktopSidebar() {
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.logoArea} onPress={() => handleNav("alter")}>
-        <Image
-          source={require("@/assets/ui/logo-alterceo.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+      <Pressable style={styles.brandArea} onPress={() => handleNav("alter")}>
+        <View style={styles.logoMark}>
+          <AlterLogo size={22} />
+        </View>
+        <View>
+          <ThemedText style={styles.brandTitle}>ALTER CEO</ThemedText>
+          <ThemedText style={styles.brandSub}>copiloto estratégico</ThemedText>
+        </View>
       </Pressable>
+
+      <View style={styles.divider} />
+
+      <View style={styles.sectionLabel}>
+        <ThemedText style={styles.sectionText}>NAVEGACIÓN</ThemedText>
+      </View>
 
       <View style={styles.nav}>
         <SidebarItem
           label="Inicio"
           icon={
-            <Ionicons
-              name={activeKey === "alter" ? "home" : "home-outline"}
-              size={20}
+            <AlterLogo
+              size={SIDEBAR_ICON_SIZE - 2}
               color={activeKey === "alter" ? ACTIVE_COLOR : INACTIVE_COLOR}
             />
           }
@@ -101,6 +114,7 @@ export function DesktopSidebar() {
       </View>
 
       <View style={styles.footer}>
+        <View style={styles.divider} />
         <Pressable
           style={[styles.profileBtn, profileHovered && styles.profileBtnHover]}
           onPress={() => handleNav("profile")}
@@ -108,11 +122,18 @@ export function DesktopSidebar() {
           onHoverOut={() => setProfileHovered(false)}
         >
           <View style={styles.avatar}>
-            <Ionicons name="person" size={14} color={SemanticColors.textPrimary} />
+            <Ionicons name="person" size={13} color="rgba(255,255,255,0.8)" />
           </View>
-          <ThemedText type="bodySm" style={styles.profileLabel}>
-            Mi Perfil
-          </ThemedText>
+          <View style={styles.profileInfo}>
+            <ThemedText style={styles.profileName}>Mi Perfil</ThemedText>
+            <ThemedText style={styles.profileRole}>CEO</ThemedText>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={14}
+            color="rgba(255,255,255,0.2)"
+            style={styles.profileChevron}
+          />
         </Pressable>
       </View>
     </View>
@@ -122,96 +143,163 @@ export function DesktopSidebar() {
 const styles = StyleSheet.create({
   container: {
     width: SIDEBAR_WIDTH,
-    backgroundColor: SemanticColors.surfaceDark,
+    backgroundColor: "#06080c",
     borderRightWidth: 1,
-    borderRightColor: SemanticColors.border,
+    borderRightColor: "rgba(255,255,255,0.04)",
   },
-  logoArea: {
+  brandArea: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.four,
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 24,
     cursor: "pointer" as never,
   },
-  logo: {
-    width: 64,
-    height: 60,
+  logoMark: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,255,132,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 14,
+    letterSpacing: 2.5,
+    color: SemanticColors.textPrimary,
+    lineHeight: 18,
+  },
+  brandSub: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 9,
+    letterSpacing: 0.5,
+    color: "rgba(255,255,255,0.3)",
+    lineHeight: 14,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    marginHorizontal: 16,
+  },
+  sectionLabel: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
+  },
+  sectionText: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 9,
+    letterSpacing: 2,
+    color: "rgba(255,255,255,0.2)",
+    lineHeight: 12,
   },
   nav: {
     flex: 1,
-    borderTopWidth: 1,
-    borderTopColor: SemanticColors.border,
-    paddingTop: Spacing.three,
     gap: 2,
+    paddingHorizontal: Spacing.two,
   },
   navItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.three,
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.four,
-    marginHorizontal: Spacing.two,
-    borderRadius: 8,
+    gap: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 10,
     cursor: "pointer" as never,
     transitionProperty: "background-color" as never,
-    transitionDuration: "150ms" as never,
+    transitionDuration: "180ms" as never,
   },
   navItemActive: {
-    backgroundColor: "rgba(0,255,132,0.08)",
+    backgroundColor: "rgba(0,255,132,0.07)",
   },
   navItemHover: {
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: "rgba(255,255,255,0.03)",
   },
-  activeBar: {
+  iconWrap: {
+    width: SIDEBAR_ICON_SIZE,
+    height: SIDEBAR_ICON_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activeIndicator: {
     position: "absolute",
     left: 0,
-    top: 8,
-    bottom: 8,
+    top: 10,
+    bottom: 10,
     width: 3,
-    borderRadius: 2,
+    borderRadius: 0,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
     backgroundColor: ACTIVE_COLOR,
+    shadowColor: ACTIVE_COLOR,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
   },
   navLabel: {
-    color: INACTIVE_COLOR,
     fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    color: INACTIVE_COLOR,
     transitionProperty: "color" as never,
-    transitionDuration: "150ms" as never,
+    transitionDuration: "180ms" as never,
   },
   navLabelActive: {
     color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratSemiBold,
   },
   navLabelHover: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.65)",
   },
   footer: {
-    borderTopWidth: 1,
-    borderTopColor: SemanticColors.border,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.two,
+    paddingBottom: Spacing.three,
   },
   profileBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: 8,
+    gap: 10,
+    marginHorizontal: Spacing.two,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
     cursor: "pointer" as never,
     transitionProperty: "background-color" as never,
-    transitionDuration: "150ms" as never,
+    transitionDuration: "180ms" as never,
   },
   profileBtnHover: {
     backgroundColor: "rgba(255,255,255,0.04)",
   },
-  profileLabel: {
-    color: SemanticColors.iconMuted,
-    fontFamily: Fonts.montserratMedium,
-  },
   avatar: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.7)",
+    lineHeight: 16,
+  },
+  profileRole: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 9,
+    color: "rgba(255,255,255,0.25)",
+    lineHeight: 12,
+    letterSpacing: 0.5,
+  },
+  profileChevron: {
+    opacity: 0.6,
   },
 });

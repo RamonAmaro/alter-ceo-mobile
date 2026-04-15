@@ -16,7 +16,7 @@ import { SemanticColors, Spacing } from "@/constants/theme";
 import { useSectionScroll } from "@/hooks/use-section-scroll";
 import type { PlanData } from "@/types/plan";
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 
 interface PlanContentProps {
   plan: PlanData;
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerBlock: {
-    backgroundColor: SemanticColors.surfaceCard,
+    backgroundColor: Platform.OS === "web" ? "transparent" : SemanticColors.surfaceCard,
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,

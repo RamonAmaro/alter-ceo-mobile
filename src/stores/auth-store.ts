@@ -97,18 +97,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkBiometricsStatus: async () => {
     const available = await isBiometricsAvailable();
     const stored = await hasStoredCredentials();
-    set({ biometricsEnabled: available && stored, isLoading: false });
+    set({ biometricsEnabled: available && stored });
   },
 
   checkSession: async () => {
     const session = await getSession();
-    if (session) {
-      set({ isAuthenticated: true, user: session });
-      const enriched = await enrichFromProfile(session);
-      set({ user: enriched });
-    } else {
-      set({ isAuthenticated: false, user: null });
+    if (!session) {
+      set({ isAuthenticated: false, user: null, isLoading: false });
+      return;
     }
+    set({ isAuthenticated: true, user: session, isLoading: false });
+    const enriched = await enrichFromProfile(session);
+    set({ user: enriched });
   },
 
   resetLocalState: () => {

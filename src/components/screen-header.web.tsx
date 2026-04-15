@@ -1,7 +1,9 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
 interface ScreenHeaderProps {
@@ -16,6 +18,7 @@ interface ScreenHeaderProps {
 }
 
 export function ScreenHeader({
+  topInset,
   icon,
   useLogoIcon = false,
   titlePrefix,
@@ -24,16 +27,23 @@ export function ScreenHeader({
   onIconPress,
   showBack = false,
 }: ScreenHeaderProps) {
+  const { isMobile } = useResponsiveLayout();
+  const shouldShowBack = showBack ?? isMobile;
+
+  function handleBack(): void {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  }
+
   return (
-    <View style={styles.container}>
-      {showBack && onBack && (
-        <Ionicons
-          name="arrow-back"
-          size={20}
-          color={SemanticColors.textPrimary}
-          onPress={onBack}
-          style={styles.backButton}
-        />
+    <View style={[styles.container, isMobile && { paddingTop: topInset + Spacing.two }]}>
+      {shouldShowBack && (
+        <Pressable onPress={handleBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={20} color={SemanticColors.textPrimary} />
+        </Pressable>
       )}
 
       {useLogoIcon ? (
