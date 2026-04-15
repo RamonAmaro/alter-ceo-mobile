@@ -1,15 +1,15 @@
 import { useEffect } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useMeetingStore } from "@/stores/meeting-store";
+import { goBackOrHome } from "@/utils/navigation";
 
 import { MeetingAudioPlayer } from "./meeting-audio-player";
 import { MeetingSummarySection } from "./meeting-summary-section";
@@ -58,7 +58,7 @@ const HERO_GRADIENT: readonly [string, string, ...string[]] = [
 
 export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const { isMobile } = useResponsiveLayout();
   const meeting = useMeetingStore((s) => s.activeMeeting);
   const isLoading = useMeetingStore((s) => s.isLoading);
   const getMeetingDetails = useMeetingStore((s) => s.getMeetingDetails);
@@ -74,15 +74,14 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const sColor = meeting ? statusColor(meeting.status) : SemanticColors.textMuted;
 
   return (
-    <ResponsiveContainer maxWidth={900}>
-      <View style={styles.root}>
+    <View style={styles.root}>
         <ScreenHeader
           topInset={insets.top}
           icon="document-text"
           titlePrefix="Detalle"
           titleAccent={"Reuni\u00F3n"}
-          showBack
-          onBack={() => router.back()}
+          showBack={isMobile}
+          onBack={() => goBackOrHome()}
         />
 
         {isLoading || !meeting ? (
@@ -200,8 +199,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
             ) : null}
           </ScrollView>
         )}
-      </View>
-    </ResponsiveContainer>
+    </View>
   );
 }
 

@@ -11,6 +11,7 @@ import {
 import { AppBackground } from "@/components/app-background";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 
@@ -23,6 +24,7 @@ const TABS = [
 ] as const;
 
 export function RecordingScreen() {
+  const { isMobile } = useResponsiveLayout();
   const windowWidth = useWindowDimensions().width;
   const [containerWidth, setContainerWidth] = useState(0);
   const width = containerWidth || windowWidth;
@@ -49,7 +51,13 @@ export function RecordingScreen() {
         style={styles.container}
         onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
       >
-        <ScreenHeader topInset={0} icon="mic" titlePrefix="Grabar" titleAccent="Reunión" />
+        <ScreenHeader
+          topInset={0}
+          icon="mic"
+          titlePrefix="Grabar"
+          titleAccent="Reunión"
+          showBack={isMobile}
+        />
 
         <View style={styles.tabBar}>
           {TABS.map((tab, i) => {

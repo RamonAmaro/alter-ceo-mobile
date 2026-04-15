@@ -1,6 +1,8 @@
 import { Spacing } from "@/constants/theme";
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
+
+const SECTION_GAP = Platform.OS === "web" ? Spacing.six : Spacing.five;
 
 export function SectionBlock({ children }: { children: ReactNode }) {
   return <View style={styles.block}>{children}</View>;
@@ -12,11 +14,11 @@ export function SectionDivider() {
 
 const styles = StyleSheet.create({
   block: {
-    marginBottom: Spacing.five,
+    marginBottom: SECTION_GAP,
   },
   divider: {
     height: 1,
     backgroundColor: "rgba(255,255,255,0.06)",
-    marginBottom: Spacing.five,
+    marginBottom: SECTION_GAP,
   },
 });

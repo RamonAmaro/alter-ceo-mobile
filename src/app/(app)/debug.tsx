@@ -11,6 +11,8 @@ import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { API_BASE_URL, API_VERSION } from "@/constants/env";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
+import { goBackOrHome } from "@/utils/navigation";
 import * as debugApiService from "@/services/debug-api-service";
 import { clearLocalAppData } from "@/services/debug-service";
 import {
@@ -69,6 +71,7 @@ function SectionCard({ title, description, children, style }: SectionCardProps) 
 
 export default function DebugScreen() {
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsiveLayout();
   const router = useRouter();
   const params = useLocalSearchParams<{ source?: string }>();
   const {
@@ -255,8 +258,8 @@ export default function DebugScreen() {
             icon="bug-outline"
             titlePrefix="Modo"
             titleAccent="Debug"
-            onBack={() => router.back()}
-            showBack
+            onBack={() => goBackOrHome()}
+            showBack={isMobile}
           />
 
           <ScrollView

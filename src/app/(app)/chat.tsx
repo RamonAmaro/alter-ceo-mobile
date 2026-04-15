@@ -6,10 +6,10 @@ import { AppBackground } from "@/components/app-background";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { KeyboardView } from "@/components/keyboard-view";
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatStore } from "@/stores/chat-store";
 
@@ -21,6 +21,7 @@ function extractInitial(displayName: string | null, email: string | null): strin
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsiveLayout();
   const [inputValue, setInputValue] = useState("");
 
   const user = useAuthStore((s) => s.user);
@@ -73,45 +74,44 @@ export default function ChatScreen() {
 
   return (
     <AppBackground style={{ paddingBottom: insets.bottom }}>
-      <ResponsiveContainer maxWidth={900}>
-        <KeyboardView>
-          <View style={styles.flex}>
-            <ScreenHeader
-              topInset={insets.top}
-              useLogoIcon
-              titlePrefix="El Cerebro"
-              titleAccent="ALTER CEO"
+      <KeyboardView>
+        <View style={styles.flex}>
+          <ScreenHeader
+            topInset={insets.top}
+            useLogoIcon
+            titlePrefix="El Cerebro"
+            titleAccent="ALTER CEO"
+            showBack={isMobile}
+          />
+
+          {isLoadingMessages ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={SemanticColors.success} />
+            </View>
+          ) : (
+            <ChatMessageList
+              messages={messages}
+              isStreaming={isStreaming}
+              userInitial={userInitial}
+              failedMessageId={failedMessageId}
+              onRetry={retryMessage}
             />
+          )}
 
-            {isLoadingMessages ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={SemanticColors.success} />
-              </View>
-            ) : (
-              <ChatMessageList
-                messages={messages}
-                isStreaming={isStreaming}
-                userInitial={userInitial}
-                failedMessageId={failedMessageId}
-                onRetry={retryMessage}
-              />
-            )}
+          {error != null && (
+            <ThemedText type="bodySm" style={styles.errorText}>
+              {error}
+            </ThemedText>
+          )}
 
-            {error != null && (
-              <ThemedText type="bodySm" style={styles.errorText}>
-                {error}
-              </ThemedText>
-            )}
-
-            <ChatInput
-              value={inputValue}
-              onChangeText={setInputValue}
-              onSend={handleSend}
-              disabled={isStreaming}
-            />
-          </View>
-        </KeyboardView>
-      </ResponsiveContainer>
+          <ChatInput
+            value={inputValue}
+            onChangeText={setInputValue}
+            onSend={handleSend}
+            disabled={isStreaming}
+          />
+        </View>
+      </KeyboardView>
     </AppBackground>
   );
 }
