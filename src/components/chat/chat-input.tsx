@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserrat,
     fontSize: 14,
     color: SemanticColors.textPrimary,
+    outlineStyle: "none" as never,
   },
   audioBtn: {
     padding: Spacing.two,

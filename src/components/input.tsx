@@ -56,6 +56,7 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 13,
+    outlineStyle: "none" as never,
   },
   inputError: {
     borderColor: SemanticColors.accent,

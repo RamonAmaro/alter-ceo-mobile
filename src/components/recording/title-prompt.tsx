@@ -130,6 +130,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
+    outlineStyle: "none" as never,
   },
   actions: {
     flexDirection: "row",

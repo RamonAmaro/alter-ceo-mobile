@@ -114,5 +114,6 @@ const styles = StyleSheet.create({
     borderColor: SemanticColors.borderLight,
     paddingHorizontal: Spacing.three,
     paddingVertical: 14,
+    outlineStyle: "none" as never,
   },
 });
