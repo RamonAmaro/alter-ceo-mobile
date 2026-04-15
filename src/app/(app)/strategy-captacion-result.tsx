@@ -21,6 +21,7 @@ import type {
   DistribucionPresupuestoTactico,
   Fase1OfertaIrresistibleSection,
   Fase2GrandesDensidadesSection,
+  Fase3SistemaCaptacionContactosSection,
   GranDensidadPrioritariaSection,
   PropuestaDeCaptacionEn5Fases,
 } from "@/types/report";
@@ -257,6 +258,100 @@ function budgetDistributionItems(distribution: DistribucionPresupuestoTactico) {
   ];
 }
 
+function phaseThreeCoreItems(section: Fase3SistemaCaptacionContactosSection): KeyValueItem[] {
+  return [
+    {
+      label: "Qué se pide exactamente",
+      value: section.que_se_pide_exactamente,
+    },
+    {
+      label: "Por qué ese nivel de datos es razonable",
+      value: section.por_que_ese_nivel_de_datos_es_razonable,
+    },
+    {
+      label: "Cómo reducir la fricción",
+      value: section.como_reducir_la_friccion,
+    },
+    {
+      label: "Cómo conectarlo con seguimiento posterior",
+      value: section.como_conectar_esto_con_seguimiento_posterior,
+    },
+  ];
+}
+
+function ContactMethodCard({
+  title,
+  text,
+  accent,
+}: {
+  title: string;
+  text: string;
+  accent: string;
+}) {
+  return (
+    <View style={[styles.contactMethodCard, { borderColor: accent }]}>
+      <View style={[styles.contactMethodAccent, { backgroundColor: accent }]} />
+      <ThemedText type="labelSm" style={styles.contactMethodTitle}>
+        {title}
+      </ThemedText>
+      <ThemedText type="bodyMd" style={styles.contactMethodText}>
+        {text}
+      </ThemedText>
+    </View>
+  );
+}
+
+function PhaseThreePanel({
+  section,
+  isMobile,
+}: {
+  section: Fase3SistemaCaptacionContactosSection;
+  isMobile: boolean;
+}) {
+  return (
+    <View style={styles.phaseThreePanel}>
+      <TextBlock text={section.explicacion_educativa} />
+
+      <View style={[styles.contactMethodGrid, !isMobile && styles.contactMethodGridDesktop]}>
+        <ContactMethodCard
+          title="Método principal"
+          text={section.metodo_principal_recomendado}
+          accent={SemanticColors.teal}
+        />
+        <ContactMethodCard
+          title="Método secundario"
+          text={section.metodo_secundario_de_apoyo}
+          accent={SemanticColors.accent}
+        />
+      </View>
+
+      <View style={styles.messagePanel}>
+        <ThemedText type="labelSm" style={styles.messagePanelTitle}>
+          Mensaje sugerido
+        </ThemedText>
+        <ThemedText type="bodyLg" style={styles.messagePanelText}>
+          {section.mensaje_sugerido_para_pedirlos}
+        </ThemedText>
+      </View>
+
+      <InsightGrid
+        items={[
+          {
+            label: "Incentivo / promesa",
+            value: section.incentivo_o_promesa_para_dejar_el_contacto,
+          },
+          {
+            label: "Error a evitar",
+            value: section.error_mas_tipico_que_el_negocio_debe_evitar,
+          },
+        ]}
+      />
+
+      <KeyValueList items={phaseThreeCoreItems(section)} />
+    </View>
+  );
+}
+
 function DensityCard({
   density,
   index,
@@ -385,6 +480,7 @@ function ProposalCard({
 }) {
   const angle = angleCopy(proposal.angulo_principal);
   const phaseTwo = proposal.fase_2_grandes_densidades;
+  const phaseThree = proposal.fase_3_sistema_de_captacion_de_contactos;
 
   return (
     <View style={styles.proposalCard}>
@@ -444,6 +540,13 @@ function ProposalCard({
             </ThemedText>
             <BudgetPanel phaseTwo={phaseTwo} isMobile={isMobile} />
           </View>
+        </View>
+      ) : null}
+
+      {phaseThree ? (
+        <View style={styles.phaseSection}>
+          <PhaseTag label="Fase 3 · Sistema de captación de contactos" />
+          <PhaseThreePanel section={phaseThree} isMobile={isMobile} />
         </View>
       ) : null}
     </View>
@@ -832,5 +935,52 @@ const styles = StyleSheet.create({
   distributionFill: {
     height: "100%",
     borderRadius: 999,
+  },
+  phaseThreePanel: {
+    gap: Spacing.two,
+  },
+  contactMethodGrid: {
+    gap: Spacing.two,
+  },
+  contactMethodGridDesktop: {
+    flexDirection: "row",
+  },
+  contactMethodCard: {
+    flex: 1,
+    minWidth: 220,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: Spacing.three,
+    gap: Spacing.one,
+    overflow: "hidden",
+  },
+  contactMethodAccent: {
+    width: 42,
+    height: 4,
+    borderRadius: 999,
+    marginBottom: Spacing.one,
+  },
+  contactMethodTitle: {
+    color: SemanticColors.textPrimary,
+  },
+  contactMethodText: {
+    color: SemanticColors.textSecondaryLight,
+  },
+  messagePanel: {
+    backgroundColor: "rgba(14, 35, 30, 0.58)",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(67,188,184,0.22)",
+    padding: Spacing.three,
+    gap: Spacing.one,
+  },
+  messagePanelTitle: {
+    color: SemanticColors.tealLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  messagePanelText: {
+    color: SemanticColors.textPrimary,
   },
 });

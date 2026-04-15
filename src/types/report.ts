@@ -133,11 +133,25 @@ export interface Fase2GrandesDensidadesSection {
   presupuesto_tactico: PresupuestoTacticoSection;
 }
 
+export interface Fase3SistemaCaptacionContactosSection {
+  explicacion_educativa: string;
+  metodo_principal_recomendado: string;
+  metodo_secundario_de_apoyo: string;
+  que_se_pide_exactamente: string;
+  por_que_ese_nivel_de_datos_es_razonable: string;
+  como_reducir_la_friccion: string;
+  mensaje_sugerido_para_pedirlos: string;
+  incentivo_o_promesa_para_dejar_el_contacto: string;
+  error_mas_tipico_que_el_negocio_debe_evitar: string;
+  como_conectar_esto_con_seguimiento_posterior: string;
+}
+
 export interface PropuestaDeCaptacionEn5Fases {
   titulo: string;
   angulo_principal: "sufrimiento" | "placer";
   fase_1_oferta_irresistible: Fase1OfertaIrresistibleSection;
   fase_2_grandes_densidades?: Fase2GrandesDensidadesSection | null;
+  fase_3_sistema_de_captacion_de_contactos?: Fase3SistemaCaptacionContactosSection | null;
 }
 
 export interface EstrategiaDeCaptacionEn5FasesSection {
