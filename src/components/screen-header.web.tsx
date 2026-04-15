@@ -1,8 +1,10 @@
 import { AlterLogo } from "@/components/alter-logo";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, StyleSheet, View } from "react-native";
 
 interface ScreenHeaderProps {
   topInset: number;
@@ -11,33 +13,47 @@ interface ScreenHeaderProps {
   titlePrefix: string;
   titleAccent: string;
   onBack?: () => void;
+  onIconPress?: () => void;
   showBack?: boolean;
 }
 
 export function ScreenHeader({
+  topInset,
   icon,
   useLogoIcon = false,
   titlePrefix,
   titleAccent,
   onBack,
-  showBack = false,
+  onIconPress,
+  showBack,
 }: ScreenHeaderProps) {
+  const { isMobile } = useResponsiveLayout();
+  const shouldShowBack = showBack ?? isMobile;
+
+  function handleBack(): void {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  }
+
   return (
-    <View style={styles.container}>
-      {showBack && onBack && (
-        <Ionicons
-          name="arrow-back"
-          size={20}
-          color={SemanticColors.textPrimary}
-          onPress={onBack}
-          style={styles.backButton}
-        />
+    <View style={[styles.container, isMobile && { paddingTop: topInset + Spacing.two }]}>
+      {shouldShowBack && (
+        <Pressable onPress={handleBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={20} color={SemanticColors.textPrimary} />
+        </Pressable>
       )}
 
       {useLogoIcon ? (
-        <AlterLogo size={20} />
+        <Pressable onPress={onIconPress} disabled={!onIconPress} style={styles.iconBtn}>
+          <AlterLogo size={20} />
+        </Pressable>
       ) : (
-        <Ionicons name={icon} size={18} color={SemanticColors.success} />
+        <Pressable onPress={onIconPress} disabled={!onIconPress} style={styles.iconBtn}>
+          <Ionicons name={icon} size={18} color={SemanticColors.success} />
+        </Pressable>
       )}
 
       <View style={styles.titleRow}>
@@ -60,6 +76,11 @@ const styles = StyleSheet.create({
   backButton: {
     cursor: "pointer" as never,
     marginRight: Spacing.one,
+  },
+  iconBtn: {
+    minWidth: 20,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   titleRow: {
     flexDirection: "row",

@@ -1,4 +1,6 @@
+import { AppBackground } from "@/components/app-background";
 import { MenuItem } from "@/components/menu-item";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useDebugStore } from "@/stores/debug-store";
@@ -46,26 +48,30 @@ export default function SettingsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <ScreenHeader
-        topInset={insets.top}
-        icon="settings"
-        titlePrefix="Sala de"
-        titleAccent="Máquinas"
-        onIconPress={() => void handleHiddenDebugTap()}
-        showBack={isMobile}
-      />
-
-      <View style={styles.content}>
-        {isDebugUnlocked ? (
-          <MenuItem
-            icon="bug-outline"
-            label="Herramientas de debug"
-            onPress={() => router.push("/(app)/debug")}
+    <AppBackground>
+      <ResponsiveContainer maxWidth={900}>
+        <View style={styles.container}>
+          <ScreenHeader
+            topInset={insets.top}
+            icon="settings"
+            titlePrefix="Sala de"
+            titleAccent="Máquinas"
+            onIconPress={() => void handleHiddenDebugTap()}
+            showBack={isMobile}
           />
-        ) : null}
-      </View>
-    </View>
+
+          <View style={styles.content}>
+            {isDebugUnlocked ? (
+              <MenuItem
+                icon="bug-outline"
+                label="Herramientas de debug"
+                onPress={() => router.push("/(app)/debug")}
+              />
+            ) : null}
+          </View>
+        </View>
+      </ResponsiveContainer>
+    </AppBackground>
   );
 }
 

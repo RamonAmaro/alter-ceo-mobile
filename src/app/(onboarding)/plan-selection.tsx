@@ -1,5 +1,7 @@
+import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { FooterActionBar } from "@/components/footer-action-bar";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { SelectableOption } from "@/components/selectable-option";
 import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
@@ -37,54 +39,59 @@ export default function PlanSelectionScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + Spacing.four }]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.textContainer}>
-          <ThemedText type="headingMd" style={styles.whiteText}>
-            ESCOGE EXPRESS{"\n"}O PROFESIONAL
-          </ThemedText>
-          <ThemedText type="bodyLg" style={styles.whiteText}>
-            {"\n"}Para poder ayudarte de forma inmediata, lo primero que vamos a diseñar es un Plan
-            para Duplicar tus Ventas y Trabajar la Mitad.
-            {"\n\n"}Para ello, te vamos a solicitar algunos datos de tu negocio (son muy sencillos,
-            no te preocupes). Elige entre inicio Express (3 minutos de tiempo aprox) o Profesional
-            (6 minutos aprox). A más información, más podemos afinar en el desarrollo del plan.
-          </ThemedText>
-        </View>
+    <AppBackground>
+      <ResponsiveContainer maxWidth={480}>
+        <View style={[styles.container, { paddingTop: insets.top + Spacing.four }]}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.textContainer}>
+              <ThemedText type="headingMd" style={styles.whiteText}>
+                ESCOGE EXPRESS{"\n"}O PROFESIONAL
+              </ThemedText>
+              <ThemedText type="bodyLg" style={styles.whiteText}>
+                {"\n"}Para poder ayudarte de forma inmediata, lo primero que vamos a diseñar es un
+                Plan para Duplicar tus Ventas y Trabajar la Mitad.
+                {"\n\n"}Para ello, te vamos a solicitar algunos datos de tu negocio (son muy
+                sencillos, no te preocupes). Elige entre inicio Express (3 minutos de tiempo aprox)
+                o Profesional (6 minutos aprox). A más información, más podemos afinar en el
+                desarrollo del plan.
+              </ThemedText>
+            </View>
 
-        <View style={styles.optionsContainer}>
-          <SelectableOption
-            label="EXPRESS"
-            subtitle="3 minutos de tiempo aprox"
-            selected={planType === "express"}
-            onPress={() => handleSelectPlan("express")}
-          />
-          <SelectableOption
-            label="PROFESIONAL"
-            subtitle="6 minutos de tiempo aprox"
-            selected={planType === "professional"}
-            onPress={() => handleSelectPlan("professional")}
-          />
-        </View>
-      </ScrollView>
+            <View style={styles.optionsContainer}>
+              <SelectableOption
+                label="EXPRESS"
+                subtitle="3 minutos de tiempo aprox"
+                selected={planType === "express"}
+                onPress={() => handleSelectPlan("express")}
+              />
+              <SelectableOption
+                label="PROFESIONAL"
+                subtitle="6 minutos de tiempo aprox"
+                selected={planType === "professional"}
+                onPress={() => handleSelectPlan("professional")}
+              />
+            </View>
+          </ScrollView>
 
-      {planType && (
-        <Animated.View
-          style={{
-            opacity: footerOpacity,
-            transform: [{ translateY: footerTranslateY }],
-          }}
-        >
-          <FooterActionBar>
-            <Button label="Continuar" onPress={() => router.push("/(onboarding)/questions")} />
-          </FooterActionBar>
-        </Animated.View>
-      )}
-    </View>
+          {planType && (
+            <Animated.View
+              style={{
+                opacity: footerOpacity,
+                transform: [{ translateY: footerTranslateY }],
+              }}
+            >
+              <FooterActionBar>
+                <Button label="Continuar" onPress={() => router.push("/(onboarding)/questions")} />
+              </FooterActionBar>
+            </Animated.View>
+          )}
+        </View>
+      </ResponsiveContainer>
+    </AppBackground>
   );
 }
 

@@ -1,4 +1,6 @@
+import { AppBackground } from "@/components/app-background";
 import { PlanContent } from "@/components/my-plan/plan-content";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors } from "@/constants/theme";
@@ -26,41 +28,51 @@ export default function MyPlanScreen() {
 
   if (!latestPlan && !error) {
     return (
-      <View style={styles.container}>
-        <ScreenHeader
-          topInset={insets.top}
-          icon="trophy"
-          titlePrefix="Mi"
-          titleAccent="Plan"
-          showBack={isMobile}
-        />
-        <View style={styles.centered}>
-          <ActivityIndicator color={SemanticColors.success} size="large" />
+      <AppBackground>
+        <View style={styles.container}>
+          <ScreenHeader
+            topInset={insets.top}
+            icon="trophy"
+            titlePrefix="Mi"
+            titleAccent="Plan"
+            showBack={isMobile}
+          />
+          <View style={styles.centered}>
+            <ActivityIndicator color={SemanticColors.success} size="large" />
+          </View>
         </View>
-      </View>
+      </AppBackground>
     );
   }
 
   if (!latestPlan) {
     return (
-      <View style={styles.container}>
-        <ScreenHeader
-          topInset={insets.top}
-          icon="trophy"
-          titlePrefix="Mi"
-          titleAccent="Plan"
-          showBack={isMobile}
-        />
-        <View style={styles.centered}>
-          <ThemedText type="bodyMd" style={styles.emptyText}>
-            Aún no tienes un plan generado.{"\n"}Completa el onboarding para crearlo.
-          </ThemedText>
+      <AppBackground>
+        <View style={styles.container}>
+          <ScreenHeader
+            topInset={insets.top}
+            icon="trophy"
+            titlePrefix="Mi"
+            titleAccent="Plan"
+            showBack={isMobile}
+          />
+          <View style={styles.centered}>
+            <ThemedText type="bodyMd" style={styles.emptyText}>
+              Aún no tienes un plan generado.{"\n"}Completa el onboarding para crearlo.
+            </ThemedText>
+          </View>
         </View>
-      </View>
+      </AppBackground>
     );
   }
 
-  return <PlanContent plan={latestPlan.plan as PlanData} insets={insets} />;
+  return (
+    <AppBackground>
+      <ResponsiveContainer maxWidth={900}>
+        <PlanContent plan={latestPlan.plan as PlanData} insets={insets} />
+      </ResponsiveContainer>
+    </AppBackground>
+  );
 }
 
 const styles = StyleSheet.create({

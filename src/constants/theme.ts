@@ -78,7 +78,3 @@ export const Spacing = {
   five: 32,
   six: 64,
 } as const;
-
-export const Layout = {
-  maxContentWidth: 900,
-} as const;

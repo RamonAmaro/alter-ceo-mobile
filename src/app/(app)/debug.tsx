@@ -4,7 +4,9 @@ import { Alert, Pressable, ScrollView, StyleSheet, View, type ViewStyle } from "
 import Constants from "expo-constants";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { API_BASE_URL, API_VERSION } from "@/constants/env";
@@ -245,195 +247,202 @@ export default function DebugScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <ScreenHeader
-        topInset={insets.top}
-        icon="bug-outline"
-        titlePrefix="Modo"
-        titleAccent="Debug"
-        onBack={() => router.back()}
-        showBack
-      />
-
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <SectionCard title="Entorno" description="Resumen de la configuración activa del cliente.">
-          <InfoRow label="App" value={Constants.expoConfig?.name ?? "Alter CEO"} />
-          <InfoRow label="Versión" value={Constants.expoConfig?.version ?? "n/a"} />
-          <InfoRow label="Modo desarrollo" value={__DEV__ ? "Sí" : "No"} />
-          <InfoRow label="Base de la API" value={API_BASE_URL} />
-          <InfoRow label="Versión de la API" value={API_VERSION} />
-        </SectionCard>
-
-        <SectionCard
-          title="Sesion"
-          description="Estado actual de autenticación del usuario cargado en la app."
-        >
-          <InfoRow label="Autenticado" value={isAuthenticated ? "Sí" : "No"} />
-          <InfoRow label="User ID" value={user?.userId ?? "n/a"} />
-          <InfoRow label="Email" value={user?.email ?? "n/a"} />
-          <InfoRow label="Nombre" value={user?.displayName ?? "n/a"} />
-          <InfoRow label="Roles" value={user?.roles.join(", ") || "Sin roles"} />
-        </SectionCard>
-
-        <SectionCard
-          title="Onboarding"
-          description="Reinicia rápidamente el progreso local del onboarding en este dispositivo."
-        >
-          <Button
-            label={isResettingOnboarding ? "Reiniciando..." : "Reiniciar onboarding"}
-            onPress={() => void handleResetOnboarding()}
-            disabled={isResettingOnboarding}
-            style={styles.actionButton}
+    <AppBackground>
+      <ResponsiveContainer maxWidth={720}>
+        <View style={styles.container}>
+          <ScreenHeader
+            topInset={insets.top}
+            icon="bug-outline"
+            titlePrefix="Modo"
+            titleAccent="Debug"
+            onBack={() => router.back()}
+            showBack
           />
-        </SectionCard>
 
-        <SectionCard
-          title="Almacenamiento local"
-          description="Borra el estado persistido del dispositivo y te devuelve al login."
-        >
-          <Button
-            label={isClearingLocalData ? "Borrando..." : "Borrar almacenamiento local"}
-            onPress={() => void handleClearLocalData()}
-            disabled={isClearingLocalData}
-            style={styles.actionButton}
-          />
-        </SectionCard>
-
-        <SectionCard
-          title="Arquetipo CEO"
-          description="Aplica manualmente un arquetipo CEO al usuario actual."
-        >
-          <Pressable
-            style={styles.selectTrigger}
-            onPress={() => setIsArchetypePickerOpen((current) => !current)}
+          <ScrollView
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+            showsVerticalScrollIndicator={false}
           >
-            <View style={styles.selectContent}>
-              <ThemedText type="labelSm" style={styles.selectLabel}>
-                {selectedArchetype?.label ?? "Selecciona un arquetipo CEO"}
+            <SectionCard
+              title="Entorno"
+              description="Resumen de la configuración activa del cliente."
+            >
+              <InfoRow label="App" value={Constants.expoConfig?.name ?? "Alter CEO"} />
+              <InfoRow label="Versión" value={Constants.expoConfig?.version ?? "n/a"} />
+              <InfoRow label="Modo desarrollo" value={__DEV__ ? "Sí" : "No"} />
+              <InfoRow label="Base de la API" value={API_BASE_URL} />
+              <InfoRow label="Versión de la API" value={API_VERSION} />
+            </SectionCard>
+
+            <SectionCard
+              title="Sesion"
+              description="Estado actual de autenticación del usuario cargado en la app."
+            >
+              <InfoRow label="Autenticado" value={isAuthenticated ? "Sí" : "No"} />
+              <InfoRow label="User ID" value={user?.userId ?? "n/a"} />
+              <InfoRow label="Email" value={user?.email ?? "n/a"} />
+              <InfoRow label="Nombre" value={user?.displayName ?? "n/a"} />
+              <InfoRow label="Roles" value={user?.roles.join(", ") || "Sin roles"} />
+            </SectionCard>
+
+            <SectionCard
+              title="Onboarding"
+              description="Reinicia rápidamente el progreso local del onboarding en este dispositivo."
+            >
+              <Button
+                label={isResettingOnboarding ? "Reiniciando..." : "Reiniciar onboarding"}
+                onPress={() => void handleResetOnboarding()}
+                disabled={isResettingOnboarding}
+                style={styles.actionButton}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title="Almacenamiento local"
+              description="Borra el estado persistido del dispositivo y te devuelve al login."
+            >
+              <Button
+                label={isClearingLocalData ? "Borrando..." : "Borrar almacenamiento local"}
+                onPress={() => void handleClearLocalData()}
+                disabled={isClearingLocalData}
+                style={styles.actionButton}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title="Arquetipo CEO"
+              description="Aplica manualmente un arquetipo CEO al usuario actual."
+            >
+              <Pressable
+                style={styles.selectTrigger}
+                onPress={() => setIsArchetypePickerOpen((current) => !current)}
+              >
+                <View style={styles.selectContent}>
+                  <ThemedText type="labelSm" style={styles.selectLabel}>
+                    {selectedArchetype?.label ?? "Selecciona un arquetipo CEO"}
+                  </ThemedText>
+                  <ThemedText type="bodySm" style={styles.selectHint}>
+                    Arquetipo detectado por el backend
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  name={isArchetypePickerOpen ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color={SemanticColors.textMuted}
+                />
+              </Pressable>
+
+              {isArchetypePickerOpen ? (
+                <View style={styles.dropdown}>
+                  {CEO_ARCHETYPE_OPTIONS.map((archetype) => {
+                    const selected = archetype.id === selectedCeoArchetypeId;
+                    return (
+                      <Pressable
+                        key={archetype.id}
+                        style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
+                        onPress={() => handleSelectArchetype(archetype.id)}
+                      >
+                        <ThemedText type="labelSm" style={styles.dropdownTitle}>
+                          {archetype.label}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+
+              <Button
+                label={isApplyingCeoArchetype ? "Aplicando..." : "Aplicar arquetipo CEO"}
+                onPress={() => void handleApplyCeoArchetype()}
+                disabled={isApplyingCeoArchetype}
+                style={styles.actionButton}
+              />
+              <ThemedText type="bodySm" style={styles.footnote}>
+                Solo modifica el arquetipo CEO del usuario actual.
               </ThemedText>
-              <ThemedText type="bodySm" style={styles.selectHint}>
-                Arquetipo detectado por el backend
+            </SectionCard>
+
+            <SectionCard
+              title="Perfiles por defecto"
+              description="Carga un business kernel y un plan de prueba para el usuario actual."
+            >
+              <Pressable
+                style={styles.selectTrigger}
+                onPress={() => setIsProfilePickerOpen((current) => !current)}
+              >
+                <View style={styles.selectContent}>
+                  <ThemedText type="labelSm" style={styles.selectLabel}>
+                    {selectedProfile?.title ?? "Selecciona un perfil"}
+                  </ThemedText>
+                  <ThemedText type="bodySm" style={styles.selectHint}>
+                    {selectedProfile?.description ?? "Sin perfil seleccionado"}
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  name={isProfilePickerOpen ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color={SemanticColors.textMuted}
+                />
+              </Pressable>
+
+              {isProfilePickerOpen ? (
+                <View style={styles.dropdown}>
+                  {availableProfiles.map((profile) => {
+                    const selected = profile.profile_id === selectedProfileId;
+                    return (
+                      <Pressable
+                        key={profile.profile_id}
+                        style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
+                        onPress={() => handleSelectProfile(profile.profile_id)}
+                      >
+                        <ThemedText type="labelSm" style={styles.dropdownTitle}>
+                          {profile.title}
+                        </ThemedText>
+                        {profile.description ? (
+                          <ThemedText type="bodySm" style={styles.dropdownDescription}>
+                            {profile.description}
+                          </ThemedText>
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+
+              {isLoadingProfiles ? (
+                <ThemedText type="bodySm" style={styles.footnote}>
+                  Cargando perfiles disponibles...
+                </ThemedText>
+              ) : null}
+
+              {profilesError ? (
+                <ThemedText type="bodySm" style={styles.footnote}>
+                  No se pudo actualizar la lista desde el backend: {profilesError}
+                </ThemedText>
+              ) : null}
+
+              {!isLoadingProfiles && !profilesError && availableProfiles.length === 0 ? (
+                <ThemedText type="bodySm" style={styles.footnote}>
+                  No hay perfiles por defecto disponibles en el backend.
+                </ThemedText>
+              ) : null}
+
+              <Button
+                label={isLoadingDefaultProfile ? "Cargando..." : "Cargar perfil por defecto"}
+                onPress={() => void handleLoadDefaultProfile()}
+                disabled={
+                  isLoadingDefaultProfile || isLoadingProfiles || availableProfiles.length === 0
+                }
+                style={styles.actionButton}
+              />
+              <ThemedText type="bodySm" style={styles.footnote}>
+                Solo carga el business kernel y el plan desde el backend.
               </ThemedText>
-            </View>
-            <Ionicons
-              name={isArchetypePickerOpen ? "chevron-up" : "chevron-down"}
-              size={18}
-              color={SemanticColors.textMuted}
-            />
-          </Pressable>
-
-          {isArchetypePickerOpen ? (
-            <View style={styles.dropdown}>
-              {CEO_ARCHETYPE_OPTIONS.map((archetype) => {
-                const selected = archetype.id === selectedCeoArchetypeId;
-                return (
-                  <Pressable
-                    key={archetype.id}
-                    style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
-                    onPress={() => handleSelectArchetype(archetype.id)}
-                  >
-                    <ThemedText type="labelSm" style={styles.dropdownTitle}>
-                      {archetype.label}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
-
-          <Button
-            label={isApplyingCeoArchetype ? "Aplicando..." : "Aplicar arquetipo CEO"}
-            onPress={() => void handleApplyCeoArchetype()}
-            disabled={isApplyingCeoArchetype}
-            style={styles.actionButton}
-          />
-          <ThemedText type="bodySm" style={styles.footnote}>
-            Solo modifica el arquetipo CEO del usuario actual.
-          </ThemedText>
-        </SectionCard>
-
-        <SectionCard
-          title="Perfiles por defecto"
-          description="Carga un business kernel y un plan de prueba para el usuario actual."
-        >
-          <Pressable
-            style={styles.selectTrigger}
-            onPress={() => setIsProfilePickerOpen((current) => !current)}
-          >
-            <View style={styles.selectContent}>
-              <ThemedText type="labelSm" style={styles.selectLabel}>
-                {selectedProfile?.title ?? "Selecciona un perfil"}
-              </ThemedText>
-              <ThemedText type="bodySm" style={styles.selectHint}>
-                {selectedProfile?.description ?? "Sin perfil seleccionado"}
-              </ThemedText>
-            </View>
-            <Ionicons
-              name={isProfilePickerOpen ? "chevron-up" : "chevron-down"}
-              size={18}
-              color={SemanticColors.textMuted}
-            />
-          </Pressable>
-
-          {isProfilePickerOpen ? (
-            <View style={styles.dropdown}>
-              {availableProfiles.map((profile) => {
-                const selected = profile.profile_id === selectedProfileId;
-                return (
-                  <Pressable
-                    key={profile.profile_id}
-                    style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
-                    onPress={() => handleSelectProfile(profile.profile_id)}
-                  >
-                    <ThemedText type="labelSm" style={styles.dropdownTitle}>
-                      {profile.title}
-                    </ThemedText>
-                    {profile.description ? (
-                      <ThemedText type="bodySm" style={styles.dropdownDescription}>
-                        {profile.description}
-                      </ThemedText>
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
-
-          {isLoadingProfiles ? (
-            <ThemedText type="bodySm" style={styles.footnote}>
-              Cargando perfiles disponibles...
-            </ThemedText>
-          ) : null}
-
-          {profilesError ? (
-            <ThemedText type="bodySm" style={styles.footnote}>
-              No se pudo actualizar la lista desde el backend: {profilesError}
-            </ThemedText>
-          ) : null}
-
-          {!isLoadingProfiles && !profilesError && availableProfiles.length === 0 ? (
-            <ThemedText type="bodySm" style={styles.footnote}>
-              No hay perfiles por defecto disponibles en el backend.
-            </ThemedText>
-          ) : null}
-
-          <Button
-            label={isLoadingDefaultProfile ? "Cargando..." : "Cargar perfil por defecto"}
-            onPress={() => void handleLoadDefaultProfile()}
-            disabled={
-              isLoadingDefaultProfile || isLoadingProfiles || availableProfiles.length === 0
-            }
-            style={styles.actionButton}
-          />
-          <ThemedText type="bodySm" style={styles.footnote}>
-            Solo carga el business kernel y el plan desde el backend.
-          </ThemedText>
-        </SectionCard>
-      </ScrollView>
-    </View>
+            </SectionCard>
+          </ScrollView>
+        </View>
+      </ResponsiveContainer>
+    </AppBackground>
   );
 }
 

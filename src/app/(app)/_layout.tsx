@@ -1,6 +1,4 @@
-import { AppBackground } from "@/components/app-background";
 import { DesktopSidebar } from "@/components/desktop-sidebar";
-import { ResponsiveContainer } from "@/components/responsive-container";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { Redirect, Stack } from "expo-router";
@@ -18,21 +16,19 @@ export default function AppLayout() {
   return (
     <View style={isMobile ? styles.fill : styles.desktopRow}>
       {!isMobile && <DesktopSidebar />}
-      <AppBackground>
-        <ResponsiveContainer>
-          <Stack screenOptions={{ headerShown: false, animation: "slide_from_left", contentStyle: { backgroundColor: "transparent" } }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="recording" />
-            <Stack.Screen name="settings" />
-            <Stack.Screen name="my-plan" />
-            <Stack.Screen name="strategy" />
-            <Stack.Screen name="chat" />
-            <Stack.Screen name="profile" />
-            <Stack.Screen name="debug" />
-            <Stack.Screen name="meeting-detail" />
-          </Stack>
-        </ResponsiveContainer>
-      </AppBackground>
+      <View style={styles.fill}>
+        <Stack screenOptions={{ headerShown: false, animation: "slide_from_left" }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="recording" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="my-plan" />
+          <Stack.Screen name="strategy" />
+          <Stack.Screen name="chat" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="debug" />
+          <Stack.Screen name="meeting-detail" />
+        </Stack>
+      </View>
     </View>
   );
 }

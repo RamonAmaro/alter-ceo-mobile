@@ -31,7 +31,7 @@
       "package": "com.ramonamaro.alterceo"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png",
       "backgroundColor": "#09090b"
     },

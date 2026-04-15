@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AppBackground } from "@/components/app-background";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { KeyboardView } from "@/components/keyboard-view";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
@@ -70,43 +72,47 @@ export default function ChatScreen() {
   }
 
   return (
-    <KeyboardView>
-      <View style={[styles.flex, { paddingBottom: insets.bottom }]}>
-        <ScreenHeader
-          topInset={insets.top}
-          useLogoIcon
-          titlePrefix="El Cerebro"
-          titleAccent="ALTER CEO"
-        />
+    <AppBackground style={{ paddingBottom: insets.bottom }}>
+      <ResponsiveContainer maxWidth={900}>
+        <KeyboardView>
+          <View style={styles.flex}>
+            <ScreenHeader
+              topInset={insets.top}
+              useLogoIcon
+              titlePrefix="El Cerebro"
+              titleAccent="ALTER CEO"
+            />
 
-        {isLoadingMessages ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={SemanticColors.success} />
+            {isLoadingMessages ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={SemanticColors.success} />
+              </View>
+            ) : (
+              <ChatMessageList
+                messages={messages}
+                isStreaming={isStreaming}
+                userInitial={userInitial}
+                failedMessageId={failedMessageId}
+                onRetry={retryMessage}
+              />
+            )}
+
+            {error != null && (
+              <ThemedText type="bodySm" style={styles.errorText}>
+                {error}
+              </ThemedText>
+            )}
+
+            <ChatInput
+              value={inputValue}
+              onChangeText={setInputValue}
+              onSend={handleSend}
+              disabled={isStreaming}
+            />
           </View>
-        ) : (
-          <ChatMessageList
-            messages={messages}
-            isStreaming={isStreaming}
-            userInitial={userInitial}
-            failedMessageId={failedMessageId}
-            onRetry={retryMessage}
-          />
-        )}
-
-        {error != null && (
-          <ThemedText type="bodySm" style={styles.errorText}>
-            {error}
-          </ThemedText>
-        )}
-
-        <ChatInput
-          value={inputValue}
-          onChangeText={setInputValue}
-          onSend={handleSend}
-          disabled={isStreaming}
-        />
-      </View>
-    </KeyboardView>
+        </KeyboardView>
+      </ResponsiveContainer>
+    </AppBackground>
   );
 }
 

@@ -217,10 +217,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerBlock: {
-    ...Platform.select({
-      web: {},
-      default: { backgroundColor: SemanticColors.surfaceCard },
-    }),
+    backgroundColor: Platform.OS === "web" ? "transparent" : SemanticColors.surfaceCard,
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,

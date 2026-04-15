@@ -1,4 +1,6 @@
+import { AppBackground } from "@/components/app-background";
 import { ChatInput } from "@/components/chat/chat-input";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { StrategyCategoryChips } from "@/components/strategy/strategy-category-chips";
 import { StrategyChatView, type ChatMessage } from "@/components/strategy/strategy-chat-view";
 import { StrategyHeader } from "@/components/strategy/strategy-header";
@@ -38,29 +40,33 @@ export default function StrategyScreen() {
   }, [inputValue]);
 
   return (
-    <KeyboardView>
-      <View style={styles.container}>
-        <StrategyHeader
-          topInset={insets.top}
-          onBack={selectedTopic !== null ? handleBack : undefined}
-        />
+    <AppBackground>
+      <ResponsiveContainer maxWidth={900}>
+        <KeyboardView>
+          <View style={styles.container}>
+            <StrategyHeader
+              topInset={insets.top}
+              onBack={selectedTopic !== null ? handleBack : undefined}
+            />
 
-        <View style={[styles.body, selectedTopic !== null && styles.bodyChat]}>
-          {selectedTopic === null ? (
-            <StrategyTopicSelector onSelect={handleSelectTopic} />
-          ) : (
-            <StrategyChatView messages={messages} />
-          )}
-        </View>
+            <View style={[styles.body, selectedTopic !== null && styles.bodyChat]}>
+              {selectedTopic === null ? (
+                <StrategyTopicSelector onSelect={handleSelectTopic} />
+              ) : (
+                <StrategyChatView messages={messages} />
+              )}
+            </View>
 
-        {selectedTopic !== null && (
-          <View style={[styles.footer, { paddingBottom: insets.bottom || Spacing.three }]}>
-            <StrategyCategoryChips onSend={sendMessage} />
-            <ChatInput value={inputValue} onChangeText={setInputValue} onSend={handleSend} />
+            {selectedTopic !== null && (
+              <View style={[styles.footer, { paddingBottom: insets.bottom || Spacing.three }]}>
+                <StrategyCategoryChips onSend={sendMessage} />
+                <ChatInput value={inputValue} onChangeText={setInputValue} onSend={handleSend} />
+              </View>
+            )}
           </View>
-        )}
-      </View>
-    </KeyboardView>
+        </KeyboardView>
+      </ResponsiveContainer>
+    </AppBackground>
   );
 }
 

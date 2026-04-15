@@ -1,3 +1,5 @@
+import { AppBackground } from "@/components/app-background";
+import { ResponsiveContainer } from "@/components/responsive-container";
 import { Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,26 +15,30 @@ export default function AlterScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + Spacing.three }]}>
-      <HomeHeader />
+    <AppBackground>
+      <ResponsiveContainer maxWidth={1100}>
+        <View style={[styles.container, { paddingTop: insets.top + Spacing.three }]}>
+          <HomeHeader />
 
-      <View style={styles.cardsArea}>
-        <View style={styles.topRow}>
-          <BrainCard />
-          <ProfitabilityColumn />
+          <View style={styles.cardsArea}>
+            <View style={styles.topRow}>
+              <BrainCard />
+              <ProfitabilityColumn />
+            </View>
+
+            <View style={styles.machinesWrap}>
+              <MachinesCard />
+            </View>
+
+            <View style={styles.meetingWrap}>
+              <MeetingSection />
+            </View>
+          </View>
+
+          <ChatInputBar />
         </View>
-
-        <View style={styles.machinesWrap}>
-          <MachinesCard />
-        </View>
-
-        <View style={styles.meetingWrap}>
-          <MeetingSection />
-        </View>
-      </View>
-
-      <ChatInputBar />
-    </View>
+      </ResponsiveContainer>
+    </AppBackground>
   );
 }
 

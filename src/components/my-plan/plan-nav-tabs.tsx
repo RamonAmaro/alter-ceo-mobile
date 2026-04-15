@@ -129,10 +129,7 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    ...Platform.select({
-      web: {},
-      default: { backgroundColor: SemanticColors.surfaceCard },
-    }),
+    backgroundColor: Platform.OS === "web" ? "transparent" : SemanticColors.surfaceCard,
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,

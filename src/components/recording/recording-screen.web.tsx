@@ -8,6 +8,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 
+import { AppBackground } from "@/components/app-background";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { useAuthStore } from "@/stores/auth-store";
@@ -43,54 +44,53 @@ export function RecordingScreen() {
   }, []);
 
   return (
-    <View style={styles.container} onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
-      <ScreenHeader
-        topInset={0}
-        icon="mic"
-        titlePrefix="Grabar"
-        titleAccent="Reunión"
-        showBack={false}
-      />
+    <AppBackground>
+      <View
+        style={styles.container}
+        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      >
+        <ScreenHeader topInset={0} icon="mic" titlePrefix="Grabar" titleAccent="Reunión" />
 
-      <View style={styles.tabBar}>
-        {TABS.map((tab, i) => {
-          const isActive = i === activeIndex;
-          const isHovered = tab.key === hoveredTab;
-          return (
-            <Pressable
-              key={tab.key}
-              style={styles.tab}
-              onPress={() => setActiveIndex(i)}
-              onHoverIn={() => setHoveredTab(tab.key)}
-              onHoverOut={() => setHoveredTab(null)}
-            >
-              <ThemedText
-                style={[
-                  styles.tabText,
-                  isHovered && !isActive && styles.tabTextHover,
-                  isActive && styles.tabTextActive,
-                ]}
+        <View style={styles.tabBar}>
+          {TABS.map((tab, i) => {
+            const isActive = i === activeIndex;
+            const isHovered = tab.key === hoveredTab;
+            return (
+              <Pressable
+                key={tab.key}
+                style={styles.tab}
+                onPress={() => setActiveIndex(i)}
+                onHoverIn={() => setHoveredTab(tab.key)}
+                onHoverOut={() => setHoveredTab(null)}
               >
-                {tab.label}
-              </ThemedText>
-              {isActive && <View style={styles.tabIndicator} />}
-            </Pressable>
-          );
-        })}
-      </View>
+                <ThemedText
+                  style={[
+                    styles.tabText,
+                    isHovered && !isActive && styles.tabTextHover,
+                    isActive && styles.tabTextActive,
+                  ]}
+                >
+                  {tab.label}
+                </ThemedText>
+                {isActive && <View style={styles.tabIndicator} />}
+              </Pressable>
+            );
+          })}
+        </View>
 
-      <View style={styles.content} onLayout={onContentLayout}>
-        {activeIndex === 0 ? (
-          <RecordingPage
-            width={width}
-            height={contentHeight}
-            onUploadComplete={handleUploadComplete}
-          />
-        ) : (
-          <MeetingsPage width={width} height={contentHeight} />
-        )}
+        <View style={styles.content} onLayout={onContentLayout}>
+          {activeIndex === 0 ? (
+            <RecordingPage
+              width={width}
+              height={contentHeight}
+              onUploadComplete={handleUploadComplete}
+            />
+          ) : (
+            <MeetingsPage width={width} height={contentHeight} />
+          )}
+        </View>
       </View>
-    </View>
+    </AppBackground>
   );
 }
 

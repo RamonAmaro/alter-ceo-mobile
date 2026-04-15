@@ -8,7 +8,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => (isMobile ? <MemoizedTabBar {...props} /> : null)}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: "transparent" } }}
+      screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="alter" />
     </Tabs>
