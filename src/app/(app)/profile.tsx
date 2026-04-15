@@ -4,7 +4,6 @@ import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
-import { useOnboardingStore } from "@/stores/onboarding-store";
 import { goBackOrHome } from "@/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,14 +23,12 @@ export default function ProfileScreen() {
   const { isMobile } = useResponsiveLayout();
   const router = useRouter();
   const signOut = useAuthStore((s) => s.signOut);
-  const resetOnboardingSession = useOnboardingStore((s) => s.resetSession);
 
   function handleGoToOnboarding(): void {
     router.push("/(onboarding)/welcome");
   }
 
   async function handleSignOut(): Promise<void> {
-    resetOnboardingSession();
     await signOut();
     router.replace("/");
   }

@@ -12,6 +12,7 @@ import {
   saveCredentials,
 } from "@/services/biometrics-service";
 import type { AuthSession } from "@/types/auth";
+import { clearUserScopedStores } from "@/utils/clear-user-data";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -48,6 +49,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
 
   signIn: async (email: string, password: string) => {
+    await clearUserScopedStores();
     const session = await login(email, password);
     const withEmail = { ...session, email: session.email ?? email };
     set({ isAuthenticated: true, user: withEmail });
@@ -58,10 +60,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     await clearCredentials();
     await logout();
+    await clearUserScopedStores();
     set({ isAuthenticated: false, user: null, biometricsEnabled: false });
   },
 
   register: async (email: string, password: string, displayName?: string) => {
+    await clearUserScopedStores();
     const session = await registerUser(email, password, displayName ?? null);
     set({ isAuthenticated: true, user: session });
     const enriched = await enrichFromProfile(session);
@@ -81,6 +85,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const credentials = await getCredentials();
     if (!credentials) return false;
 
+    await clearUserScopedStores();
     const session = await login(credentials.email, credentials.password);
     const withEmail = { ...session, email: session.email ?? credentials.email };
     set({ isAuthenticated: true, user: withEmail });
@@ -126,5 +131,6 @@ setOnUnauthorizedHandler(() => {
   const { isAuthenticated } = useAuthStore.getState();
   if (isAuthenticated) {
     useAuthStore.setState({ isAuthenticated: false, user: null });
+    void clearUserScopedStores();
   }
 });
