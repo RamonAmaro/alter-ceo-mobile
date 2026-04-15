@@ -7,6 +7,15 @@
     "icon": "./assets/images/icon.png",
     "scheme": "alterceo",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/75fe4230-fac6-489c-a74e-ab20340aba52",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "bundleIdentifier": "com.ramonamaro.alter-ceo",
       "infoPlist": {
