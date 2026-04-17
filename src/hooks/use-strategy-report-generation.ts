@@ -1,6 +1,6 @@
 import {
-  STRATEGY_REPORT_STEPS,
   getStepIndexForStrategyReportStage,
+  getStepIndexForStrategyReportStep,
   type StrategyReportStage,
 } from "@/constants/strategy-report-loading-steps";
 import {
@@ -17,12 +17,16 @@ import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 
 const MAX_RETRIES = 3;
-const MAX_AUTOPLAY_STEP_INDEX = STRATEGY_REPORT_STEPS.length - 2;
-const AUTOPLAY_INTERVAL_MS = 2400;
 
 interface StrategyReportGenerationState {
   readonly stepIndex: number;
   readonly error: string | null;
+}
+
+interface ReportStepStartedPayload {
+  readonly step_id?: string;
+  readonly step_index?: number;
+  readonly step_count?: number;
 }
 
 function buildAnswersPayload(
@@ -60,7 +64,6 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
   const abortRef = useRef<{ abort: () => void } | null>(null);
   const lastEventIdRef = useRef<string | undefined>(undefined);
   const retryCountRef = useRef(0);
-  const autoplayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const user = useAuthStore((s) => s.user);
   const reportType = useStrategyReportStore((s) => s.reportType);
@@ -82,46 +85,30 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
     void startGeneration();
     return () => {
       abortRef.current?.abort();
-      stopAutoplay();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function stopAutoplay(): void {
-    if (autoplayTimerRef.current) {
-      clearInterval(autoplayTimerRef.current);
-      autoplayTimerRef.current = null;
-    }
-  }
-
-  function startAutoplay(): void {
-    if (autoplayTimerRef.current) return;
-    autoplayTimerRef.current = setInterval(() => {
-      setStepIndex((current) => {
-        if (current >= MAX_AUTOPLAY_STEP_INDEX) {
-          stopAutoplay();
-          return current;
-        }
-        return current + 1;
-      });
-    }, AUTOPLAY_INTERVAL_MS);
-  }
-
   function advanceToStage(stage: StrategyReportStage): void {
     const nextIndex = getStepIndexForStrategyReportStage(stage);
     setStepIndex((prev) => Math.max(prev, nextIndex));
+  }
 
-    if (stage === "report_generating") {
-      startAutoplay();
-    }
+  function advanceToReportStep(stepId: string): void {
+    const nextIndex = getStepIndexForStrategyReportStep(stepId);
+    if (nextIndex === null) return;
+    setStepIndex((prev) => Math.max(prev, nextIndex));
+  }
 
-    if (stage === "complete" || stage === "error") {
-      stopAutoplay();
+  function parseReportStepPayload(payload: string): ReportStepStartedPayload | null {
+    try {
+      return JSON.parse(payload) as ReportStepStartedPayload;
+    } catch {
+      return null;
     }
   }
 
   function handleFailure(message: string): void {
-    stopAutoplay();
     setError(message);
   }
 
@@ -161,6 +148,14 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
 
         if (event.event === "report_generating") {
           advanceToStage("report_generating");
+          return;
+        }
+
+        if (event.event === "report_step_started") {
+          const payload = parseReportStepPayload(event.data);
+          if (payload?.step_id) {
+            advanceToReportStep(payload.step_id);
+          }
           return;
         }
 

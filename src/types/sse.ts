@@ -3,6 +3,7 @@ export const SSE_EVENT_TYPES = [
   "queued",
   "running",
   "report_generating",
+  "report_step_started",
   "routing",
   "started",
   "business_kernel",
