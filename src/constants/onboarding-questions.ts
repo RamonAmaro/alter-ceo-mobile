@@ -1,4 +1,5 @@
 export type QuestionType = "single" | "multi" | "text" | "audio";
+export type QuestionValidationKind = "website" | "instagram";
 
 export interface QuestionOption {
   label: string;
@@ -12,6 +13,7 @@ export interface Question {
   progress: number;
   options?: QuestionOption[];
   placeholder?: string;
+  validationKind?: QuestionValidationKind;
   unavailableOptionLabel?: string;
   unavailableOptionValue?: string;
 }
@@ -166,6 +168,7 @@ export function getExpressQuestions(): Question[] {
       question:
         "Indica la web de tu negocio (necesario para procesar tu negocio y comprender tu propuesta de valor)",
       placeholder: "tunegocio.com",
+      validationKind: "website",
       unavailableOptionLabel: "No tengo web",
       unavailableOptionValue: "__no_website__",
     },
@@ -175,6 +178,7 @@ export function getExpressQuestions(): Question[] {
       question:
         "Indica el Instagram de tu negocio (necesario para comprender la esencia de tu negocio)",
       placeholder: "@tunegocio",
+      validationKind: "instagram",
       unavailableOptionLabel: "No tengo Instagram",
       unavailableOptionValue: "__no_instagram__",
     },

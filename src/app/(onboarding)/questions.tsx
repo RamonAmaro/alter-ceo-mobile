@@ -20,6 +20,7 @@ import {
   isInstagramUnavailableAnswer,
   isWebsiteUnavailableAnswer,
 } from "@/utils/onboarding-contact-presence";
+import { validateContactInput } from "@/utils/validate-contact-input";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 
 import { PrefetchBanner } from "@/components/onboarding/prefetch-banner";
@@ -73,7 +74,19 @@ export default function QuestionsScreen() {
   }
 
   const currentAnswer = answers.get(currentQuestionIndex);
-  const nextEnabled = validateQuestionAnswer(question.type, currentAnswer);
+  const textValidationResult =
+    question.type === "text" && question.validationKind
+      ? validateContactInput(question.validationKind, currentAnswer)
+      : null;
+  const nextEnabled = validateQuestionAnswer(question.type, currentAnswer, question.validationKind);
+  const validationMessage =
+    question.type === "text" &&
+    typeof currentAnswer === "string" &&
+    currentAnswer.trim() !== "" &&
+    textValidationResult &&
+    !textValidationResult.valid
+      ? textValidationResult.message
+      : undefined;
   const planLabel = planType === "professional" ? "PROFESIONAL" : "EXPRESS";
 
   function handleOptionPress(label: string): void {
@@ -231,6 +244,7 @@ export default function QuestionsScreen() {
             slideAnim={slideAnim}
             onOptionPress={handleOptionPress}
             onTextChange={handleTextChange}
+            validationMessage={validationMessage}
           />
         </ScrollView>
 
