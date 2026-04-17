@@ -22,6 +22,7 @@ import type {
 } from "@/types/onboarding";
 import type { Answer } from "@/stores/onboarding-store";
 import type { PlanRunCreateRequest } from "@/types/plan";
+import { normalizeWebsiteUrl } from "@/utils/normalize-website-url";
 
 const DAILY_HOURS_MAP: Record<string, DailyHoursDedicated> = {
   "Menos de 6": "lt_6",
@@ -193,7 +194,7 @@ export function buildExpressPayload(params: BuildExpressPayloadParams): PlanRunC
     task_prioritization_style: mapSingle(PRIORITIZATION_MAP, a(6)),
     new_customer_acquisition_channel: mapSingle(ACQUISITION_MAP, a(7)),
     consumption_pattern: mapSingle(CONSUMPTION_MAP, a(8)),
-    business_website_url: (a(9) as string) ?? "",
+    business_website_url: normalizeWebsiteUrl((a(9) as string) ?? ""),
     business_instagram: (a(10) as string) ?? "",
     primary_offer_audio: primaryOfferAudio,
     main_daily_obstacle_audio: mainObstacleAudio,
@@ -231,7 +232,7 @@ export function buildProfessionalPayload(
     team_meetings_cadence: mapSingle(TEAM_MEETINGS_MAP, a(13)),
     founder_absence_impact: mapSingle(FOUNDER_ABSENCE_MAP, a(14)),
     kpi_tracking_maturity: mapSingle(KPI_MAP, a(15)),
-    business_website_url: (a(16) as string) ?? "",
+    business_website_url: normalizeWebsiteUrl((a(16) as string) ?? ""),
     business_instagram: (a(17) as string) ?? "",
     offer_and_sales_obstacle_audio: offerAndSalesAudio,
     primary_offer_price_audio: primaryOfferPriceAudio,

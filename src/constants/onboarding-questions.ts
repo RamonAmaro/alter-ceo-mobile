@@ -163,7 +163,7 @@ export function getExpressQuestions(): Question[] {
       progress: 70,
       question:
         "Indica la web de tu negocio (necesario para procesar tu negocio y comprender tu propuesta de valor)",
-      placeholder: "https://www.tunegocio.com",
+      placeholder: "tunegocio.com",
     },
     {
       type: "text",
@@ -440,7 +440,7 @@ export function getProfessionalQuestions(): Question[] {
       progress: 80,
       question:
         "Indica la web de tu negocio (necesario para procesar tu negocio y comprender tu propuesta de valor)",
-      placeholder: "https://www.tunegocio.com",
+      placeholder: "tunegocio.com",
     },
     {
       type: "text",

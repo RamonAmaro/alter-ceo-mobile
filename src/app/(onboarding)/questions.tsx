@@ -15,6 +15,7 @@ import { Spacing } from "@/constants/theme";
 import { prefetchUrlContext } from "@/services/onboarding-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { normalizeWebsiteUrl } from "@/utils/normalize-website-url";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 
 import { PrefetchBanner } from "@/components/onboarding/prefetch-banner";
@@ -123,7 +124,7 @@ export default function QuestionsScreen() {
 
     prefetchUrlContext({
       user_id: user.userId,
-      business_website_url: website,
+      business_website_url: normalizeWebsiteUrl(website),
       business_instagram: instagram,
     })
       .then(() => {
