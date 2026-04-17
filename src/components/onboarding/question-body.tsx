@@ -14,6 +14,8 @@ interface QuestionConfig {
   type: string;
   placeholder?: string;
   options?: readonly { label: string; subtitle?: string }[];
+  unavailableOptionLabel?: string;
+  unavailableOptionValue?: string;
 }
 
 interface QuestionBodyProps {
@@ -42,6 +44,13 @@ export function QuestionBody({
 }: QuestionBodyProps) {
   const options = question.options ?? [];
   const isMulti = question.type === "multi";
+  const unavailableOptionValue = question.unavailableOptionValue;
+  const unavailableSelected =
+    unavailableOptionValue !== undefined && currentAnswer === unavailableOptionValue;
+  const textValue =
+    typeof currentAnswer === "string" && currentAnswer !== unavailableOptionValue
+      ? currentAnswer
+      : "";
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -61,16 +70,27 @@ export function QuestionBody({
 
       <View style={styles.optionsContainer}>
         {question.type === "text" ? (
-          <TextInput
-            style={styles.textInput}
-            placeholder={question.placeholder}
-            placeholderTextColor={SemanticColors.textPlaceholder}
-            value={(currentAnswer as string) || ""}
-            onChangeText={onTextChange}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType={getKeyboardType(question.placeholder)}
-          />
+          <>
+            <TextInput
+              style={[styles.textInput, unavailableSelected && styles.textInputDisabled]}
+              placeholder={question.placeholder}
+              placeholderTextColor={SemanticColors.textPlaceholder}
+              value={textValue}
+              onChangeText={onTextChange}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType={getKeyboardType(question.placeholder)}
+              editable={!unavailableSelected}
+            />
+            {question.unavailableOptionLabel && unavailableOptionValue ? (
+              <QuestionOption
+                label={question.unavailableOptionLabel}
+                selected={currentAnswer === unavailableOptionValue}
+                multi
+                onPress={() => onOptionPress(unavailableOptionValue)}
+              />
+            ) : null}
+          </>
         ) : (
           options.map((option) => (
             <QuestionOption
@@ -115,5 +135,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: 14,
     outlineStyle: "none" as never,
+  },
+  textInputDisabled: {
+    opacity: 0.55,
   },
 });

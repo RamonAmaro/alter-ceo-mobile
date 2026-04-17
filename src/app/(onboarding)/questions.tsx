@@ -15,6 +15,11 @@ import { Spacing } from "@/constants/theme";
 import { prefetchUrlContext } from "@/services/onboarding-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { normalizeWebsiteUrl } from "@/utils/normalize-website-url";
+import {
+  isInstagramUnavailableAnswer,
+  isWebsiteUnavailableAnswer,
+} from "@/utils/onboarding-contact-presence";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 
 import { PrefetchBanner } from "@/components/onboarding/prefetch-banner";
@@ -78,6 +83,12 @@ export default function QuestionsScreen() {
         ? current.filter((item) => item !== label)
         : [...current, label];
       setAnswer(currentQuestionIndex, updated);
+    } else if (
+      question.type === "text" &&
+      question.unavailableOptionValue !== undefined &&
+      label === question.unavailableOptionValue
+    ) {
+      setAnswer(currentQuestionIndex, currentAnswer === label ? "" : label);
     } else {
       setAnswer(currentQuestionIndex, label);
     }
@@ -116,15 +127,27 @@ export default function QuestionsScreen() {
     const websiteIndex =
       planType === "professional" ? WEBSITE_INDEX_PROFESSIONAL : WEBSITE_INDEX_EXPRESS;
 
-    const instagram = answers.get(instagramIndex) as string | undefined;
-    const website = answers.get(websiteIndex) as string | undefined;
+    const instagramAnswer = answers.get(instagramIndex);
+    const websiteAnswer = answers.get(websiteIndex);
+    const hasInstagram =
+      typeof instagramAnswer === "string" &&
+      instagramAnswer.trim() !== "" &&
+      !isInstagramUnavailableAnswer(instagramAnswer);
+    const hasWebsite =
+      typeof websiteAnswer === "string" &&
+      websiteAnswer.trim() !== "" &&
+      !isWebsiteUnavailableAnswer(websiteAnswer);
 
-    if (!instagram || !website) return;
+    if (!hasInstagram && !hasWebsite) return;
 
     prefetchUrlContext({
       user_id: user.userId,
-      business_website_url: website,
-      business_instagram: instagram,
+      business_website_url:
+        hasWebsite && typeof websiteAnswer === "string" ? normalizeWebsiteUrl(websiteAnswer) : null,
+      has_website: hasWebsite,
+      business_instagram:
+        hasInstagram && typeof instagramAnswer === "string" ? instagramAnswer.trim() : null,
+      has_instagram: hasInstagram,
     })
       .then(() => {
         setPrefetchStatus("ok");

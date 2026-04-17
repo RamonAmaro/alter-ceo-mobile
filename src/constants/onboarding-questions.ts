@@ -12,6 +12,8 @@ export interface Question {
   progress: number;
   options?: QuestionOption[];
   placeholder?: string;
+  unavailableOptionLabel?: string;
+  unavailableOptionValue?: string;
 }
 
 export function getExpressQuestions(): Question[] {
@@ -163,7 +165,9 @@ export function getExpressQuestions(): Question[] {
       progress: 70,
       question:
         "Indica la web de tu negocio (necesario para procesar tu negocio y comprender tu propuesta de valor)",
-      placeholder: "https://www.tunegocio.com",
+      placeholder: "tunegocio.com",
+      unavailableOptionLabel: "No tengo web",
+      unavailableOptionValue: "__no_website__",
     },
     {
       type: "text",
@@ -171,6 +175,8 @@ export function getExpressQuestions(): Question[] {
       question:
         "Indica el Instagram de tu negocio (necesario para comprender la esencia de tu negocio)",
       placeholder: "@tunegocio",
+      unavailableOptionLabel: "No tengo Instagram",
+      unavailableOptionValue: "__no_instagram__",
     },
     {
       type: "audio",
@@ -440,7 +446,9 @@ export function getProfessionalQuestions(): Question[] {
       progress: 80,
       question:
         "Indica la web de tu negocio (necesario para procesar tu negocio y comprender tu propuesta de valor)",
-      placeholder: "https://www.tunegocio.com",
+      placeholder: "tunegocio.com",
+      unavailableOptionLabel: "No tengo web",
+      unavailableOptionValue: "__no_website__",
     },
     {
       type: "text",
@@ -448,6 +456,8 @@ export function getProfessionalQuestions(): Question[] {
       question:
         "Indica el Instagram de tu negocio (necesario para comprender la esencia de tu negocio)",
       placeholder: "@tunegocio",
+      unavailableOptionLabel: "No tengo Instagram",
+      unavailableOptionValue: "__no_instagram__",
     },
     {
       type: "audio",

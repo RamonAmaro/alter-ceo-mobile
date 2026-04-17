@@ -22,6 +22,11 @@ import type {
 } from "@/types/onboarding";
 import type { Answer } from "@/stores/onboarding-store";
 import type { PlanRunCreateRequest } from "@/types/plan";
+import { normalizeWebsiteUrl } from "@/utils/normalize-website-url";
+import {
+  isInstagramUnavailableAnswer,
+  isWebsiteUnavailableAnswer,
+} from "@/utils/onboarding-contact-presence";
 
 const DAILY_HOURS_MAP: Record<string, DailyHoursDedicated> = {
   "Menos de 6": "lt_6",
@@ -165,6 +170,32 @@ function mapRevenue(answer: Answer | undefined): number | "no_business" {
   return REVENUE_MAP[answer] ?? "no_business";
 }
 
+function buildWebsiteFields(answer: Answer | undefined): {
+  business_website_url: string | null;
+  has_website: boolean;
+} {
+  if (typeof answer !== "string" || answer.trim() === "" || isWebsiteUnavailableAnswer(answer)) {
+    return { business_website_url: null, has_website: false };
+  }
+  return {
+    business_website_url: normalizeWebsiteUrl(answer),
+    has_website: true,
+  };
+}
+
+function buildInstagramFields(answer: Answer | undefined): {
+  business_instagram: string | null;
+  has_instagram: boolean;
+} {
+  if (typeof answer !== "string" || answer.trim() === "" || isInstagramUnavailableAnswer(answer)) {
+    return { business_instagram: null, has_instagram: false };
+  }
+  return {
+    business_instagram: answer.trim(),
+    has_instagram: true,
+  };
+}
+
 interface BuildExpressPayloadParams {
   answers: Map<number, Answer>;
   primaryOfferAudio: AudioAnswer;
@@ -182,6 +213,8 @@ interface BuildProfessionalPayloadParams {
 export function buildExpressPayload(params: BuildExpressPayloadParams): PlanRunCreateRequest {
   const { answers, primaryOfferAudio, mainObstacleAudio, userId } = params;
   const a = (i: number) => answers.get(i);
+  const websiteFields = buildWebsiteFields(a(9));
+  const instagramFields = buildInstagramFields(a(10));
 
   const expressAnswers: ExpressOnboardingAnswers = {
     daily_hours_dedicated: mapSingle(DAILY_HOURS_MAP, a(2)),
@@ -193,8 +226,8 @@ export function buildExpressPayload(params: BuildExpressPayloadParams): PlanRunC
     task_prioritization_style: mapSingle(PRIORITIZATION_MAP, a(6)),
     new_customer_acquisition_channel: mapSingle(ACQUISITION_MAP, a(7)),
     consumption_pattern: mapSingle(CONSUMPTION_MAP, a(8)),
-    business_website_url: (a(9) as string) ?? "",
-    business_instagram: (a(10) as string) ?? "",
+    ...websiteFields,
+    ...instagramFields,
     primary_offer_audio: primaryOfferAudio,
     main_daily_obstacle_audio: mainObstacleAudio,
   };
@@ -213,6 +246,8 @@ export function buildProfessionalPayload(
 ): PlanRunCreateRequest {
   const { answers, offerAndSalesAudio, primaryOfferPriceAudio, userId } = params;
   const a = (i: number) => answers.get(i);
+  const websiteFields = buildWebsiteFields(a(16));
+  const instagramFields = buildInstagramFields(a(17));
 
   const professionalAnswers: ProfessionalOnboardingAnswers = {
     daily_hours_dedicated: mapSingle(DAILY_HOURS_MAP, a(2)),
@@ -231,8 +266,8 @@ export function buildProfessionalPayload(
     team_meetings_cadence: mapSingle(TEAM_MEETINGS_MAP, a(13)),
     founder_absence_impact: mapSingle(FOUNDER_ABSENCE_MAP, a(14)),
     kpi_tracking_maturity: mapSingle(KPI_MAP, a(15)),
-    business_website_url: (a(16) as string) ?? "",
-    business_instagram: (a(17) as string) ?? "",
+    ...websiteFields,
+    ...instagramFields,
     offer_and_sales_obstacle_audio: offerAndSalesAudio,
     primary_offer_price_audio: primaryOfferPriceAudio,
   };
