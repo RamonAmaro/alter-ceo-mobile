@@ -10,7 +10,7 @@ export default function AppLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "slide_from_left" }}>
+    <Stack screenOptions={{ headerShown: false, animation: "default" }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="recording" />
       <Stack.Screen name="settings" />
