@@ -6,12 +6,25 @@ import { Image, ImageSourcePropType, StyleSheet, TouchableOpacity, View } from "
 interface StrategyTopicCardProps {
   label: string;
   image: ImageSourcePropType;
+  actionLabel?: string;
+  disabled?: boolean;
   onPress: () => void;
 }
 
-export function StrategyTopicCard({ label, image, onPress }: StrategyTopicCardProps) {
+export function StrategyTopicCard({
+  label,
+  image,
+  actionLabel = "Comenzar",
+  disabled = false,
+  onPress,
+}: StrategyTopicCardProps) {
   return (
-    <TouchableOpacity style={styles.outer} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={[styles.outer, disabled && styles.outerDisabled]}
+      onPress={onPress}
+      activeOpacity={disabled ? 1 : 0.85}
+      disabled={disabled}
+    >
       <LinearGradient
         colors={["rgba(255,255,255,0.22)", "rgba(255,255,255,0)"]}
         start={{ x: 0.5, y: 0 }}
@@ -25,11 +38,17 @@ export function StrategyTopicCard({ label, image, onPress }: StrategyTopicCardPr
         </ThemedText>
 
         <View style={styles.imageWrap}>
-          <Image source={image} style={styles.image} resizeMode="contain" />
+          <Image
+            source={image}
+            style={[styles.image, disabled && styles.imageDisabled]}
+            resizeMode="contain"
+          />
         </View>
 
         <View style={styles.divider} />
-        <ThemedText style={styles.buttonLabel}>Comenzar</ThemedText>
+        <ThemedText style={[styles.buttonLabel, disabled && styles.buttonLabelDisabled]}>
+          {actionLabel}
+        </ThemedText>
       </View>
     </TouchableOpacity>
   );
@@ -42,6 +61,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "rgba(0,255,132,0.24)",
     overflow: "hidden",
+  },
+  outerDisabled: {
+    borderColor: "rgba(255,255,255,0.08)",
   },
   content: {
     flex: 1,
@@ -68,6 +90,9 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
   },
+  imageDisabled: {
+    opacity: 0.45,
+  },
   divider: {
     width: "100%",
     height: 1,
@@ -79,5 +104,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 15,
     color: SemanticColors.tealLight,
+  },
+  buttonLabelDisabled: {
+    color: SemanticColors.textMuted,
   },
 });

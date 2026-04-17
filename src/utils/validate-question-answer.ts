@@ -15,6 +15,10 @@ export function validateQuestionAnswer(
     return typeof answer === "string" && answer.trim() !== "";
   }
 
+  if (questionType === "integer") {
+    return typeof answer === "string" && /^\d+$/.test(answer.trim());
+  }
+
   if (questionType === "multi") {
     return Array.isArray(answer) && answer.length > 0;
   }

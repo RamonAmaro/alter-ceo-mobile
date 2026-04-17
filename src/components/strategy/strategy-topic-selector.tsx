@@ -7,6 +7,7 @@ interface TopicConfig {
   key: string;
   label: string;
   image: ImageSourcePropType;
+  enabled: boolean;
 }
 
 const TOPICS: TopicConfig[] = [
@@ -14,21 +15,25 @@ const TOPICS: TopicConfig[] = [
     key: "captacion",
     label: "CAPTACIÓN",
     image: require("@/assets/ui/strategy-captacion.png"),
+    enabled: true,
   },
   {
     key: "ventas",
     label: "GUIÓN\nDE VENTAS",
     image: require("@/assets/ui/strategy-ventas.png"),
+    enabled: false,
   },
   {
     key: "equipo",
     label: "EQUIPO",
     image: require("@/assets/ui/strategy-equipo.png"),
+    enabled: false,
   },
   {
     key: "delegar",
     label: "DELEGAR",
     image: require("@/assets/ui/strategy-delegar.png"),
+    enabled: false,
   },
 ];
 
@@ -51,6 +56,8 @@ export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) 
               key={topic.key}
               label={topic.label}
               image={topic.image}
+              disabled={!topic.enabled}
+              actionLabel={topic.enabled ? "Comenzar" : "Próximamente"}
               onPress={() => onSelect(topic.key)}
             />
           ))}
@@ -62,6 +69,8 @@ export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) 
               key={topic.key}
               label={topic.label}
               image={topic.image}
+              disabled={!topic.enabled}
+              actionLabel={topic.enabled ? "Comenzar" : "Próximamente"}
               onPress={() => onSelect(topic.key)}
             />
           ))}
