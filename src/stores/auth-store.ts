@@ -12,7 +12,11 @@ import {
   saveCredentials,
 } from "@/services/biometrics-service";
 import type { AuthSession } from "@/types/auth";
-import { clearUserScopedStores } from "@/utils/clear-user-data";
+import {
+  clearUserScopedStores,
+  ensureCleanForUser,
+  ensureCleanOnSignOut,
+} from "@/utils/clear-user-data";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -49,8 +53,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
 
   signIn: async (email: string, password: string) => {
-    await clearUserScopedStores();
     const session = await login(email, password);
+    await ensureCleanForUser(session.userId);
     const withEmail = { ...session, email: session.email ?? email };
     set({ isAuthenticated: true, user: withEmail });
     const enriched = await enrichFromProfile(withEmail);
@@ -60,13 +64,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     await clearCredentials();
     await logout();
-    await clearUserScopedStores();
+    await ensureCleanOnSignOut();
     set({ isAuthenticated: false, user: null, biometricsEnabled: false });
   },
 
   register: async (email: string, password: string, displayName?: string) => {
-    await clearUserScopedStores();
     const session = await registerUser(email, password, displayName ?? null);
+    await ensureCleanForUser(session.userId);
     set({ isAuthenticated: true, user: session });
     const enriched = await enrichFromProfile(session);
     set({ user: enriched });
@@ -85,8 +89,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     const credentials = await getCredentials();
     if (!credentials) return false;
 
-    await clearUserScopedStores();
     const session = await login(credentials.email, credentials.password);
+    await ensureCleanForUser(session.userId);
     const withEmail = { ...session, email: session.email ?? credentials.email };
     set({ isAuthenticated: true, user: withEmail });
     const enriched = await enrichFromProfile(withEmail);
@@ -108,9 +112,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkSession: async () => {
     const session = await getSession();
     if (!session) {
+      await ensureCleanOnSignOut();
       set({ isAuthenticated: false, user: null, isLoading: false });
       return;
     }
+    await ensureCleanForUser(session.userId);
     set({ isAuthenticated: true, user: session, isLoading: false });
     const enriched = await enrichFromProfile(session);
     set({ user: enriched });
@@ -131,6 +137,8 @@ setOnUnauthorizedHandler(() => {
   const { isAuthenticated } = useAuthStore.getState();
   if (isAuthenticated) {
     useAuthStore.setState({ isAuthenticated: false, user: null });
+    void ensureCleanOnSignOut();
+  } else {
     void clearUserScopedStores();
   }
 });
