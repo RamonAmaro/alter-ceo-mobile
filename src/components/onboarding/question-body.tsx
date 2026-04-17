@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { getKeyboardType } from "@/utils/get-keyboard-type";
 
+import type { QuestionValidationKind } from "@/constants/onboarding-questions";
 import type { Answer } from "@/stores/onboarding-store";
 
 interface QuestionConfig {
@@ -13,6 +14,7 @@ interface QuestionConfig {
   progress: number;
   type: string;
   placeholder?: string;
+  validationKind?: QuestionValidationKind;
   options?: readonly { label: string; subtitle?: string }[];
   unavailableOptionLabel?: string;
   unavailableOptionValue?: string;
@@ -25,6 +27,7 @@ interface QuestionBodyProps {
   slideAnim: Animated.Value;
   onOptionPress: (label: string) => void;
   onTextChange: (text: string) => void;
+  validationMessage?: string;
 }
 
 function isOptionSelected(type: string, currentAnswer: Answer | undefined, label: string): boolean {
@@ -41,6 +44,7 @@ export function QuestionBody({
   slideAnim,
   onOptionPress,
   onTextChange,
+  validationMessage,
 }: QuestionBodyProps) {
   const options = question.options ?? [];
   const isMulti = question.type === "multi";
@@ -90,6 +94,11 @@ export function QuestionBody({
                 onPress={() => onOptionPress(unavailableOptionValue)}
               />
             ) : null}
+            {validationMessage ? (
+              <ThemedText type="bodySm" style={styles.validationMessage}>
+                {validationMessage}
+              </ThemedText>
+            ) : null}
           </>
         ) : (
           options.map((option) => (
@@ -138,5 +147,9 @@ const styles = StyleSheet.create({
   },
   textInputDisabled: {
     opacity: 0.55,
+  },
+  validationMessage: {
+    color: SemanticColors.error,
+    marginTop: 2,
   },
 });
