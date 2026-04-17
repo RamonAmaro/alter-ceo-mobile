@@ -22,10 +22,10 @@ export const NAV_ITEMS: NavItemConfig[] = [
   },
   {
     key: "business-memory",
-    label: "Memoria",
+    label: "Mi Negocio",
     icon: (color, focused) => (
       <Ionicons
-        name={focused ? "compass" : "compass-outline"}
+        name={focused ? "briefcase" : "briefcase-outline"}
         size={TAB_ICON_SIZE}
         color={color}
       />
