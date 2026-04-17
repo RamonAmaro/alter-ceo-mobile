@@ -15,7 +15,7 @@ interface QuestionConfig {
   type: string;
   placeholder?: string;
   validationKind?: QuestionValidationKind;
-  options?: readonly { label: string; subtitle?: string }[];
+  options?: readonly { label: string; subtitle?: string; value?: string }[];
   unavailableOptionLabel?: string;
   unavailableOptionValue?: string;
 }
@@ -48,6 +48,7 @@ export function QuestionBody({
 }: QuestionBodyProps) {
   const options = question.options ?? [];
   const isMulti = question.type === "multi";
+  const isTextInput = question.type === "text" || question.type === "integer";
   const unavailableOptionValue = question.unavailableOptionValue;
   const unavailableSelected =
     unavailableOptionValue !== undefined && currentAnswer === unavailableOptionValue;
@@ -73,7 +74,7 @@ export function QuestionBody({
       </ThemedText>
 
       <View style={styles.optionsContainer}>
-        {question.type === "text" ? (
+        {isTextInput ? (
           <>
             <TextInput
               style={[styles.textInput, unavailableSelected && styles.textInputDisabled]}
@@ -83,10 +84,14 @@ export function QuestionBody({
               onChangeText={onTextChange}
               autoCapitalize="none"
               autoCorrect={false}
-              keyboardType={getKeyboardType(question.placeholder)}
+              keyboardType={
+                question.type === "integer" ? "numeric" : getKeyboardType(question.placeholder)
+              }
               editable={!unavailableSelected}
             />
-            {question.unavailableOptionLabel && unavailableOptionValue ? (
+            {question.type === "text" &&
+            question.unavailableOptionLabel &&
+            unavailableOptionValue ? (
               <QuestionOption
                 label={question.unavailableOptionLabel}
                 selected={currentAnswer === unavailableOptionValue}
