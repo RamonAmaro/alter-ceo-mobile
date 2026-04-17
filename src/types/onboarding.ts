@@ -60,8 +60,10 @@ export interface ExpressOnboardingAnswers {
   task_prioritization_style: TaskPrioritizationStyle;
   new_customer_acquisition_channel: AcquisitionChannel;
   consumption_pattern: ConsumptionPattern;
-  business_website_url: string;
-  business_instagram: string;
+  business_website_url: string | null;
+  has_website: boolean;
+  business_instagram: string | null;
+  has_instagram: boolean;
   primary_offer_audio: AudioAnswer;
   main_daily_obstacle_audio: AudioAnswer;
 }
@@ -83,19 +85,23 @@ export interface ProfessionalOnboardingAnswers {
   team_meetings_cadence: TeamMeetingsCadence;
   founder_absence_impact: FounderAbsenceImpact;
   kpi_tracking_maturity: KPITrackingMaturity;
-  business_website_url: string;
-  business_instagram: string;
+  business_website_url: string | null;
+  has_website: boolean;
+  business_instagram: string | null;
+  has_instagram: boolean;
   offer_and_sales_obstacle_audio: AudioAnswer;
   primary_offer_price_audio: AudioAnswer;
 }
 
 export interface OnboardingUrlContextPrefetchRequest {
   user_id: string;
-  business_website_url: string;
-  business_instagram: string;
+  business_website_url: string | null;
+  has_website: boolean;
+  business_instagram: string | null;
+  has_instagram: boolean;
 }
 
-export type PrefetchStatus = "scheduled" | "cached" | "disabled" | "unavailable";
+export type PrefetchStatus = "scheduled" | "cached" | "disabled" | "unavailable" | "skipped";
 
 export interface OnboardingUrlContextPrefetchAccepted {
   status: PrefetchStatus;
