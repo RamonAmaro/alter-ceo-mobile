@@ -16,6 +16,12 @@ export default function AppLayout() {
       <Stack.Screen name="settings" />
       <Stack.Screen name="my-plan" />
       <Stack.Screen name="strategy" />
+
+      <Stack.Screen name="strategy-captacion" />
+      <Stack.Screen name="strategy-captacion-loading" />
+      <Stack.Screen name="strategy-captacion-result" />
+      <Stack.Screen name="strategy-captacion-ready" />
+
       <Stack.Screen name="chat" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="debug" />

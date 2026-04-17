@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { getKeyboardType } from "@/utils/get-keyboard-type";
 
+import type { QuestionValidationKind } from "@/constants/onboarding-questions";
 import type { Answer } from "@/stores/onboarding-store";
 
 interface QuestionConfig {
@@ -13,7 +14,8 @@ interface QuestionConfig {
   progress: number;
   type: string;
   placeholder?: string;
-  options?: readonly { label: string; subtitle?: string }[];
+  validationKind?: QuestionValidationKind;
+  options?: readonly { label: string; subtitle?: string; value?: string }[];
   unavailableOptionLabel?: string;
   unavailableOptionValue?: string;
 }
@@ -25,13 +27,14 @@ interface QuestionBodyProps {
   slideAnim: Animated.Value;
   onOptionPress: (label: string) => void;
   onTextChange: (text: string) => void;
+  validationMessage?: string;
 }
 
-function isOptionSelected(type: string, currentAnswer: Answer | undefined, label: string): boolean {
+function isOptionSelected(type: string, currentAnswer: Answer | undefined, value: string): boolean {
   if (type === "multi") {
-    return Array.isArray(currentAnswer) && currentAnswer.includes(label);
+    return Array.isArray(currentAnswer) && currentAnswer.includes(value);
   }
-  return currentAnswer === label;
+  return currentAnswer === value;
 }
 
 export function QuestionBody({
@@ -41,9 +44,11 @@ export function QuestionBody({
   slideAnim,
   onOptionPress,
   onTextChange,
+  validationMessage,
 }: QuestionBodyProps) {
   const options = question.options ?? [];
   const isMulti = question.type === "multi";
+  const isTextInput = question.type === "text" || question.type === "integer";
   const unavailableOptionValue = question.unavailableOptionValue;
   const unavailableSelected =
     unavailableOptionValue !== undefined && currentAnswer === unavailableOptionValue;
@@ -69,7 +74,7 @@ export function QuestionBody({
       </ThemedText>
 
       <View style={styles.optionsContainer}>
-        {question.type === "text" ? (
+        {isTextInput ? (
           <>
             <TextInput
               style={[styles.textInput, unavailableSelected && styles.textInputDisabled]}
@@ -79,10 +84,14 @@ export function QuestionBody({
               onChangeText={onTextChange}
               autoCapitalize="none"
               autoCorrect={false}
-              keyboardType={getKeyboardType(question.placeholder)}
+              keyboardType={
+                question.type === "integer" ? "numeric" : getKeyboardType(question.placeholder)
+              }
               editable={!unavailableSelected}
             />
-            {question.unavailableOptionLabel && unavailableOptionValue ? (
+            {question.type === "text" &&
+            question.unavailableOptionLabel &&
+            unavailableOptionValue ? (
               <QuestionOption
                 label={question.unavailableOptionLabel}
                 selected={currentAnswer === unavailableOptionValue}
@@ -90,16 +99,25 @@ export function QuestionBody({
                 onPress={() => onOptionPress(unavailableOptionValue)}
               />
             ) : null}
+            {validationMessage ? (
+              <ThemedText type="bodySm" style={styles.validationMessage}>
+                {validationMessage}
+              </ThemedText>
+            ) : null}
           </>
         ) : (
           options.map((option) => (
             <QuestionOption
-              key={option.label}
+              key={option.value ?? option.label}
               label={option.label}
               subtitle={option.subtitle}
-              selected={isOptionSelected(question.type, currentAnswer, option.label)}
+              selected={isOptionSelected(
+                question.type,
+                currentAnswer,
+                option.value ?? option.label,
+              )}
               multi={isMulti}
-              onPress={() => onOptionPress(option.label)}
+              onPress={() => onOptionPress(option.value ?? option.label)}
             />
           ))
         )}
@@ -138,5 +156,9 @@ const styles = StyleSheet.create({
   },
   textInputDisabled: {
     opacity: 0.55,
+  },
+  validationMessage: {
+    color: SemanticColors.error,
+    marginTop: 2,
   },
 });
