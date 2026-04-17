@@ -21,11 +21,11 @@ export const NAV_ITEMS: NavItemConfig[] = [
     ),
   },
   {
-    key: "settings",
-    label: "Ajustes",
+    key: "business-memory",
+    label: "Memoria",
     icon: (color, focused) => (
       <Ionicons
-        name={focused ? "settings" : "settings-outline"}
+        name={focused ? "compass" : "compass-outline"}
         size={TAB_ICON_SIZE}
         color={color}
       />

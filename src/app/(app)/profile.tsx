@@ -16,7 +16,7 @@ const MENU_ITEMS = [
   { icon: "shield-outline" as const, label: "Seguridad" },
   { icon: "help-circle-outline" as const, label: "Ayuda" },
   { icon: "clipboard-outline" as const, label: "Configurar mi plan", key: "onboarding" },
-  { icon: "compass-outline" as const, label: "Memoria de negocio", key: "business-memory" },
+  { icon: "settings-outline" as const, label: "Ajustes", key: "settings" },
 ];
 
 export default function ProfileScreen() {
@@ -30,8 +30,8 @@ export default function ProfileScreen() {
       case "onboarding":
         router.push("/(onboarding)/welcome");
         return;
-      case "business-memory":
-        router.push("/(app)/business-memory" as Href);
+      case "settings":
+        router.push("/(app)/settings" as Href);
         return;
     }
   }
