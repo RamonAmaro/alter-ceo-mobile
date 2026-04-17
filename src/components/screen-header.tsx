@@ -9,6 +9,7 @@ interface ScreenHeaderProps {
   topInset: number;
   icon?: React.ComponentProps<typeof Ionicons>["name"];
   useLogoIcon?: boolean;
+  renderIcon?: () => React.ReactNode;
   titlePrefix: string;
   titleAccent: string;
   onBack?: () => void;
@@ -16,10 +17,21 @@ interface ScreenHeaderProps {
   showBack?: boolean;
 }
 
+function HeaderIcon({
+  useLogoIcon,
+  renderIcon,
+  icon,
+}: Pick<ScreenHeaderProps, "useLogoIcon" | "renderIcon" | "icon">): React.ReactNode {
+  if (renderIcon) return renderIcon();
+  if (useLogoIcon) return <AlterLogo size={20} />;
+  return <Ionicons name={icon} size={18} color={SemanticColors.success} />;
+}
+
 export function ScreenHeader({
   topInset,
   icon,
   useLogoIcon = false,
+  renderIcon,
   titlePrefix,
   titleAccent,
   onBack,
@@ -42,25 +54,9 @@ export function ScreenHeader({
         </TouchableOpacity>
       )}
 
-      {useLogoIcon ? (
-        <Pressable
-          onPress={onIconPress}
-          disabled={!onIconPress}
-          style={styles.iconBtn}
-          hitSlop={12}
-        >
-          <AlterLogo size={20} />
-        </Pressable>
-      ) : (
-        <Pressable
-          onPress={onIconPress}
-          disabled={!onIconPress}
-          style={styles.iconBtn}
-          hitSlop={12}
-        >
-          <Ionicons name={icon} size={18} color={SemanticColors.success} />
-        </Pressable>
-      )}
+      <Pressable onPress={onIconPress} disabled={!onIconPress} style={styles.iconBtn} hitSlop={12}>
+        <HeaderIcon useLogoIcon={useLogoIcon} renderIcon={renderIcon} icon={icon} />
+      </Pressable>
 
       <View style={styles.titleRow}>
         <ThemedText style={styles.prefix}>{titlePrefix} </ThemedText>

@@ -21,7 +21,13 @@ export default function Index() {
     if (authLoading || !isAuthenticated || !currentUserId) return;
     if (onboardingStatusUserId === currentUserId) return;
     void resolveCompletionStatus(currentUserId);
-  }, [authLoading, isAuthenticated, currentUserId, onboardingStatusUserId, resolveCompletionStatus]);
+  }, [
+    authLoading,
+    isAuthenticated,
+    currentUserId,
+    onboardingStatusUserId,
+    resolveCompletionStatus,
+  ]);
 
   useEffect(() => {
     if (!isAuthenticated || !onboardingCompleted || !currentUserId) return;

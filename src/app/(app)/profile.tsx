@@ -7,7 +7,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { goBackOrHome } from "@/utils/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,6 +16,7 @@ const MENU_ITEMS = [
   { icon: "shield-outline" as const, label: "Seguridad" },
   { icon: "help-circle-outline" as const, label: "Ayuda" },
   { icon: "clipboard-outline" as const, label: "Configurar mi plan", key: "onboarding" },
+  { icon: "compass-outline" as const, label: "Memoria de negocio", key: "business-memory" },
 ];
 
 export default function ProfileScreen() {
@@ -24,8 +25,15 @@ export default function ProfileScreen() {
   const router = useRouter();
   const signOut = useAuthStore((s) => s.signOut);
 
-  function handleGoToOnboarding(): void {
-    router.push("/(onboarding)/welcome");
+  function handleMenuPress(key?: string): void {
+    switch (key) {
+      case "onboarding":
+        router.push("/(onboarding)/welcome");
+        return;
+      case "business-memory":
+        router.push("/(app)/business-memory" as Href);
+        return;
+    }
   }
 
   async function handleSignOut(): Promise<void> {
@@ -72,7 +80,7 @@ export default function ProfileScreen() {
               key={item.icon}
               icon={item.icon}
               label={item.label}
-              onPress={item.key === "onboarding" ? handleGoToOnboarding : undefined}
+              onPress={item.key ? () => handleMenuPress(item.key) : undefined}
             />
           ))}
         </View>

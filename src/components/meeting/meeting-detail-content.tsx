@@ -75,130 +75,130 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
 
   return (
     <View style={styles.root}>
-        <ScreenHeader
-          topInset={insets.top}
-          icon="document-text"
-          titlePrefix="Detalle"
-          titleAccent={"Reuni\u00F3n"}
-          showBack={isMobile}
-          onBack={() => goBackOrHome()}
-        />
+      <ScreenHeader
+        topInset={insets.top}
+        icon="document-text"
+        titlePrefix="Detalle"
+        titleAccent={"Reuni\u00F3n"}
+        showBack={isMobile}
+        onBack={() => goBackOrHome()}
+      />
 
-        {isLoading || !meeting ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={SemanticColors.tealLight} />
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.six }}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.heroSection}>
-              <ThemedText type="headingLg" style={styles.title}>
-                {meeting.title}
+      {isLoading || !meeting ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={SemanticColors.tealLight} />
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.six }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.heroSection}>
+            <ThemedText type="headingLg" style={styles.title}>
+              {meeting.title}
+            </ThemedText>
+
+            <View style={styles.metaRow}>
+              <ThemedText type="caption" style={styles.meta}>
+                {formatDate(meeting.created_at)}
               </ThemedText>
-
-              <View style={styles.metaRow}>
-                <ThemedText type="caption" style={styles.meta}>
-                  {formatDate(meeting.created_at)}
-                </ThemedText>
-                <ThemedText type="caption" style={styles.metaSep}>
-                  {"\u00B7"}
-                </ThemedText>
-                <ThemedText type="caption" style={styles.meta}>
-                  {formatTime(meeting.created_at)}
-                </ThemedText>
-                {dur ? (
-                  <>
-                    <ThemedText type="caption" style={styles.metaSep}>
-                      {"\u00B7"}
-                    </ThemedText>
-                    <ThemedText type="caption" style={styles.metaGreen}>
-                      {dur}
-                    </ThemedText>
-                  </>
-                ) : null}
-              </View>
-
-              <View style={[styles.statusPill, { backgroundColor: `${sColor}15` }]}>
-                <View style={[styles.statusDot, { backgroundColor: sColor }]} />
-                <ThemedText type="caption" style={[styles.statusLabel, { color: sColor }]}>
-                  {statusLabel(meeting.status)}
-                </ThemedText>
-              </View>
+              <ThemedText type="caption" style={styles.metaSep}>
+                {"\u00B7"}
+              </ThemedText>
+              <ThemedText type="caption" style={styles.meta}>
+                {formatTime(meeting.created_at)}
+              </ThemedText>
+              {dur ? (
+                <>
+                  <ThemedText type="caption" style={styles.metaSep}>
+                    {"\u00B7"}
+                  </ThemedText>
+                  <ThemedText type="caption" style={styles.metaGreen}>
+                    {dur}
+                  </ThemedText>
+                </>
+              ) : null}
             </View>
 
-            <View style={styles.playerWrap}>
-              <MeetingAudioPlayer
-                audioUrl={meeting.audio_url}
-                durationSeconds={meeting.duration_seconds}
-              />
+            <View style={[styles.statusPill, { backgroundColor: `${sColor}15` }]}>
+              <View style={[styles.statusDot, { backgroundColor: sColor }]} />
+              <ThemedText type="caption" style={[styles.statusLabel, { color: sColor }]}>
+                {statusLabel(meeting.status)}
+              </ThemedText>
             </View>
+          </View>
 
-            {summary ? (
-              <>
-                <LinearGradient colors={HERO_GRADIENT} style={styles.summaryCard}>
-                  <ThemedText type="caption" style={styles.eyebrow}>
-                    RESUMEN EJECUTIVO
-                  </ThemedText>
-                  <ThemedText type="headingMd" style={styles.headline}>
-                    {summary.headline}
-                  </ThemedText>
-                  <ThemedText type="bodyMd" style={styles.summaryBody}>
-                    {summary.executive_summary}
-                  </ThemedText>
-                </LinearGradient>
+          <View style={styles.playerWrap}>
+            <MeetingAudioPlayer
+              audioUrl={meeting.audio_url}
+              durationSeconds={meeting.duration_seconds}
+            />
+          </View>
 
-                <View style={styles.grid}>
-                  <MeetingSummarySection
-                    icon="checkmark-circle-outline"
-                    iconColor={SemanticColors.success}
-                    title="Decisiones"
-                    items={summary.decisions ?? []}
-                    emptyMessage={"Sin decisiones extra\u00EDdas"}
-                  />
-                  <MeetingSummarySection
-                    icon="warning-outline"
-                    iconColor={SemanticColors.warning}
-                    title="Bloqueos"
-                    items={summary.blockers ?? []}
-                    emptyMessage={"Sin bloqueos extra\u00EDdos"}
-                  />
-                  <MeetingSummarySection
-                    icon="arrow-forward-circle-outline"
-                    iconColor={SemanticColors.info}
-                    title={"Pr\u00F3ximos pasos"}
-                    items={summary.next_steps ?? []}
-                    emptyMessage="Sin siguientes pasos"
-                  />
-                  <MeetingSummarySection
-                    icon="pulse-outline"
-                    iconColor={SemanticColors.accent}
-                    title={"Se\u00F1ales Business Kernel"}
-                    items={summary.business_kernel_signals ?? []}
-                    emptyMessage={"Sin se\u00F1ales extra\u00EDdas"}
-                  />
-                </View>
-              </>
-            ) : null}
-
-            {meeting.transcript ? (
-              <View style={styles.section}>
-                <MeetingTranscriptSection transcript={meeting.transcript} />
-              </View>
-            ) : null}
-
-            {meeting.error_message ? (
-              <View style={[styles.section, styles.errorBox]}>
-                <Ionicons name="alert-circle" size={16} color={SemanticColors.error} />
-                <ThemedText type="bodySm" style={styles.errorText}>
-                  {meeting.error_message}
+          {summary ? (
+            <>
+              <LinearGradient colors={HERO_GRADIENT} style={styles.summaryCard}>
+                <ThemedText type="caption" style={styles.eyebrow}>
+                  RESUMEN EJECUTIVO
                 </ThemedText>
+                <ThemedText type="headingMd" style={styles.headline}>
+                  {summary.headline}
+                </ThemedText>
+                <ThemedText type="bodyMd" style={styles.summaryBody}>
+                  {summary.executive_summary}
+                </ThemedText>
+              </LinearGradient>
+
+              <View style={styles.grid}>
+                <MeetingSummarySection
+                  icon="checkmark-circle-outline"
+                  iconColor={SemanticColors.success}
+                  title="Decisiones"
+                  items={summary.decisions ?? []}
+                  emptyMessage={"Sin decisiones extra\u00EDdas"}
+                />
+                <MeetingSummarySection
+                  icon="warning-outline"
+                  iconColor={SemanticColors.warning}
+                  title="Bloqueos"
+                  items={summary.blockers ?? []}
+                  emptyMessage={"Sin bloqueos extra\u00EDdos"}
+                />
+                <MeetingSummarySection
+                  icon="arrow-forward-circle-outline"
+                  iconColor={SemanticColors.info}
+                  title={"Pr\u00F3ximos pasos"}
+                  items={summary.next_steps ?? []}
+                  emptyMessage="Sin siguientes pasos"
+                />
+                <MeetingSummarySection
+                  icon="pulse-outline"
+                  iconColor={SemanticColors.accent}
+                  title={"Se\u00F1ales Business Kernel"}
+                  items={summary.business_kernel_signals ?? []}
+                  emptyMessage={"Sin se\u00F1ales extra\u00EDdas"}
+                />
               </View>
-            ) : null}
-          </ScrollView>
-        )}
+            </>
+          ) : null}
+
+          {meeting.transcript ? (
+            <View style={styles.section}>
+              <MeetingTranscriptSection transcript={meeting.transcript} />
+            </View>
+          ) : null}
+
+          {meeting.error_message ? (
+            <View style={[styles.section, styles.errorBox]}>
+              <Ionicons name="alert-circle" size={16} color={SemanticColors.error} />
+              <ThemedText type="bodySm" style={styles.errorText}>
+                {meeting.error_message}
+              </ThemedText>
+            </View>
+          ) : null}
+        </ScrollView>
+      )}
     </View>
   );
 }

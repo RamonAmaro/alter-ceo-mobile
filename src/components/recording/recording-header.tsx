@@ -7,7 +7,11 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 export function RecordingHeader() {
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => goBackOrHome()} style={styles.backButton} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={() => goBackOrHome()}
+        style={styles.backButton}
+        activeOpacity={0.7}
+      >
         <Ionicons name="chevron-back" size={28} color={SemanticColors.textPrimary} />
       </TouchableOpacity>
 
