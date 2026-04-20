@@ -5,16 +5,22 @@ import type {
 
 export type StepIconLibrary = "Ionicons" | "MaterialCommunityIcons";
 
-export type FormFieldType = "text" | "textarea";
+export type FormFieldType = "text" | "textarea" | "select";
 
 export interface StepIconConfig {
   readonly library: StepIconLibrary;
   readonly name: string;
 }
 
+export interface FormFieldOption {
+  readonly label: string;
+  readonly value: string;
+}
+
 export interface FormFieldConfig {
   readonly id: string;
   readonly label: string;
+  readonly options?: readonly FormFieldOption[];
   readonly placeholder?: string;
   readonly type: FormFieldType;
 }
@@ -37,7 +43,16 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     fields: [
       { id: "business_name", label: "Nombre del negocio", type: "text" },
       { id: "sector", label: "Sector", type: "text" },
-      { id: "business_model", label: "Modelo de negocio", type: "text" },
+      {
+        id: "business_model",
+        label: "Modelo de negocio",
+        type: "select",
+        options: [
+          { value: "B2B", label: "B2B" },
+          { value: "B2C", label: "B2C" },
+          { value: "Hybrid", label: "Hibrido" },
+        ],
+      },
       { id: "website_url", label: "Sitio web", type: "text" },
       { id: "business_instagram", label: "Instagram del negocio", type: "text" },
       { id: "geography", label: "Geografia principal", type: "text" },
@@ -48,9 +63,36 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     icon: { library: "MaterialCommunityIcons", name: "bag-personal-outline" },
     fields: [
       { id: "offer_summary", label: "Resumen de la oferta", type: "textarea" },
-      { id: "pricing_strategy", label: "Estrategia de precios", type: "text" },
-      { id: "differentiation_level", label: "Nivel de diferenciacion", type: "text" },
-      { id: "sales_system", label: "Sistema de ventas", type: "text" },
+      {
+        id: "pricing_strategy",
+        label: "Estrategia de precios",
+        type: "select",
+        options: [
+          { value: "cost_plus", label: "Coste mas margen" },
+          { value: "competitor_based", label: "Basado en competidores" },
+          { value: "value_based", label: "Basado en valor" },
+        ],
+      },
+      {
+        id: "differentiation_level",
+        label: "Nivel de diferenciacion",
+        type: "select",
+        options: [
+          { value: "high", label: "Alta" },
+          { value: "medium", label: "Media" },
+          { value: "low", label: "Baja" },
+        ],
+      },
+      {
+        id: "sales_system",
+        label: "Sistema de ventas",
+        type: "select",
+        options: [
+          { value: "structured", label: "Estructurado" },
+          { value: "intuitive", label: "Intuitivo" },
+          { value: "improvised", label: "Improvisado" },
+        ],
+      },
       { id: "pipeline_conversion_summary", label: "Resumen de conversion del embudo", type: "textarea" },
     ],
   },
@@ -58,10 +100,45 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     id: "financial_block",
     icon: { library: "MaterialCommunityIcons", name: "file-chart-outline" },
     fields: [
-      { id: "profitability_level", label: "Nivel de rentabilidad", type: "text" },
-      { id: "liquidity_level", label: "Nivel de liquidez", type: "text" },
-      { id: "gross_margin_level", label: "Nivel de margen bruto", type: "text" },
-      { id: "kpi_maturity", label: "Madurez de KPIs", type: "text" },
+      {
+        id: "profitability_level",
+        label: "Nivel de rentabilidad",
+        type: "select",
+        options: [
+          { value: "high", label: "Alta" },
+          { value: "adjusted", label: "Ajustada" },
+          { value: "critical", label: "Critica" },
+        ],
+      },
+      {
+        id: "liquidity_level",
+        label: "Nivel de liquidez",
+        type: "select",
+        options: [
+          { value: "stable", label: "Estable" },
+          { value: "adjusted", label: "Ajustada" },
+          { value: "risk", label: "En riesgo" },
+        ],
+      },
+      {
+        id: "gross_margin_level",
+        label: "Nivel de margen bruto",
+        type: "select",
+        options: [
+          { value: "precise", label: "Preciso" },
+          { value: "approximate", label: "Aproximado" },
+        ],
+      },
+      {
+        id: "kpi_maturity",
+        label: "Madurez de KPIs",
+        type: "select",
+        options: [
+          { value: "solid", label: "Solida" },
+          { value: "basic", label: "Basica" },
+          { value: "none", label: "Ninguna" },
+        ],
+      },
       { id: "monthly_sales_history_eur", label: "Historico mensual de ventas (EUR)", type: "textarea" },
     ],
   },
@@ -70,7 +147,16 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     icon: { library: "MaterialCommunityIcons", name: "account-group-outline" },
     fields: [
       { id: "team_and_roles", label: "Equipo y roles clave", type: "textarea" },
-      { id: "founder_dependency_level", label: "Dependencia del fundador", type: "text" },
+      {
+        id: "founder_dependency_level",
+        label: "Dependencia del fundador",
+        type: "select",
+        options: [
+          { value: "high", label: "Alta" },
+          { value: "medium", label: "Media" },
+          { value: "low", label: "Baja" },
+        ],
+      },
       { id: "leadership_summary", label: "Resumen de liderazgo", type: "textarea" },
     ],
   },
@@ -91,19 +177,19 @@ const TEMPLATE_BY_ID = new Map(
 
 const DEFAULT_ICON: StepIconConfig = { library: "MaterialCommunityIcons", name: "shape-outline" };
 
+export function buildBusinessMemoryStep(section: BusinessKernelSectionResponse): BusinessMemoryStep {
+  const template = TEMPLATE_BY_ID.get(section.id);
+  return {
+    ...section,
+    icon: template?.icon ?? DEFAULT_ICON,
+    fields: template?.fields ?? [],
+  };
+}
+
 export function buildBusinessMemorySteps(
   sections: readonly BusinessKernelSectionResponse[],
 ): BusinessMemoryStep[] {
-  return [...sections]
-    .sort((left, right) => left.order - right.order)
-    .map((section) => {
-      const template = TEMPLATE_BY_ID.get(section.id);
-      return {
-        ...section,
-        icon: template?.icon ?? DEFAULT_ICON,
-        fields: template?.fields ?? [],
-      };
-    });
+  return [...sections].sort((left, right) => left.order - right.order).map(buildBusinessMemoryStep);
 }
 
 export function findStepById(

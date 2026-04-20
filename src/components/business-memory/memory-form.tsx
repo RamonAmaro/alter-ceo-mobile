@@ -11,6 +11,7 @@ interface MemoryFormProps {
   fieldPresentation?: Readonly<Record<string, BusinessMemoryFieldPresentation>>;
   initialValues?: Readonly<Record<string, string>>;
   saveLabel?: string;
+  saveDisabled?: boolean;
   onChange?: (values: Record<string, string>) => void;
   onSave?: (values: Record<string, string>) => void;
 }
@@ -32,6 +33,7 @@ export function MemoryForm({
   fieldPresentation,
   initialValues,
   saveLabel = "Guardar memoria",
+  saveDisabled = false,
   onChange,
   onSave,
 }: MemoryFormProps) {
@@ -80,15 +82,21 @@ export function MemoryForm({
               placeholder={fieldPresentation?.[field.id]?.placeholder ?? field.placeholder}
               helperText={fieldPresentation?.[field.id]?.helperText}
               multiline={isMultiline}
-              returnKeyType={isLast || isMultiline ? "done" : "next"}
-              onSubmitEditing={isLast || isMultiline ? undefined : () => focusNextField(index)}
+              options={field.options}
+              returnKeyType={isLast || isMultiline || field.type === "select" ? "done" : "next"}
+              onSubmitEditing={
+                isLast || isMultiline || field.type === "select"
+                  ? undefined
+                  : () => focusNextField(index)
+              }
               tone={fieldPresentation?.[field.id]?.tone}
+              type={field.type}
             />
           );
         })}
       </View>
 
-      <MemorySaveButton label={saveLabel} onPress={handleSave} disabled={isEmpty} />
+      <MemorySaveButton label={saveLabel} onPress={handleSave} disabled={isEmpty || saveDisabled} />
     </View>
   );
 }

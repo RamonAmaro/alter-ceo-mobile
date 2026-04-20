@@ -28,9 +28,21 @@ export interface BusinessKernelDashboardProgressResponse {
   total_sections: number;
 }
 
+export interface BusinessKernelSectionPatchRequest {
+  data: Record<string, unknown>;
+  expected_version?: string | null;
+}
+
 export interface UserBusinessKernelDashboardResponse {
   user_id: string;
   version: string | null;
   progress: BusinessKernelDashboardProgressResponse;
   sections: BusinessKernelSectionResponse[];
+}
+
+export interface BusinessKernelSectionPatchResponse {
+  user_id: string;
+  version: string;
+  progress: BusinessKernelDashboardProgressResponse;
+  section: BusinessKernelSectionResponse;
 }

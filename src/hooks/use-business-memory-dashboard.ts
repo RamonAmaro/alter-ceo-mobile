@@ -1,11 +1,19 @@
-import { buildBusinessMemorySteps, type BusinessMemoryStep } from "@/constants/business-memory-steps";
+import {
+  buildBusinessMemoryStep,
+  buildBusinessMemorySteps,
+  type BusinessMemoryStep,
+} from "@/constants/business-memory-steps";
 import { getBusinessKernelDashboard } from "@/services/business-kernel-service";
 import { useAuthStore } from "@/stores/auth-store";
-import type { BusinessKernelDashboardProgressResponse } from "@/types/business-kernel";
+import type {
+  BusinessKernelDashboardProgressResponse,
+  BusinessKernelSectionPatchResponse,
+} from "@/types/business-kernel";
 import { toErrorMessage } from "@/utils/to-error-message";
 import { useEffect, useState } from "react";
 
 interface UseBusinessMemoryDashboardResult {
+  applySectionPatch: (payload: BusinessKernelSectionPatchResponse) => void;
   error: string | null;
   isLoading: boolean;
   progress: BusinessKernelDashboardProgressResponse | null;
@@ -99,7 +107,24 @@ export function useBusinessMemoryDashboard(): UseBusinessMemoryDashboardResult {
     void loadDashboard(userId);
   }
 
+  function applySectionPatch(payload: BusinessKernelSectionPatchResponse): void {
+    setVersion(payload.version);
+    setProgress(payload.progress);
+    setSteps((currentSteps) => {
+      const nextStep = buildBusinessMemoryStep(payload.section);
+      const existingIndex = currentSteps.findIndex((step) => step.id === payload.section.id);
+      if (existingIndex < 0) {
+        return [...currentSteps, nextStep].sort((left, right) => left.order - right.order);
+      }
+      const nextSteps = [...currentSteps];
+      nextSteps[existingIndex] = nextStep;
+      return nextSteps;
+    });
+    setError(null);
+  }
+
   return {
+    applySectionPatch,
     error,
     isLoading,
     progress,
