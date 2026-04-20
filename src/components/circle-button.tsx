@@ -51,7 +51,7 @@ export function CircleButton({
       pulseAnim.stopAnimation();
       pulseAnim.setValue(1);
     }
-  }, [pulse]);
+  }, [pulse, pulseAnim]);
 
   const radius = size / 2;
   const midSize = size - outerRimWidth * 2;
@@ -69,10 +69,7 @@ export function CircleButton({
           ]}
         >
           <View
-            style={[
-              styles.midRim,
-              { width: midSize, height: midSize, borderRadius: midRadius },
-            ]}
+            style={[styles.midRim, { width: midSize, height: midSize, borderRadius: midRadius }]}
           >
             <View
               style={[

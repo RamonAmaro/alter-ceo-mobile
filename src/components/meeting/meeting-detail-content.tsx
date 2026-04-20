@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/components/screen-header";
@@ -25,12 +24,6 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-}
-
 function formatDuration(seconds: number | null | undefined): string {
   if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds <= 0) return "0:00";
   const m = Math.floor(seconds / 60);
@@ -49,21 +42,6 @@ function formatSize(bytes: number | null | undefined): string {
   }
   const precision = v >= 100 || i === 0 ? 0 : v >= 10 ? 1 : 2;
   return `${v.toFixed(precision)} ${units[i]}`;
-}
-
-function processingDurationLabel(
-  startedAt: string | null | undefined,
-  finishedAt: string | null | undefined,
-): string | null {
-  if (!startedAt || !finishedAt) return null;
-  const start = new Date(startedAt).getTime();
-  const end = new Date(finishedAt).getTime();
-  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return null;
-  const totalSec = Math.round((end - start) / 1000);
-  if (totalSec < 60) return `${totalSec}s`;
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${m}m ${s.toString().padStart(2, "0")}s`;
 }
 
 function statusColor(status: string): string {
@@ -133,9 +111,6 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const dur = formatDuration(meeting?.duration_seconds);
   const sColor = meeting ? statusColor(meeting.status) : SemanticColors.textMuted;
   const stageLabel = meeting ? processingStageLabel(meeting.processing_stage) : null;
-  const procDur = meeting
-    ? processingDurationLabel(meeting.processing_started_at, meeting.processing_finished_at)
-    : null;
 
   const sections: readonly SectionStat[] = summary
     ? [
@@ -372,10 +347,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
                         </ThemedText>
                       </View>
                       <ThemedText
-                        style={[
-                          styles.anatomySegTitle,
-                          empty && styles.anatomySegTitleEmpty,
-                        ]}
+                        style={[styles.anatomySegTitle, empty && styles.anatomySegTitleEmpty]}
                         numberOfLines={2}
                       >
                         {sec.title}
@@ -408,9 +380,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
             </View>
           ) : null}
 
-          {meeting.transcript ? (
-            <MeetingTranscriptSection transcript={meeting.transcript} />
-          ) : null}
+          {meeting.transcript ? <MeetingTranscriptSection transcript={meeting.transcript} /> : null}
 
           {meeting.error_message ? (
             <View style={styles.errorBox}>

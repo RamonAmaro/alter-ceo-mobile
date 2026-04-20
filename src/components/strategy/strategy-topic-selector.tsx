@@ -50,7 +50,10 @@ export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) 
   return (
     <View style={[styles.grid, isDesktop ? styles.gridDesktop : null]}>
       {TOPICS.map((topic, index) => (
-        <View key={topic.key} style={[styles.cell, isDesktop ? styles.cellDesktop : styles.cellRow]}>
+        <View
+          key={topic.key}
+          style={[styles.cell, isDesktop ? styles.cellDesktop : styles.cellRow]}
+        >
           <StrategyTopicCard
             index={index}
             total={total}

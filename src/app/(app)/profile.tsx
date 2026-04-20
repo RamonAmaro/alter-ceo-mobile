@@ -101,14 +101,14 @@ export default function ProfileScreen() {
         >
           <EyebrowPill label="IDENTIDAD · CONFIGURACIÓN" />
 
-          <ProfileHeroCard
-            name="(Nombre)"
-            company="(Nombre de Empresa)"
-            completeness={35}
-          />
+          <ProfileHeroCard name="(Nombre)" company="(Nombre de Empresa)" completeness={35} />
 
           <View style={styles.sectionWrap}>
-            <SectionHeading eyebrow="ACCESOS RÁPIDOS" titlePrefix="Gestiona tu" titleAccent="cuenta" />
+            <SectionHeading
+              eyebrow="ACCESOS RÁPIDOS"
+              titlePrefix="Gestiona tu"
+              titleAccent="cuenta"
+            />
           </View>
 
           <View style={styles.menuList}>

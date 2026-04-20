@@ -75,11 +75,7 @@ export default function SettingsScreen() {
           />
 
           <View style={styles.sectionWrap}>
-            <SectionHeading
-              eyebrow="HERRAMIENTAS"
-              titlePrefix="Accesos"
-              titleAccent="avanzados"
-            />
+            <SectionHeading eyebrow="HERRAMIENTAS" titlePrefix="Accesos" titleAccent="avanzados" />
           </View>
 
           <View style={styles.menuList}>

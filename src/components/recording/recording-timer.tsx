@@ -76,14 +76,14 @@ export function RecordingTimer({ isRecording, isPaused }: RecordingTimerProps) {
   const statusLabel = isRecording
     ? "GRABANDO · EN VIVO"
     : isPaused
-    ? "PAUSADO · RETOMAR"
-    : "LISTO PARA CAPTURAR";
+      ? "PAUSADO · RETOMAR"
+      : "LISTO PARA CAPTURAR";
 
   const statusColor = isRecording
     ? SemanticColors.error
     : isPaused
-    ? SemanticColors.warning
-    : SemanticColors.success;
+      ? SemanticColors.warning
+      : SemanticColors.success;
 
   const pulseOpacity = pulseAnim.interpolate({
     inputRange: [0, 1],

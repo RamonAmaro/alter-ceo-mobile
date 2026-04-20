@@ -36,7 +36,12 @@ export function ItemCard({ index, title, description, accentColor }: ItemCardPro
       />
 
       <View style={styles.header}>
-        <View style={[styles.badge, { backgroundColor: `${accentColor}18`, borderColor: `${accentColor}33` }]}>
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: `${accentColor}18`, borderColor: `${accentColor}33` },
+          ]}
+        >
           <ThemedText style={[styles.badgeNum, { color: accentColor }]}>#{index}</ThemedText>
         </View>
         <View style={styles.metaRow}>

@@ -26,7 +26,7 @@ export function SectionHeading({
         {titlePrefix}
         {titleAccent ? " " : ""}
         {titleAccent ? <ThemedText style={styles.titleAccent}>{titleAccent}</ThemedText> : null}
-        {titleSuffix ? <ThemedText style={styles.title}>{" "}{titleSuffix}</ThemedText> : null}
+        {titleSuffix ? <ThemedText style={styles.title}> {titleSuffix}</ThemedText> : null}
       </ThemedText>
     </View>
   );

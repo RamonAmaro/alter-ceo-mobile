@@ -17,15 +17,9 @@ export function PlanPill({
 }: PlanPillProps) {
   return (
     <View style={[styles.pill, accent && styles.pillAccent]}>
-      {withDot ? (
-        <View style={[styles.dot, accent ? styles.dotAccent : styles.dotMuted]} />
-      ) : null}
+      {withDot ? <View style={[styles.dot, accent ? styles.dotAccent : styles.dotMuted]} /> : null}
       <ThemedText
-        style={[
-          styles.text,
-          accent && styles.textAccent,
-          uppercase && styles.textUppercase,
-        ]}
+        style={[styles.text, accent && styles.textAccent, uppercase && styles.textUppercase]}
       >
         {label}
       </ThemedText>
