@@ -36,12 +36,12 @@ export function StepHeroRing({
         </ThemedText>
       </View>
 
-      <ProgressRing size={size} progress={step.progress} strokeWidth={3} animate={animate}>
+      <ProgressRing size={size} progress={step.completion_pct} strokeWidth={3} animate={animate}>
         <View style={styles.iconLayer} pointerEvents="none">
           <StepIcon config={step.icon} size={iconSize} color="rgba(255,255,255,0.10)" />
         </View>
         <View style={styles.labelStack} pointerEvents="none">
-          <ThemedText style={styles.percent}>{step.progress}</ThemedText>
+          <ThemedText style={styles.percent}>{step.completion_pct}</ThemedText>
           <ThemedText style={styles.percentUnit}>% COMPLETADO</ThemedText>
         </View>
       </ProgressRing>

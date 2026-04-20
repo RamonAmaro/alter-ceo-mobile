@@ -87,12 +87,12 @@ export function StepCard({ step, index, total, onPress, animationDelay = 0 }: St
             {indexLabel}
           </ThemedText>
 
-          <ProgressRing size={RING_SIZE} progress={step.progress} strokeWidth={3}>
+          <ProgressRing size={RING_SIZE} progress={step.completion_pct} strokeWidth={3}>
             <View style={styles.ringInner} pointerEvents="none">
               <View style={styles.ringIconLayer}>
                 <StepIcon config={step.icon} size={iconSize} color="rgba(255,255,255,0.14)" />
               </View>
-              <ThemedText style={styles.ringPercent}>{step.progress}%</ThemedText>
+              <ThemedText style={styles.ringPercent}>{step.completion_pct}%</ThemedText>
             </View>
           </ProgressRing>
 

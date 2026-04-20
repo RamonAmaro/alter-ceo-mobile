@@ -1,3 +1,8 @@
+import type {
+  BusinessKernelSectionId,
+  BusinessKernelSectionResponse,
+} from "@/types/business-kernel";
+
 export type StepIconLibrary = "Ionicons" | "MaterialCommunityIcons";
 
 export type FormFieldType = "text" | "textarea";
@@ -14,68 +19,100 @@ export interface FormFieldConfig {
   readonly type: FormFieldType;
 }
 
-export interface BusinessMemoryStep {
-  readonly id: string;
-  readonly title: string;
-  readonly description: string;
-  readonly progress: number;
+export interface BusinessMemorySectionTemplate {
+  readonly id: BusinessKernelSectionId;
   readonly icon: StepIconConfig;
   readonly fields: readonly FormFieldConfig[];
 }
 
-export const BUSINESS_MEMORY_STEPS: readonly BusinessMemoryStep[] = [
+export type BusinessMemoryStep = BusinessKernelSectionResponse & {
+  icon: StepIconConfig;
+  fields: readonly FormFieldConfig[];
+};
+
+export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTemplate[] = [
   {
-    id: "ficha-corporativa",
-    title: "Ficha Corporativa Básica",
-    description: "Este bloque valida los datos fundacionales y de contacto del negocio.",
-    progress: 50,
+    id: "company_profile",
     icon: { library: "MaterialCommunityIcons", name: "account-edit" },
     fields: [
-      { id: "razon-social", label: "Razón Social  |  Nombre Comercial", type: "text" },
-      { id: "sector-modelo", label: "Sector y Modelo de Negocio", type: "text" },
-      { id: "activos-digitales", label: "Activos Digitales", type: "text" },
-      { id: "mercado-geografico", label: "Mercado Geográfico", type: "text" },
-      { id: "fase-operativa", label: "Fase Operativa Actual", type: "text" },
+      { id: "business_name", label: "Nombre del negocio", type: "text" },
+      { id: "sector", label: "Sector", type: "text" },
+      { id: "business_model", label: "Modelo de negocio", type: "text" },
+      { id: "website_url", label: "Sitio web", type: "text" },
+      { id: "business_instagram", label: "Instagram del negocio", type: "text" },
+      { id: "geography", label: "Geografia", type: "text" },
     ],
   },
   {
-    id: "diagnostico-comercial",
-    title: "Diagnóstico Comercial y de Ventas",
-    description: "Este bloque evalúa la madurez de la oferta y la tracción en el mercado.",
-    progress: 25,
+    id: "commercial_block",
     icon: { library: "MaterialCommunityIcons", name: "bag-personal-outline" },
-    fields: [],
+    fields: [
+      { id: "offer_summary", label: "Resumen de la oferta", type: "textarea" },
+      { id: "pricing_strategy", label: "Estrategia de precios", type: "text" },
+      { id: "differentiation_level", label: "Nivel de diferenciacion", type: "text" },
+      { id: "sales_system", label: "Sistema de ventas", type: "text" },
+      { id: "pipeline_conversion_summary", label: "Resumen de conversion del pipeline", type: "textarea" },
+    ],
   },
   {
-    id: "salud-financiera",
-    title: "Salud Financiera y Control de Gestión",
-    description: "Este bloque mide la solidez económica y la madurez analítica.",
-    progress: 30,
+    id: "financial_block",
     icon: { library: "MaterialCommunityIcons", name: "file-chart-outline" },
-    fields: [],
+    fields: [
+      { id: "profitability_level", label: "Nivel de rentabilidad", type: "text" },
+      { id: "liquidity_level", label: "Nivel de liquidez", type: "text" },
+      { id: "gross_margin_level", label: "Nivel de margen bruto", type: "text" },
+      { id: "kpi_maturity", label: "Madurez de KPIs", type: "text" },
+      { id: "monthly_sales_history_eur", label: "Historico mensual de ventas (EUR)", type: "textarea" },
+    ],
   },
   {
-    id: "estructura-organizativa",
-    title: "Estructura Organizativa y Liderazgo",
-    description: "Este bloque analiza el capital humano y el nivel de delegación.",
-    progress: 40,
+    id: "team_block",
     icon: { library: "MaterialCommunityIcons", name: "account-group-outline" },
-    fields: [],
+    fields: [
+      { id: "team_and_roles", label: "Equipo y roles", type: "textarea" },
+      { id: "founder_dependency_level", label: "Dependencia del founder", type: "text" },
+      { id: "leadership_summary", label: "Resumen de liderazgo", type: "textarea" },
+    ],
   },
   {
-    id: "eficiencia-operativa",
-    title: "Eficiencia Operativa y Ejecución",
-    description: "Este bloque enfoca en la capacidad operativa actual y la tracción diaria.",
-    progress: 45,
+    id: "execution_block",
     icon: { library: "MaterialCommunityIcons", name: "account-tie-outline" },
-    fields: [],
+    fields: [
+      { id: "top_bottlenecks", label: "Cuellos de botella principales", type: "textarea" },
+      { id: "focus_areas", label: "Areas de foco", type: "textarea" },
+      { id: "active_micro_goals", label: "Micro objetivos activos", type: "textarea" },
+    ],
   },
 ];
 
-export function findStepById(stepId: string): BusinessMemoryStep | undefined {
-  return BUSINESS_MEMORY_STEPS.find((step) => step.id === stepId);
+const TEMPLATE_BY_ID = new Map(
+  BUSINESS_MEMORY_SECTION_TEMPLATES.map((template) => [template.id, template]),
+);
+
+const DEFAULT_ICON: StepIconConfig = { library: "MaterialCommunityIcons", name: "shape-outline" };
+
+export function buildBusinessMemorySteps(
+  sections: readonly BusinessKernelSectionResponse[],
+): BusinessMemoryStep[] {
+  return [...sections]
+    .sort((left, right) => left.order - right.order)
+    .map((section) => {
+      const template = TEMPLATE_BY_ID.get(section.id);
+      return {
+        ...section,
+        icon: template?.icon ?? DEFAULT_ICON,
+        fields: template?.fields ?? [],
+      };
+    });
 }
 
-export function getStepIndex(stepId: string): number {
-  return BUSINESS_MEMORY_STEPS.findIndex((step) => step.id === stepId);
+export function findStepById(
+  steps: readonly BusinessMemoryStep[],
+  stepId: string,
+): BusinessMemoryStep | undefined {
+  return steps.find((step) => step.id === stepId);
+}
+
+export function getStepIndex(steps: readonly BusinessMemoryStep[], stepId: string): number {
+  return steps.findIndex((step) => step.id === stepId);
 }

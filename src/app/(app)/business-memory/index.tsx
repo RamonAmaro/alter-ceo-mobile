@@ -1,11 +1,13 @@
 import { AppBackground } from "@/components/app-background";
+import { Button } from "@/components/button";
 import { CompassBadge } from "@/components/business-memory/compass-badge";
 import { MemoryOverviewCard } from "@/components/business-memory/memory-overview-card";
 import { StepsGrid } from "@/components/business-memory/steps-grid";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
-import { BUSINESS_MEMORY_STEPS, type BusinessMemoryStep } from "@/constants/business-memory-steps";
+import { type BusinessMemoryStep } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useBusinessMemoryDashboard } from "@/hooks/use-business-memory-dashboard";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useRouter, type Href } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -15,6 +17,7 @@ export default function BusinessMemoryIndexScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const router = useRouter();
+  const { error, isLoading, progress, refresh, steps } = useBusinessMemoryDashboard();
 
   function handleStepPress(step: BusinessMemoryStep): void {
     router.push(`/(app)/business-memory/${step.id}` as Href);
@@ -40,7 +43,24 @@ export default function BusinessMemoryIndexScreen() {
             <ThemedText style={styles.eyebrowText}>RESUMEN · CARTOGRAFÍA</ThemedText>
           </View>
 
-          <MemoryOverviewCard steps={BUSINESS_MEMORY_STEPS} />
+          {isLoading ? (
+            <View style={styles.feedbackCard}>
+              <ThemedText style={styles.feedbackTitle}>Cargando memoria de negocio</ThemedText>
+              <ThemedText style={styles.feedbackDescription}>
+                Estamos trayendo tus secciones y porcentajes desde el backend.
+              </ThemedText>
+            </View>
+          ) : error || !progress ? (
+            <View style={styles.feedbackCard}>
+              <ThemedText style={styles.feedbackTitle}>No pudimos cargar la memoria</ThemedText>
+              <ThemedText style={styles.feedbackDescription}>
+                {error ?? "Intentalo de nuevo en unos segundos."}
+              </ThemedText>
+              <Button label="Reintentar" onPress={refresh} style={styles.retryButton} />
+            </View>
+          ) : (
+            <MemoryOverviewCard progress={progress} />
+          )}
 
           <View style={styles.sectionHeader}>
             <View style={styles.sectionAccent} />
@@ -51,7 +71,7 @@ export default function BusinessMemoryIndexScreen() {
             Explora tus <ThemedText style={styles.sectionTitleAccent}>bloques</ThemedText>
           </ThemedText>
 
-          <StepsGrid steps={BUSINESS_MEMORY_STEPS} onStepPress={handleStepPress} />
+          {!isLoading && !error ? <StepsGrid steps={steps} onStepPress={handleStepPress} /> : null}
         </ScrollView>
       </View>
     </AppBackground>
@@ -125,5 +145,34 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     color: SemanticColors.success,
     fontStyle: "italic",
+  },
+  feedbackCard: {
+    marginHorizontal: Spacing.three,
+    paddingVertical: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    gap: Spacing.two,
+    alignItems: "center",
+  },
+  feedbackTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 18,
+    lineHeight: 22,
+    color: SemanticColors.textPrimary,
+    textAlign: "center",
+  },
+  feedbackDescription: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: SemanticColors.textSecondaryLight,
+    textAlign: "center",
+    maxWidth: 320,
+  },
+  retryButton: {
+    marginTop: Spacing.two,
   },
 });
