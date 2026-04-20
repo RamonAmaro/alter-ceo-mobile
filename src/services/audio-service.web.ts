@@ -67,6 +67,10 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
 
   useEffect(() => {
     return () => {
+      if (uriRef.current) {
+        URL.revokeObjectURL(uriRef.current);
+        uriRef.current = null;
+      }
       streamRef.current?.getTracks().forEach((t) => t.stop());
       audioCtxRef.current?.close().catch(() => {});
     };
@@ -90,6 +94,9 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
 
   const buildUri = useCallback(() => {
     if (chunksRef.current.length === 0) return;
+    if (uriRef.current) {
+      URL.revokeObjectURL(uriRef.current);
+    }
     const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current });
     uriRef.current = URL.createObjectURL(blob);
     forceUpdate((n) => n + 1);
@@ -122,8 +129,12 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
       }
     };
 
+    recorder.onstop = () => {
+      buildUri();
+    };
+
     recorderRef.current = recorder;
-  }, []);
+  }, [buildUri]);
 
   const record = useCallback(() => {
     const recorder = recorderRef.current;
@@ -133,7 +144,10 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
       recorder.resume();
     } else if (recorder.state === "inactive") {
       chunksRef.current = [];
-      uriRef.current = null;
+      if (uriRef.current) {
+        URL.revokeObjectURL(uriRef.current);
+        uriRef.current = null;
+      }
       recorder.start(100);
     }
   }, []);
@@ -150,13 +164,12 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
       recorder.requestData();
       recorder.stop();
     }
-    buildUri();
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     analyserRef.current = null;
     audioCtxRef.current?.close().catch(() => {});
     audioCtxRef.current = null;
-  }, [buildUri]);
+  }, []);
 
   const getStatus = useCallback((): RecordingStatus => {
     return { metering: computeMetering() };

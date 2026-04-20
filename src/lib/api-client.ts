@@ -108,9 +108,7 @@ export async function patch<T>(path: string, body?: unknown): Promise<T> {
 
 export async function postFormData<T>(path: string, formData: FormData): Promise<T> {
   try {
-    const response = await apiClient.post<T>(path, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await apiClient.post<T>(path, formData);
     return response.data;
   } catch (err) {
     return handleAxiosError(err);

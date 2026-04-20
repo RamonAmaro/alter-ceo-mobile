@@ -47,3 +47,26 @@ export interface ChatTurnCreateResponse {
   status: RunStatus;
   user_message_id: string;
 }
+
+export interface ChatAudioTurnCreateRequest {
+  turn_id: string;
+  uri: string;
+  language?: string;
+  recording_id?: string;
+}
+
+export interface ChatAudioTurnCreateResponse {
+  turn_id: string;
+  thread_id: string;
+  status: RunStatus;
+  user_message_id: string;
+  recording_id?: string | null;
+  transcript: string;
+  audio_url: string;
+  storage_bucket: string;
+  storage_key: string;
+  storage_provider: string;
+  transcription_provider: string;
+  language?: string | null;
+  duration_seconds?: number | null;
+}

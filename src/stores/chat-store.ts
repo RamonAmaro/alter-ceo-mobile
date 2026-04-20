@@ -12,6 +12,7 @@ interface ChatState {
   activeThreadId: string | null;
   messages: ChatMessageResponse[];
   isStreaming: boolean;
+  isSubmittingAudio: boolean;
   streamingText: string;
   isLoadingThreads: boolean;
   isLoadingMessages: boolean;
@@ -24,6 +25,7 @@ interface ChatState {
   selectThread: (threadId: string) => Promise<void>;
   fetchMessages: (threadId: string) => Promise<void>;
   sendMessage: (threadId: string, message: string) => Promise<void>;
+  sendAudioMessage: (threadId: string, uri: string) => Promise<void>;
   retryMessage: () => Promise<void>;
   cancelStream: () => void;
   reset: () => void;
@@ -34,6 +36,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   activeThreadId: null,
   messages: [],
   isStreaming: false,
+  isSubmittingAudio: false,
   streamingText: "",
   isLoadingThreads: false,
   isLoadingMessages: false,
@@ -132,6 +135,60 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  sendAudioMessage: async (threadId: string, uri: string) => {
+    set({
+      isSubmittingAudio: true,
+      error: null,
+      failedMessageId: null,
+    });
+
+    try {
+      const turnId = ulid();
+      const response = await chatService.createAudioTurn(threadId, {
+        turn_id: turnId,
+        uri,
+        language: "es",
+        recording_id: `rec-${turnId}`,
+      });
+
+      const userMsg: ChatMessageResponse = {
+        id: response.user_message_id,
+        thread_id: threadId,
+        role: "user",
+        text: response.transcript.trim() || "Mensaje de audio enviado",
+        created_at: new Date().toISOString(),
+      };
+
+      set((state) => ({
+        messages: [...state.messages, userMsg],
+        isSubmittingAudio: false,
+        isStreaming: true,
+        streamingText: "",
+        error: null,
+      }));
+
+      const connection = chatService.streamTurnEvents(
+        response.turn_id,
+        (event) => handleStreamEvent(event, threadId, set, get),
+        undefined,
+        () => handleStreamDone(threadId, set, get),
+        (err) =>
+          set({
+            isStreaming: false,
+            streamingText: "",
+            _sseConnection: null,
+            error: toErrorMessage(err),
+          }),
+      );
+      set({ _sseConnection: connection });
+    } catch (err) {
+      set({
+        isSubmittingAudio: false,
+        error: toErrorMessage(err),
+      });
+    }
+  },
+
   retryMessage: async () => {
     const { messages, activeThreadId, failedMessageId } = get();
     if (!failedMessageId || !activeThreadId) return;
@@ -156,6 +213,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       threads: [],
       activeThreadId: null,
       messages: [],
+      isSubmittingAudio: false,
       isLoadingThreads: false,
       isLoadingMessages: false,
       error: null,

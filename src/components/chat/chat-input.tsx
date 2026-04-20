@@ -1,20 +1,40 @@
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
+import type { ChatAudioState } from "@/hooks/use-chat-audio-recorder";
+import { formatTimer } from "@/utils/format-timer";
 
 interface ChatInputProps {
   value: string;
   onChangeText: (text: string) => void;
   onSend: () => void;
+  onAudioPress: () => void;
+  audioState: ChatAudioState;
+  audioElapsedMs: number;
   disabled?: boolean;
 }
 
-export function ChatInput({ value, onChangeText, onSend, disabled = false }: ChatInputProps) {
+export function ChatInput({
+  value,
+  onChangeText,
+  onSend,
+  onAudioPress,
+  audioState,
+  audioElapsedMs,
+  disabled = false,
+}: ChatInputProps) {
   const hasText = value.trim().length > 0;
-  const canSend = hasText && !disabled;
+  const isRecording = audioState === "recording";
+  const isSubmittingAudio = audioState === "submitting";
+  const canSend = hasText && !disabled && !isRecording && !isSubmittingAudio;
+  const placeholder = isRecording
+    ? `Grabando audio... ${formatTimer(audioElapsedMs)}`
+    : isSubmittingAudio
+      ? "Transcribiendo audio..."
+      : "Escribe tu mensaje...";
 
   return (
     <View style={styles.container}>
@@ -27,17 +47,34 @@ export function ChatInput({ value, onChangeText, onSend, disabled = false }: Cha
         >
           <TextInput
             style={styles.input}
-            placeholder="Escribe tu mensaje..."
+            placeholder={placeholder}
             placeholderTextColor="rgba(255,255,255,0.4)"
             value={value}
             onChangeText={onChangeText}
             onSubmitEditing={onSend}
             returnKeyType="send"
             multiline={false}
-            editable={!disabled}
+            editable={!disabled && !isRecording && !isSubmittingAudio}
           />
-          <TouchableOpacity style={styles.audioBtn} activeOpacity={0.6}>
-            <Ionicons name="radio-outline" size={20} color={SemanticColors.textMuted} />
+          <TouchableOpacity
+            style={[
+              styles.audioBtn,
+              isRecording && styles.audioBtnRecording,
+              isSubmittingAudio && styles.audioBtnDisabled,
+            ]}
+            activeOpacity={0.7}
+            onPress={onAudioPress}
+            disabled={isSubmittingAudio || disabled}
+          >
+            {isSubmittingAudio ? (
+              <ActivityIndicator size="small" color={SemanticColors.textPrimary} />
+            ) : (
+              <Ionicons
+                name={isRecording ? "stop" : "mic-outline"}
+                size={18}
+                color={isRecording ? "#08140E" : SemanticColors.textMuted}
+              />
+            )}
           </TouchableOpacity>
         </LinearGradient>
 
@@ -90,7 +127,18 @@ const styles = StyleSheet.create({
     outlineStyle: "none" as never,
   },
   audioBtn: {
-    padding: Spacing.two,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  audioBtnRecording: {
+    backgroundColor: SemanticColors.success,
+  },
+  audioBtnDisabled: {
+    opacity: 0.7,
   },
   sendBtn: {
     width: 48,
