@@ -1,5 +1,6 @@
 import type { FormFieldConfig } from "@/constants/business-memory-steps";
 import { Spacing } from "@/constants/theme";
+import type { BusinessMemoryFieldPresentation } from "@/utils/business-memory-display";
 import { useMemo, useRef, useState } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 import { MemoryFormField } from "./memory-form-field";
@@ -7,6 +8,7 @@ import { MemorySaveButton } from "./memory-save-button";
 
 interface MemoryFormProps {
   fields: readonly FormFieldConfig[];
+  fieldPresentation?: Readonly<Record<string, BusinessMemoryFieldPresentation>>;
   initialValues?: Readonly<Record<string, string>>;
   saveLabel?: string;
   onChange?: (values: Record<string, string>) => void;
@@ -27,6 +29,7 @@ function hasAnyValue(values: Record<string, string>): boolean {
 
 export function MemoryForm({
   fields,
+  fieldPresentation,
   initialValues,
   saveLabel = "Guardar memoria",
   onChange,
@@ -74,10 +77,12 @@ export function MemoryForm({
               label={field.label}
               value={values[field.id] ?? ""}
               onChangeText={(text) => handleChange(field.id, text)}
-              placeholder={field.placeholder}
+              placeholder={fieldPresentation?.[field.id]?.placeholder ?? field.placeholder}
+              helperText={fieldPresentation?.[field.id]?.helperText}
               multiline={isMultiline}
               returnKeyType={isLast || isMultiline ? "done" : "next"}
               onSubmitEditing={isLast || isMultiline ? undefined : () => focusNextField(index)}
+              tone={fieldPresentation?.[field.id]?.tone}
             />
           );
         })}

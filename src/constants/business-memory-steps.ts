@@ -40,7 +40,7 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
       { id: "business_model", label: "Modelo de negocio", type: "text" },
       { id: "website_url", label: "Sitio web", type: "text" },
       { id: "business_instagram", label: "Instagram del negocio", type: "text" },
-      { id: "geography", label: "Geografia", type: "text" },
+      { id: "geography", label: "Geografia principal", type: "text" },
     ],
   },
   {
@@ -51,7 +51,7 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
       { id: "pricing_strategy", label: "Estrategia de precios", type: "text" },
       { id: "differentiation_level", label: "Nivel de diferenciacion", type: "text" },
       { id: "sales_system", label: "Sistema de ventas", type: "text" },
-      { id: "pipeline_conversion_summary", label: "Resumen de conversion del pipeline", type: "textarea" },
+      { id: "pipeline_conversion_summary", label: "Resumen de conversion del embudo", type: "textarea" },
     ],
   },
   {
@@ -69,8 +69,8 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     id: "team_block",
     icon: { library: "MaterialCommunityIcons", name: "account-group-outline" },
     fields: [
-      { id: "team_and_roles", label: "Equipo y roles", type: "textarea" },
-      { id: "founder_dependency_level", label: "Dependencia del founder", type: "text" },
+      { id: "team_and_roles", label: "Equipo y roles clave", type: "textarea" },
+      { id: "founder_dependency_level", label: "Dependencia del fundador", type: "text" },
       { id: "leadership_summary", label: "Resumen de liderazgo", type: "textarea" },
     ],
   },
@@ -80,7 +80,7 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     fields: [
       { id: "top_bottlenecks", label: "Cuellos de botella principales", type: "textarea" },
       { id: "focus_areas", label: "Areas de foco", type: "textarea" },
-      { id: "active_micro_goals", label: "Micro objetivos activos", type: "textarea" },
+      { id: "active_micro_goals", label: "Microobjetivos activos", type: "textarea" },
     ],
   },
 ];

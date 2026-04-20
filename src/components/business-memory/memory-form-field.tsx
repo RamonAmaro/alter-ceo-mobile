@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import type { BusinessMemoryFieldTone } from "@/utils/business-memory-display";
 import { forwardRef, useState } from "react";
 import {
   StyleSheet,
@@ -14,10 +15,12 @@ interface MemoryFormFieldProps {
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
+  helperText?: string;
   multiline?: boolean;
   returnKeyType?: ReturnKeyTypeOptions;
   onSubmitEditing?: () => void;
   blurOnSubmit?: boolean;
+  tone?: BusinessMemoryFieldTone;
 }
 
 export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
@@ -27,28 +30,38 @@ export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
       value,
       onChangeText,
       placeholder,
+      helperText,
       multiline = false,
       returnKeyType,
       onSubmitEditing,
       blurOnSubmit,
+      tone = "default",
     },
     ref,
   ) {
     const [isFocused, setIsFocused] = useState(false);
     const hasValue = value.length > 0;
     const isActive = isFocused || hasValue;
+    const isUnknown = tone === "unknown" && !hasValue && !isFocused;
 
     return (
       <View style={styles.wrapper}>
         <View style={styles.labelRow}>
-          <View style={[styles.accentBar, isActive && styles.accentBarActive]} />
-          <ThemedText style={styles.label}>{label}</ThemedText>
+          <View
+            style={[
+              styles.accentBar,
+              isActive && styles.accentBarActive,
+              isUnknown && styles.accentBarUnknown,
+            ]}
+          />
+          <ThemedText style={[styles.label, isUnknown && styles.labelUnknown]}>{label}</ThemedText>
         </View>
 
         <View
           style={[
             styles.inputWrapper,
             multiline && styles.inputWrapperMultiline,
+            isUnknown && styles.inputWrapperUnknown,
             isFocused && styles.inputWrapperFocused,
             hasValue && !isFocused && styles.inputWrapperFilled,
           ]}
@@ -58,7 +71,7 @@ export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
             value={value}
             onChangeText={onChangeText}
             placeholder={placeholder}
-            placeholderTextColor={SemanticColors.textPlaceholder}
+            placeholderTextColor={isUnknown ? "rgba(255,149,0,0.85)" : SemanticColors.textPlaceholder}
             style={[styles.input, multiline && styles.inputMultiline]}
             multiline={multiline}
             selectionColor={SemanticColors.success}
@@ -71,6 +84,8 @@ export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
             autoCorrect
           />
         </View>
+
+        {helperText && isUnknown ? <ThemedText style={styles.helperText}>{helperText}</ThemedText> : null}
       </View>
     );
   },
@@ -95,12 +110,18 @@ const styles = StyleSheet.create({
   accentBarActive: {
     backgroundColor: SemanticColors.success,
   },
+  accentBarUnknown: {
+    backgroundColor: SemanticColors.warning,
+  },
   label: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 12,
     lineHeight: 16,
     color: SemanticColors.textSecondaryLight,
     letterSpacing: 0.4,
+  },
+  labelUnknown: {
+    color: "rgba(255,149,0,0.9)",
   },
   inputWrapper: {
     borderWidth: 1,
@@ -121,6 +142,10 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0,255,132,0.35)",
     backgroundColor: "rgba(0,255,132,0.04)",
   },
+  inputWrapperUnknown: {
+    borderColor: "rgba(255,149,0,0.4)",
+    backgroundColor: "rgba(255,149,0,0.06)",
+  },
   inputWrapperFocused: {
     borderColor: SemanticColors.success,
     backgroundColor: "rgba(0,255,132,0.08)",
@@ -136,5 +161,12 @@ const styles = StyleSheet.create({
   inputMultiline: {
     textAlignVertical: "top",
     minHeight: 72,
+  },
+  helperText: {
+    paddingHorizontal: Spacing.one,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "rgba(255,149,0,0.92)",
   },
 });

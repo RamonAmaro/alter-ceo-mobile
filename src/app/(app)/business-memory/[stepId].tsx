@@ -11,28 +11,10 @@ import { ThemedText } from "@/components/themed-text";
 import { findStepById, getStepIndex } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useBusinessMemoryDashboard } from "@/hooks/use-business-memory-dashboard";
+import { buildBusinessMemoryFieldPresentation } from "@/utils/business-memory-display";
 import { Redirect, useLocalSearchParams, type Href } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-function stringifyFieldValue(value: unknown): string {
-  if (value == null) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (Array.isArray(value)) {
-    const allSimple = value.every(
-      (item) =>
-        item == null ||
-        typeof item === "string" ||
-        typeof item === "number" ||
-        typeof item === "boolean",
-    );
-    return allSimple
-      ? value.map((item) => (item == null ? "" : String(item))).join("\n")
-      : JSON.stringify(value, null, 2);
-  }
-  return JSON.stringify(value, null, 2);
-}
 
 export default function BusinessMemoryStepScreen() {
   const insets = useSafeAreaInsets();
@@ -96,8 +78,11 @@ export default function BusinessMemoryStepScreen() {
   const totalSteps = steps.length;
   const activeDot = stepIndex + 1;
   const hasFields = step.fields.length > 0;
+  const fieldPresentation = Object.fromEntries(
+    step.fields.map((field) => [field.id, buildBusinessMemoryFieldPresentation(field.id, step.data[field.id])]),
+  );
   const initialValues = Object.fromEntries(
-    step.fields.map((field) => [field.id, stringifyFieldValue(step.data[field.id])]),
+    step.fields.map((field) => [field.id, fieldPresentation[field.id]?.value ?? ""]),
   );
 
   function handleSave(values: Record<string, string>): void {
@@ -148,6 +133,7 @@ export default function BusinessMemoryStepScreen() {
               <MemoryForm
                 key={`${step.id}:${version ?? "draft"}`}
                 fields={step.fields}
+                fieldPresentation={fieldPresentation}
                 initialValues={initialValues}
                 onSave={handleSave}
                 saveLabel="Guardar memoria"
