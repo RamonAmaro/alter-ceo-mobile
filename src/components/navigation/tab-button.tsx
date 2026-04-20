@@ -6,8 +6,9 @@ import { useRef } from "react";
 import { Animated, Pressable, StyleSheet, View } from "react-native";
 
 const ACTIVE_COLOR = SemanticColors.success;
-const INACTIVE_COLOR = "rgba(255,255,255,0.35)";
-const ACTIVE_LABEL_COLOR = "rgba(0,255,132,0.9)";
+const INACTIVE_COLOR = "rgba(255,255,255,0.45)";
+const INACTIVE_LABEL_COLOR = "rgba(255,255,255,0.6)";
+const ACTIVE_LABEL_COLOR = "rgba(0,255,132,0.95)";
 
 interface TabButtonProps {
   item: NavItemConfig;
@@ -67,11 +68,14 @@ export function TabButton({ item, focused, onPress }: TabButtonProps) {
       accessibilityLabel={item.label}
     >
       <Animated.View style={[styles.tabButtonInner, { transform: [{ scale: scaleAnim }] }]}>
-        {focused && <View style={styles.iconGlow} />}
-        {item.icon(color, focused)}
+        {focused && <View style={styles.activeDot} />}
+        <View style={styles.iconWrapper}>
+          {focused && <View style={styles.iconGlow} />}
+          {item.icon(color, focused)}
+        </View>
         <ThemedText
           type="caption"
-          style={[styles.tabLabel, { color: focused ? ACTIVE_LABEL_COLOR : INACTIVE_COLOR }]}
+          style={[styles.tabLabel, { color: focused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR }]}
           numberOfLines={1}
         >
           {item.label}
@@ -85,54 +89,66 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: "center",
-    paddingBottom: 10,
+    paddingTop: 6,
+    paddingBottom: 14,
   },
   tabButtonInner: {
     alignItems: "center",
-    gap: 4,
+    gap: 6,
+  },
+  activeDot: {
+    position: "absolute",
+    top: -10,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: ACTIVE_COLOR,
+  },
+  iconWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconGlow: {
     position: "absolute",
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(0,255,132,0.12)",
-    top: -6,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,255,132,0.14)",
   },
   tabLabel: {
     fontSize: 10,
-    lineHeight: 12,
+    lineHeight: 13,
     textAlign: "center",
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   centerWrapper: {
     flex: 1,
     alignItems: "center",
     justifyContent: "flex-end",
-    paddingBottom: 6,
+    paddingBottom: 10,
   },
   centerButton: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -20,
+    marginTop: -22,
   },
   centerGlow: {
     position: "absolute",
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: "rgba(0,255,132,0.08)",
   },
   centerGlowActive: {
-    backgroundColor: "rgba(0,255,132,0.18)",
+    backgroundColor: "rgba(0,255,132,0.22)",
   },
   centerInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(0,255,132,0.1)",
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "rgba(0,255,132,0.12)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.25)",
+    borderColor: "rgba(0,255,132,0.3)",
     alignItems: "center",
     justifyContent: "center",
   },

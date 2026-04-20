@@ -43,13 +43,8 @@ interface OnboardingRecorder {
 }
 
 export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingRecorder {
-  const {
-    startRecording,
-    stopRecording,
-    pauseRecording,
-    resumeRecording,
-    durationMs,
-  } = useAudioRecorder();
+  const { startRecording, stopRecording, pauseRecording, resumeRecording, durationMs } =
+    useAudioRecorder();
 
   const [recordState, setRecordState] = useState<RecordingState>("idle");
   const [result, setResult] = useState<RecordingResult | null>(null);

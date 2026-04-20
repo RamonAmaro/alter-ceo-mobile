@@ -49,6 +49,7 @@ export default function AppLayout() {
                 <Stack.Screen name="profile" />
                 <Stack.Screen name="debug" />
                 <Stack.Screen name="meeting-detail" />
+                <Stack.Screen name="business-memory" />
               </Stack>
             </ThemeProvider>
           </View>
