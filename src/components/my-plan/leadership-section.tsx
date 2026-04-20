@@ -2,7 +2,7 @@ import { PhaseItem } from "@/components/my-plan/phase-item";
 import { RoleBarRow } from "@/components/my-plan/role-bar-row";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import type { PlanLeadership, RoleSnapshot } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
@@ -65,7 +65,7 @@ export function LeadershipSection({
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="Plan de liderazgo" />
+      <SectionHeader eyebrow="EVOLUCIÓN · DEL CEO" title="Plan de" accent="liderazgo" />
 
       {activePhases.length > 0 && (
         <View style={styles.phasesBlock}>
@@ -84,9 +84,10 @@ export function LeadershipSection({
 
       {topCategories.length > 0 && (
         <View style={styles.evolutionBlock}>
-          <ThemedText type="caption" style={styles.evolutionCaption}>
-            EVOLUCIÓN DE TU ROL — HOY vs MES 12
-          </ThemedText>
+          <View style={styles.captionRow}>
+            <View style={styles.captionBar} />
+            <ThemedText style={styles.evolutionCaption}>ROL · HOY vs MES 12</ThemedText>
+          </View>
           {topCategories.map((c) => (
             <RoleBarRow
               key={c.key}
@@ -110,17 +111,29 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   evolutionBlock: {
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 18,
     padding: Spacing.three,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(255,255,255,0.08)",
     gap: Spacing.three,
   },
+  captionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  captionBar: {
+    width: 14,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: SemanticColors.success,
+  },
   evolutionCaption: {
-    color: "rgba(255,255,255,0.35)",
-    letterSpacing: 1,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 10,
-    fontFamily: Fonts.montserratBold,
+    lineHeight: 14,
+    color: SemanticColors.textMuted,
+    letterSpacing: 2.2,
   },
 });

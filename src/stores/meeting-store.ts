@@ -30,6 +30,7 @@ interface MeetingState {
     contentType: string,
     sizeBytes: number,
     durationSeconds?: number,
+    title?: string,
   ) => Promise<void>;
   reset: () => void;
 }
@@ -69,6 +70,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     contentType: string,
     sizeBytes: number,
     durationSeconds?: number,
+    title?: string,
   ) => {
     get()._activePoller?.stop();
     set({ _activePoller: null, error: null });
@@ -76,6 +78,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const created = await meetingService.createMeeting({
         user_id: userId,
+        title: title ?? null,
         file_name: fileName,
         content_type: contentType,
       });

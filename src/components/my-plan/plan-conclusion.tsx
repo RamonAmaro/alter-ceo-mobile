@@ -1,5 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
+import { GlassCard } from "@/components/ui/glass-card";
+import { MonumentalIndex } from "@/components/ui/monumental-index";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
@@ -15,23 +17,27 @@ export function PlanConclusion({ text }: PlanConclusionProps) {
     <View style={styles.container}>
       <View style={styles.dividerLine} />
 
-      <View style={styles.iconBox}>
-        <Ionicons name="flag" size={20} color={SemanticColors.success} />
+      <View style={styles.iconWrap}>
+        <View style={styles.iconRing}>
+          <View style={styles.iconBox}>
+            <Ionicons name="flag" size={22} color={SemanticColors.success} />
+          </View>
+        </View>
       </View>
 
-      <ThemedText type="caption" style={styles.label}>
-        Has llegado al cierre de tu plan
-      </ThemedText>
-
-      <ThemedText type="headingMd" style={styles.title}>
-        Conclusión Express
-      </ThemedText>
-
-      <View style={styles.card}>
-        <ThemedText type="bodyMd" style={styles.body}>
-          {text ?? DEFAULT_CONCLUSION}
-        </ThemedText>
+      <View style={styles.eyebrowRow}>
+        <View style={styles.dot} />
+        <ThemedText style={styles.eyebrow}>HAS LLEGADO AL CIERRE</ThemedText>
       </View>
+
+      <ThemedText style={styles.title}>
+        Conclusión <ThemedText style={styles.titleAccent}>Express</ThemedText>
+      </ThemedText>
+
+      <GlassCard tone="emerald" padding={Spacing.four} radius={22}>
+        <MonumentalIndex label="FIN" size={130} opacity={0.05} right={-12} bottom={-24} />
+        <ThemedText style={styles.body}>{text ?? DEFAULT_CONCLUSION}</ThemedText>
+      </GlassCard>
     </View>
   );
 }
@@ -47,39 +53,69 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "rgba(255,255,255,0.08)",
   },
-  iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 99,
-    backgroundColor: "rgba(0,255,132,0.08)",
+  iconWrap: {
     alignItems: "center",
     justifyContent: "center",
     marginTop: Spacing.two,
   },
-  label: {
-    color: "rgba(255,255,255,0.35)",
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
+  iconRing: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.2)",
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(0,255,132,0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eyebrowRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.one,
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: SemanticColors.success,
+  },
+  eyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 10,
-    fontFamily: Fonts.montserratBold,
+    lineHeight: 14,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 2.2,
   },
   title: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 26,
+    lineHeight: 30,
     color: SemanticColors.textPrimary,
-    fontFamily: Fonts.montserratExtraBold,
     textAlign: "center",
   },
-  card: {
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
-    padding: Spacing.four,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-    width: "100%",
+  titleAccent: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontStyle: "italic",
+    fontSize: 26,
+    lineHeight: 30,
+    color: SemanticColors.success,
+    letterSpacing: -0.6,
   },
   body: {
-    color: "rgba(255,255,255,0.65)",
-    lineHeight: 24,
+    fontFamily: Fonts.montserratMedium,
     fontSize: 14,
+    lineHeight: 24,
+    color: SemanticColors.textSecondaryLight,
     textAlign: "center",
   },
 });

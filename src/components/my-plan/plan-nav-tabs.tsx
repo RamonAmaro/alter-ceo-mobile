@@ -43,14 +43,14 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
 
       if (!hasInitialized.current) {
         hasInitialized.current = true;
-        indicatorX.setValue(layout.x + layout.width / 2);
+        indicatorX.setValue(layout.x);
         indicatorScaleX.setValue(layout.width);
         indicatorOpacity.setValue(1);
         return;
       }
 
       Animated.spring(indicatorX, {
-        toValue: layout.x + layout.width / 2,
+        toValue: layout.x,
         useNativeDriver: USE_NATIVE_DRIVER,
         tension: 120,
         friction: 14,
@@ -93,8 +93,9 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const isActive = tab.key === activeKey;
+          const indexLabel = String(index + 1).padStart(2, "0");
           return (
             <Pressable
               key={tab.key}
@@ -103,7 +104,12 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
               style={styles.tab}
             >
               <ThemedText
-                type="caption"
+                style={[styles.tabIndex, isActive && styles.tabIndexActive]}
+                numberOfLines={1}
+              >
+                {indexLabel}
+              </ThemedText>
+              <ThemedText
                 style={[styles.tabText, isActive && styles.tabTextActive]}
                 numberOfLines={1}
               >
@@ -130,19 +136,36 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: Platform.OS === "web" ? "transparent" : SemanticColors.surfaceCard,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.06)",
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,
   },
   tab: {
     paddingHorizontal: Spacing.three,
-    paddingTop: 4,
-    paddingBottom: 10,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.three,
+    alignItems: "flex-start",
+    gap: 2,
+    minWidth: 80,
+  },
+  tabIndex: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontStyle: "italic",
+    fontSize: 9,
+    lineHeight: 11,
+    color: "rgba(255,255,255,0.25)",
+    letterSpacing: 1.4,
+  },
+  tabIndexActive: {
+    color: SemanticColors.success,
   },
   tabText: {
-    color: "rgba(255,255,255,0.35)",
+    color: "rgba(255,255,255,0.45)",
     fontSize: 13,
-    fontFamily: Fonts.montserratMedium,
+    lineHeight: 16,
+    fontFamily: Fonts.montserratSemiBold,
   },
   tabTextActive: {
     color: SemanticColors.textPrimary,
@@ -153,8 +176,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     width: 1,
-    height: 3,
+    height: 2,
     borderRadius: 99,
     backgroundColor: SemanticColors.success,
+    transformOrigin: "left center" as never,
   },
 });

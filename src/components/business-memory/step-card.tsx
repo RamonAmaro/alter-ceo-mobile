@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
-import { ProgressRing } from "./progress-ring";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { StepIcon } from "./step-icon";
 
 interface StepCardProps {
@@ -88,7 +88,7 @@ export function StepCard({ step, index, total, onPress, animationDelay = 0 }: St
           </ThemedText>
 
           <ProgressRing size={RING_SIZE} progress={step.progress} strokeWidth={3}>
-            <View style={styles.ringInner} pointerEvents="none">
+            <View style={[styles.ringInner, { pointerEvents: "none" }]}>
               <View style={styles.ringIconLayer}>
                 <StepIcon config={step.icon} size={iconSize} color="rgba(255,255,255,0.14)" />
               </View>

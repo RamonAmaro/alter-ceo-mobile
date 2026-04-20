@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import type { BusinessMemoryStep } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Platform, StyleSheet, View } from "react-native";
-import { ProgressRing } from "./progress-ring";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { StepIcon } from "./step-icon";
 
 interface StepHeroRingProps {
@@ -37,10 +37,10 @@ export function StepHeroRing({
       </View>
 
       <ProgressRing size={size} progress={step.progress} strokeWidth={3} animate={animate}>
-        <View style={styles.iconLayer} pointerEvents="none">
+        <View style={[styles.iconLayer, { pointerEvents: "none" }]}>
           <StepIcon config={step.icon} size={iconSize} color="rgba(255,255,255,0.10)" />
         </View>
-        <View style={styles.labelStack} pointerEvents="none">
+        <View style={[styles.labelStack, { pointerEvents: "none" }]}>
           <ThemedText style={styles.percent}>{step.progress}</ThemedText>
           <ThemedText style={styles.percentUnit}>% COMPLETADO</ThemedText>
         </View>

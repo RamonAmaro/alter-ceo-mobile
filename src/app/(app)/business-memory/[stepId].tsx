@@ -1,5 +1,4 @@
 import { AppBackground } from "@/components/app-background";
-import { CompassBadge } from "@/components/business-memory/compass-badge";
 import { MemoryEmptyState } from "@/components/business-memory/memory-empty-state";
 import { MemoryForm } from "@/components/business-memory/memory-form";
 import { StepDots } from "@/components/business-memory/step-dots";
@@ -43,7 +42,7 @@ export default function BusinessMemoryStepScreen() {
           topInset={insets.top}
           titlePrefix="Memoria"
           titleAccent="de negocio"
-          renderIcon={() => <CompassBadge size={28} />}
+          icon="briefcase"
           showBack
         />
 
