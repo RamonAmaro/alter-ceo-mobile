@@ -25,6 +25,7 @@ interface MeetingState {
   getMeetingDetails: (meetingId: string) => Promise<void>;
   startMeetingUpload: (
     userId: string,
+    title: string,
     fileUri: string,
     fileName: string,
     contentType: string,
@@ -64,6 +65,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
 
   startMeetingUpload: async (
     userId: string,
+    title: string,
     fileUri: string,
     fileName: string,
     contentType: string,
@@ -76,6 +78,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const created = await meetingService.createMeeting({
         user_id: userId,
+        title,
         file_name: fileName,
         content_type: contentType,
       });
