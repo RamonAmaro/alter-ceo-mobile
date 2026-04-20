@@ -1,16 +1,26 @@
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface PlanPillProps {
   label: string;
   accent?: boolean;
+  uppercase?: boolean;
+  withDot?: boolean;
 }
 
-export function PlanPill({ label, accent = false }: PlanPillProps) {
+export function PlanPill({
+  label,
+  accent = false,
+  uppercase = false,
+  withDot = false,
+}: PlanPillProps) {
   return (
     <View style={[styles.pill, accent && styles.pillAccent]}>
-      <ThemedText type="caption" style={[styles.text, accent && styles.textAccent]}>
+      {withDot ? <View style={[styles.dot, accent ? styles.dotAccent : styles.dotMuted]} /> : null}
+      <ThemedText
+        style={[styles.text, accent && styles.textAccent, uppercase && styles.textUppercase]}
+      >
         {label}
       </ThemedText>
     </View>
@@ -19,22 +29,46 @@ export function PlanPill({ label, accent = false }: PlanPillProps) {
 
 const styles = StyleSheet.create({
   pill: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.one,
+    backgroundColor: "rgba(255,255,255,0.04)",
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: 99,
+    paddingVertical: 5,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   pillAccent: {
     backgroundColor: "rgba(0,255,132,0.1)",
     borderColor: "rgba(0,255,132,0.25)",
   },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  dotMuted: {
+    backgroundColor: SemanticColors.textMuted,
+  },
+  dotAccent: {
+    backgroundColor: SemanticColors.success,
+  },
   text: {
-    color: "rgba(255,255,255,0.65)",
+    color: SemanticColors.textSecondaryLight,
     fontSize: 12,
+    lineHeight: 16,
+    fontFamily: Fonts.montserratMedium,
   },
   textAccent: {
     color: SemanticColors.success,
+    fontFamily: Fonts.montserratSemiBold,
+  },
+  textUppercase: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 2.2,
+    textTransform: "uppercase",
   },
 });

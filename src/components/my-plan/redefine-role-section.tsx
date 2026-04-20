@@ -17,7 +17,11 @@ export function RedefineRoleSection({ steps }: RedefineRoleSectionProps) {
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="3 pasos para redefinir tu rol" />
+      <SectionHeader
+        eyebrow="ROADMAP · REDEFINICIÓN"
+        title="3 pasos para"
+        accent="redefinir tu rol"
+      />
 
       <RedefineStep index={1} title={paso_1.titulo} isLast={false}>
         <ThemedText type="bodyMd" style={styles.text}>

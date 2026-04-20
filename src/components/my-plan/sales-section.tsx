@@ -3,13 +3,14 @@ import { PriorityItem } from "@/components/my-plan/priority-item";
 import { RevenueChart } from "@/components/my-plan/revenue-chart";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
+import { MonumentalIndex } from "@/components/ui/monumental-index";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { formatEur } from "@/utils/format-currency";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 
 const GRADIENT_COLORS: [string, string, string] = [
-  "rgba(0,255,132,0.1)",
+  "rgba(0,255,132,0.12)",
   "rgba(0,192,238,0.05)",
   "rgba(0,0,0,0)",
 ];
@@ -33,7 +34,7 @@ export function SalesSection({
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="Plan de ventas" />
+      <SectionHeader eyebrow="PROYECCIÓN · 12 MESES" title="Plan de" accent="ventas" />
 
       <View style={styles.targetCard}>
         <LinearGradient
@@ -42,10 +43,14 @@ export function SalesSection({
           start={GRADIENT_START}
           end={GRADIENT_END}
         >
-          <ThemedText type="caption" style={styles.targetCaption}>
-            OBJETIVO A 12 MESES
-          </ThemedText>
-          <ThemedText type="headingLg" style={styles.targetValue}>
+          <MonumentalIndex label="12M" size={140} opacity={0.06} right={-10} bottom={-28} />
+
+          <View style={styles.targetHeader}>
+            <View style={styles.targetDot} />
+            <ThemedText style={styles.targetCaption}>OBJETIVO · 12 MESES</ThemedText>
+          </View>
+
+          <ThemedText style={styles.targetValue} numberOfLines={1}>
             {targetLabel}
           </ThemedText>
         </LinearGradient>
@@ -54,13 +59,12 @@ export function SalesSection({
       {monthlyProjection.length > 0 && (
         <>
           <View style={styles.chartBlock}>
-            <ThemedText type="caption" style={styles.blockCaption}>
-              PROYECCIÓN MENSUAL
-            </ThemedText>
+            <View style={styles.captionRow}>
+              <View style={styles.captionBar} />
+              <ThemedText style={styles.blockCaption}>PROYECCIÓN MENSUAL</ThemedText>
+            </View>
             {projectionIntroduction && (
-              <ThemedText type="bodyMd" style={styles.chartIntro}>
-                {projectionIntroduction}
-              </ThemedText>
+              <ThemedText style={styles.chartIntro}>{projectionIntroduction}</ThemedText>
             )}
             <View style={styles.chartWrapper}>
               <RevenueChart values={monthlyProjection} />
@@ -68,9 +72,10 @@ export function SalesSection({
           </View>
 
           <View style={styles.chartBlock}>
-            <ThemedText type="caption" style={styles.blockCaption}>
-              ACUMULADO A 12 MESES
-            </ThemedText>
+            <View style={styles.captionRow}>
+              <View style={styles.captionBar} />
+              <ThemedText style={styles.blockCaption}>ACUMULADO · 12 MESES</ThemedText>
+            </View>
             <View style={styles.chartWrapper}>
               <CumulativeChart values={monthlyProjection} />
             </View>
@@ -80,9 +85,10 @@ export function SalesSection({
 
       {immediatePriorities.length > 0 && (
         <View style={styles.prioritiesBlock}>
-          <ThemedText type="caption" style={styles.blockCaption}>
-            PRIORIDADES INMEDIATAS — 30 DÍAS
-          </ThemedText>
+          <View style={styles.captionRow}>
+            <View style={styles.captionBar} />
+            <ThemedText style={styles.blockCaption}>PRIORIDADES · 30 DÍAS</ThemedText>
+          </View>
           {immediatePriorities.map((p, i) => (
             <PriorityItem key={`priority-${i}`} text={p} />
           ))}
@@ -97,44 +103,73 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   targetCard: {
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.2)",
+    borderColor: "rgba(0,255,132,0.22)",
     overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
   targetGradient: {
     padding: Spacing.four,
+    gap: Spacing.two,
+  },
+  targetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.one,
   },
+  targetDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: SemanticColors.success,
+  },
   targetCaption: {
-    color: "rgba(255,255,255,0.45)",
-    letterSpacing: 1.2,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 10,
-    fontFamily: Fonts.montserratBold,
+    lineHeight: 14,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 2.2,
   },
   targetValue: {
-    color: SemanticColors.success,
-    fontSize: 36,
-    lineHeight: 46,
     fontFamily: Fonts.montserratExtraBold,
+    fontStyle: "italic",
+    fontSize: 38,
+    lineHeight: 46,
+    color: SemanticColors.success,
+    letterSpacing: -1.4,
+    marginTop: Spacing.one,
   },
   chartBlock: {
     gap: Spacing.two,
   },
+  captionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  captionBar: {
+    width: 14,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: SemanticColors.success,
+  },
   blockCaption: {
-    color: "rgba(255,255,255,0.35)",
-    letterSpacing: 1,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 10,
-    fontFamily: Fonts.montserratBold,
+    lineHeight: 14,
+    color: SemanticColors.textMuted,
+    letterSpacing: 2.2,
   },
   chartIntro: {
-    color: SemanticColors.iconMuted,
-    lineHeight: 22,
+    fontFamily: Fonts.montserratMedium,
     fontSize: 13,
+    lineHeight: 20,
+    color: SemanticColors.iconMuted,
   },
   chartWrapper: {
     backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
+    borderRadius: 18,
     padding: Spacing.three,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.06)",

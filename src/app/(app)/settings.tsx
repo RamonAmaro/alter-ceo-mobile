@@ -1,11 +1,15 @@
 import { AppBackground } from "@/components/app-background";
-import { MenuItem } from "@/components/menu-item";
+import { ProfileMenuCard } from "@/components/profile/profile-menu-card";
 import { ScreenHeader } from "@/components/screen-header";
+import { EyebrowPill } from "@/components/ui/eyebrow-pill";
+import { HeroOverviewCard } from "@/components/ui/hero-overview-card";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useDebugStore } from "@/stores/debug-store";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
@@ -51,22 +55,48 @@ export default function SettingsScreen() {
       <View style={styles.container}>
         <ScreenHeader
           topInset={insets.top}
-          icon="settings"
+          icon="construct"
           titlePrefix="Sala de"
           titleAccent="Máquinas"
           onIconPress={() => void handleHiddenDebugTap()}
           showBack={isMobile}
         />
 
-        <View style={styles.content}>
-          {isDebugUnlocked ? (
-            <MenuItem
-              icon="bug-outline"
-              label="Herramientas de debug"
-              onPress={() => router.push("/(app)/debug")}
-            />
-          ) : null}
-        </View>
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <EyebrowPill label="AJUSTES · MOTOR" />
+
+          <HeroOverviewCard
+            eyebrow="ENTORNO"
+            headline="Afina tu copiloto"
+            subhead="Aquí vivirán las preferencias de la aplicación y las herramientas avanzadas."
+          />
+
+          <View style={styles.sectionWrap}>
+            <SectionHeading eyebrow="HERRAMIENTAS" titlePrefix="Accesos" titleAccent="avanzados" />
+          </View>
+
+          <View style={styles.menuList}>
+            {isDebugUnlocked ? (
+              <ProfileMenuCard
+                icon="bug-outline"
+                label="Herramientas de debug"
+                description="Inspecciona estado interno y feature flags"
+                tone="emerald"
+                onPress={() => router.push("/(app)/debug")}
+              />
+            ) : (
+              <ProfileMenuCard
+                icon="lock-closed-outline"
+                label="Sin herramientas avanzadas"
+                description="Contacta a tu equipo para desbloquear el modo debug"
+                disabled
+              />
+            )}
+          </View>
+        </ScrollView>
       </View>
     </AppBackground>
   );
@@ -77,7 +107,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingTop: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.four,
+  },
+  sectionWrap: {
+    marginTop: -Spacing.one,
+  },
+  menuList: {
+    gap: Spacing.two,
   },
 });

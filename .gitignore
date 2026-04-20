@@ -52,5 +52,6 @@ app-example
 docs/
 CLAUDE.md
 .claude/
+.agents/
 
 yarn.lock

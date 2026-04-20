@@ -62,9 +62,10 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const isActive = tab.key === activeKey;
           const isHovered = tab.key === hoveredKey;
+          const indexLabel = String(index + 1).padStart(2, "0");
           return (
             <Pressable
               key={tab.key}
@@ -75,7 +76,12 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
               style={styles.tab}
             >
               <ThemedText
-                type="caption"
+                style={[styles.tabIndex, isActive && styles.tabIndexActive]}
+                numberOfLines={1}
+              >
+                {indexLabel}
+              </ThemedText>
+              <ThemedText
                 style={[
                   styles.tabText,
                   isHovered && !isActive && styles.tabTextHover,
@@ -115,19 +121,36 @@ const styles = StyleSheet.create({
   },
   tab: {
     paddingHorizontal: Spacing.three,
-    paddingTop: 6,
-    paddingBottom: 12,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.three,
+    alignItems: "flex-start",
+    gap: 2,
     cursor: "pointer" as never,
+    minWidth: 90,
+  },
+  tabIndex: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontStyle: "italic",
+    fontSize: 9,
+    lineHeight: 11,
+    color: "rgba(255,255,255,0.25)",
+    letterSpacing: 1.4,
+    transitionProperty: "color" as never,
+    transitionDuration: "150ms" as never,
+  },
+  tabIndexActive: {
+    color: SemanticColors.success,
   },
   tabText: {
-    color: "rgba(255,255,255,0.35)",
+    color: "rgba(255,255,255,0.45)",
     fontSize: 13,
-    fontFamily: Fonts.montserratMedium,
+    lineHeight: 16,
+    fontFamily: Fonts.montserratSemiBold,
     transitionProperty: "color" as never,
     transitionDuration: "150ms" as never,
   },
   tabTextHover: {
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.7)",
   },
   tabTextActive: {
     color: SemanticColors.textPrimary,

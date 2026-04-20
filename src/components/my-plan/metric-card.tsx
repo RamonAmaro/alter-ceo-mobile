@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -29,12 +29,13 @@ export function MetricCard({ label, value }: MetricCardProps) {
   const color = resolveColor(value);
   return (
     <View style={styles.card}>
-      <ThemedText type="caption" style={styles.label}>
-        {label}
-      </ThemedText>
-      <ThemedText type="labelSm" style={[styles.value, { color }]}>
-        {value ?? "—"}
-      </ThemedText>
+      <View style={styles.labelRow}>
+        <View style={[styles.accent, { backgroundColor: color }]} />
+        <ThemedText style={styles.label} numberOfLines={1}>
+          {label}
+        </ThemedText>
+      </View>
+      <ThemedText style={[styles.value, { color }]}>{value ?? "—"}</ThemedText>
     </View>
   );
 }
@@ -43,21 +44,35 @@ const styles = StyleSheet.create({
   card: {
     width: "47%",
     backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: Spacing.three,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
+    borderColor: "rgba(255,255,255,0.08)",
+    gap: Spacing.two,
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.one,
   },
+  accent: {
+    width: 10,
+    height: 2,
+    borderRadius: 1,
+  },
   label: {
-    color: "rgba(255,255,255,0.4)",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    fontSize: 10,
-    fontFamily: Fonts.montserratBold,
+    flex: 1,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 9,
+    lineHeight: 12,
+    color: SemanticColors.textMuted,
+    letterSpacing: 2,
   },
   value: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 15,
+    fontFamily: Fonts.montserratExtraBold,
+    fontStyle: "italic",
+    fontSize: 17,
+    lineHeight: 20,
+    letterSpacing: -0.4,
   },
 });

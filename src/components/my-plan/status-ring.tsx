@@ -110,7 +110,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     gap: 6,
-    width: "30%",
   },
   center: {
     alignItems: "center",
@@ -118,12 +117,17 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.montserratBold,
-    fontSize: 11,
+    fontSize: 10,
+    lineHeight: 13,
+    textAlign: "center",
+    paddingHorizontal: 4,
   },
   caption: {
-    color: "rgba(255,255,255,0.4)",
+    color: "rgba(255,255,255,0.45)",
     fontSize: 10,
-    fontFamily: Fonts.montserratMedium,
+    lineHeight: 13,
+    fontFamily: Fonts.montserratSemiBold,
     textAlign: "center",
+    letterSpacing: 0.3,
   },
 });

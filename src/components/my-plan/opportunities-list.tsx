@@ -16,7 +16,13 @@ export function OpportunitiesList({ introduction, opportunities }: Opportunities
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="Oportunidades" badge={unique.length} badgeColor="#00FF84" />
+      <SectionHeader
+        eyebrow="PALANCAS · DE CRECIMIENTO"
+        title="Oportunidades"
+        accent="a capturar"
+        badge={unique.length}
+        badgeColor="#00FF84"
+      />
 
       {introduction && (
         <ThemedText type="bodyMd" style={styles.intro}>

@@ -1,22 +1,63 @@
 import { AppBackground } from "@/components/app-background";
-import { MenuItem } from "@/components/menu-item";
-import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Spacing } from "@/constants/theme";
+import { ProfileHeroCard } from "@/components/profile/profile-hero-card";
+import { ProfileMenuCard } from "@/components/profile/profile-menu-card";
+import { ScreenHeader } from "@/components/screen-header";
+import { EyebrowPill } from "@/components/ui/eyebrow-pill";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
-import { goBackOrHome } from "@/utils/navigation";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, type Href } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const MENU_ITEMS = [
-  { icon: "person-outline" as const, label: "Editar perfil" },
-  { icon: "shield-outline" as const, label: "Seguridad" },
-  { icon: "help-circle-outline" as const, label: "Ayuda" },
-  { icon: "clipboard-outline" as const, label: "Configurar mi plan", key: "onboarding" },
-  { icon: "settings-outline" as const, label: "Ajustes", key: "settings" },
+type MenuKey = "edit" | "security" | "help" | "onboarding" | "settings";
+
+interface MenuEntry {
+  key: MenuKey;
+  icon: React.ComponentProps<typeof ProfileMenuCard>["icon"];
+  label: string;
+  description: string;
+  tone?: React.ComponentProps<typeof ProfileMenuCard>["tone"];
+  disabled?: boolean;
+}
+
+const MENU_ITEMS: readonly MenuEntry[] = [
+  {
+    key: "edit",
+    icon: "person-outline",
+    label: "Editar perfil",
+    description: "Nombre, contacto y datos personales",
+    disabled: true,
+  },
+  {
+    key: "security",
+    icon: "shield-checkmark-outline",
+    label: "Seguridad",
+    description: "Contraseña y biometría",
+    disabled: true,
+  },
+  {
+    key: "onboarding",
+    icon: "clipboard-outline",
+    label: "Configurar mi plan",
+    description: "Vuelve al onboarding estratégico",
+    tone: "emerald",
+  },
+  {
+    key: "settings",
+    icon: "construct-outline",
+    label: "Ajustes",
+    description: "Sala de máquinas",
+    tone: "emerald",
+  },
+  {
+    key: "help",
+    icon: "help-circle-outline",
+    label: "Ayuda",
+    description: "Soporte y documentación",
+    disabled: true,
+  },
 ];
 
 export default function ProfileScreen() {
@@ -25,13 +66,15 @@ export default function ProfileScreen() {
   const router = useRouter();
   const signOut = useAuthStore((s) => s.signOut);
 
-  function handleMenuPress(key?: string): void {
+  function handleMenuPress(key: MenuKey): void {
     switch (key) {
       case "onboarding":
         router.push("/(onboarding)/welcome");
         return;
       case "settings":
         router.push("/(app)/settings" as Href);
+        return;
+      default:
         return;
     }
   }
@@ -43,61 +86,57 @@ export default function ProfileScreen() {
 
   return (
     <AppBackground>
-      <View style={[styles.container, { paddingTop: insets.top + Spacing.two }]}>
-        <View style={styles.header}>
-          {isMobile ? (
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => goBackOrHome()}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chevron-back" size={24} color={SemanticColors.textPrimary} />
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.backBtn} />
-          )}
-          <ThemedText type="subtitle" style={styles.headerTitle}>
-            Perfil
-          </ThemedText>
-          <View style={styles.headerSpacer} />
-        </View>
+      <View style={styles.container}>
+        <ScreenHeader
+          topInset={insets.top}
+          icon="person-circle-outline"
+          titlePrefix="Mi"
+          titleAccent="Perfil"
+          showBack={isMobile}
+        />
 
-        <View style={styles.profileSection}>
-          <View style={styles.avatarLarge}>
-            <Ionicons name="person" size={40} color={SemanticColors.textMuted} />
-          </View>
-          <ThemedText type="subtitle" style={styles.userName}>
-            (Nombre)
-          </ThemedText>
-          <ThemedText type="labelSm" style={styles.userCompany}>
-            (Nombre de Empresa)
-          </ThemedText>
-        </View>
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <EyebrowPill label="IDENTIDAD · CONFIGURACIÓN" />
 
-        <View style={styles.content}>
-          {MENU_ITEMS.map((item) => (
-            <MenuItem
-              key={item.icon}
-              icon={item.icon}
-              label={item.label}
-              onPress={item.key ? () => handleMenuPress(item.key) : undefined}
+          <ProfileHeroCard name="(Nombre)" company="(Nombre de Empresa)" completeness={35} />
+
+          <View style={styles.sectionWrap}>
+            <SectionHeading
+              eyebrow="ACCESOS RÁPIDOS"
+              titlePrefix="Gestiona tu"
+              titleAccent="cuenta"
             />
-          ))}
-        </View>
+          </View>
 
-        <View style={[styles.signOutWrap, { paddingBottom: insets.bottom + Spacing.four }]}>
-          <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.8}>
-            <LinearGradient
-              colors={["rgba(255,68,68,0.15)", "rgba(255,68,68,0.05)"]}
-              style={styles.signOutGradient}
-            >
-              <Ionicons name="log-out-outline" size={20} color="#FF4444" />
-              <ThemedText type="labelSm" style={styles.signOutText}>
-                Cerrar sesión
-              </ThemedText>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.menuList}>
+            {MENU_ITEMS.map((item, index) => (
+              <ProfileMenuCard
+                key={item.key}
+                icon={item.icon}
+                label={item.label}
+                description={item.description}
+                tone={item.tone}
+                disabled={item.disabled}
+                onPress={item.disabled ? undefined : () => handleMenuPress(item.key)}
+                animationDelay={index * 60}
+              />
+            ))}
+          </View>
+
+          <View style={styles.dangerWrap}>
+            <ProfileMenuCard
+              icon="log-out-outline"
+              label="Cerrar sesión"
+              description="Saldrás de tu cuenta ALTER CEO"
+              tone="danger"
+              onPress={() => void handleSignOut()}
+              animationDelay={MENU_ITEMS.length * 60}
+            />
+          </View>
+        </ScrollView>
       </View>
     </AppBackground>
   );
@@ -106,73 +145,19 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingBottom: Spacing.three,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.06)",
-  },
-  backBtn: {
-    padding: Spacing.one,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 18,
-    color: SemanticColors.textPrimary,
-  },
-  headerSpacer: {
-    width: 32,
-  },
-  profileSection: {
-    alignItems: "center",
-    paddingVertical: Spacing.five,
-  },
-  avatarLarge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 2,
-    borderColor: "rgba(0,255,132,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.three,
-  },
-  userName: {
-    fontSize: 22,
-    color: SemanticColors.textPrimary,
-  },
-  userCompany: {
-    fontSize: 14,
-    color: SemanticColors.textMuted,
-    marginTop: Spacing.one,
   },
   content: {
-    gap: Spacing.one,
+    paddingTop: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.four,
   },
-  signOutWrap: {
-    flex: 1,
-    justifyContent: "flex-end",
+  sectionWrap: {
+    marginTop: -Spacing.one,
   },
-  signOutBtn: {
-    borderRadius: 14,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255,68,68,0.15)",
-  },
-  signOutGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+  menuList: {
     gap: Spacing.two,
-    paddingVertical: Spacing.three,
   },
-  signOutText: {
-    fontSize: 15,
-    color: "#FF4444",
+  dangerWrap: {
+    marginTop: Spacing.three,
   },
 });

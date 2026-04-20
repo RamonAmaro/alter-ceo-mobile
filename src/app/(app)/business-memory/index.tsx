@@ -1,5 +1,4 @@
 import { AppBackground } from "@/components/app-background";
-import { CompassBadge } from "@/components/business-memory/compass-badge";
 import { MemoryOverviewCard } from "@/components/business-memory/memory-overview-card";
 import { StepsGrid } from "@/components/business-memory/steps-grid";
 import { ScreenHeader } from "@/components/screen-header";
@@ -27,7 +26,7 @@ export default function BusinessMemoryIndexScreen() {
           topInset={insets.top}
           titlePrefix="Memoria"
           titleAccent="de negocio"
-          renderIcon={() => <CompassBadge size={28} />}
+          icon="briefcase"
           showBack={isMobile}
         />
 
