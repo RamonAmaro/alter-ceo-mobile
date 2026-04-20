@@ -146,7 +146,6 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     id: "team_block",
     icon: { library: "MaterialCommunityIcons", name: "account-group-outline" },
     fields: [
-      { id: "team_and_roles", label: "Equipo y roles clave", type: "textarea" },
       {
         id: "founder_dependency_level",
         label: "Dependencia del fundador",
@@ -156,6 +155,12 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
           { value: "medium", label: "Media" },
           { value: "low", label: "Baja" },
         ],
+      },
+      {
+        id: "founder_dependency_detail",
+        label: "Detalle de la dependencia",
+        type: "textarea",
+        placeholder: "Explica en que decisiones, relaciones o procesos se concentra esa dependencia",
       },
       { id: "leadership_summary", label: "Resumen de liderazgo", type: "textarea" },
     ],
