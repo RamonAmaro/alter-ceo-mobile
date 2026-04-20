@@ -12,6 +12,7 @@ import { SalesSection } from "@/components/my-plan/sales-section";
 import { SalesStrategySection } from "@/components/my-plan/sales-strategy-section";
 import { SectionBlock, SectionDivider } from "@/components/my-plan/section-layout";
 import { ScreenHeader } from "@/components/screen-header";
+import { EyebrowPill } from "@/components/ui/eyebrow-pill";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useSectionScroll } from "@/hooks/use-section-scroll";
 import type { PlanData } from "@/types/plan";
@@ -88,6 +89,10 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
+        <View style={styles.eyebrowWrap}>
+          <EyebrowPill label="MI PLAN · ESTRATÉGICO" />
+        </View>
+
         {plan.introduccion_general && (
           <View onLayout={(e) => handleSectionLayout("intro", e.nativeEvent.layout.y)}>
             <SectionBlock>
@@ -221,6 +226,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.six,
+    paddingTop: Spacing.four,
+  },
+  eyebrowWrap: {
+    alignItems: "center",
+    marginBottom: Spacing.four,
   },
 });

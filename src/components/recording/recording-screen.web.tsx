@@ -63,6 +63,7 @@ export function RecordingScreen() {
           {TABS.map((tab, i) => {
             const isActive = i === activeIndex;
             const isHovered = tab.key === hoveredTab;
+            const indexLabel = String(i + 1).padStart(2, "0");
             return (
               <Pressable
                 key={tab.key}
@@ -71,6 +72,9 @@ export function RecordingScreen() {
                 onHoverIn={() => setHoveredTab(tab.key)}
                 onHoverOut={() => setHoveredTab(null)}
               >
+                <ThemedText style={[styles.tabIndex, isActive && styles.tabIndexActive]}>
+                  {indexLabel}
+                </ThemedText>
                 <ThemedText
                   style={[
                     styles.tabText,
@@ -108,26 +112,44 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: "row",
-    gap: Spacing.one,
+    gap: Spacing.two,
     paddingHorizontal: Spacing.four,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.06)",
   },
   tab: {
+    position: "relative",
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.three,
+    alignItems: "flex-start",
+    gap: 2,
+    minWidth: 100,
     cursor: "pointer" as never,
   },
+  tabIndex: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontStyle: "italic",
+    fontSize: 9,
+    lineHeight: 11,
+    color: "rgba(255,255,255,0.25)",
+    letterSpacing: 1.4,
+    transitionProperty: "color" as never,
+    transitionDuration: "150ms" as never,
+  },
+  tabIndexActive: {
+    color: SemanticColors.success,
+  },
   tabText: {
-    fontFamily: Fonts.montserratMedium,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 13,
-    color: "rgba(255,255,255,0.35)",
+    lineHeight: 16,
+    color: "rgba(255,255,255,0.45)",
     transitionProperty: "color" as never,
     transitionDuration: "150ms" as never,
   },
   tabTextHover: {
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.7)",
   },
   tabTextActive: {
     fontFamily: Fonts.montserratBold,

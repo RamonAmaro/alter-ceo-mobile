@@ -74,12 +74,13 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
     <View style={[styles.page, { width, height }]}>
       <View style={styles.listContainer}>
         <View style={styles.headerRow}>
-          <ThemedText type="caption" style={styles.sectionLabel}>
-            TUS REUNIONES
-          </ThemedText>
-          <ThemedText type="caption" style={styles.countLabel}>
-            {meetings.length}
-          </ThemedText>
+          <View style={styles.headerLeft}>
+            <View style={styles.accentBar} />
+            <ThemedText style={styles.sectionLabel}>TUS REUNIONES</ThemedText>
+          </View>
+          <View style={styles.countPill}>
+            <ThemedText style={styles.countLabel}>{meetings.length}</ThemedText>
+          </View>
         </View>
 
         {isLoading && meetings.length === 0 ? (
@@ -88,17 +89,25 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
           </View>
         ) : meetings.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="mic-off-outline" size={32} color="rgba(255,255,255,0.15)" />
-            <ThemedText type="bodySm" style={styles.emptyText}>
-              No hay reuniones guardadas
+            <View style={styles.emptyIcon}>
+              <Ionicons name="mic-off-outline" size={28} color="rgba(255,255,255,0.2)" />
+            </View>
+            <ThemedText style={styles.emptyTitle}>No hay reuniones</ThemedText>
+            <ThemedText style={styles.emptyText}>
+              Tus grabaciones aparecerán aquí cuando las realices
             </ThemedText>
           </View>
         ) : (
           <FlatList
             data={meetingItems}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <MeetingListItem item={item} onPress={handlePress} onDelete={handleDelete} />
+            renderItem={({ item, index }) => (
+              <MeetingListItem
+                item={item}
+                index={index}
+                onPress={handlePress}
+                onDelete={handleDelete}
+              />
             )}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
@@ -123,7 +132,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
   },
   headerRow: {
@@ -132,16 +141,40 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: Spacing.three,
   },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  accentBar: {
+    width: 14,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: SemanticColors.success,
+  },
   sectionLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
     color: SemanticColors.textMuted,
-    fontFamily: Fonts.montserratBold,
-    letterSpacing: 1,
-    fontSize: 11,
+    letterSpacing: 2.4,
+  },
+  countPill: {
+    minWidth: 28,
+    height: 22,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.25)",
   },
   countLabel: {
-    color: SemanticColors.textDisabled,
-    fontFamily: Fonts.montserratMedium,
+    fontFamily: Fonts.montserratBold,
     fontSize: 11,
+    lineHeight: 13,
+    color: SemanticColors.success,
   },
   separator: {
     height: Spacing.two,
@@ -156,7 +189,29 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingTop: Spacing.six,
   },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    marginBottom: Spacing.two,
+  },
+  emptyTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 15,
+    lineHeight: 20,
+    color: SemanticColors.textSecondaryLight,
+  },
   emptyText: {
-    color: "rgba(255, 255, 255, 0.3)",
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 12,
+    lineHeight: 18,
+    color: SemanticColors.textMuted,
+    textAlign: "center",
+    paddingHorizontal: Spacing.four,
   },
 });

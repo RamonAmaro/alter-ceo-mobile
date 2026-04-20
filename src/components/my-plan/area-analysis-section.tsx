@@ -30,7 +30,7 @@ interface AreaAnalysisSectionProps {
 export function AreaAnalysisSection({ areas }: AreaAnalysisSectionProps) {
   return (
     <View style={styles.container}>
-      <SectionHeader title="Análisis por áreas" />
+      <SectionHeader eyebrow="CARTOGRAFÍA · ÁREAS" title="Análisis por" accent="áreas" />
 
       <View style={styles.list}>
         {AREA_CONFIG.map(({ key, label, icon }) => {

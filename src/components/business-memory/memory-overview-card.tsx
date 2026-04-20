@@ -3,7 +3,7 @@ import type { BusinessMemoryStep } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { Platform, StyleSheet, View } from "react-native";
-import { ProgressRing } from "./progress-ring";
+import { ProgressRing } from "@/components/ui/progress-ring";
 
 interface MemoryOverviewCardProps {
   steps: readonly BusinessMemoryStep[];
@@ -48,7 +48,7 @@ export function MemoryOverviewCard({ steps }: MemoryOverviewCardProps) {
 
       <View style={styles.ringWrap}>
         <ProgressRing size={RING_SIZE} progress={overall} strokeWidth={3}>
-          <View style={styles.ringInner} pointerEvents="none">
+          <View style={[styles.ringInner, { pointerEvents: "none" }]}>
             <View style={styles.ringRow}>
               <ThemedText style={styles.ringBig}>{overall}</ThemedText>
               <ThemedText style={styles.ringUnit}>%</ThemedText>

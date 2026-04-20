@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useUploadRecording } from "@/hooks/use-upload-recording";
 import {
   enableRecordingMode,
@@ -16,6 +17,7 @@ import { formatShortDate } from "@/utils/format-date";
 
 import { AudioWave } from "./audio-wave";
 import { RecordingControls } from "./recording-controls";
+import { RecordingStageDesktop } from "./recording-stage-desktop";
 import { RecordingTimer } from "./recording-timer";
 import { SavedToast } from "./saved-toast";
 import { TitlePrompt } from "./title-prompt";
@@ -52,6 +54,7 @@ interface RecordingPageProps {
 
 export function RecordingPage({ width, height, onUploadComplete }: RecordingPageProps) {
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsiveLayout();
   const [state, setState] = useState<RecordingState>("idle");
   const [showToast, setShowToast] = useState(false);
   const [showTitlePrompt, setShowTitlePrompt] = useState(false);
@@ -171,24 +174,36 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
 
   return (
     <View style={[styles.page, { width, height }]}>
-      <View style={styles.content}>
-        <AudioWave isActive={isActive} isReset={isReset} recorder={recorder} />
-        <RecordingTimer isRecording={isActive} isPaused={state === "paused"} />
-      </View>
+      {isMobile ? (
+        <>
+          <View style={styles.content}>
+            <AudioWave isActive={isActive} isReset={isReset} recorder={recorder} />
+            <RecordingTimer isRecording={isActive} isPaused={state === "paused"} />
+          </View>
 
-      <LinearGradient
-        colors={GRADIENT_COLORS}
-        locations={GRADIENT_LOCATIONS}
-        style={[styles.bottomOverlay, { paddingBottom: insets.bottom + Spacing.three }]}
-        pointerEvents="box-none"
-      >
-        <RecordingControls
+          <LinearGradient
+            colors={GRADIENT_COLORS}
+            locations={GRADIENT_LOCATIONS}
+            style={[styles.bottomOverlay, { paddingBottom: insets.bottom + Spacing.three }]}
+            pointerEvents="box-none"
+          >
+            <RecordingControls
+              state={state}
+              onRecord={handleRecord}
+              onDelete={handleDelete}
+              onSave={handleSave}
+            />
+          </LinearGradient>
+        </>
+      ) : (
+        <RecordingStageDesktop
           state={state}
+          recorder={recorder}
           onRecord={handleRecord}
           onDelete={handleDelete}
           onSave={handleSave}
         />
-      </LinearGradient>
+      )}
 
       <SavedToast visible={showToast} />
 

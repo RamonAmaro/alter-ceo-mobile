@@ -26,7 +26,11 @@ export function SalesStrategySection({
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="Plan para duplicar tus ventas" />
+      <SectionHeader
+        eyebrow="ESTRATEGIA · DE CRECIMIENTO"
+        title="Plan para"
+        accent="duplicar ventas"
+      />
 
       {productImprovement && <SalesProductBlock data={productImprovement} />}
       {customerAcquisition && <SalesAcquisitionBlock data={customerAcquisition} />}

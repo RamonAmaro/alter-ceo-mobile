@@ -1,6 +1,6 @@
-import { ThemedText } from "@/components/themed-text";
-import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { ImageSourcePropType, StyleSheet, View } from "react-native";
+import { Spacing } from "@/constants/theme";
 import { StrategyTopicCard } from "./strategy-topic-card";
 
 interface TopicConfig {
@@ -19,7 +19,7 @@ const TOPICS: TopicConfig[] = [
   },
   {
     key: "ventas",
-    label: "GUIÓN\nDE VENTAS",
+    label: "GUIÓN DE VENTAS",
     image: require("@/assets/ui/strategy-ventas.png"),
     enabled: false,
   },
@@ -37,69 +37,56 @@ const TOPICS: TopicConfig[] = [
   },
 ];
 
+const STAGGER_MS = 80;
+
 interface StrategyTopicSelectorProps {
   onSelect: (key: string) => void;
 }
 
 export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) {
-  const topRow = TOPICS.slice(0, 2);
-  const bottomRow = TOPICS.slice(2, 4);
+  const { isDesktop } = useResponsiveLayout();
+  const total = TOPICS.length;
 
   return (
-    <View style={styles.container}>
-      <ThemedText style={styles.heading}>ELIGE UN TEMA</ThemedText>
-
-      <View style={styles.grid}>
-        <View style={styles.row}>
-          {topRow.map((topic) => (
-            <StrategyTopicCard
-              key={topic.key}
-              label={topic.label}
-              image={topic.image}
-              disabled={!topic.enabled}
-              actionLabel={topic.enabled ? "Comenzar" : "Próximamente"}
-              onPress={() => onSelect(topic.key)}
-            />
-          ))}
+    <View style={[styles.grid, isDesktop ? styles.gridDesktop : null]}>
+      {TOPICS.map((topic, index) => (
+        <View key={topic.key} style={[styles.cell, isDesktop ? styles.cellDesktop : styles.cellRow]}>
+          <StrategyTopicCard
+            index={index}
+            total={total}
+            label={topic.label}
+            image={topic.image}
+            disabled={!topic.enabled}
+            actionLabel={topic.enabled ? "Comenzar" : "Próximamente"}
+            onPress={() => onSelect(topic.key)}
+            animationDelay={index * STAGGER_MS}
+          />
         </View>
-
-        <View style={styles.row}>
-          {bottomRow.map((topic) => (
-            <StrategyTopicCard
-              key={topic.key}
-              label={topic.label}
-              image={topic.image}
-              disabled={!topic.enabled}
-              actionLabel={topic.enabled ? "Comenzar" : "Próximamente"}
-              onPress={() => onSelect(topic.key)}
-            />
-          ))}
-        </View>
-      </View>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    gap: Spacing.two,
-  },
-  heading: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 15,
-    lineHeight: 19,
-    textAlign: "center",
-    letterSpacing: 2,
-    color: SemanticColors.textPrimary,
-    marginVertical: Spacing.four,
-  },
   grid: {
-    gap: Spacing.two,
-  },
-  row: {
     flexDirection: "row",
-    gap: Spacing.two,
-    height: 253,
+    flexWrap: "wrap",
+    gap: Spacing.three,
+  },
+  gridDesktop: {
+    gap: Spacing.three,
+  },
+  cell: {
+    minHeight: 260,
+  },
+  cellRow: {
+    flexGrow: 1,
+    flexBasis: "47%",
+    minWidth: 140,
+  },
+  cellDesktop: {
+    flexGrow: 1,
+    flexBasis: "22%",
+    minWidth: 220,
   },
 });

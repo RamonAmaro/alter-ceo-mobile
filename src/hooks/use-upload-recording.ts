@@ -57,7 +57,7 @@ export function useUploadRecording(): {
 
     await useMeetingStore
       .getState()
-      .startMeetingUpload(userId, uri, fileName, contentType, sizeBytes, durationSeconds);
+      .startMeetingUpload(userId, uri, fileName, contentType, sizeBytes, durationSeconds, title);
   }, []);
 
   return {

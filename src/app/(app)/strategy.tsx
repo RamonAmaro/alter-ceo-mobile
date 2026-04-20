@@ -1,15 +1,19 @@
 import { AppBackground } from "@/components/app-background";
-import { ResponsiveContainer } from "@/components/responsive-container";
-import { StrategyHeader } from "@/components/strategy/strategy-header";
+import { ScreenHeader } from "@/components/screen-header";
 import { StrategyTopicSelector } from "@/components/strategy/strategy-topic-selector";
+import { EyebrowPill } from "@/components/ui/eyebrow-pill";
+import { HeroOverviewCard } from "@/components/ui/hero-overview-card";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import { router } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StrategyScreen() {
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsiveLayout();
   const beginDraft = useStrategyReportStore((s) => s.beginDraft);
 
   function handleSelectTopic(topic: string): void {
@@ -20,15 +24,38 @@ export default function StrategyScreen() {
 
   return (
     <AppBackground>
-      <ResponsiveContainer maxWidth={900}>
-        <View style={styles.container}>
-          <StrategyHeader topInset={insets.top} />
+      <View style={styles.container}>
+        <ScreenHeader
+          topInset={insets.top}
+          icon="bar-chart"
+          titlePrefix="Crear"
+          titleAccent="Estrategia"
+          showBack={isMobile}
+        />
 
-          <View style={[styles.body, { paddingBottom: insets.bottom || Spacing.three }]}>
-            <StrategyTopicSelector onSelect={handleSelectTopic} />
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <EyebrowPill label="ESTRATEGIAS · ARSENAL" />
+
+          <HeroOverviewCard
+            eyebrow="PANEL DE COMANDO"
+            headline="Construye tu plan de ataque"
+            subhead="Elige un tema y ALTER generará un informe personalizado."
+          />
+
+          <View style={styles.sectionHeaderWrap}>
+            <SectionHeading
+              eyebrow="BIBLIOTECA TÁCTICA"
+              titlePrefix="Elige tu"
+              titleAccent="tema"
+            />
           </View>
-        </View>
-      </ResponsiveContainer>
+
+          <StrategyTopicSelector onSelect={handleSelectTopic} />
+        </ScrollView>
+      </View>
     </AppBackground>
   );
 }
@@ -37,10 +64,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  body: {
-    flex: 1,
+  content: {
+    paddingTop: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.three,
-    justifyContent: "center",
+    gap: Spacing.four,
+  },
+  sectionHeaderWrap: {
+    marginTop: -Spacing.one,
   },
 });

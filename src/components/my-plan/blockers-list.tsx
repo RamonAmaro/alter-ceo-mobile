@@ -16,7 +16,13 @@ export function BlockersList({ introduction, blockers }: BlockersListProps) {
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="Bloqueos detectados" badge={unique.length} badgeColor="#FF4444" />
+      <SectionHeader
+        eyebrow="FRENOS · DETECTADOS"
+        title="Bloqueos"
+        accent="a vencer"
+        badge={unique.length}
+        badgeColor="#FF4444"
+      />
 
       {introduction && (
         <ThemedText type="bodyMd" style={styles.intro}>

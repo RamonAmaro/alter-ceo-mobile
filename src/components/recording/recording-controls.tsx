@@ -66,9 +66,9 @@ function SideButton({
 
 export function RecordingControls({ state, onRecord, onDelete, onSave }: RecordingControlsProps) {
   const { isMobile } = useResponsiveLayout();
-  const buttonSize = isMobile ? 120 : 80;
-  const sideSize = isMobile ? 56 : 44;
-  const sideIconSize = isMobile ? 26 : 20;
+  const buttonSize = isMobile ? 88 : 72;
+  const sideSize = isMobile ? 48 : 40;
+  const sideIconSize = isMobile ? 22 : 18;
   const deleteScale = useRef(new Animated.Value(1)).current;
   const deleteGlow = useRef(new Animated.Value(0)).current;
   const saveScale = useRef(new Animated.Value(1)).current;

@@ -25,7 +25,7 @@ export function ScreenHeader({
   titleAccent,
   onBack,
   onIconPress,
-  showBack = false,
+  showBack,
 }: ScreenHeaderProps) {
   const { isMobile } = useResponsiveLayout();
   const shouldShowBack = showBack ?? isMobile;
