@@ -12,12 +12,14 @@ import {
   getStepIndex,
 } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { Redirect, useLocalSearchParams, type Href } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function BusinessMemoryStepScreen() {
   const insets = useSafeAreaInsets();
+  const { isDesktop, isMobile } = useResponsiveLayout();
   const { stepId } = useLocalSearchParams<{ stepId: string }>();
 
   const step = findStepById(stepId ?? "");
@@ -30,6 +32,8 @@ export default function BusinessMemoryStepScreen() {
   const totalSteps = BUSINESS_MEMORY_STEPS.length;
   const activeDot = stepIndex + 1;
   const hasFields = step.fields.length > 0;
+  const isWideWeb = Platform.OS === "web" && isDesktop;
+  const ringSize = isWideWeb ? 250 : 220;
 
   function handleSave(values: Record<string, string>): void {
     void values;
@@ -43,44 +47,95 @@ export default function BusinessMemoryStepScreen() {
           titlePrefix="Memoria"
           titleAccent="de negocio"
           icon="briefcase"
-          showBack
+          showBack={isMobile}
         />
 
         <KeyboardAwareScroll
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
+          contentContainerStyle={[
+            styles.content,
+            isWideWeb && styles.contentDesktop,
+            { paddingBottom: insets.bottom + Spacing.six },
+          ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           bottomOffset={24}
         >
-          <StepDots total={totalSteps} active={activeDot} hint="Bloque · Memoria" />
+          {isWideWeb ? (
+            <View style={styles.desktopGrid}>
+              <View style={styles.desktopHeroColumn}>
+                <StepDots total={totalSteps} active={activeDot} hint="Bloque · Memoria" />
 
-          <View style={styles.hero}>
-            <StepHeroRing
-              step={step}
-              index={stepIndex}
-              total={totalSteps}
-              size={220}
-              animate={false}
-            />
-            <ThemedText style={styles.stepTitle}>{step.title}</ThemedText>
-            <ThemedText style={styles.stepDescription}>{step.description}</ThemedText>
-          </View>
-
-          <View style={styles.formWrapper}>
-            {hasFields ? (
-              <View style={styles.formSectionHeader}>
-                <View style={styles.formAccent} />
-                <ThemedText style={styles.formEyebrow}>COMPLETA EL BLOQUE</ThemedText>
+                <View style={[styles.hero, styles.heroDesktop]}>
+                  <StepHeroRing
+                    step={step}
+                    index={stepIndex}
+                    total={totalSteps}
+                    size={ringSize}
+                    animate={false}
+                  />
+                  <ThemedText style={styles.stepTitle}>{step.title}</ThemedText>
+                  <ThemedText style={styles.stepDescription}>{step.description}</ThemedText>
+                </View>
               </View>
-            ) : null}
 
-            {hasFields ? (
-              <MemoryForm fields={step.fields} onSave={handleSave} saveLabel="Guardar memoria" />
-            ) : (
-              <MemoryEmptyState />
-            )}
-          </View>
+              <View style={styles.desktopFormColumn}>
+                <View style={[styles.formWrapper, styles.formWrapperDesktop]}>
+                  {hasFields ? (
+                    <View style={styles.formSectionHeader}>
+                      <View style={styles.formAccent} />
+                      <ThemedText style={styles.formEyebrow}>COMPLETA EL BLOQUE</ThemedText>
+                    </View>
+                  ) : null}
+
+                  {hasFields ? (
+                    <MemoryForm
+                      fields={step.fields}
+                      onSave={handleSave}
+                      saveLabel="Guardar memoria"
+                    />
+                  ) : (
+                    <MemoryEmptyState />
+                  )}
+                </View>
+              </View>
+            </View>
+          ) : (
+            <>
+              <StepDots total={totalSteps} active={activeDot} hint="Bloque · Memoria" />
+
+              <View style={styles.hero}>
+                <StepHeroRing
+                  step={step}
+                  index={stepIndex}
+                  total={totalSteps}
+                  size={ringSize}
+                  animate={false}
+                />
+                <ThemedText style={styles.stepTitle}>{step.title}</ThemedText>
+                <ThemedText style={styles.stepDescription}>{step.description}</ThemedText>
+              </View>
+
+              <View style={styles.formWrapper}>
+                {hasFields ? (
+                  <View style={styles.formSectionHeader}>
+                    <View style={styles.formAccent} />
+                    <ThemedText style={styles.formEyebrow}>COMPLETA EL BLOQUE</ThemedText>
+                  </View>
+                ) : null}
+
+                {hasFields ? (
+                  <MemoryForm
+                    fields={step.fields}
+                    onSave={handleSave}
+                    saveLabel="Guardar memoria"
+                  />
+                ) : (
+                  <MemoryEmptyState />
+                )}
+              </View>
+            </>
+          )}
         </KeyboardAwareScroll>
       </View>
     </AppBackground>
@@ -95,11 +150,31 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     gap: Spacing.four,
   },
+  contentDesktop: {
+    paddingHorizontal: Spacing.three,
+  },
+  desktopGrid: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.five,
+  },
+  desktopHeroColumn: {
+    width: 340,
+    gap: Spacing.three,
+    paddingTop: Spacing.one,
+  },
+  desktopFormColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
   hero: {
     alignItems: "center",
     gap: Spacing.two,
     paddingHorizontal: Spacing.four,
     marginTop: Spacing.one,
+  },
+  heroDesktop: {
+    paddingHorizontal: Spacing.one,
   },
   stepTitle: {
     fontFamily: Fonts.montserratBold,
@@ -121,6 +196,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
     gap: Spacing.three,
+  },
+  formWrapperDesktop: {
+    paddingHorizontal: 0,
+    paddingTop: Spacing.one,
   },
   formSectionHeader: {
     flexDirection: "row",
