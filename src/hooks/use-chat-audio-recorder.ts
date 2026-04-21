@@ -4,13 +4,18 @@ import { Alert } from "react-native";
 import {
   enableRecordingMode,
   MAX_DURATION_MS,
-  openAppSettings,
   RecordingPresets,
-  requestAudioPermission,
+  stopRecorderAndGetUri,
   useAudioRecorder,
 } from "@/services/audio-service";
+import { ensureMicrophonePermission } from "@/utils/ensure-microphone-permission";
 
 export type ChatAudioState = "idle" | "recording" | "submitting";
+
+type RecorderState =
+  | { readonly kind: "idle" }
+  | { readonly kind: "recording"; readonly startedAt: number }
+  | { readonly kind: "submitting" };
 
 interface UseChatAudioRecorderOptions {
   readonly disabled?: boolean;
@@ -28,162 +33,107 @@ const RECORDING_OPTIONS = {
   isMeteringEnabled: true,
 };
 
-async function waitForRecorderUri(
-  recorder: { uri: string | null },
-  timeoutMs = 1500,
-  intervalMs = 50,
-): Promise<string | null> {
-  const startedAt = Date.now();
-
-  while (Date.now() - startedAt < timeoutMs) {
-    if (recorder.uri) {
-      return recorder.uri;
-    }
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
-
-  return recorder.uri;
-}
-
 export function useChatAudioRecorder({
   disabled = false,
   onSubmitAudio,
 }: UseChatAudioRecorderOptions): UseChatAudioRecorderResult {
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
 
-  const [audioState, setAudioState] = useState<ChatAudioState>("idle");
+  const [state, setState] = useState<RecorderState>({ kind: "idle" });
   const [elapsedMs, setElapsedMs] = useState(0);
 
-  const preparedRef = useRef(false);
-  const segmentStartRef = useRef(0);
-  const accumulatedMsRef = useRef(0);
-  const isStoppingRef = useRef(false);
-  const audioStateRef = useRef<ChatAudioState>("idle");
-  const recorderRef = useRef(recorder);
-  const onSubmitAudioRef = useRef(onSubmitAudio);
-
-  audioStateRef.current = audioState;
-  recorderRef.current = recorder;
-  onSubmitAudioRef.current = onSubmitAudio;
-
+  const mountedRef = useRef(true);
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
-      if (audioStateRef.current === "recording" || audioStateRef.current === "submitting") {
-        recorderRef.current.stop();
-      }
+      mountedRef.current = false;
     };
   }, []);
 
-  const stopAndSubmitRecording = useCallback(async (): Promise<void> => {
-    if (audioState !== "recording" || isStoppingRef.current) return;
+  const stopAndSubmit = useCallback(
+    async (startedAt: number): Promise<void> => {
+      setState({ kind: "submitting" });
+      setElapsedMs(Math.min(Date.now() - startedAt, MAX_DURATION_MS));
 
-    const activeRecorder = recorderRef.current;
+      const uri = await stopRecorderAndGetUri(recorder).catch(() => null);
 
-    isStoppingRef.current = true;
-    accumulatedMsRef.current += Date.now() - segmentStartRef.current;
-    segmentStartRef.current = 0;
-    setElapsedMs(Math.min(accumulatedMsRef.current, MAX_DURATION_MS));
-    setAudioState("submitting");
+      if (!mountedRef.current) return;
 
-    activeRecorder.stop();
-    preparedRef.current = false;
+      if (!uri) {
+        setState({ kind: "idle" });
+        setElapsedMs(0);
+        Alert.alert("Error al grabar", "No se ha podido procesar el audio. Inténtalo de nuevo.");
+        return;
+      }
 
-    const uri = await waitForRecorderUri(activeRecorder);
-    if (!uri) {
-      accumulatedMsRef.current = 0;
-      setElapsedMs(0);
-      setAudioState("idle");
-      isStoppingRef.current = false;
-      Alert.alert("Error al grabar", "No se ha podido procesar el audio. Inténtalo de nuevo.");
-      return;
-    }
-
-    try {
-      await onSubmitAudioRef.current(uri);
-    } finally {
-      accumulatedMsRef.current = 0;
-      setElapsedMs(0);
-      setAudioState("idle");
-      isStoppingRef.current = false;
-    }
-  }, [audioState]);
+      try {
+        await onSubmitAudio(uri);
+      } finally {
+        if (mountedRef.current) {
+          setState({ kind: "idle" });
+          setElapsedMs(0);
+        }
+      }
+    },
+    [recorder, onSubmitAudio],
+  );
 
   useEffect(() => {
-    if (audioState !== "recording") return;
+    if (state.kind !== "recording") return;
 
-    const interval = setInterval(() => {
-      const nextElapsedMs = Math.min(
-        accumulatedMsRef.current +
-          (segmentStartRef.current ? Date.now() - segmentStartRef.current : 0),
-        MAX_DURATION_MS,
-      );
-
-      setElapsedMs(nextElapsedMs);
-
-      if (nextElapsedMs >= MAX_DURATION_MS) {
-        void stopAndSubmitRecording();
+    const tick = () => {
+      const next = Math.min(Date.now() - state.startedAt, MAX_DURATION_MS);
+      setElapsedMs(next);
+      if (next >= MAX_DURATION_MS) {
+        void stopAndSubmit(state.startedAt);
       }
-    }, 200);
+    };
 
+    const interval = setInterval(tick, 200);
     return () => clearInterval(interval);
-  }, [audioState, stopAndSubmitRecording]);
+  }, [state, stopAndSubmit]);
+
+  useEffect(() => {
+    return () => {
+      void recorder.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startRecording = useCallback(async (): Promise<void> => {
     if (disabled) return;
 
-    const activeRecorder = recorderRef.current;
-
-    const { granted, canAskAgain } = await requestAudioPermission();
-
-    if (!granted) {
-      if (!canAskAgain) {
-        Alert.alert(
-          "Micrófono desactivado",
-          "Activa el permiso de micrófono en los ajustes de tu dispositivo para poder grabar.",
-          [
-            { text: "Cancelar", style: "cancel" },
-            { text: "Ir a ajustes", onPress: openAppSettings },
-          ],
-        );
-      } else {
-        Alert.alert("Permiso requerido", "Necesitamos acceso al micrófono para grabar.");
-      }
-      return;
-    }
+    const granted = await ensureMicrophonePermission({
+      deniedMessage: "Necesitamos acceso al micrófono para grabar.",
+    });
+    if (!granted) return;
 
     try {
       await enableRecordingMode();
-
-      if (!preparedRef.current) {
-        await activeRecorder.prepareToRecordAsync();
-        preparedRef.current = true;
-      }
-
-      accumulatedMsRef.current = 0;
-      segmentStartRef.current = Date.now();
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      if (!mountedRef.current) return;
       setElapsedMs(0);
-      activeRecorder.record();
-      setAudioState("recording");
+      setState({ kind: "recording", startedAt: Date.now() });
     } catch {
-      preparedRef.current = false;
-      setAudioState("idle");
+      if (!mountedRef.current) return;
+      setState({ kind: "idle" });
       Alert.alert("Error al grabar", "No se pudo iniciar la grabación. Inténtalo de nuevo.");
     }
-  }, [disabled]);
+  }, [disabled, recorder]);
 
   const handleAudioPress = useCallback(() => {
-    if (audioState === "idle") {
+    if (state.kind === "idle") {
       void startRecording();
       return;
     }
-
-    if (audioState === "recording") {
-      void stopAndSubmitRecording();
+    if (state.kind === "recording") {
+      void stopAndSubmit(state.startedAt);
     }
-  }, [audioState, startRecording, stopAndSubmitRecording]);
+  }, [state, startRecording, stopAndSubmit]);
 
   return {
-    audioState,
+    audioState: state.kind,
     elapsedMs,
     handleAudioPress,
   };
