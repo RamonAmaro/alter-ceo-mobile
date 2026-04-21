@@ -16,7 +16,7 @@ export default function StrategyCaptacionReadyScreen() {
   const insets = useSafeAreaInsets();
   const template = useStrategyReportStore((s) => s.template);
   const answers = useStrategyReportStore((s) => s.answers);
-  const reset = useStrategyReportStore((s) => s.reset);
+  const discardDraft = useStrategyReportStore((s) => s.discardDraft);
 
   useEffect(() => {
     if (!template) {
@@ -31,7 +31,7 @@ export default function StrategyCaptacionReadyScreen() {
   ).length;
 
   function handleBackToStrategy(): void {
-    reset();
+    discardDraft();
     router.replace("/(app)/strategy");
   }
 

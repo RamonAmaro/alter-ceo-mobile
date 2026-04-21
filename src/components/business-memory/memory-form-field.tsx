@@ -116,7 +116,9 @@ export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
                         onPress={() => handleSelect(option.value)}
                         style={[styles.dropdownItem, selected && styles.dropdownItemSelected]}
                       >
-                        <ThemedText style={[styles.dropdownLabel, selected && styles.dropdownLabelSelected]}>
+                        <ThemedText
+                          style={[styles.dropdownLabel, selected && styles.dropdownLabelSelected]}
+                        >
                           {option.label}
                         </ThemedText>
                       </Pressable>
@@ -131,7 +133,9 @@ export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
               value={value}
               onChangeText={onChangeText}
               placeholder={placeholder}
-              placeholderTextColor={isUnknown ? "rgba(255,149,0,0.85)" : SemanticColors.textPlaceholder}
+              placeholderTextColor={
+                isUnknown ? "rgba(255,149,0,0.85)" : SemanticColors.textPlaceholder
+              }
               style={[styles.input, multiline && styles.inputMultiline]}
               multiline={multiline}
               selectionColor={SemanticColors.success}
@@ -146,7 +150,9 @@ export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
           )}
         </View>
 
-        {helperText && isUnknown ? <ThemedText style={styles.helperText}>{helperText}</ThemedText> : null}
+        {helperText && isUnknown ? (
+          <ThemedText style={styles.helperText}>{helperText}</ThemedText>
+        ) : null}
       </View>
     );
   },

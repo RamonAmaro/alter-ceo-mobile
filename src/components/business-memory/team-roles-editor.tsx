@@ -48,7 +48,8 @@ export function TeamRolesEditor({
             </View>
           </View>
           <ThemedText style={styles.subtitle}>
-            Define cada rol con la persona responsable, su reporte y el tipo de relacion con el fundador.
+            Define cada rol con la persona responsable, su reporte y el tipo de relacion con el
+            fundador.
           </ThemedText>
         </View>
 

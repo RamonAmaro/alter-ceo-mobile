@@ -4,6 +4,8 @@ import { getInfoAsync } from "expo-file-system/legacy";
 
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
+import { useRecordingsStore } from "@/stores/recordings-store";
+import { toErrorMessage } from "@/utils/to-error-message";
 
 function getContentType(uri: string): string {
   const ext = uri.split(".").pop()?.toLowerCase();
@@ -31,6 +33,7 @@ async function getFileSize(uri: string): Promise<number> {
 }
 
 interface UploadParams {
+  recordingId: string;
   uri: string;
   title: string;
   durationMs: number;
@@ -45,21 +48,51 @@ export function useUploadRecording(): {
   const isUploading =
     uploadProgress?.stage === "uploading" || uploadProgress?.stage === "processing";
 
-  const uploadRecording = useCallback(async ({ uri, title, durationMs }: UploadParams) => {
-    const userId = useAuthStore.getState().user?.userId;
-    if (!userId) return;
+  const uploadRecording = useCallback(
+    async ({ recordingId, uri, title, durationMs }: UploadParams) => {
+      const userId = useAuthStore.getState().user?.userId;
+      if (!userId) return;
 
-    const contentType = getContentType(uri);
-    const ext =
-      contentType === "audio/3gpp" ? "3gp" : contentType === "audio/webm" ? "webm" : "m4a";
-    const fileName = `${title.replace(/\s+/g, "-").toLowerCase()}.${ext}`;
-    const sizeBytes = await getFileSize(uri);
-    const durationSeconds = durationMs / 1000;
+      const contentType = getContentType(uri);
+      const ext =
+        contentType === "audio/3gpp" ? "3gp" : contentType === "audio/webm" ? "webm" : "m4a";
+      const fileName = `${title.replace(/\s+/g, "-").toLowerCase()}.${ext}`;
+      const sizeBytes = await getFileSize(uri);
+      const durationSeconds = durationMs / 1000;
 
-    await useMeetingStore
-      .getState()
-      .startMeetingUpload(userId, title, uri, fileName, contentType, sizeBytes, durationSeconds);
-  }, []);
+      const recordingsStore = useRecordingsStore.getState();
+      await recordingsStore.updateRecordingStatus(recordingId, { uploadStatus: "uploading" });
+
+      try {
+        await useMeetingStore
+          .getState()
+          .startMeetingUpload(
+            userId,
+            title,
+            uri,
+            fileName,
+            contentType,
+            sizeBytes,
+            durationSeconds,
+          );
+
+        const finalStage = useMeetingStore.getState().uploadProgress?.stage;
+        const meetingId = useMeetingStore.getState().uploadProgress?.meeting_id;
+        await recordingsStore.updateRecordingStatus(recordingId, {
+          uploadStatus: finalStage === "failed" ? "failed" : "processing",
+          meetingId,
+          errorMessage:
+            finalStage === "failed" ? useMeetingStore.getState().uploadProgress?.error : undefined,
+        });
+      } catch (err) {
+        await recordingsStore.updateRecordingStatus(recordingId, {
+          uploadStatus: "failed",
+          errorMessage: toErrorMessage(err),
+        });
+      }
+    },
+    [],
+  );
 
   return {
     uploadRecording,

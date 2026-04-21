@@ -8,6 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "web:chrome": "open -na \"Google Chrome\" --args --user-data-dir=/tmp/chrome-alterceo-dev --disable-features=SameSiteByDefaultCookies,CookiesWithoutSameSiteMustBeSecure http://localhost:8081",
     "lint": "expo lint",
     "lint:fix": "expo lint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",

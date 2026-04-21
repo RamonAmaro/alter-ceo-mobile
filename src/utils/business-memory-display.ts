@@ -105,7 +105,10 @@ function formatStringList(values: unknown): string {
 function formatSalesHistory(values: unknown): string {
   if (!Array.isArray(values) || values.length === 0) return "";
   return values
-    .map((item, index) => `Mes ${index + 1}: ${formatCurrencyValue(typeof item === "number" ? item : null)}`)
+    .map(
+      (item, index) =>
+        `Mes ${index + 1}: ${formatCurrencyValue(typeof item === "number" ? item : null)}`,
+    )
     .join("\n");
 }
 

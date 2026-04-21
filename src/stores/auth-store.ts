@@ -13,7 +13,7 @@ import {
 } from "@/services/biometrics-service";
 import type { AuthSession } from "@/types/auth";
 import {
-  clearUserScopedStores,
+  clearUserScopedStoresKeepingPending,
   ensureCleanForUser,
   ensureCleanOnSignOut,
 } from "@/utils/clear-user-data";
@@ -71,7 +71,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   handleUnauthorized: async () => {
     await logout();
-    await ensureCleanOnSignOut();
+    await clearUserScopedStoresKeepingPending();
     set({ isAuthenticated: false, user: null });
   },
 
@@ -140,13 +140,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 }));
 
 // Force sign-out on any 401 response (session expired / invalid).
-// Preserve biometric credentials — 401 means the session expired, not that
-// the user revoked access. They can re-enter via FaceID/biometrics.
+// Preserve biometric credentials AND pending local recordings — 401 means the
+// session expired, not that the user revoked access. They can re-enter via
+// FaceID/biometrics and find any unsent recording still waiting.
 setOnUnauthorizedHandler(() => {
   const { isAuthenticated, handleUnauthorized } = useAuthStore.getState();
   if (isAuthenticated) {
     void handleUnauthorized();
   } else {
-    void clearUserScopedStores();
+    void clearUserScopedStoresKeepingPending();
   }
 });

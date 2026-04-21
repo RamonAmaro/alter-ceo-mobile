@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 import type { SSEConnection } from "@/lib/sse-client";
@@ -6,6 +7,33 @@ import type { ChatMessageResponse, ChatThreadSummary } from "@/types/chat";
 import { handleStreamDone, handleStreamEvent } from "@/utils/chat-stream-handlers";
 import { toErrorMessage } from "@/utils/to-error-message";
 import { ulid } from "@/utils/ulid";
+
+// Drafts: texto no input que o usuário ainda não enviou. Preservado em 401.
+// Estrutura: { [userId]: { [threadId]: text } }
+// Chave especial `__new__` guarda o draft de uma conversa ainda não criada.
+export const CHAT_DRAFTS_STORAGE_KEY = "chat_drafts_v1";
+export const NEW_THREAD_DRAFT_KEY = "__new__";
+
+type DraftsByUser = Record<string, Record<string, string>>;
+
+const DRAFT_DEBOUNCE_MS = 400;
+let draftPersistTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function persistDrafts(drafts: DraftsByUser): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CHAT_DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+  } catch {
+    // best-effort
+  }
+}
+
+function schedulePersist(getDrafts: () => DraftsByUser): void {
+  if (draftPersistTimer) clearTimeout(draftPersistTimer);
+  draftPersistTimer = setTimeout(() => {
+    draftPersistTimer = null;
+    void persistDrafts(getDrafts());
+  }, DRAFT_DEBOUNCE_MS);
+}
 
 interface ChatState {
   threads: ChatThreadSummary[];
@@ -18,6 +46,7 @@ interface ChatState {
   isLoadingMessages: boolean;
   error: string | null;
   failedMessageId: string | null;
+  drafts: DraftsByUser;
   _sseConnection: SSEConnection | null;
 
   fetchThreads: (userId: string) => Promise<void>;
@@ -28,7 +57,12 @@ interface ChatState {
   sendAudioMessage: (threadId: string, uri: string) => Promise<void>;
   retryMessage: () => Promise<void>;
   cancelStream: () => void;
+  loadDrafts: () => Promise<void>;
+  setDraft: (userId: string, threadKey: string, text: string) => void;
+  getDraft: (userId: string, threadKey: string) => string;
+  clearDraft: (userId: string, threadKey: string) => void;
   reset: () => void;
+  resetKeepingDrafts: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -42,6 +76,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoadingMessages: false,
   error: null,
   failedMessageId: null,
+  drafts: {},
   _sseConnection: null,
 
   fetchThreads: async (userId: string) => {
@@ -210,6 +245,39 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ isStreaming: false, streamingText: "", _sseConnection: null });
   },
 
+  loadDrafts: async () => {
+    try {
+      const raw = await AsyncStorage.getItem(CHAT_DRAFTS_STORAGE_KEY);
+      const parsed: DraftsByUser = raw ? JSON.parse(raw) : {};
+      set({ drafts: parsed });
+    } catch {
+      set({ drafts: {} });
+    }
+  },
+
+  setDraft: (userId: string, threadKey: string, text: string) => {
+    const current = get().drafts;
+    const userDrafts = current[userId] ?? {};
+    const nextUserDrafts = text
+      ? { ...userDrafts, [threadKey]: text }
+      : Object.fromEntries(Object.entries(userDrafts).filter(([k]) => k !== threadKey));
+    const next: DraftsByUser = { ...current, [userId]: nextUserDrafts };
+    set({ drafts: next });
+    schedulePersist(() => get().drafts);
+  },
+
+  getDraft: (userId: string, threadKey: string) => {
+    return get().drafts[userId]?.[threadKey] ?? "";
+  },
+
+  clearDraft: (userId: string, threadKey: string) => {
+    get().setDraft(userId, threadKey, "");
+  },
+
+  // Reset transient in-memory state. Persisted drafts in AsyncStorage are kept
+  // intact — they are scoped per-userId inside the blob, so returning users
+  // (same or different) restore their own drafts on sign-in. Drafts only go
+  // away when the user actively sends the message or uninstalls the app.
   reset: () => {
     get().cancelStream();
     set({
@@ -220,6 +288,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isLoadingThreads: false,
       isLoadingMessages: false,
       error: null,
+      drafts: {},
+    });
+  },
+
+  resetKeepingDrafts: () => {
+    get().cancelStream();
+    set({
+      threads: [],
+      activeThreadId: null,
+      messages: [],
+      isSubmittingAudio: false,
+      isLoadingThreads: false,
+      isLoadingMessages: false,
+      error: null,
+      // drafts preserved intentionally
     });
   },
 }));
