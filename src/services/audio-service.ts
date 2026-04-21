@@ -47,4 +47,15 @@ export async function enableRecordingMode(): Promise<void> {
   });
 }
 
+interface Recorder {
+  readonly uri: string | null;
+  stop(): Promise<unknown>;
+}
+
+export async function stopRecorderAndGetUri(recorder: Recorder): Promise<string | null> {
+  // expo-audio resolves stop() after the URI is available on `recorder.uri`.
+  await recorder.stop();
+  return recorder.uri;
+}
+
 export { RecordingPresets, useAudioRecorder };

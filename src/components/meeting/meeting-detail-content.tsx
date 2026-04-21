@@ -1,6 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect } from "react";
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/components/screen-header";

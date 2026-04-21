@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -9,6 +9,7 @@ import { KeyboardView } from "@/components/keyboard-view";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { useChatAudioRecorder } from "@/hooks/use-chat-audio-recorder";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatStore } from "@/stores/chat-store";
@@ -33,6 +34,7 @@ export default function ChatScreen() {
   const threads = useChatStore((s) => s.threads);
   const activeThreadId = useChatStore((s) => s.activeThreadId);
   const isStreaming = useChatStore((s) => s.isStreaming);
+  const isSubmittingAudio = useChatStore((s) => s.isSubmittingAudio);
   const isLoadingMessages = useChatStore((s) => s.isLoadingMessages);
   const error = useChatStore((s) => s.error);
   const failedMessageId = useChatStore((s) => s.failedMessageId);
@@ -41,8 +43,31 @@ export default function ChatScreen() {
   const createThread = useChatStore((s) => s.createThread);
   const selectThread = useChatStore((s) => s.selectThread);
   const sendMessage = useChatStore((s) => s.sendMessage);
+  const sendAudioMessage = useChatStore((s) => s.sendAudioMessage);
   const retryMessage = useChatStore((s) => s.retryMessage);
   const cancelStream = useChatStore((s) => s.cancelStream);
+
+  const chatBusy = isStreaming || isSubmittingAudio;
+
+  const handleSubmitAudio = useCallback(
+    async (uri: string): Promise<void> => {
+      if (!user) return;
+      const threadId = activeThreadId ?? (await createThread(user.userId));
+      await sendAudioMessage(threadId, uri);
+    },
+    [activeThreadId, createThread, sendAudioMessage, user],
+  );
+
+  const {
+    audioState,
+    elapsedMs,
+    handleStartRecording,
+    handleStopRecording,
+    handleCancelRecording,
+  } = useChatAudioRecorder({
+    disabled: chatBusy,
+    onSubmitAudio: handleSubmitAudio,
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -108,7 +133,12 @@ export default function ChatScreen() {
             value={inputValue}
             onChangeText={setInputValue}
             onSend={handleSend}
-            disabled={isStreaming}
+            onStartRecording={handleStartRecording}
+            onStopRecording={handleStopRecording}
+            onCancelRecording={handleCancelRecording}
+            audioState={audioState}
+            audioElapsedMs={elapsedMs}
+            disabled={chatBusy}
           />
         </View>
       </KeyboardView>
