@@ -136,10 +136,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendAudioMessage: async (threadId: string, uri: string) => {
+    get()._sseConnection?.abort();
+
     set({
       isSubmittingAudio: true,
       error: null,
       failedMessageId: null,
+      _sseConnection: null,
     });
 
     try {
@@ -148,13 +151,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         turn_id: turnId,
         uri,
         language: "es",
-        recording_id: `rec-${turnId}`,
       });
 
       const userMsg: ChatMessageResponse = {
         id: response.user_message_id,
         thread_id: threadId,
         role: "user",
+        // Intentional `||` (not `??`): empty string should also fall back.
         text: response.transcript.trim() || "Mensaje de audio enviado",
         created_at: new Date().toISOString(),
       };
