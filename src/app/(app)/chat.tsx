@@ -58,7 +58,13 @@ export default function ChatScreen() {
     [activeThreadId, createThread, sendAudioMessage, user],
   );
 
-  const { audioState, elapsedMs, handleAudioPress } = useChatAudioRecorder({
+  const {
+    audioState,
+    elapsedMs,
+    handleStartRecording,
+    handleStopRecording,
+    handleCancelRecording,
+  } = useChatAudioRecorder({
     disabled: chatBusy,
     onSubmitAudio: handleSubmitAudio,
   });
@@ -127,7 +133,9 @@ export default function ChatScreen() {
             value={inputValue}
             onChangeText={setInputValue}
             onSend={handleSend}
-            onAudioPress={handleAudioPress}
+            onStartRecording={handleStartRecording}
+            onStopRecording={handleStopRecording}
+            onCancelRecording={handleCancelRecording}
             audioState={audioState}
             audioElapsedMs={elapsedMs}
             disabled={chatBusy}
