@@ -26,6 +26,7 @@ interface AuthState {
 
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  handleUnauthorized: () => Promise<void>;
   register: (email: string, password: string, displayName?: string) => Promise<void>;
   tryBiometricLogin: () => Promise<boolean>;
   enableBiometrics: (email: string, password: string) => Promise<void>;
@@ -66,6 +67,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     await logout();
     await ensureCleanOnSignOut();
     set({ isAuthenticated: false, user: null, biometricsEnabled: false });
+  },
+
+  handleUnauthorized: async () => {
+    await logout();
+    await ensureCleanOnSignOut();
+    set({ isAuthenticated: false, user: null });
   },
 
   register: async (email: string, password: string, displayName?: string) => {
@@ -132,12 +139,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 }));
 
-// Force sign-out on any 401 response (session expired / invalid)
+// Force sign-out on any 401 response (session expired / invalid).
+// Preserve biometric credentials — 401 means the session expired, not that
+// the user revoked access. They can re-enter via FaceID/biometrics.
 setOnUnauthorizedHandler(() => {
-  const { isAuthenticated } = useAuthStore.getState();
+  const { isAuthenticated, handleUnauthorized } = useAuthStore.getState();
   if (isAuthenticated) {
-    useAuthStore.setState({ isAuthenticated: false, user: null });
-    void ensureCleanOnSignOut();
+    void handleUnauthorized();
   } else {
     void clearUserScopedStores();
   }
