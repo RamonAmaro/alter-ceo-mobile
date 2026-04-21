@@ -42,6 +42,7 @@ export const Typography = {
 export const SemanticColors = {
   success: "#00FF84",
   successMuted: "rgba(0,255,132,0.15)",
+  onSuccess: "#08140E",
   warning: "#FF9500",
   error: "#FF4444",
   errorMuted: "rgba(255,80,80,0.2)",
