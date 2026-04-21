@@ -1,6 +1,7 @@
 import { StyleSheet, View } from "react-native";
 
 import { ChatRecordingBar } from "@/components/chat/chat-recording-bar";
+import { ChatSubmittingBar } from "@/components/chat/chat-submitting-bar";
 import { ChatTextInputRow } from "@/components/chat/chat-text-input-row";
 import { Spacing } from "@/constants/theme";
 import type { ChatAudioState } from "@/hooks/use-chat-audio-recorder";
@@ -28,17 +29,16 @@ export function ChatInput({
   audioElapsedMs,
   disabled = false,
 }: ChatInputProps) {
-  const isRecording = audioState === "recording";
-  const isSubmitting = audioState === "submitting";
-
   return (
     <View style={styles.container}>
-      {isRecording ? (
+      {audioState === "recording" ? (
         <ChatRecordingBar
           elapsedMs={audioElapsedMs}
           onCancel={onCancelRecording}
           onSend={onStopRecording}
         />
+      ) : audioState === "submitting" ? (
+        <ChatSubmittingBar />
       ) : (
         <ChatTextInputRow
           value={value}
@@ -46,7 +46,6 @@ export function ChatInput({
           onSend={onSend}
           onStartRecording={onStartRecording}
           disabled={disabled}
-          submitting={isSubmitting}
         />
       )}
     </View>

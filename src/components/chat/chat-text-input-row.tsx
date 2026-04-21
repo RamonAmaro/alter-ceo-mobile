@@ -11,7 +11,6 @@ interface ChatTextInputRowProps {
   readonly onSend: () => void;
   readonly onStartRecording: () => void;
   readonly disabled?: boolean;
-  readonly submitting?: boolean;
 }
 
 export function ChatTextInputRow({
@@ -20,11 +19,10 @@ export function ChatTextInputRow({
   onSend,
   onStartRecording,
   disabled = false,
-  submitting = false,
 }: ChatTextInputRowProps) {
   const hasText = value.trim().length > 0;
-  const canSend = hasText && !disabled && !submitting;
-  const placeholder = submitting ? "Transcribiendo audio..." : "Escribe tu mensaje...";
+  const canSend = hasText && !disabled;
+  const placeholder = "Escribe tu mensaje...";
 
   return (
     <View style={styles.row}>
@@ -43,32 +41,40 @@ export function ChatTextInputRow({
           onSubmitEditing={onSend}
           returnKeyType="send"
           multiline={false}
-          editable={!disabled && !submitting}
+          editable={!disabled}
         />
-        <TouchableOpacity
-          style={[styles.audioBtn, submitting && styles.audioBtnDisabled]}
-          activeOpacity={0.7}
-          onPress={onStartRecording}
-          disabled={submitting || disabled}
-          hitSlop={8}
-        >
-          <Ionicons name="mic-outline" size={18} color={SemanticColors.textMuted} />
-        </TouchableOpacity>
       </LinearGradient>
 
-      <TouchableOpacity
-        style={[styles.sendBtn, !canSend && styles.sendBtnDisabled]}
-        activeOpacity={0.8}
-        onPress={onSend}
-        disabled={!canSend}
-      >
-        <LinearGradient
-          colors={canSend ? ["#00FF84", "#00CC6A"] : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]}
-          style={styles.sendGradient}
+      {hasText ? (
+        <TouchableOpacity
+          style={[styles.actionBtn, !canSend && styles.actionBtnDisabled]}
+          activeOpacity={0.8}
+          onPress={onSend}
+          disabled={!canSend}
+          accessibilityLabel="Enviar mensaje"
         >
-          <Ionicons name="send" size={18} color={canSend ? "#000000" : "rgba(0,0,0,0.4)"} />
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={
+              canSend ? ["#00FF84", "#00CC6A"] : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]
+            }
+            style={styles.actionGradient}
+          >
+            <Ionicons name="send" size={18} color={canSend ? "#000000" : "rgba(0,0,0,0.4)"} />
+          </LinearGradient>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={[styles.actionBtn, disabled && styles.actionBtnDisabled]}
+          activeOpacity={0.8}
+          onPress={onStartRecording}
+          disabled={disabled}
+          accessibilityLabel="Grabar audio"
+        >
+          <LinearGradient colors={["#00FF84", "#00CC6A"]} style={styles.actionGradient}>
+            <Ionicons name="mic" size={20} color={SemanticColors.onSuccess} />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -97,27 +103,16 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
     outlineStyle: "none" as never,
   },
-  audioBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  audioBtnDisabled: {
-    opacity: 0.7,
-  },
-  sendBtn: {
+  actionBtn: {
     width: 48,
     height: 48,
     borderRadius: 24,
     overflow: "hidden",
   },
-  sendBtnDisabled: {
+  actionBtnDisabled: {
     opacity: 0.6,
   },
-  sendGradient: {
+  actionGradient: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
