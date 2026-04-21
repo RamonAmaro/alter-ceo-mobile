@@ -33,9 +33,7 @@ export function SectionHeader({
 
       <View style={styles.row}>
         <View style={styles.titleGroup}>
-          {!eyebrow ? (
-            <View style={[styles.leftAccent, { backgroundColor: accentColor }]} />
-          ) : null}
+          {!eyebrow ? <View style={[styles.leftAccent, { backgroundColor: accentColor }]} /> : null}
           <ThemedText style={styles.title}>
             {title}
             {accent ? <ThemedText style={styles.titleAccent}>{` ${accent}`}</ThemedText> : null}

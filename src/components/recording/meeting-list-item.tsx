@@ -110,13 +110,10 @@ export function MeetingListItem({ item, index, onPress }: MeetingListItemProps) 
       </View>
 
       {cfg.label ? (
-        <View
-          style={[
-            styles.statusPill,
-            { backgroundColor: cfg.bg, borderColor: cfg.border },
-          ]}
-        >
-          {isLoading ? <ActivityIndicator size={10} color={cfg.color} /> : (
+        <View style={[styles.statusPill, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+          {isLoading ? (
+            <ActivityIndicator size={10} color={cfg.color} />
+          ) : (
             <View style={[styles.statusDot, { backgroundColor: cfg.color }]} />
           )}
           <ThemedText style={[styles.statusText, { color: cfg.color }]}>{cfg.label}</ThemedText>

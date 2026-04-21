@@ -1,30 +1,20 @@
 import { ThemedText } from "@/components/themed-text";
-import type { BusinessMemoryStep } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import type { BusinessKernelDashboardProgressResponse } from "@/types/business-kernel";
 import { LinearGradient } from "expo-linear-gradient";
 import { Platform, StyleSheet, View } from "react-native";
 import { ProgressRing } from "@/components/ui/progress-ring";
 
 interface MemoryOverviewCardProps {
-  steps: readonly BusinessMemoryStep[];
+  progress: BusinessKernelDashboardProgressResponse;
 }
 
 const RING_SIZE = 118;
 
-function computeOverallProgress(steps: readonly BusinessMemoryStep[]): number {
-  if (steps.length === 0) return 0;
-  const sum = steps.reduce((acc, s) => acc + s.progress, 0);
-  return Math.round(sum / steps.length);
-}
-
-function countStarted(steps: readonly BusinessMemoryStep[]): number {
-  return steps.filter((s) => s.progress > 0).length;
-}
-
-export function MemoryOverviewCard({ steps }: MemoryOverviewCardProps) {
-  const overall = computeOverallProgress(steps);
-  const started = countStarted(steps);
-  const total = steps.length;
+export function MemoryOverviewCard({ progress }: MemoryOverviewCardProps) {
+  const overall = progress.completion_pct;
+  const started = progress.completed_sections;
+  const total = progress.total_sections;
 
   return (
     <View style={styles.card}>
@@ -42,7 +32,7 @@ export function MemoryOverviewCard({ steps }: MemoryOverviewCardProps) {
         </View>
         <ThemedText style={styles.headline}>Tu territorio estratégico</ThemedText>
         <ThemedText style={styles.subhead}>
-          {started} de {total} bloques activados
+          {started} de {total} bloques completados
         </ThemedText>
       </View>
 

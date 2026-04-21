@@ -1,81 +1,209 @@
+import type {
+  BusinessKernelSectionId,
+  BusinessKernelSectionResponse,
+} from "@/types/business-kernel";
+
 export type StepIconLibrary = "Ionicons" | "MaterialCommunityIcons";
 
-export type FormFieldType = "text" | "textarea";
+export type FormFieldType = "text" | "textarea" | "select";
 
 export interface StepIconConfig {
   readonly library: StepIconLibrary;
   readonly name: string;
 }
 
+export interface FormFieldOption {
+  readonly label: string;
+  readonly value: string;
+}
+
 export interface FormFieldConfig {
   readonly id: string;
   readonly label: string;
+  readonly options?: readonly FormFieldOption[];
   readonly placeholder?: string;
   readonly type: FormFieldType;
 }
 
-export interface BusinessMemoryStep {
-  readonly id: string;
-  readonly title: string;
-  readonly description: string;
-  readonly progress: number;
+export interface BusinessMemorySectionTemplate {
+  readonly id: BusinessKernelSectionId;
   readonly icon: StepIconConfig;
   readonly fields: readonly FormFieldConfig[];
 }
 
-export const BUSINESS_MEMORY_STEPS: readonly BusinessMemoryStep[] = [
+export type BusinessMemoryStep = BusinessKernelSectionResponse & {
+  icon: StepIconConfig;
+  fields: readonly FormFieldConfig[];
+};
+
+export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTemplate[] = [
   {
-    id: "ficha-corporativa",
-    title: "Ficha Corporativa Básica",
-    description: "Este bloque valida los datos fundacionales y de contacto del negocio.",
-    progress: 50,
+    id: "company_profile",
     icon: { library: "MaterialCommunityIcons", name: "account-edit" },
     fields: [
-      { id: "razon-social", label: "Razón Social  |  Nombre Comercial", type: "text" },
-      { id: "sector-modelo", label: "Sector y Modelo de Negocio", type: "text" },
-      { id: "activos-digitales", label: "Activos Digitales", type: "text" },
-      { id: "mercado-geografico", label: "Mercado Geográfico", type: "text" },
-      { id: "fase-operativa", label: "Fase Operativa Actual", type: "text" },
+      { id: "business_name", label: "Nombre del negocio", type: "text" },
+      { id: "sector", label: "Sector", type: "text" },
+      {
+        id: "business_model",
+        label: "Modelo de negocio",
+        type: "select",
+        options: [
+          { value: "B2B", label: "B2B" },
+          { value: "B2C", label: "B2C" },
+          { value: "Hybrid", label: "Hibrido" },
+        ],
+      },
+      { id: "website_url", label: "Sitio web", type: "text" },
+      { id: "business_instagram", label: "Instagram del negocio", type: "text" },
+      { id: "geography", label: "Geografia principal", type: "text" },
     ],
   },
   {
-    id: "diagnostico-comercial",
-    title: "Diagnóstico Comercial y de Ventas",
-    description: "Este bloque evalúa la madurez de la oferta y la tracción en el mercado.",
-    progress: 25,
+    id: "commercial_block",
     icon: { library: "MaterialCommunityIcons", name: "bag-personal-outline" },
-    fields: [],
+    fields: [
+      { id: "offer_summary", label: "Resumen de la oferta", type: "textarea" },
+      {
+        id: "pricing_strategy",
+        label: "Estrategia de precios",
+        type: "select",
+        options: [
+          { value: "cost_plus", label: "Coste mas margen" },
+          { value: "competitor_based", label: "Basado en competidores" },
+          { value: "value_based", label: "Basado en valor" },
+        ],
+      },
+      {
+        id: "differentiation_level",
+        label: "Nivel de diferenciacion",
+        type: "select",
+        options: [
+          { value: "high", label: "Alta" },
+          { value: "medium", label: "Media" },
+          { value: "low", label: "Baja" },
+        ],
+      },
+      {
+        id: "sales_system",
+        label: "Sistema de ventas",
+        type: "select",
+        options: [
+          { value: "structured", label: "Estructurado" },
+          { value: "intuitive", label: "Intuitivo" },
+          { value: "improvised", label: "Improvisado" },
+        ],
+      },
+      { id: "pipeline_conversion_summary", label: "Resumen de conversion del embudo", type: "textarea" },
+    ],
   },
   {
-    id: "salud-financiera",
-    title: "Salud Financiera y Control de Gestión",
-    description: "Este bloque mide la solidez económica y la madurez analítica.",
-    progress: 30,
+    id: "financial_block",
     icon: { library: "MaterialCommunityIcons", name: "file-chart-outline" },
-    fields: [],
+    fields: [
+      {
+        id: "profitability_level",
+        label: "Nivel de rentabilidad",
+        type: "select",
+        options: [
+          { value: "high", label: "Alta" },
+          { value: "adjusted", label: "Ajustada" },
+          { value: "critical", label: "Critica" },
+        ],
+      },
+      {
+        id: "liquidity_level",
+        label: "Nivel de liquidez",
+        type: "select",
+        options: [
+          { value: "stable", label: "Estable" },
+          { value: "adjusted", label: "Ajustada" },
+          { value: "risk", label: "En riesgo" },
+        ],
+      },
+      {
+        id: "gross_margin_level",
+        label: "Nivel de margen bruto",
+        type: "select",
+        options: [
+          { value: "precise", label: "Preciso" },
+          { value: "approximate", label: "Aproximado" },
+        ],
+      },
+      {
+        id: "kpi_maturity",
+        label: "Madurez de KPIs",
+        type: "select",
+        options: [
+          { value: "solid", label: "Solida" },
+          { value: "basic", label: "Basica" },
+          { value: "none", label: "Ninguna" },
+        ],
+      },
+      { id: "monthly_sales_history_eur", label: "Historico mensual de ventas (EUR)", type: "textarea" },
+    ],
   },
   {
-    id: "estructura-organizativa",
-    title: "Estructura Organizativa y Liderazgo",
-    description: "Este bloque analiza el capital humano y el nivel de delegación.",
-    progress: 40,
+    id: "team_block",
     icon: { library: "MaterialCommunityIcons", name: "account-group-outline" },
-    fields: [],
+    fields: [
+      {
+        id: "founder_dependency_level",
+        label: "Dependencia del fundador",
+        type: "select",
+        options: [
+          { value: "high", label: "Alta" },
+          { value: "medium", label: "Media" },
+          { value: "low", label: "Baja" },
+        ],
+      },
+      {
+        id: "founder_dependency_detail",
+        label: "Detalle de la dependencia",
+        type: "textarea",
+        placeholder: "Explica en que decisiones, relaciones o procesos se concentra esa dependencia",
+      },
+      { id: "leadership_summary", label: "Resumen de liderazgo", type: "textarea" },
+    ],
   },
   {
-    id: "eficiencia-operativa",
-    title: "Eficiencia Operativa y Ejecución",
-    description: "Este bloque enfoca en la capacidad operativa actual y la tracción diaria.",
-    progress: 45,
+    id: "execution_block",
     icon: { library: "MaterialCommunityIcons", name: "account-tie-outline" },
-    fields: [],
+    fields: [
+      { id: "top_bottlenecks", label: "Cuellos de botella principales", type: "textarea" },
+      { id: "focus_areas", label: "Areas de foco", type: "textarea" },
+      { id: "active_micro_goals", label: "Microobjetivos activos", type: "textarea" },
+    ],
   },
 ];
 
-export function findStepById(stepId: string): BusinessMemoryStep | undefined {
-  return BUSINESS_MEMORY_STEPS.find((step) => step.id === stepId);
+const TEMPLATE_BY_ID = new Map(
+  BUSINESS_MEMORY_SECTION_TEMPLATES.map((template) => [template.id, template]),
+);
+
+const DEFAULT_ICON: StepIconConfig = { library: "MaterialCommunityIcons", name: "shape-outline" };
+
+export function buildBusinessMemoryStep(section: BusinessKernelSectionResponse): BusinessMemoryStep {
+  const template = TEMPLATE_BY_ID.get(section.id);
+  return {
+    ...section,
+    icon: template?.icon ?? DEFAULT_ICON,
+    fields: template?.fields ?? [],
+  };
 }
 
-export function getStepIndex(stepId: string): number {
-  return BUSINESS_MEMORY_STEPS.findIndex((step) => step.id === stepId);
+export function buildBusinessMemorySteps(
+  sections: readonly BusinessKernelSectionResponse[],
+): BusinessMemoryStep[] {
+  return [...sections].sort((left, right) => left.order - right.order).map(buildBusinessMemoryStep);
+}
+
+export function findStepById(
+  steps: readonly BusinessMemoryStep[],
+  stepId: string,
+): BusinessMemoryStep | undefined {
+  return steps.find((step) => step.id === stepId);
+}
+
+export function getStepIndex(steps: readonly BusinessMemoryStep[], stepId: string): number {
+  return steps.findIndex((step) => step.id === stepId);
 }

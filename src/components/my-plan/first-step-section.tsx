@@ -13,11 +13,7 @@ interface FirstStepSectionProps {
 export function FirstStepSection({ message }: FirstStepSectionProps) {
   return (
     <View style={styles.container}>
-      <SectionHeader
-        eyebrow="ACCIÓN INMEDIATA"
-        title="Primer paso para"
-        accent="arrancar"
-      />
+      <SectionHeader eyebrow="ACCIÓN INMEDIATA" title="Primer paso para" accent="arrancar" />
 
       <GlassCard tone="emerald" padding={Spacing.four} radius={22}>
         <MonumentalIndex label="01" size={130} opacity={0.06} right={-10} bottom={-24} />
