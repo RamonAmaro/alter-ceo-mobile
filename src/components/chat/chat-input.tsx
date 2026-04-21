@@ -72,7 +72,7 @@ export function ChatInput({
               <Ionicons
                 name={isRecording ? "stop" : "mic-outline"}
                 size={18}
-                color={isRecording ? "#08140E" : SemanticColors.textMuted}
+                color={isRecording ? SemanticColors.onSuccess : SemanticColors.textMuted}
               />
             )}
           </TouchableOpacity>
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
   audioBtnRecording: {
     backgroundColor: SemanticColors.success,
