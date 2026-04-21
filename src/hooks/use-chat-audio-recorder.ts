@@ -25,7 +25,9 @@ interface UseChatAudioRecorderOptions {
 interface UseChatAudioRecorderResult {
   readonly audioState: ChatAudioState;
   readonly elapsedMs: number;
-  readonly handleAudioPress: () => void;
+  readonly handleStartRecording: () => void;
+  readonly handleStopRecording: () => void;
+  readonly handleCancelRecording: () => void;
 }
 
 const RECORDING_OPTIONS = {
@@ -78,6 +80,12 @@ export function useChatAudioRecorder({
     [recorder, onSubmitAudio],
   );
 
+  const cancelRecording = useCallback(async (): Promise<void> => {
+    setState({ kind: "idle" });
+    setElapsedMs(0);
+    await stopRecorderAndGetUri(recorder).catch(() => null);
+  }, [recorder]);
+
   useEffect(() => {
     if (state.kind !== "recording") return;
 
@@ -122,19 +130,26 @@ export function useChatAudioRecorder({
     }
   }, [disabled, recorder]);
 
-  const handleAudioPress = useCallback(() => {
-    if (state.kind === "idle") {
-      void startRecording();
-      return;
-    }
-    if (state.kind === "recording") {
-      void stopAndSubmit(state.startedAt);
-    }
-  }, [state, startRecording, stopAndSubmit]);
+  const handleStartRecording = useCallback(() => {
+    if (state.kind !== "idle") return;
+    void startRecording();
+  }, [state.kind, startRecording]);
+
+  const handleStopRecording = useCallback(() => {
+    if (state.kind !== "recording") return;
+    void stopAndSubmit(state.startedAt);
+  }, [state, stopAndSubmit]);
+
+  const handleCancelRecording = useCallback(() => {
+    if (state.kind !== "recording") return;
+    void cancelRecording();
+  }, [state.kind, cancelRecording]);
 
   return {
     audioState: state.kind,
     elapsedMs,
-    handleAudioPress,
+    handleStartRecording,
+    handleStopRecording,
+    handleCancelRecording,
   };
 }
