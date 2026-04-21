@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { Platform } from "react-native";
+import { getInfoAsync } from "expo-file-system/legacy";
 
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
@@ -24,9 +25,9 @@ async function getFileSize(uri: string): Promise<number> {
     }
   }
 
-  const { getInfoAsync } = await import("expo-file-system/legacy");
   const info = await getInfoAsync(uri);
-  return info.exists ? (info.size ?? 0) : 0;
+  if (!info.exists) return 0;
+  return info.size ?? 0;
 }
 
 interface UploadParams {
@@ -57,7 +58,7 @@ export function useUploadRecording(): {
 
     await useMeetingStore
       .getState()
-      .startMeetingUpload(userId, uri, fileName, contentType, sizeBytes, durationSeconds, title);
+      .startMeetingUpload(userId, title, uri, fileName, contentType, sizeBytes, durationSeconds);
   }, []);
 
   return {

@@ -52,6 +52,12 @@ export function handleAxiosError(err: unknown): never {
     if (typeof data === "object" && data !== null) {
       if (typeof data.detail === "string") {
         message = data.detail;
+      } else if (
+        typeof data.detail === "object" &&
+        data.detail !== null &&
+        typeof (data.detail as Record<string, unknown>).message === "string"
+      ) {
+        message = (data.detail as Record<string, unknown>).message as string;
       } else if (Array.isArray(data.detail)) {
         message = (data.detail[0] as ValidationError)?.msg ?? message;
         validationErrors = data.detail as ValidationError[];
@@ -85,6 +91,15 @@ export async function get<T>(path: string, params?: Record<string, string>): Pro
 export async function post<T>(path: string, body?: unknown): Promise<T> {
   try {
     const response = await apiClient.post<T>(path, body);
+    return response.data;
+  } catch (err) {
+    return handleAxiosError(err);
+  }
+}
+
+export async function patch<T>(path: string, body?: unknown): Promise<T> {
+  try {
+    const response = await apiClient.patch<T>(path, body);
     return response.data;
   } catch (err) {
     return handleAxiosError(err);

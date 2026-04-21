@@ -1,7 +1,7 @@
-import { create } from "zustand";
-import type { MeetingResponse, MeetingSummaryResponse } from "@/types/meeting";
 import * as meetingService from "@/services/meeting-service";
+import type { MeetingResponse, MeetingSummaryResponse } from "@/types/meeting";
 import { toErrorMessage } from "@/utils/to-error-message";
+import { create } from "zustand";
 
 type UploadStage = "uploading" | "processing" | "completed" | "failed";
 
@@ -25,12 +25,12 @@ interface MeetingState {
   getMeetingDetails: (meetingId: string) => Promise<void>;
   startMeetingUpload: (
     userId: string,
+    title: string,
     fileUri: string,
     fileName: string,
     contentType: string,
     sizeBytes: number,
     durationSeconds?: number,
-    title?: string,
   ) => Promise<void>;
   reset: () => void;
 }
@@ -65,12 +65,12 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
 
   startMeetingUpload: async (
     userId: string,
+    title: string,
     fileUri: string,
     fileName: string,
     contentType: string,
     sizeBytes: number,
     durationSeconds?: number,
-    title?: string,
   ) => {
     get()._activePoller?.stop();
     set({ _activePoller: null, error: null });
@@ -78,7 +78,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     try {
       const created = await meetingService.createMeeting({
         user_id: userId,
-        title: title ?? null,
+        title,
         file_name: fileName,
         content_type: contentType,
       });
