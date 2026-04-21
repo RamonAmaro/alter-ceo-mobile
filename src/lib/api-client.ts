@@ -108,6 +108,7 @@ export async function patch<T>(path: string, body?: unknown): Promise<T> {
 
 export async function postFormData<T>(path: string, formData: FormData): Promise<T> {
   try {
+    // Do not set Content-Type: axios/fetch generates the multipart boundary automatically.
     const response = await apiClient.post<T>(path, formData);
     return response.data;
   } catch (err) {
