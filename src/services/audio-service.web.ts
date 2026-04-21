@@ -32,6 +32,17 @@ export function openAppSettings(): void {
 
 export async function enableRecordingMode(): Promise<void> {}
 
+interface Recorder {
+  readonly uri: string | null;
+  stop(): Promise<string | null> | Promise<unknown>;
+}
+
+export async function stopRecorderAndGetUri(recorder: Recorder): Promise<string | null> {
+  const result = await recorder.stop();
+  if (typeof result === "string" || result === null) return result;
+  return recorder.uri;
+}
+
 interface RecordingStatus {
   metering?: number;
 }
@@ -40,7 +51,7 @@ interface WebAudioRecorder {
   prepareToRecordAsync: () => Promise<void>;
   record: () => void;
   pause: () => void;
-  stop: () => void;
+  stop: () => Promise<string | null>;
   getStatus: () => RecordingStatus;
   uri: string | null;
 }
@@ -63,6 +74,7 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
   const chunksRef = useRef<Blob[]>([]);
   const mimeTypeRef = useRef("audio/webm");
   const uriRef = useRef<string | null>(null);
+  const pendingStopResolverRef = useRef<((uri: string | null) => void) | null>(null);
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
@@ -92,14 +104,15 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
     return Math.max(DB_FLOOR, Math.min(0, db));
   }, []);
 
-  const buildUri = useCallback(() => {
-    if (chunksRef.current.length === 0) return;
+  const buildUri = useCallback((): string | null => {
+    if (chunksRef.current.length === 0) return null;
     if (uriRef.current) {
       URL.revokeObjectURL(uriRef.current);
     }
     const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current });
     uriRef.current = URL.createObjectURL(blob);
     forceUpdate((n) => n + 1);
+    return uriRef.current;
   }, []);
 
   const prepareToRecordAsync = useCallback(async () => {
@@ -130,7 +143,10 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
     };
 
     recorder.onstop = () => {
-      buildUri();
+      const uri = buildUri();
+      const resolve = pendingStopResolverRef.current;
+      pendingStopResolverRef.current = null;
+      resolve?.(uri);
     };
 
     recorderRef.current = recorder;
@@ -158,17 +174,30 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
     }
   }, []);
 
-  const stop = useCallback(() => {
+  const stop = useCallback((): Promise<string | null> => {
     const recorder = recorderRef.current;
-    if (recorder && recorder.state !== "inactive") {
-      recorder.requestData();
-      recorder.stop();
+
+    const cleanup = () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      analyserRef.current = null;
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+    };
+
+    if (!recorder || recorder.state === "inactive") {
+      cleanup();
+      return Promise.resolve(uriRef.current);
     }
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    analyserRef.current = null;
-    audioCtxRef.current?.close().catch(() => {});
-    audioCtxRef.current = null;
+
+    const uriPromise = new Promise<string | null>((resolve) => {
+      pendingStopResolverRef.current = resolve;
+    });
+
+    recorder.requestData();
+    recorder.stop();
+
+    return uriPromise.finally(cleanup);
   }, []);
 
   const getStatus = useCallback((): RecordingStatus => {
