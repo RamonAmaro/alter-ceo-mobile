@@ -7,7 +7,7 @@ export interface BusinessMemoryFieldPresentation {
   value: string;
 }
 
-const UNKNOWN_HELPER_TEXT = "Aun no tenemos informacion suficiente para completar este campo.";
+const UNKNOWN_HELPER_TEXT = "Aún no tenemos información suficiente para completar este campo.";
 const UNKNOWN_PLACEHOLDER = "Pendiente de completar";
 
 const SIMPLE_VALUE_LABELS: Record<string, string> = {
@@ -16,20 +16,20 @@ const SIMPLE_VALUE_LABELS: Record<string, string> = {
   adjusted: "Ajustada",
   approximate: "Aproximado",
   archived: "Archivado",
-  basic: "Basica",
+  basic: "Básica",
   b2b: "B2B",
   b2c: "B2C",
   clear: "Clara",
   conflict: "En conflicto",
   competitor_based: "Basado en competidores",
-  cost_plus: "Coste mas margen",
-  critical: "Critica",
+  cost_plus: "Coste más margen",
+  critical: "Crítica",
   disciplined: "Disciplinada",
   done: "Hecho",
   frequent: "Frecuente",
   healthy: "Saludable",
   high: "Alta",
-  hybrid: "Hibrido",
+  hybrid: "Híbrido",
   improvised: "Improvisado",
   in_progress: "En progreso",
   inconsistent: "Inconsistente",
@@ -37,7 +37,7 @@ const SIMPLE_VALUE_LABELS: Record<string, string> = {
   low: "Baja",
   medium: "Media",
   mixed: "Mixta",
-  monthly_subscription: "Suscripcion mensual",
+  monthly_subscription: "Suscripción mensual",
   neutral: "Neutra",
   none: "Ninguna",
   one_time: "Una sola vez",
@@ -47,9 +47,9 @@ const SIMPLE_VALUE_LABELS: Record<string, string> = {
   repeatable: "Repetible",
   risk: "En riesgo",
   rough: "Aproximada",
-  solid: "Solida",
+  solid: "Sólida",
   stable: "Estable",
-  sporadic: "Esporadico",
+  sporadic: "Esporádico",
   strained: "Tensionada",
   structured: "Estructurado",
   unclear: "Poco clara",

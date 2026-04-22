@@ -48,7 +48,7 @@ export function TeamRolesEditor({
             </View>
           </View>
           <ThemedText style={styles.subtitle}>
-            Define cada rol con la persona responsable, su reporte y el tipo de relacion con el
+            Define cada rol con la persona responsable, su reporte y el tipo de relación con el
             fundador.
           </ThemedText>
         </View>
@@ -62,9 +62,9 @@ export function TeamRolesEditor({
       {roles.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="people-outline" size={18} color={SemanticColors.textMuted} />
-          <ThemedText style={styles.emptyTitle}>Aun no has definido roles</ThemedText>
+          <ThemedText style={styles.emptyTitle}>Aún no has definido roles</ThemedText>
           <ThemedText style={styles.emptyDescription}>
-            Empieza creando el primer rol para reflejar como se organiza hoy el equipo.
+            Empieza creando el primer rol para reflejar cómo se organiza hoy el equipo.
           </ThemedText>
         </View>
       ) : null}
@@ -121,14 +121,14 @@ export function TeamRolesEditor({
               />
 
               <MemoryFormField
-                label="Relacion con el fundador"
+                label="Relación con el fundador"
                 onChangeText={(value) =>
                   onChangeRole(role.role_id, {
                     relationship_status_to_founder: value === NONE_OPTION ? "" : value,
                   })
                 }
                 options={RELATIONSHIP_OPTIONS}
-                placeholder="Selecciona una opcion"
+                placeholder="Selecciona una opción"
                 type="select"
                 value={role.relationship_status_to_founder || NONE_OPTION}
               />
@@ -141,7 +141,7 @@ export function TeamRolesEditor({
                   })
                 }
                 options={reportOptions}
-                placeholder="Selecciona una opcion"
+                placeholder="Selecciona una opción"
                 type="select"
                 value={role.reports_to_role_id || NONE_OPTION}
               />

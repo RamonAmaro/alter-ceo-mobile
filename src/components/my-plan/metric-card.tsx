@@ -1,17 +1,20 @@
+import { statusToDisplayLabel } from "@/components/my-plan/status-ring";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
+// Keys match raw backend values (without diacritics). Display-only translation
+// happens via `statusToDisplayLabel` when rendering the text.
 const STATUS_COLORS: Record<string, string> = {
   Ajustada: "#FF9500",
   Inexistentes: "#FF4444",
   Reactiva: "#FF9500",
   Alto: "#FF4444",
-  Crítica: "#FF4444",
+  Critica: "#FF4444",
   Bajo: "#00FF84",
   Moderado: "#FF9500",
   Buena: "#00FF84",
-  Sólida: "#00FF84",
+  Solida: "#00FF84",
   Normal: SemanticColors.textSecondaryLight,
 };
 
@@ -27,6 +30,7 @@ interface MetricCardProps {
 
 export function MetricCard({ label, value }: MetricCardProps) {
   const color = resolveColor(value);
+  const displayValue = value ? statusToDisplayLabel(value) : "—";
   return (
     <View style={styles.card}>
       <View style={styles.labelRow}>
@@ -35,7 +39,7 @@ export function MetricCard({ label, value }: MetricCardProps) {
           {label}
         </ThemedText>
       </View>
-      <ThemedText style={[styles.value, { color }]}>{value ?? "—"}</ThemedText>
+      <ThemedText style={[styles.value, { color }]}>{displayValue}</ThemedText>
     </View>
   );
 }

@@ -23,10 +23,9 @@ export function DocumentsHistoryPage({ width, height }: DocumentsHistoryPageProp
           <View style={styles.emptyIcon}>
             <Ionicons name="document-outline" size={28} color="rgba(255,255,255,0.2)" />
           </View>
-          <ThemedText style={styles.emptyTitle}>Historial no disponible</ThemedText>
+          <ThemedText style={styles.emptyTitle}>No hay documentos</ThemedText>
           <ThemedText style={styles.emptyText}>
-            El listado de documentos procesados estará disponible en cuanto completemos la
-            integración con el backend.
+            Aún no has subido ningún documento. Cuando subas uno, aparecerá aquí.
           </ThemedText>
         </View>
       </View>

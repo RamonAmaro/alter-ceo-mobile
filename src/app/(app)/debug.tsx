@@ -279,7 +279,7 @@ export default function DebugScreen() {
             </SectionCard>
 
             <SectionCard
-              title="Sesion"
+              title="Sesión"
               description="Estado actual de autenticación del usuario cargado en la app."
             >
               <InfoRow label="Autenticado" value={isAuthenticated ? "Sí" : "No"} />

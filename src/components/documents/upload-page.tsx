@@ -37,8 +37,8 @@ export function UploadPage({ width, height }: UploadPageProps) {
 
   function handlePick(): void {
     Alert.alert(
-      "Próximamente",
-      "La subida y análisis de documentos estará disponible en cuanto completemos la integración con el backend.",
+      "Pendiente de integración",
+      "La pantalla ya está lista. La subida y el análisis de documentos se activarán en cuanto el backend exponga el endpoint correspondiente.",
     );
   }
 

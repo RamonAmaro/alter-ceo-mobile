@@ -99,13 +99,20 @@ function awaitFinalTranscript(
 }
 
 export async function createTranscriptionSession(): Promise<TranscriptionSession> {
-  const ws = await connectWebSocket(buildWsUrl());
+  const wsUrl = buildWsUrl();
+  // eslint-disable-next-line no-console
+  console.log("[transcription-service] connecting WS", wsUrl);
+  const ws = await connectWebSocket(wsUrl);
+  // eslint-disable-next-line no-console
+  console.log("[transcription-service] WS OPEN");
 
   const accumulated = { final: "", delta: "" };
   let errorCallback: ((message: string) => void) | null = null;
 
   ws.onmessage = (event) => {
     const msg = parseWsMessage(event.data);
+    // eslint-disable-next-line no-console
+    console.log("[transcription-service] WS message", msg);
     if (!msg) return;
     if (msg.type === "transcript_final" && msg.text) {
       accumulated.final = accumulated.final ? `${accumulated.final} ${msg.text}` : msg.text;
@@ -119,13 +126,17 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
   };
 
   ws.onclose = (e) => {
+    // eslint-disable-next-line no-console
+    console.log("[transcription-service] WS closed", { code: e.code, reason: e.reason });
     if (e.code !== 1000 && e.code !== 1005) {
       const reason = e.reason || `Conexión cerrada inesperadamente (código ${e.code})`;
       errorCallback?.(reason);
     }
   };
 
-  ws.onerror = () => {
+  ws.onerror = (e) => {
+    // eslint-disable-next-line no-console
+    console.log("[transcription-service] WS error", e);
     errorCallback?.("Error de conexión con el servidor de transcripción");
   };
 

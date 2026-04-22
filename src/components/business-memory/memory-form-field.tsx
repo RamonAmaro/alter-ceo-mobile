@@ -96,7 +96,7 @@ export const MemoryFormField = forwardRef<TextInputType, MemoryFormFieldProps>(
                     isUnknown && !selectedOption && styles.selectPlaceholderUnknown,
                   ]}
                 >
-                  {selectedOption?.label ?? placeholder ?? "Selecciona una opcion"}
+                  {selectedOption?.label ?? placeholder ?? "Selecciona una opción"}
                 </ThemedText>
                 <Ionicons
                   name={isExpanded ? "chevron-up" : "chevron-down"}

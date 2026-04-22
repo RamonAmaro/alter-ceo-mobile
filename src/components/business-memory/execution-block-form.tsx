@@ -192,9 +192,9 @@ function MicroGoalsEditor({
       {goals.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="flag-outline" size={18} color={SemanticColors.textMuted} />
-          <ThemedText style={styles.emptyTitle}>Todavia no hay microobjetivos</ThemedText>
+          <ThemedText style={styles.emptyTitle}>Todavía no hay microobjetivos</ThemedText>
           <ThemedText style={styles.emptyDescription}>
-            Añade pequeñas victorias operativas para que este bloque se convierta en accion.
+            Añade pequeñas victorias operativas para que este bloque se convierta en acción.
           </ThemedText>
         </View>
       ) : null}
@@ -347,23 +347,23 @@ export function ExecutionBlockForm({
         onAdd={handleAddBottleneck}
         onChangeDraft={setNewBottleneck}
         onDeleteItem={handleDeleteBottleneck}
-        subtitle="Los grandes frenos que hoy limitan la ejecucion."
+        subtitle="Los grandes frenos que hoy limitan la ejecución."
         title="Cuellos de botella"
       />
 
       <ListSectionEditor
         addLabel="Añadir foco"
-        draftLabel="Nueva area de foco"
+        draftLabel="Nueva área de foco"
         draftPlaceholder="Ej. Profesionalizar el pipeline comercial"
         draftValue={newFocusArea}
-        emptyDescription="Marca las prioridades donde conviene poner energia para desbloquear crecimiento."
-        emptyTitle="No hay areas de foco"
+        emptyDescription="Marca las prioridades donde conviene poner energía para desbloquear crecimiento."
+        emptyTitle="No hay áreas de foco"
         items={focusAreas}
         onAdd={handleAddFocusArea}
         onChangeDraft={setNewFocusArea}
         onDeleteItem={handleDeleteFocusArea}
-        subtitle="Las palancas que merecen concentracion inmediata."
-        title="Areas de foco"
+        subtitle="Las palancas que merecen concentración inmediata."
+        title="Áreas de foco"
       />
 
       <MicroGoalsEditor

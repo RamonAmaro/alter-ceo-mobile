@@ -135,7 +135,7 @@ function validateMonthlySalesHistory(value: string): string | null {
   for (const [index, line] of lines.entries()) {
     if (line.toLowerCase().includes("sin dato")) continue;
     if (parseEuroNumber(line) === undefined) {
-      return `La linea ${index + 1} del historico mensual no tiene un importe valido.`;
+      return `La línea ${index + 1} del histórico mensual no tiene un importe válido.`;
     }
   }
 
@@ -434,7 +434,7 @@ export default function BusinessMemoryStepScreen() {
 
   async function handleSave(values: Record<string, string>): Promise<void> {
     if (!userId || !version) {
-      setSaveError("No pudimos identificar la version actual de la memoria.");
+      setSaveError("No pudimos identificar la versión actual de la memoria.");
       setSaveSuccess(null);
       return;
     }
@@ -498,7 +498,7 @@ export default function BusinessMemoryStepScreen() {
     values: Record<string, string>;
   }): Promise<void> {
     if (!userId || !version) {
-      setSaveError("No pudimos identificar la version actual de la memoria.");
+      setSaveError("No pudimos identificar la versión actual de la memoria.");
       setSaveSuccess(null);
       return;
     }
@@ -546,13 +546,13 @@ export default function BusinessMemoryStepScreen() {
     microGoals: ExecutionMicroGoalDraft[];
   }): Promise<void> {
     if (!userId || !version) {
-      setSaveError("No pudimos identificar la version actual de la memoria.");
+      setSaveError("No pudimos identificar la versión actual de la memoria.");
       setSaveSuccess(null);
       return;
     }
 
     if (currentStep.id !== "execution_block") {
-      setSaveError("Este bloque no corresponde a la edicion de ejecucion.");
+      setSaveError("Este bloque no corresponde a la edición de ejecución.");
       setSaveSuccess(null);
       return;
     }
@@ -564,7 +564,7 @@ export default function BusinessMemoryStepScreen() {
       return;
     }
 
-    const focusAreasError = validateExecutionList("El area de foco", payload.focusAreas);
+    const focusAreasError = validateExecutionList("El área de foco", payload.focusAreas);
     if (focusAreasError) {
       setSaveError(focusAreasError);
       setSaveSuccess(null);
@@ -588,7 +588,7 @@ export default function BusinessMemoryStepScreen() {
         data: buildExecutionBlockPayload(currentStep.data, payload),
       });
       applySectionPatch(response);
-      setSaveSuccess("Bloque de ejecucion actualizado correctamente.");
+      setSaveSuccess("Bloque de ejecución actualizado correctamente.");
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setSaveError(
@@ -633,7 +633,7 @@ export default function BusinessMemoryStepScreen() {
             initialMicroGoals={initialMicroGoalDrafts}
             onSave={handleExecutionBlockSave}
             saveDisabled={isSaving}
-            saveLabel={isSaving ? "Guardando..." : "Guardar ejecucion"}
+            saveLabel={isSaving ? "Guardando..." : "Guardar ejecución"}
           />
         ) : null}
 

@@ -1,5 +1,10 @@
 import { SectionHeader } from "@/components/my-plan/section-header";
-import { StatusRing, statusToColor, statusToValue } from "@/components/my-plan/status-ring";
+import {
+  StatusRing,
+  statusToColor,
+  statusToDisplayLabel,
+  statusToValue,
+} from "@/components/my-plan/status-ring";
 import { ThemedText } from "@/components/themed-text";
 import { MonumentalIndex } from "@/components/ui/monumental-index";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
@@ -71,7 +76,7 @@ export function DiagnosisSection({
                   size={ringSize}
                   value={statusToValue(r.label)}
                   color={statusToColor(r.label)}
-                  label={r.label}
+                  label={statusToDisplayLabel(r.label)}
                   caption={r.caption}
                 />
               </View>

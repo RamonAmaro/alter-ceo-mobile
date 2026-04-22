@@ -50,12 +50,12 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
         options: [
           { value: "B2B", label: "B2B" },
           { value: "B2C", label: "B2C" },
-          { value: "Hybrid", label: "Hibrido" },
+          { value: "Hybrid", label: "Híbrido" },
         ],
       },
       { id: "website_url", label: "Sitio web", type: "text" },
       { id: "business_instagram", label: "Instagram del negocio", type: "text" },
-      { id: "geography", label: "Geografia principal", type: "text" },
+      { id: "geography", label: "Geografía principal", type: "text" },
     ],
   },
   {
@@ -68,14 +68,14 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
         label: "Estrategia de precios",
         type: "select",
         options: [
-          { value: "cost_plus", label: "Coste mas margen" },
+          { value: "cost_plus", label: "Coste más margen" },
           { value: "competitor_based", label: "Basado en competidores" },
           { value: "value_based", label: "Basado en valor" },
         ],
       },
       {
         id: "differentiation_level",
-        label: "Nivel de diferenciacion",
+        label: "Nivel de diferenciación",
         type: "select",
         options: [
           { value: "high", label: "Alta" },
@@ -95,7 +95,7 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
       },
       {
         id: "pipeline_conversion_summary",
-        label: "Resumen de conversion del embudo",
+        label: "Resumen de conversión del embudo",
         type: "textarea",
       },
     ],
@@ -111,7 +111,7 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
         options: [
           { value: "high", label: "Alta" },
           { value: "adjusted", label: "Ajustada" },
-          { value: "critical", label: "Critica" },
+          { value: "critical", label: "Crítica" },
         ],
       },
       {
@@ -138,14 +138,14 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
         label: "Madurez de KPIs",
         type: "select",
         options: [
-          { value: "solid", label: "Solida" },
-          { value: "basic", label: "Basica" },
+          { value: "solid", label: "Sólida" },
+          { value: "basic", label: "Básica" },
           { value: "none", label: "Ninguna" },
         ],
       },
       {
         id: "monthly_sales_history_eur",
-        label: "Historico mensual de ventas (EUR)",
+        label: "Histórico mensual de ventas (EUR)",
         type: "textarea",
       },
     ],
@@ -169,7 +169,7 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
         label: "Detalle de la dependencia",
         type: "textarea",
         placeholder:
-          "Explica en que decisiones, relaciones o procesos se concentra esa dependencia",
+          "Explica en qué decisiones, relaciones o procesos se concentra esa dependencia",
       },
       { id: "leadership_summary", label: "Resumen de liderazgo", type: "textarea" },
     ],
@@ -179,7 +179,7 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
     icon: { library: "MaterialCommunityIcons", name: "account-tie-outline" },
     fields: [
       { id: "top_bottlenecks", label: "Cuellos de botella principales", type: "textarea" },
-      { id: "focus_areas", label: "Areas de foco", type: "textarea" },
+      { id: "focus_areas", label: "Áreas de foco", type: "textarea" },
       { id: "active_micro_goals", label: "Microobjetivos activos", type: "textarea" },
     ],
   },
