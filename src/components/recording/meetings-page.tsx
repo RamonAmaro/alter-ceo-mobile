@@ -21,8 +21,10 @@ interface MeetingsPageProps {
 
 function toUploadStatus(status: string): "processing" | "completed" | "failed" | undefined {
   if (status === "COMPLETED") return "completed";
-  if (status === "FAILED" || status === "PENDING_UPLOAD") return "failed";
-  if (status === "PROCESSING" || status === "UPLOADED") return "processing";
+  if (status === "FAILED") return "failed";
+  if (status === "PROCESSING" || status === "UPLOADED" || status === "PENDING_UPLOAD") {
+    return "processing";
+  }
   return undefined;
 }
 
