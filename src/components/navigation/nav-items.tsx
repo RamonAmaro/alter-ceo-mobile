@@ -19,7 +19,7 @@ export const NAV_ITEMS: NavItemConfig[] = [
   },
   {
     key: "documents",
-    label: "Documentos",
+    label: "Subir documento",
     icon: (color, focused) => (
       <Ionicons
         name={focused ? "cloud-upload" : "cloud-upload-outline"}
@@ -40,7 +40,7 @@ export const NAV_ITEMS: NavItemConfig[] = [
     label: "Gestor de tareas",
     icon: (color, focused) => (
       <Ionicons
-        name={focused ? "file-tray-full" : "file-tray-full-outline"}
+        name={focused ? "construct" : "construct-outline"}
         size={TAB_ICON_SIZE}
         color={color}
       />

@@ -96,7 +96,7 @@ export default function SettingsScreen() {
                 bloqueos y puntos de acción. En el Historial revisas todas las sesiones pasadas.
               </ThemedText>
 
-              <ThemedText style={styles.bodyLabel}>Documentos</ThemedText>
+              <ThemedText style={styles.bodyLabel}>Subir documento</ThemedText>
               <ThemedText style={styles.body}>
                 Adjunta informes, contratos o PDFs y Alter los procesa: obtienes resumen ejecutivo,
                 temas tratados, implicaciones estratégicas y puntos de acción listos para ejecutar.
