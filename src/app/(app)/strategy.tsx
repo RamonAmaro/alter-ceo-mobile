@@ -4,6 +4,7 @@ import { StrategyTopicSelector } from "@/components/strategy/strategy-topic-sele
 import { EyebrowPill } from "@/components/ui/eyebrow-pill";
 import { HeroOverviewCard } from "@/components/ui/hero-overview-card";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
@@ -39,14 +40,14 @@ export default function StrategyScreen() {
         <ScreenHeader
           topInset={insets.top}
           icon="bar-chart"
-          titlePrefix="Crear"
+          titlePrefix="Nueva"
           titleAccent="Estrategia"
           showBack={isMobile}
         />
 
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         >
           <EyebrowPill label="ESTRATEGIAS · ARSENAL" />
 

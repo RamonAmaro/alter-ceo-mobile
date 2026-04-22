@@ -12,6 +12,7 @@ import { FooterActionBar } from "@/components/footer-action-bar";
 import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
@@ -651,7 +652,7 @@ export default function StrategyCaptacionResultScreen() {
               styles.scrollContent,
               { paddingBottom: insets.bottom + Spacing.five },
             ]}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           >
             {renderReport(generatedReport, isMobile)}
           </ScrollView>

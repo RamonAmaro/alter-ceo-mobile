@@ -4,6 +4,7 @@ import { MemoryOverviewCard } from "@/components/business-memory/memory-overview
 import { StepsGrid } from "@/components/business-memory/steps-grid";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { type BusinessMemoryStep } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useBusinessMemoryDashboard } from "@/hooks/use-business-memory-dashboard";
@@ -35,7 +36,7 @@ export default function BusinessMemoryIndexScreen() {
 
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         >
           <View style={styles.eyebrowPill}>
             <View style={styles.eyebrowDot} />

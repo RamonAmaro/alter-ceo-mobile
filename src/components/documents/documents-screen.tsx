@@ -1,3 +1,7 @@
+import { AppBackground } from "@/components/app-background";
+import { ScreenHeader } from "@/components/screen-header";
+import { SegmentedTabs, type SegmentedTabConfig } from "@/components/ui/segmented-tabs";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useCallback, useRef, useState } from "react";
 import {
   FlatList,
@@ -9,24 +13,19 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppBackground } from "@/components/app-background";
-import { ScreenHeader } from "@/components/screen-header";
-import { SegmentedTabs, type SegmentedTabConfig } from "@/components/ui/segmented-tabs";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
-import { useAuthStore } from "@/stores/auth-store";
-import { useMeetingStore } from "@/stores/meeting-store";
+import { DocumentsHistoryPage } from "./documents-history-page";
+import { UploadPage } from "./upload-page";
 
-import { MeetingsPage } from "./meetings-page";
-import { RecordingPage } from "./recording-page";
+const PAGES = ["upload", "history"] as const;
 
-const PAGES = ["recording", "meetings"] as const;
+type PageKey = (typeof PAGES)[number];
 
 const TABS: readonly SegmentedTabConfig[] = [
-  { key: "recording", label: "Grabar", icon: "mic" },
-  { key: "meetings", label: "Historial", icon: "albums" },
+  { key: "upload", label: "Subir", icon: "cloud-upload" },
+  { key: "history", label: "Historial", icon: "albums" },
 ];
 
-export function RecordingScreen() {
+export function DocumentsScreen() {
   const insets = useSafeAreaInsets();
   const windowWidth = useWindowDimensions().width;
   const { isMobile } = useResponsiveLayout();
@@ -34,26 +33,11 @@ export function RecordingScreen() {
   const width = containerWidth || Math.min(windowWidth, 900);
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
-  const listRef = useRef<FlatList<(typeof PAGES)[number]>>(null);
+  const listRef = useRef<FlatList<PageKey>>(null);
 
-  const userId = useAuthStore((s) => s.user?.userId);
-  const fetchMeetings = useMeetingStore((s) => s.fetchMeetings);
-
-  const handleUploadComplete = useCallback(() => {
-    if (userId) {
-      fetchMeetings(userId);
-    }
-  }, [userId, fetchMeetings]);
-
-  const goToIndex = useCallback(
-    (index: number) => {
-      listRef.current?.scrollToIndex({ index, animated: true });
-      if (index === 1 && userId) fetchMeetings(userId);
-    },
-    [userId, fetchMeetings],
-  );
-
-  const goToHistory = useCallback(() => goToIndex(1), [goToIndex]);
+  const goToIndex = useCallback((index: number) => {
+    listRef.current?.scrollToIndex({ index, animated: true });
+  }, []);
 
   const viewabilityConfig = useRef({
     viewAreaCoveragePercentThreshold: 50,
@@ -70,21 +54,16 @@ export function RecordingScreen() {
   }, []);
 
   const renderPage = useCallback(
-    ({ item }: { item: (typeof PAGES)[number] }) => {
+    ({ item }: { item: PageKey }) => {
       if (carouselHeight === 0) return null;
-      if (item === "recording") {
+      if (item === "upload") {
         return (
-          <RecordingPage
-            width={width}
-            height={carouselHeight}
-            onUploadComplete={handleUploadComplete}
-            onGoToHistory={goToHistory}
-          />
+          <UploadPage width={width} height={carouselHeight} onUploaded={() => goToIndex(1)} />
         );
       }
-      return <MeetingsPage width={width} height={carouselHeight} />;
+      return <DocumentsHistoryPage width={width} height={carouselHeight} />;
     },
-    [width, carouselHeight, handleUploadComplete, goToHistory],
+    [width, carouselHeight, goToIndex],
   );
 
   return (
@@ -95,9 +74,9 @@ export function RecordingScreen() {
       >
         <ScreenHeader
           topInset={insets.top}
-          icon="mic"
-          titlePrefix="Reuniones"
-          titleAccent={activeIndex === 0 ? "Grabar" : "Historial"}
+          icon="cloud-upload"
+          titlePrefix="Documentos"
+          titleAccent={activeIndex === 0 ? "Subir" : "Historial"}
           showBack={isMobile}
         />
 

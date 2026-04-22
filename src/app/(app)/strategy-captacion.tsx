@@ -10,7 +10,7 @@ import { QuestionBody } from "@/components/onboarding/question-body";
 import { QuestionHeader } from "@/components/onboarding/question-header";
 import { ScreenLayout } from "@/components/screen-layout";
 import { ThemedText } from "@/components/themed-text";
-import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { SHOW_SCROLL_INDICATOR, USE_NATIVE_DRIVER } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useStrategyReportStore, type StrategyReportAnswer } from "@/stores/strategy-report-store";
 import type { ReportInputType, ReportQuestion } from "@/types/report";
@@ -206,7 +206,7 @@ export default function StrategyCaptacionScreen() {
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           keyboardShouldPersistTaps="handled"
         >
           <QuestionHeader planLabel="CAPTACIÓN" onBack={handleBack} />

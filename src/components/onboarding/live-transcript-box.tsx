@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useEffect, useRef } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -21,7 +22,7 @@ export function LiveTranscriptBox({ text, maxHeight = 120 }: LiveTranscriptBoxPr
     <View style={[styles.container, { maxHeight }]}>
       <ScrollView
         ref={scrollRef}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         scrollEnabled
         keyboardShouldPersistTaps="handled"
       >

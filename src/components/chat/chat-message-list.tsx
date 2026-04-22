@@ -4,6 +4,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ScrollToBottomButton } from "@/components/chat/scroll-to-bottom-button";
 import { StreamingBubble } from "@/components/chat/streaming-bubble";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Spacing } from "@/constants/theme";
 import type { ChatMessageResponse, MessageKind } from "@/types/chat";
 
@@ -94,7 +95,7 @@ export function ChatMessageList({
         renderItem={renderMessage}
         ListHeaderComponent={listHeader}
         contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         keyboardDismissMode="interactive"
         style={styles.container}
         inverted

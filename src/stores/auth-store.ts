@@ -145,9 +145,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 // FaceID/biometrics and find any unsent recording still waiting.
 setOnUnauthorizedHandler(() => {
   const { isAuthenticated, handleUnauthorized } = useAuthStore.getState();
-  if (isAuthenticated) {
-    void handleUnauthorized();
-  } else {
-    void clearUserScopedStoresKeepingPending();
-  }
+  const task = isAuthenticated ? handleUnauthorized() : clearUserScopedStoresKeepingPending();
+  task.catch(() => {
+    // Already best-effort: if clearing fails we cannot recover here, and the
+    // failure itself is not actionable by the user. Swallow to avoid an
+    // unhandled rejection in the 401 hot path.
+  });
 });

@@ -10,6 +10,7 @@ import { AudioRecorderHeader } from "@/components/onboarding/audio-recorder-head
 import { AudioRecorderStatus } from "@/components/onboarding/audio-recorder-status";
 import { RecordButton } from "@/components/record-button";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
 import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { useOnboardingRecorder } from "@/hooks/use-onboarding-recorder";
@@ -89,7 +90,7 @@ export function AudioRecorderView({
       <ScrollView
         style={styles.topSection}
         contentContainerStyle={styles.topContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
       >
         <ThemedText type="headingLg" style={styles.whiteText}>
           {question.instruction ||

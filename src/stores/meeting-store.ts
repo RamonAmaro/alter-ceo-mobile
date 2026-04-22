@@ -23,6 +23,7 @@ interface MeetingState {
 
   fetchMeetings: (userId: string, limit?: number) => Promise<void>;
   getMeetingDetails: (meetingId: string) => Promise<void>;
+  updateMeetingTitleLocally: (meetingId: string, title: string) => void;
   startMeetingUpload: (
     userId: string,
     title: string,
@@ -61,6 +62,21 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     } catch (err) {
       set({ error: toErrorMessage(err), isLoading: false });
     }
+  },
+
+  updateMeetingTitleLocally: (meetingId: string, title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    const { activeMeeting, meetings } = get();
+    set({
+      activeMeeting:
+        activeMeeting && activeMeeting.meeting_id === meetingId
+          ? { ...activeMeeting, title: trimmed }
+          : activeMeeting,
+      meetings: meetings.map((m) =>
+        m.meeting_id === meetingId ? { ...m, title: trimmed } : m,
+      ),
+    });
   },
 
   startMeetingUpload: async (

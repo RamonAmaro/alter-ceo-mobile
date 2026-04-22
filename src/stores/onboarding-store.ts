@@ -89,6 +89,13 @@ function buildEmptyDraftState() {
   };
 }
 
+function cancelScheduledDraftPersist(): void {
+  if (draftPersistTimer) {
+    clearTimeout(draftPersistTimer);
+    draftPersistTimer = null;
+  }
+}
+
 function schedulePersistDraft(getState: () => OnboardingState): void {
   if (draftPersistTimer) clearTimeout(draftPersistTimer);
   draftPersistTimer = setTimeout(() => {
@@ -165,6 +172,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   },
 
   markCompletedForUser: (userId: string) => {
+    cancelScheduledDraftPersist();
     const normalizedUserId = userId.trim() || null;
     set({
       completed: true,
@@ -267,6 +275,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   // switch). Drafts are only explicitly purged on successful submission
   // (`markCompletedForUser`) or by uninstalling the app.
   reset: async () => {
+    cancelScheduledDraftPersist();
     set({
       ...buildEmptyDraftState(),
       completed: false,

@@ -13,6 +13,7 @@ import { SalesStrategySection } from "@/components/my-plan/sales-strategy-sectio
 import { SectionBlock, SectionDivider } from "@/components/my-plan/section-layout";
 import { ScreenHeader } from "@/components/screen-header";
 import { EyebrowPill } from "@/components/ui/eyebrow-pill";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useSectionScroll } from "@/hooks/use-section-scroll";
 import type { PlanData } from "@/types/plan";
@@ -75,7 +76,12 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
   return (
     <View style={styles.container}>
       <View style={styles.headerBlock}>
-        <ScreenHeader topInset={insets.top} icon="trophy" titlePrefix="Mi" titleAccent="Plan" />
+        <ScreenHeader
+          topInset={insets.top}
+          icon="trophy"
+          titlePrefix="Planes de"
+          titleAccent="negocio"
+        />
         <PlanNavTabs tabs={tabs} activeKey={activeTab} onPress={handleTabPress} />
       </View>
 
@@ -85,7 +91,7 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
           styles.scrollContent,
           { paddingBottom: insets.bottom + Spacing.six },
         ]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >

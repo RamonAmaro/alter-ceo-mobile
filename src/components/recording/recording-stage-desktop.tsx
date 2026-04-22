@@ -14,6 +14,7 @@ interface RecordingStageDesktopProps {
   state: RecordingState;
   recorder: AudioRecorderLike;
   onRecord: () => void;
+  onPauseResume: () => void;
   onDelete: () => void;
   onSave: () => void;
 }
@@ -22,6 +23,7 @@ export function RecordingStageDesktop({
   state,
   recorder,
   onRecord,
+  onPauseResume,
   onDelete,
   onSave,
 }: RecordingStageDesktopProps) {
@@ -41,6 +43,7 @@ export function RecordingStageDesktop({
           <RecordingControls
             state={state}
             onRecord={onRecord}
+            onPauseResume={onPauseResume}
             onDelete={onDelete}
             onSave={onSave}
           />

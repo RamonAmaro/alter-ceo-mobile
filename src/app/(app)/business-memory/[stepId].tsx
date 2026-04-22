@@ -14,6 +14,7 @@ import { Button } from "@/components/button";
 import { KeyboardAwareScroll } from "@/components/keyboard-aware-scroll";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import type { FormFieldConfig } from "@/constants/business-memory-steps";
 import { findStepById, getStepIndex } from "@/constants/business-memory-steps";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
@@ -675,7 +676,7 @@ export default function BusinessMemoryStepScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           bottomOffset={24}
         >
           {isWideWeb ? (

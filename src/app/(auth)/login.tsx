@@ -21,6 +21,7 @@ import { FormCheckbox } from "@/components/form-checkbox";
 import { Input } from "@/components/input";
 import { KeyboardView } from "@/components/keyboard-view";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { isBiometricsAvailable } from "@/services/biometrics-service";
@@ -130,7 +131,7 @@ export default function LoginScreen() {
               },
             ]}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           >
             {isMobile && (
               <View style={styles.logoContainer}>

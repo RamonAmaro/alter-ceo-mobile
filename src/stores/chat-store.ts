@@ -35,6 +35,13 @@ function schedulePersist(getDrafts: () => DraftsByUser): void {
   }, DRAFT_DEBOUNCE_MS);
 }
 
+function cancelScheduledPersist(): void {
+  if (draftPersistTimer) {
+    clearTimeout(draftPersistTimer);
+    draftPersistTimer = null;
+  }
+}
+
 interface ChatState {
   threads: ChatThreadSummary[];
   activeThreadId: string | null;
@@ -280,6 +287,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // away when the user actively sends the message or uninstalls the app.
   reset: () => {
     get().cancelStream();
+    cancelScheduledPersist();
     set({
       threads: [],
       activeThreadId: null,

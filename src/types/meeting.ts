@@ -48,12 +48,20 @@ export interface MeetingProcessingAccepted {
   processing_run_id: string;
 }
 
+export interface MeetingActionItem {
+  description: string;
+  owners?: string[] | null;
+  due_date?: string | null;
+}
+
 export interface MeetingSummaryPayload {
   headline: string;
   executive_summary: string;
+  topics?: string[];
   decisions?: string[];
   blockers?: string[];
   next_steps?: string[];
+  action_items?: MeetingActionItem[];
   business_kernel_signals?: string[];
 }
 

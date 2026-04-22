@@ -14,7 +14,6 @@ function CustomTabBar({ state }: BottomTabBarProps) {
   const activeRouteName = state.routes[state.index].name;
 
   const handlePress = useCallback((item: NavItemConfig) => {
-    if (item.key === "alter") return;
     router.navigate(`/(app)/${item.key}` as Href);
   }, []);
 
@@ -25,12 +24,7 @@ function CustomTabBar({ state }: BottomTabBarProps) {
         {NAV_ITEMS.map((item) => {
           const focused = activeRouteName === item.key;
           return (
-            <TabButton
-              key={item.key}
-              item={item}
-              focused={focused && item.key === "alter"}
-              onPress={() => handlePress(item)}
-            />
+            <TabButton key={item.key} item={item} focused={focused} onPress={() => handlePress(item)} />
           );
         })}
       </View>
@@ -67,7 +61,7 @@ const styles = StyleSheet.create({
   },
   tabsRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    paddingTop: 12,
+    alignItems: "flex-start",
+    paddingTop: 8,
   },
 });

@@ -23,6 +23,9 @@ interface TitlePromptProps {
 
 export function TitlePrompt({ visible, defaultTitle, onConfirm, onCancel }: TitlePromptProps) {
   const [title, setTitle] = useState(defaultTitle);
+  const [initialSelection, setInitialSelection] = useState<{ start: number; end: number } | null>(
+    null,
+  );
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
   const wasVisibleRef = useRef(false);
@@ -30,6 +33,7 @@ export function TitlePrompt({ visible, defaultTitle, onConfirm, onCancel }: Titl
   if (visible && !wasVisibleRef.current) {
     wasVisibleRef.current = true;
     setTitle(defaultTitle);
+    setInitialSelection({ start: defaultTitle.length, end: defaultTitle.length });
     Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: USE_NATIVE_DRIVER }),
       Animated.spring(scale, {
@@ -68,11 +72,14 @@ export function TitlePrompt({ visible, defaultTitle, onConfirm, onCancel }: Titl
         <TextInput
           style={styles.input}
           value={title}
-          onChangeText={setTitle}
+          onChangeText={(text) => {
+            setTitle(text);
+            if (initialSelection) setInitialSelection(null);
+          }}
           placeholder="Ej: Reunión semanal de equipo"
           placeholderTextColor={SemanticColors.textPlaceholder}
           autoFocus
-          selectTextOnFocus
+          selection={initialSelection ?? undefined}
           returnKeyType="done"
           onSubmitEditing={handleConfirm}
         />
@@ -89,9 +96,9 @@ export function TitlePrompt({ visible, defaultTitle, onConfirm, onCancel }: Titl
             style={styles.confirmButton}
             activeOpacity={0.7}
           >
-            <Ionicons name="cloud-upload-outline" size={16} color={SemanticColors.surfaceDark} />
+            <Ionicons name="sparkles-outline" size={16} color={SemanticColors.surfaceDark} />
             <ThemedText type="bodySm" style={styles.confirmText}>
-              Guardar y subir
+              Guardar y procesar
             </ThemedText>
           </TouchableOpacity>
         </View>

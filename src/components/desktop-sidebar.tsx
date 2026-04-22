@@ -99,7 +99,7 @@ export function DesktopSidebar() {
           onPress={() => handleNav("alter")}
         />
 
-        {NAV_ITEMS.filter((i) => !i.isCenter).map((item) => {
+        {NAV_ITEMS.map((item) => {
           const focused = activeKey === item.key;
           return (
             <SidebarItem

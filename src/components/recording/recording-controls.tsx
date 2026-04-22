@@ -1,11 +1,11 @@
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { useCallback, useRef } from "react";
-import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { CircleButton } from "@/components/circle-button";
-import { MicIcon, PauseIcon, PlayIcon } from "@/components/recording-icons";
+import { MicIcon } from "@/components/recording-icons";
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -14,181 +14,155 @@ type RecordingState = "idle" | "recording" | "paused";
 interface RecordingControlsProps {
   state: RecordingState;
   onRecord: () => void;
+  onPauseResume: () => void;
   onDelete: () => void;
   onSave: () => void;
 }
 
-interface SideButtonProps {
-  icon: React.ReactNode;
+type ActionTone = "danger" | "warning" | "info" | "success";
+
+interface ActionButtonProps {
+  tone: ActionTone;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
   label: string;
-  size: number;
   onPress: () => void;
-  scaleAnim: Animated.Value;
-  glowOpacity: Animated.Value;
-  glowColor: string;
+  size: number;
+  iconSize: number;
 }
 
-function SideButton({
-  icon,
-  label,
-  size,
-  onPress,
-  scaleAnim,
-  glowOpacity,
-  glowColor,
-}: SideButtonProps) {
+const TONE_STYLES: Record<ActionTone, { background: string; border: string }> = {
+  danger: { background: "#FF4444", border: "rgba(255,255,255,0.15)" },
+  warning: { background: "#FF9500", border: "rgba(255,255,255,0.15)" },
+  info: { background: "#0060FF", border: "rgba(255,255,255,0.18)" },
+  success: { background: "#00B864", border: "rgba(255,255,255,0.18)" },
+};
+
+function ActionButton({ tone, icon, label, onPress, size, iconSize }: ActionButtonProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const toneStyle = TONE_STYLES[tone];
   const radius = size / 2;
+
+  const handlePress = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.88,
+        duration: 90,
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        speed: 20,
+        bounciness: 10,
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
+    ]).start();
+    onPress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onPress]);
+
   return (
-    <View style={styles.sideWrapper}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+    <View style={styles.actionWrapper}>
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.8}>
         <Animated.View
           style={[
-            styles.sideButton,
-            { width: size, height: size, borderRadius: radius, transform: [{ scale: scaleAnim }] },
+            styles.actionButton,
+            {
+              width: size,
+              height: size,
+              borderRadius: radius,
+              backgroundColor: toneStyle.background,
+              borderColor: toneStyle.border,
+              transform: [{ scale: scaleAnim }],
+            },
           ]}
         >
-          {icon}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFillObject,
-              { borderRadius: radius, backgroundColor: glowColor, opacity: glowOpacity },
-            ]}
-          />
+          <Ionicons name={icon} size={iconSize} color="#FFFFFF" />
         </Animated.View>
       </TouchableOpacity>
-      <ThemedText type="caption" style={styles.sideLabel}>
-        {label}
-      </ThemedText>
+      <ThemedText style={styles.actionLabel}>{label}</ThemedText>
     </View>
   );
 }
 
-export function RecordingControls({ state, onRecord, onDelete, onSave }: RecordingControlsProps) {
+export function RecordingControls({
+  state,
+  onRecord,
+  onPauseResume,
+  onDelete,
+  onSave,
+}: RecordingControlsProps) {
   const { isMobile } = useResponsiveLayout();
-  const buttonSize = isMobile ? 88 : 72;
-  const sideSize = isMobile ? 48 : 40;
-  const sideIconSize = isMobile ? 22 : 18;
-  const deleteScale = useRef(new Animated.Value(1)).current;
-  const deleteGlow = useRef(new Animated.Value(0)).current;
-  const saveScale = useRef(new Animated.Value(1)).current;
-  const saveGlow = useRef(new Animated.Value(0)).current;
-  const isActive = state === "recording" || state === "paused";
+  const mainSize = isMobile ? 96 : 80;
+  const actionSize = isMobile ? 64 : 56;
+  const actionIconSize = isMobile ? 26 : 22;
 
-  const animateButton = useCallback(
-    (scale: Animated.Value, glow: Animated.Value, callback: () => void) => {
-      Animated.sequence([
-        Animated.parallel([
-          Animated.spring(scale, {
-            toValue: 1.4,
-            useNativeDriver: USE_NATIVE_DRIVER,
-            speed: 50,
-            bounciness: 6,
-          }),
-          Animated.timing(glow, {
-            toValue: 0.55,
-            duration: 120,
-            useNativeDriver: USE_NATIVE_DRIVER,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.spring(scale, {
-            toValue: 1,
-            useNativeDriver: USE_NATIVE_DRIVER,
-            speed: 20,
-            bounciness: 14,
-          }),
-          Animated.timing(glow, {
-            toValue: 0,
-            duration: 350,
-            useNativeDriver: USE_NATIVE_DRIVER,
-          }),
-        ]),
-      ]).start(() => {
-        callback();
-        deleteScale.setValue(1);
-        deleteGlow.setValue(0);
-        saveScale.setValue(1);
-        saveGlow.setValue(0);
-      });
-    },
-    [deleteScale, deleteGlow, saveScale, saveGlow],
-  );
-
-  const handleDelete = useCallback(() => {
-    if (!isActive) return;
-    animateButton(deleteScale, deleteGlow, onDelete);
-  }, [isActive, animateButton, deleteScale, deleteGlow, onDelete]);
-
-  const handleSave = useCallback(() => {
-    if (!isActive) return;
-    animateButton(saveScale, saveGlow, onSave);
-  }, [isActive, animateButton, saveScale, saveGlow, onSave]);
-
-  return (
-    <View style={styles.container}>
-      <SideButton
-        icon={<Ionicons name="close" size={sideIconSize} color={SemanticColors.textPrimary} />}
-        label="Eliminar"
-        size={sideSize}
-        onPress={isActive ? handleDelete : onDelete}
-        scaleAnim={deleteScale}
-        glowOpacity={deleteGlow}
-        glowColor="#FF4444"
-      />
-
-      {state === "idle" && (
+  if (state === "idle") {
+    return (
+      <View style={styles.container}>
         <CircleButton
-          size={buttonSize}
+          size={mainSize}
           gradientId="gradMicRec"
           colors={["#00C0EE", "#0060FF"]}
           icon={MicIcon}
-          label="Grabar ahora"
+          label="Grabar"
           onPress={onRecord}
         />
-      )}
+      </View>
+    );
+  }
 
-      {state === "recording" && (
-        <CircleButton
-          size={buttonSize}
-          gradientId="gradPauseRec"
-          colors={["#E05555", "#B83030"]}
-          icon={PauseIcon}
-          label="Parar"
-          onPress={onRecord}
-          pulse
-        />
-      )}
-
-      {state === "paused" && (
-        <CircleButton
-          size={buttonSize}
-          gradientId="gradResumeRec"
-          colors={["#00C0EE", "#0060FF"]}
-          icon={PlayIcon}
-          label="Continuar"
-          onPress={onRecord}
-        />
-      )}
-
-      <SideButton
-        icon={
-          <Ionicons
-            name="download-outline"
-            size={sideIconSize}
-            color={SemanticColors.textPrimary}
-          />
+  const pauseOrResume: ActionButtonProps =
+    state === "recording"
+      ? {
+          tone: "warning",
+          icon: "pause",
+          label: "Pausar",
+          onPress: onPauseResume,
+          size: actionSize,
+          iconSize: actionIconSize,
         }
-        label="Guardar"
-        size={sideSize}
-        onPress={isActive ? handleSave : onSave}
-        scaleAnim={saveScale}
-        glowOpacity={saveGlow}
-        glowColor="#00FF84"
+      : {
+          tone: "info",
+          icon: "play",
+          label: "Reanudar",
+          onPress: onPauseResume,
+          size: actionSize,
+          iconSize: actionIconSize,
+        };
+
+  return (
+    <View style={styles.container}>
+      <ActionButton
+        tone="danger"
+        icon="trash"
+        label="Eliminar"
+        onPress={onDelete}
+        size={actionSize}
+        iconSize={actionIconSize}
+      />
+      <ActionButton {...pauseOrResume} />
+      <ActionButton
+        tone="success"
+        icon="checkmark"
+        label="Finalizar"
+        onPress={onSave}
+        size={actionSize}
+        iconSize={actionIconSize}
       />
     </View>
   );
 }
+
+const actionShadow = Platform.select({
+  ios: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+  },
+  android: { elevation: 8 },
+  web: { boxShadow: "0 6px 18px rgba(0,0,0,0.35)" },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -198,19 +172,21 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
     paddingBottom: Spacing.two,
   },
-  sideWrapper: {
+  actionWrapper: {
     alignItems: "center",
     gap: Spacing.one,
-    marginBottom: Spacing.three,
   },
-  sideButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+  actionButton: {
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
+    borderWidth: 1,
+    ...actionShadow,
   },
-  sideLabel: {
-    color: SemanticColors.textSecondaryLight,
-    textAlign: "center",
+  actionLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.textPrimary,
+    letterSpacing: 0.3,
   },
 });

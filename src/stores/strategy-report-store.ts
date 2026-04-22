@@ -81,6 +81,13 @@ function buildEmptyState() {
   };
 }
 
+function cancelScheduledStrategyPersist(): void {
+  if (draftPersistTimer) {
+    clearTimeout(draftPersistTimer);
+    draftPersistTimer = null;
+  }
+}
+
 function scheduleStrategyPersist(getState: () => StrategyReportState): void {
   if (draftPersistTimer) clearTimeout(draftPersistTimer);
   draftPersistTimer = setTimeout(() => {
@@ -210,6 +217,7 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
   // draft is restored. To actively discard the draft (finished report, user
   // aborts the questionnaire) use `discardDraft` instead.
   reset: () => {
+    cancelScheduledStrategyPersist();
     set(buildEmptyState());
   },
 
@@ -223,6 +231,7 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
   // Explicitly discard the draft (user finished the report or abandoned the
   // questionnaire on purpose).
   discardDraft: () => {
+    cancelScheduledStrategyPersist();
     const userId = get().draftUserId;
     set(buildEmptyState());
     if (userId) void clearPersistedStrategyDraft(userId);
