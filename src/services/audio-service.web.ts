@@ -128,12 +128,25 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
     source.connect(analyser);
     analyserRef.current = analyser;
 
-    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : "audio/webm";
-    mimeTypeRef.current = mimeType;
+    // Browsers differ on supported MIME types: desktop Chrome/Firefox do webm;opus,
+    // Safari/iOS only do mp4, some Android webviews only do ogg. Probe in order
+    // so we always record with a type the browser actually accepts — falling
+    // back to a blank string lets the browser pick its default.
+    const candidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/ogg;codecs=opus",
+      "audio/ogg",
+    ];
+    const mimeType = candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
+    mimeTypeRef.current = mimeType || "audio/webm";
 
-    const recorder = new MediaRecorder(stream, { mimeType });
+    const recorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+    // Some browsers substitute the requested type. Trust what the recorder ends up with.
+    if (recorder.mimeType) mimeTypeRef.current = recorder.mimeType;
     chunksRef.current = [];
 
     recorder.ondataavailable = (e) => {

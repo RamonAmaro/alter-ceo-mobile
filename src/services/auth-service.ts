@@ -1,6 +1,9 @@
+import { Platform } from "react-native";
+
 import * as SecureStore from "@/services/secure-store";
 
 import { apiClient, handleAxiosError, setAuthCookieGetter } from "@/lib/api-client";
+import { ApiError } from "@/types/api";
 import { SESSION_COOKIE_KEY, type AuthSession } from "@/types/auth";
 import { extractSessionCookie } from "@/utils/extract-session-cookie";
 
@@ -34,6 +37,22 @@ export async function initAuthCookie(): Promise<void> {
   setAuthCookieGetter(() => stored ?? null);
 }
 
+// Browsers apply Set-Cookie transparently on the response that delivered it,
+// but on cross-site contexts Safari/iOS silently drops cookies that lack
+// SameSite=None; Secure. A follow-up request confirms whether the cookie was
+// actually persisted — if /auth/session returns 401, the browser rejected it.
+async function verifyCookieAccepted(): Promise<void> {
+  if (Platform.OS !== "web") return;
+  try {
+    await apiClient.get<RawAuthSessionResponse>("/auth/session");
+  } catch {
+    throw new ApiError(
+      0,
+      "Tu navegador está bloqueando las cookies. Revisa los ajustes de privacidad o prueba con otro navegador.",
+    );
+  }
+}
+
 export async function login(email: string, password: string): Promise<AuthSession> {
   try {
     const response = await apiClient.post<RawAuthSessionResponse>("/auth/login", {
@@ -42,6 +61,7 @@ export async function login(email: string, password: string): Promise<AuthSessio
     });
     const cookie = extractSessionCookie(response.headers);
     if (cookie) await saveSession(cookie);
+    await verifyCookieAccepted();
     return mapSession(response.data);
   } catch (err) {
     return handleAxiosError(err);
@@ -61,6 +81,7 @@ export async function register(
     });
     const cookie = extractSessionCookie(response.headers);
     if (cookie) await saveSession(cookie);
+    await verifyCookieAccepted();
     return mapSession(response.data);
   } catch (err) {
     return handleAxiosError(err);
