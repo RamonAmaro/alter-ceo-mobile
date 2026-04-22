@@ -13,7 +13,6 @@ import type { MeetingSummaryResponse } from "@/types/meeting";
 import { formatDurationSeconds } from "@/utils/format-date";
 
 import { MeetingListItem, type MeetingItem } from "./meeting-list-item";
-import { PendingRecordingsSection } from "./pending-recordings-section";
 
 interface MeetingsPageProps {
   width: number;
@@ -73,7 +72,6 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
   return (
     <View style={[styles.page, { width, height }]}>
       <View style={styles.listContainer}>
-        <PendingRecordingsSection />
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={styles.accentBar} />
