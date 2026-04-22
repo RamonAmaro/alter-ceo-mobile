@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AlterLogo } from "@/components/alter-logo";
+import { AlterWordmark } from "@/components/alter-wordmark";
 import { NAV_ITEMS } from "@/components/navigation/nav-items";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
@@ -74,8 +75,8 @@ export function DesktopSidebar() {
         <View style={styles.logoMark}>
           <AlterLogo size={22} />
         </View>
-        <View>
-          <ThemedText style={styles.brandTitle}>ALTER CEO</ThemedText>
+        <View style={styles.brandTextWrap}>
+          <AlterWordmark size={14} />
           <ThemedText style={styles.brandSub}>copiloto estratégico</ThemedText>
         </View>
       </Pressable>
@@ -90,8 +91,9 @@ export function DesktopSidebar() {
         <SidebarItem
           label="Inicio"
           icon={
-            <AlterLogo
-              size={SIDEBAR_ICON_SIZE - 2}
+            <Ionicons
+              name={activeKey === "alter" ? "home" : "home-outline"}
+              size={SIDEBAR_ICON_SIZE}
               color={activeKey === "alter" ? ACTIVE_COLOR : INACTIVE_COLOR}
             />
           }
@@ -166,12 +168,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  brandTitle: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 14,
-    letterSpacing: 2.5,
-    color: SemanticColors.textPrimary,
-    lineHeight: 18,
+  brandTextWrap: {
+    alignItems: "flex-start",
+    gap: 2,
   },
   brandSub: {
     fontFamily: Fonts.montserratMedium,

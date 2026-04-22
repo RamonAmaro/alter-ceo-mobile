@@ -21,6 +21,14 @@ interface TabButtonProps {
   onPress: () => void;
 }
 
+function formatTabLabel(label: string): string {
+  const words = label.trim().split(/\s+/);
+  if (words.length < 2) return label;
+  const lastWord = words[words.length - 1];
+  const rest = words.slice(0, -1).join(" ");
+  return `${rest}\n${lastWord}`;
+}
+
 export function TabButton({ item, focused, onPress }: TabButtonProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -66,7 +74,7 @@ export function TabButton({ item, focused, onPress }: TabButtonProps) {
             style={[styles.tabLabel, { color: focused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR }]}
             numberOfLines={LABEL_LINES}
           >
-            {item.label}
+            {formatTabLabel(item.label)}
           </ThemedText>
         </View>
       </Animated.View>

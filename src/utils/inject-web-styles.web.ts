@@ -25,6 +25,15 @@ const CSS = `
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 255, 132, 0.32) transparent;
 }
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
 `;
 
 export function injectWebStyles(): void {

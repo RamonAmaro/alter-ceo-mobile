@@ -1,4 +1,5 @@
 import { AlterLogo } from "@/components/alter-logo";
+import { AlterWordmark } from "@/components/alter-wordmark";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { goBackOrHome } from "@/utils/navigation";
@@ -17,9 +18,7 @@ export function ChatHeader() {
         <ThemedText type="labelSm" style={styles.labelItalic}>
           El Cerebro{" "}
         </ThemedText>
-        <ThemedText type="subtitle" style={styles.labelBold}>
-          ALTER CEO
-        </ThemedText>
+        <AlterWordmark size={14} />
       </View>
 
       <View style={styles.spacer} />
@@ -50,11 +49,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontStyle: "italic",
     color: SemanticColors.success,
-  },
-  labelBold: {
-    fontSize: 16,
-    color: SemanticColors.textPrimary,
-    letterSpacing: 0.5,
   },
   spacer: {
     width: 32,

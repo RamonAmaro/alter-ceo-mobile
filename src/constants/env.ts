@@ -6,13 +6,14 @@ const PROD_API_BASE_URL = "https://api.alterceo.app";
 const LOCAL_API_BASE_URL = "http://localhost:8000";
 const USE_LOCAL_API = process.env.EXPO_PUBLIC_USE_LOCAL_API === "true";
 
-// On web we route through a same-origin Vercel rewrite (/api → api.alterceo.app)
-// so the session cookie stays first-party. iOS Safari/WebKit blocks cross-site
-// cookies via ITP even with SameSite=None; Secure, so the proxy is required
-// for the preview to work on iPhone.
+// In production web builds (Vercel deploy) we route through a same-origin
+// rewrite (/api → api.alterceo.app, configured in vercel.json) so the session
+// cookie stays first-party — iOS Safari/WebKit blocks cross-site cookies via
+// ITP even with SameSite=None; Secure. In dev (__DEV__ true, expo start --web)
+// we hit the backend directly because there is no rewrite server in front.
 function resolveApiBaseUrl(): string {
   if (USE_LOCAL_API) return LOCAL_API_BASE_URL;
-  if (Platform.OS === "web") return "/api";
+  if (Platform.OS === "web" && !__DEV__) return "/api";
   return PROD_API_BASE_URL;
 }
 

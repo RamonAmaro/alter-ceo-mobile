@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from "react";
-import { Image, ImageBackground, StyleSheet, View, type DimensionValue } from "react-native";
+import { ImageBackground, StyleSheet, View, type DimensionValue } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { AlterBrand } from "@/components/alter-brand";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
@@ -16,31 +17,24 @@ export function AuthLayout({ children }: PropsWithChildren) {
   return (
     <View style={styles.row}>
       <View style={styles.bannerSide}>
-        <View style={styles.decoCircle1} />
-        <View style={styles.decoCircle2} />
-        <View style={styles.decoCircle3} />
-
         <LinearGradient
-          colors={["rgba(0,255,132,0.05)", "transparent", "rgba(0,207,255,0.05)"]}
+          colors={["#0c1511", "#06080c", "#050f13"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
 
+        <View style={styles.auraOne} />
+        <View style={styles.auraTwo} />
+
         <View style={styles.bannerContent}>
-          <Image
-            source={require("@/assets/ui/logo-alterceo.png")}
-            style={styles.bannerLogo}
-            resizeMode="contain"
-          />
+          <AlterBrand iconSize={128} wordmarkSize={36} orientation="vertical" gap={Spacing.three} />
 
           <View style={styles.accentLine} />
 
-          <ThemedText type="headingLg" style={styles.bannerTitle}>
-            Tu copiloto{"\n"}estratégico
-          </ThemedText>
+          <ThemedText style={styles.bannerTitle}>Tu copiloto estratégico</ThemedText>
 
-          <ThemedText type="bodyMd" style={styles.bannerSubtitle}>
+          <ThemedText style={styles.bannerSubtitle}>
             Inteligencia artificial diseñada para CEOs y directivos que quieren tomar mejores
             decisiones, más rápido.
           </ThemedText>
@@ -53,6 +47,7 @@ export function AuthLayout({ children }: PropsWithChildren) {
         imageStyle={styles.formBgImage}
         resizeMode="cover"
       >
+        <View style={styles.formOverlay} />
         {children}
       </ImageBackground>
     </View>
@@ -66,70 +61,61 @@ const styles = StyleSheet.create({
   },
   bannerSide: {
     flex: 1,
-    backgroundColor: "#09090b",
+    backgroundColor: "#06080c",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
-  decoCircle1: {
+  auraOne: {
     position: "absolute",
-    bottom: -60,
-    left: -60,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.08)",
+    top: "15%",
+    left: "-15%",
+    width: 520,
+    height: 520,
+    borderRadius: 260,
+    backgroundColor: "rgba(0,255,132,0.06)",
   },
-  decoCircle2: {
+  auraTwo: {
     position: "absolute",
-    bottom: -30,
-    left: -30,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.06)",
-  },
-  decoCircle3: {
-    position: "absolute",
-    top: -40,
-    right: -40,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    borderWidth: 1,
-    borderColor: "rgba(0,207,255,0.06)",
+    bottom: "-10%",
+    right: "-10%",
+    width: 440,
+    height: 440,
+    borderRadius: 220,
+    backgroundColor: "rgba(0,207,255,0.04)",
   },
   bannerContent: {
     alignItems: "center",
     gap: Spacing.four,
     paddingHorizontal: Spacing.six,
-  },
-  bannerLogo: {
-    width: 200,
-    height: 188,
+    maxWidth: 480,
   },
   accentLine: {
-    width: 96,
-    height: 4,
+    width: 72,
+    height: 3,
     borderRadius: 2,
-    backgroundColor: "#00FF84",
-    opacity: 0.6,
+    backgroundColor: SemanticColors.success,
+    opacity: 0.7,
+    marginTop: Spacing.two,
   },
   bannerTitle: {
-    color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
+    fontSize: 28,
+    lineHeight: 34,
+    color: SemanticColors.textPrimary,
     textAlign: "center",
+    marginTop: Spacing.two,
   },
   bannerSubtitle: {
-    color: SemanticColors.textMuted,
+    fontFamily: Fonts.montserrat,
+    fontSize: 15,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    lineHeight: 24,
-    maxWidth: 360,
+    maxWidth: 380,
   },
   formSide: {
-    flexBasis: 480,
+    flexBasis: 520,
     flexShrink: 0,
     flexGrow: 0,
     justifyContent: "center",
@@ -139,5 +125,9 @@ const styles = StyleSheet.create({
   formBgImage: {
     width: "100%" as DimensionValue,
     height: "100%" as DimensionValue,
+  },
+  formOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(6,8,12,0.35)",
   },
 });
