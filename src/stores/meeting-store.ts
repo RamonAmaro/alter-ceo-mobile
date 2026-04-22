@@ -7,6 +7,31 @@ type UploadStage = "uploading" | "processing" | "completed" | "failed";
 
 const MAX_POLL_ATTEMPTS = 60;
 
+function toSummary(meeting: MeetingResponse): MeetingSummaryResponse {
+  return {
+    meeting_id: meeting.meeting_id,
+    user_id: meeting.user_id,
+    title: meeting.title,
+    status: meeting.status,
+    processing_stage: meeting.processing_stage,
+    processing_run_id: meeting.processing_run_id,
+    duration_seconds: meeting.duration_seconds,
+    updated_at: meeting.updated_at,
+    error_message: meeting.error_message,
+  };
+}
+
+function upsertMeetingSummary(
+  meetings: MeetingSummaryResponse[],
+  next: MeetingSummaryResponse,
+): MeetingSummaryResponse[] {
+  const index = meetings.findIndex((m) => m.meeting_id === next.meeting_id);
+  if (index === -1) return [next, ...meetings];
+  const copy = meetings.slice();
+  copy[index] = next;
+  return copy;
+}
+
 interface UploadProgress {
   meeting_id: string;
   stage: UploadStage;
@@ -99,12 +124,21 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         content_type: contentType,
       });
 
-      set({
+      set((state) => ({
         uploadProgress: {
           meeting_id: created.meeting_id,
           stage: "uploading",
         },
-      });
+        meetings: upsertMeetingSummary(state.meetings, {
+          meeting_id: created.meeting_id,
+          user_id: created.user_id,
+          title: created.title,
+          status: created.status,
+          processing_stage: created.processing_stage,
+          duration_seconds: durationSeconds ?? null,
+          updated_at: created.updated_at,
+        }),
+      }));
 
       await meetingService.uploadFileToS3(created.upload, fileUri, contentType);
 
@@ -138,6 +172,10 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
           });
         },
         (meeting) => {
+          const summary = toSummary(meeting);
+          set((state) => ({
+            meetings: upsertMeetingSummary(state.meetings, summary),
+          }));
           if (meeting.status === "COMPLETED" || meeting.status === "FAILED") {
             set({
               _activePoller: null,

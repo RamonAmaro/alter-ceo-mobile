@@ -32,6 +32,25 @@ async function getFileSize(uri: string): Promise<number> {
   return info.size ?? 0;
 }
 
+async function isSourceAvailable(uri: string): Promise<boolean> {
+  if (Platform.OS === "web") {
+    try {
+      const response = await fetch(uri);
+      if (!response.ok) return false;
+      const blob = await response.blob();
+      return blob.size > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  const info = await getInfoAsync(uri);
+  return info.exists && (info.size ?? 0) > 0;
+}
+
+const LOST_SOURCE_ERROR_ES =
+  "La grabación se perdió al recargar la página. Por favor, graba de nuevo.";
+
 interface UploadParams {
   recordingId: string;
   uri: string;
@@ -53,6 +72,21 @@ export function useUploadRecording(): {
       const userId = useAuthStore.getState().user?.userId;
       if (!userId) return;
 
+      const recordingsStore = useRecordingsStore.getState();
+
+      // On web, a blob URL from a previous session is revoked after reload and
+      // any retry would fail with ERR_FILE_NOT_FOUND. Detect that up front so
+      // we don't create an orphan meeting on the backend for a file we can no
+      // longer upload.
+      const available = await isSourceAvailable(uri);
+      if (!available) {
+        await recordingsStore.updateRecordingStatus(recordingId, {
+          uploadStatus: "failed",
+          errorMessage: LOST_SOURCE_ERROR_ES,
+        });
+        return;
+      }
+
       const contentType = getContentType(uri);
       const ext =
         contentType === "audio/3gpp" ? "3gp" : contentType === "audio/webm" ? "webm" : "m4a";
@@ -60,7 +94,6 @@ export function useUploadRecording(): {
       const sizeBytes = await getFileSize(uri);
       const durationSeconds = durationMs / 1000;
 
-      const recordingsStore = useRecordingsStore.getState();
       await recordingsStore.updateRecordingStatus(recordingId, { uploadStatus: "uploading" });
 
       try {

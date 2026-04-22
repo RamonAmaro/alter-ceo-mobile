@@ -12,6 +12,7 @@ import {
   openAppSettings,
   RecordingPresets,
   requestAudioPermission,
+  stopRecorderAndGetUri,
   useAudioRecorder,
 } from "@/services/audio-service";
 import { persistRecordingFile } from "@/services/recording-storage";
@@ -124,37 +125,33 @@ export function RecordingPage({
   }, [state, recorder]);
 
   const handleDelete = useCallback(async () => {
-    if (state === "recording" || state === "paused") {
-      recorder.stop();
-    }
-    preparedRef.current = false;
     accumulatedMsRef.current = 0;
     segmentStartRef.current = 0;
     setState("idle");
+    if (state === "recording" || state === "paused") {
+      await stopRecorderAndGetUri(recorder).catch(() => null);
+    }
+    preparedRef.current = false;
   }, [state, recorder]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (state === "idle") return;
 
     if (state === "recording") {
       accumulatedMsRef.current += Date.now() - segmentStartRef.current;
     }
 
-    recorder.stop();
-    preparedRef.current = false;
-
-    const uri = recorder.uri;
-    if (!uri) {
-      accumulatedMsRef.current = 0;
-      segmentStartRef.current = 0;
-      setState("idle");
-      return;
-    }
-
-    pendingSaveRef.current = { uri, durationMs: accumulatedMsRef.current };
+    const durationMs = accumulatedMsRef.current;
     accumulatedMsRef.current = 0;
     segmentStartRef.current = 0;
     setState("idle");
+
+    const uri = await stopRecorderAndGetUri(recorder).catch(() => null);
+    preparedRef.current = false;
+
+    if (!uri) return;
+
+    pendingSaveRef.current = { uri, durationMs };
     setShowTitlePrompt(true);
   }, [state, recorder]);
 

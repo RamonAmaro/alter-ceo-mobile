@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -28,26 +28,30 @@ export function TitlePrompt({ visible, defaultTitle, onConfirm, onCancel }: Titl
   );
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
-  const wasVisibleRef = useRef(false);
 
-  if (visible && !wasVisibleRef.current) {
-    wasVisibleRef.current = true;
-    setTitle(defaultTitle);
-    setInitialSelection({ start: defaultTitle.length, end: defaultTitle.length });
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: USE_NATIVE_DRIVER }),
-      Animated.spring(scale, {
-        toValue: 1,
-        speed: 28,
-        bounciness: 8,
-        useNativeDriver: USE_NATIVE_DRIVER,
-      }),
-    ]).start();
-  } else if (!visible && wasVisibleRef.current) {
-    wasVisibleRef.current = false;
-    opacity.setValue(0);
-    scale.setValue(0.9);
-  }
+  useEffect(() => {
+    if (visible) {
+      setTitle(defaultTitle);
+      setInitialSelection({ start: defaultTitle.length, end: defaultTitle.length });
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: USE_NATIVE_DRIVER,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          speed: 28,
+          bounciness: 8,
+          useNativeDriver: USE_NATIVE_DRIVER,
+        }),
+      ]).start();
+    } else {
+      opacity.setValue(0);
+      scale.setValue(0.9);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, defaultTitle]);
 
   if (!visible) return null;
 
