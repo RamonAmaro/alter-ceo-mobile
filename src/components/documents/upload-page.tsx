@@ -36,14 +36,29 @@ export function UploadPage({ width, height }: UploadPageProps) {
   }, []);
 
   function handlePick(): void {
-    Alert.alert(
-      "Pendiente de integración",
-      "La pantalla ya está lista. La subida y el análisis de documentos se activarán en cuanto el backend exponga el endpoint correspondiente.",
-    );
+    const title = "Función en desarrollo";
+    const message =
+      "La subida y el análisis de documentos aún no está disponible. Estamos trabajando para activarla muy pronto.";
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n\n${message}`);
+      return;
+    }
+    Alert.alert(title, message);
   }
 
+  const dragProps =
+    Platform.OS === "web"
+      ? {
+          onDragOver: (event: { preventDefault: () => void }) => event.preventDefault(),
+          onDrop: (event: { preventDefault: () => void }) => {
+            event.preventDefault();
+            handlePick();
+          },
+        }
+      : undefined;
+
   return (
-    <View style={[styles.page, { width, height }]}>
+    <View style={[styles.page, { width, height }]} {...dragProps}>
       <View style={styles.content}>
         <TouchableOpacity activeOpacity={0.8} onPress={handlePick}>
           <Animated.View style={[styles.heroButton, { transform: [{ scale: pulseScale }] }]}>
