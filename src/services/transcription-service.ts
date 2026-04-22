@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_VERSION } from "@/constants/env";
+import { API_ABSOLUTE_URL, API_VERSION } from "@/constants/env";
 
 const STOP_FINALIZATION_TIMEOUT_MS = 4000;
 const WS_CONNECT_TIMEOUT_MS = 5000;
@@ -13,7 +13,7 @@ export interface TranscriptionSession {
 type WsMessage = { type: string; text?: string; message?: string };
 
 function buildWsUrl(): string {
-  const base = API_BASE_URL.replace(/^https?/, (m) => (m === "https" ? "wss" : "ws"));
+  const base = API_ABSOLUTE_URL.replace(/^https?/, (m) => (m === "https" ? "wss" : "ws"));
   return `${base}/${API_VERSION}/audio/transcribe/ws?language=es`;
 }
 
