@@ -1,5 +1,7 @@
 import * as meetingService from "@/services/meeting-service";
+import * as sourceService from "@/services/source-service";
 import type { MeetingResponse, MeetingSummaryResponse } from "@/types/meeting";
+import type { SourceDetailResponse } from "@/types/source";
 import { toErrorMessage } from "@/utils/to-error-message";
 import { create } from "zustand";
 
@@ -41,6 +43,8 @@ interface UploadProgress {
 interface MeetingState {
   meetings: MeetingSummaryResponse[];
   activeMeeting: MeetingResponse | null;
+  activeSource: SourceDetailResponse | null;
+  isSourceLoading: boolean;
   uploadProgress: UploadProgress | null;
   isLoading: boolean;
   error: string | null;
@@ -48,6 +52,8 @@ interface MeetingState {
 
   fetchMeetings: (userId: string, limit?: number) => Promise<void>;
   getMeetingDetails: (meetingId: string) => Promise<void>;
+  fetchSourceDetail: (sourceId: string) => Promise<void>;
+  renameMeeting: (meetingId: string, title: string) => Promise<void>;
   deleteMeeting: (meetingId: string) => Promise<void>;
   startMeetingUpload: (
     userId: string,
@@ -64,6 +70,8 @@ interface MeetingState {
 export const useMeetingStore = create<MeetingState>((set, get) => ({
   meetings: [],
   activeMeeting: null,
+  activeSource: null,
+  isSourceLoading: false,
   uploadProgress: null,
   isLoading: false,
   error: null,
@@ -80,12 +88,46 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   },
 
   getMeetingDetails: async (meetingId: string) => {
-    set({ isLoading: true, error: null });
+    const { activeMeeting } = get();
+    const isDifferentMeeting = activeMeeting?.meeting_id !== meetingId;
+    set({
+      isLoading: true,
+      error: null,
+      ...(isDifferentMeeting ? { activeSource: null } : {}),
+    });
     try {
       const meeting = await meetingService.getMeeting(meetingId);
       set({ activeMeeting: meeting, isLoading: false });
     } catch (err) {
       set({ error: toErrorMessage(err), isLoading: false });
+    }
+  },
+
+  fetchSourceDetail: async (sourceId: string) => {
+    set({ isSourceLoading: true });
+    try {
+      const source = await sourceService.getSourceDetail(sourceId);
+      set({ activeSource: source, isSourceLoading: false });
+    } catch (err) {
+      set({ error: toErrorMessage(err), isSourceLoading: false });
+    }
+  },
+
+  renameMeeting: async (meetingId: string, title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    const { activeMeeting, meetings } = get();
+    try {
+      const updated = await meetingService.updateMeeting(meetingId, { title: trimmed });
+      set({
+        activeMeeting: activeMeeting?.meeting_id === meetingId ? updated : activeMeeting,
+        meetings: meetings.map((m) =>
+          m.meeting_id === meetingId ? { ...m, title: updated.title } : m,
+        ),
+      });
+    } catch (err) {
+      set({ error: toErrorMessage(err) });
+      throw err;
     }
   },
 
@@ -225,6 +267,8 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     set({
       meetings: [],
       activeMeeting: null,
+      activeSource: null,
+      isSourceLoading: false,
       uploadProgress: null,
       isLoading: false,
       error: null,

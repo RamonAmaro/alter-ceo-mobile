@@ -140,9 +140,7 @@ export function useAudioRecorder(_options?: RecordingOptions): WebAudioRecorder 
     const mimeType = candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
     mimeTypeRef.current = mimeType || "audio/webm";
 
-    const recorder = mimeType
-      ? new MediaRecorder(stream, { mimeType })
-      : new MediaRecorder(stream);
+    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
     // Some browsers substitute the requested type. Trust what the recorder ends up with.
     if (recorder.mimeType) mimeTypeRef.current = recorder.mimeType;
     chunksRef.current = [];

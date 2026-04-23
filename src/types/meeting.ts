@@ -1,4 +1,5 @@
 import type { MeetingProcessingStage, MeetingStatus } from "./api";
+import type { SourceStatus } from "./source";
 
 export interface MeetingCreateRequest {
   user_id: string;
@@ -57,6 +58,16 @@ export interface MeetingSummaryPayload {
   business_kernel_signals?: string[];
 }
 
+export interface MeetingLinkedSource {
+  source_id: string;
+  status: SourceStatus | string;
+  error_message?: string | null;
+}
+
+export interface MeetingUpdateRequest {
+  title: string;
+}
+
 export interface MeetingResponse {
   meeting_id: string;
   user_id: string;
@@ -80,6 +91,7 @@ export interface MeetingResponse {
   updated_at: string;
   processing_started_at?: string | null;
   processing_finished_at?: string | null;
+  source?: MeetingLinkedSource | null;
 }
 
 export interface MeetingSummaryResponse {

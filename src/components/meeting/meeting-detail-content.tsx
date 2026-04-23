@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Platform,
   ScrollView,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -16,13 +17,28 @@ import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
+import * as meetingService from "@/services/meeting-service";
 import { useMeetingStore } from "@/stores/meeting-store";
+import { createPoller } from "@/utils/create-poller";
 import { formatDurationSeconds } from "@/utils/format-date";
 import { goBackOrHome } from "@/utils/navigation";
 
+import { MeetingAlertsSection } from "./meeting-alerts-section";
+import { MeetingEntitiesSection } from "./meeting-entities-section";
 import { MeetingSummarySection } from "./meeting-summary-section";
 import { MeetingTechnicalDetails } from "./meeting-technical-details";
 import { MeetingTranscriptSection } from "./meeting-transcript-section";
+
+const STATUS_POLL_INTERVAL_MS = 5000;
+const STATUS_POLL_MAX_ATTEMPTS = 40;
+
+function isMeetingInProgress(status: string | undefined | null): boolean {
+  return status === "PROCESSING" || status === "UPLOADED" || status === "PENDING_UPLOAD";
+}
+
+function isSourceInProgress(status: string | undefined | null): boolean {
+  return status === "processing" || status === "pending";
+}
 
 interface MeetingDetailContentProps {
   meetingId: string;
@@ -78,6 +94,21 @@ function processingStageLabel(stage: string | null | undefined): string | null {
   }
 }
 
+function sourceStatusLabel(status: string | null | undefined): string {
+  if (status === "ready") return "Análisis profundo listo";
+  if (status === "processing") return "Analizando…";
+  if (status === "pending") return "En cola de análisis";
+  if (status === "failed") return "Análisis fallido";
+  return "Sin análisis";
+}
+
+function sourceStatusColor(status: string | null | undefined): string {
+  if (status === "ready") return SemanticColors.success;
+  if (status === "failed") return SemanticColors.error;
+  if (status === "processing" || status === "pending") return SemanticColors.warning;
+  return SemanticColors.textMuted;
+}
+
 function confirmDelete(onConfirm: () => void): void {
   if (Platform.OS === "web") {
     const ok =
@@ -109,17 +140,66 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const meeting = useMeetingStore((s) => s.activeMeeting);
+  const activeSource = useMeetingStore((s) => s.activeSource);
   const isLoading = useMeetingStore((s) => s.isLoading);
+  const isSourceLoading = useMeetingStore((s) => s.isSourceLoading);
   const getMeetingDetails = useMeetingStore((s) => s.getMeetingDetails);
+  const fetchSourceDetail = useMeetingStore((s) => s.fetchSourceDetail);
+  const renameMeeting = useMeetingStore((s) => s.renameMeeting);
   const deleteMeeting = useMeetingStore((s) => s.deleteMeeting);
 
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const titleInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (meetingId) {
       getMeetingDetails(meetingId);
     }
   }, [meetingId, getMeetingDetails]);
+
+  const sourceId = meeting?.source?.source_id ?? null;
+  const sourceStatus = meeting?.source?.status ?? null;
+
+  useEffect(() => {
+    if (!sourceId || sourceStatus !== "ready") return;
+    if (activeSource?.source_id === sourceId) return;
+    fetchSourceDetail(sourceId);
+  }, [sourceId, sourceStatus, activeSource?.source_id, fetchSourceDetail]);
+
+  const meetingStatus = meeting?.status ?? null;
+  const shouldPoll =
+    !!meeting && (isMeetingInProgress(meetingStatus) || isSourceInProgress(sourceStatus));
+  const pollTargetId = shouldPoll ? (meeting?.meeting_id ?? null) : null;
+
+  useEffect(() => {
+    if (!pollTargetId) return;
+
+    let attempts = 0;
+    const poller = createPoller({
+      fn: () => meetingService.getMeeting(pollTargetId),
+      interval: STATUS_POLL_INTERVAL_MS,
+      shouldStop: (next) => {
+        attempts += 1;
+        const meetingDone = !isMeetingInProgress(next.status);
+        const sourceDone = !isSourceInProgress(next.source?.status ?? null);
+        if (meetingDone && sourceDone) return true;
+        return attempts >= STATUS_POLL_MAX_ATTEMPTS;
+      },
+      onUpdate: (next) => {
+        useMeetingStore.setState({ activeMeeting: next });
+      },
+      onError: () => {
+        // silent; UI already reflects the processing state
+      },
+    });
+
+    poller.start();
+    return () => poller.stop();
+  }, [pollTargetId]);
 
   const summary = meeting?.summary;
   const dur = formatDurationSeconds(meeting?.duration_seconds);
@@ -175,6 +255,45 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const totalInsights =
     decisions.length + blockers.length + nextSteps.length + kernelSignals.length;
 
+  const entities = activeSource?.entities ?? [];
+  const alerts = activeSource?.insights ?? [];
+  const hasSourceData = sourceStatus === "ready" && (entities.length > 0 || alerts.length > 0);
+
+  function handleStartEditTitle(): void {
+    if (!meeting) return;
+    setEditedTitle(meeting.title);
+    setTitleError(null);
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 50);
+  }
+
+  function handleCancelEditTitle(): void {
+    setIsEditingTitle(false);
+    setEditedTitle("");
+    setTitleError(null);
+  }
+
+  async function handleConfirmEditTitle(): Promise<void> {
+    if (!meeting || isSavingTitle) return;
+    const trimmed = editedTitle.trim();
+    if (!trimmed || trimmed === meeting.title) {
+      handleCancelEditTitle();
+      return;
+    }
+    setIsSavingTitle(true);
+    setTitleError(null);
+    try {
+      await renameMeeting(meeting.meeting_id, trimmed);
+      setIsEditingTitle(false);
+      setEditedTitle("");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No se pudo guardar el título.";
+      setTitleError(message);
+    } finally {
+      setIsSavingTitle(false);
+    }
+  }
+
   function handleDelete(): void {
     if (!meeting || isDeleting) return;
     confirmDelete(async () => {
@@ -213,7 +332,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         >
           {/* ———————————————————————————————————— */}
-          {/*  HERO · folio + título + duración     */}
+          {/*  HERO                                 */}
           {/* ———————————————————————————————————— */}
           <View style={styles.hero}>
             <View style={styles.heroTopRow}>
@@ -230,9 +349,67 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
               {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
             </ThemedText>
 
-            <ThemedText style={styles.heroTitle} numberOfLines={5}>
-              {meeting.title}
-            </ThemedText>
+            {isEditingTitle ? (
+              <View style={styles.titleEditColumn}>
+                <View style={styles.titleEditWrap}>
+                  <TextInput
+                    ref={titleInputRef}
+                    value={editedTitle}
+                    onChangeText={setEditedTitle}
+                    style={styles.titleInput}
+                    onSubmitEditing={handleConfirmEditTitle}
+                    placeholderTextColor={SemanticColors.textPlaceholder}
+                    returnKeyType="done"
+                    autoCorrect={false}
+                    multiline
+                    editable={!isSavingTitle}
+                    maxLength={300}
+                  />
+                  <View style={styles.titleEditActions}>
+                    <TouchableOpacity
+                      onPress={handleCancelEditTitle}
+                      style={[styles.titleEditBtn, styles.titleEditBtnGhost]}
+                      activeOpacity={0.6}
+                      disabled={isSavingTitle}
+                      accessibilityLabel="Cancelar edición"
+                    >
+                      <Ionicons name="close" size={16} color={SemanticColors.textMuted} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleConfirmEditTitle}
+                      style={styles.titleEditBtn}
+                      activeOpacity={0.6}
+                      disabled={isSavingTitle}
+                      accessibilityLabel="Guardar título"
+                    >
+                      {isSavingTitle ? (
+                        <ActivityIndicator size="small" color={SemanticColors.success} />
+                      ) : (
+                        <Ionicons name="checkmark" size={16} color={SemanticColors.success} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                {titleError ? (
+                  <ThemedText style={styles.titleEditError}>{titleError}</ThemedText>
+                ) : null}
+              </View>
+            ) : (
+              <View style={styles.titleRow}>
+                <ThemedText style={styles.heroTitle} numberOfLines={5}>
+                  {meeting.title}
+                </ThemedText>
+                <TouchableOpacity
+                  onPress={handleStartEditTitle}
+                  style={styles.titleEditTrigger}
+                  activeOpacity={0.6}
+                  hitSlop={8}
+                  accessibilityLabel="Editar título"
+                >
+                  <Ionicons name="create-outline" size={16} color={SemanticColors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
 
             <View style={styles.heroAxis}>
               <View style={styles.heroAxisRule} />
@@ -259,6 +436,28 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
                 </ThemedText>
               </View>
             </View>
+
+            {meeting.source ? (
+              <View style={styles.sourceIndicator}>
+                {isSourceLoading && sourceStatus === "ready" ? (
+                  <ActivityIndicator size="small" color={SemanticColors.tealLight} />
+                ) : (
+                  <View
+                    style={[styles.sourceDot, { backgroundColor: sourceStatusColor(sourceStatus) }]}
+                  />
+                )}
+                <ThemedText style={styles.sourceText}>
+                  {isSourceLoading && sourceStatus === "ready"
+                    ? "Cargando análisis…"
+                    : sourceStatusLabel(sourceStatus)}
+                </ThemedText>
+                {alerts.length > 0 ? (
+                  <ThemedText style={styles.sourceBadge}>
+                    {String(alerts.length).padStart(2, "0")} ALERTAS
+                  </ThemedText>
+                ) : null}
+              </View>
+            ) : null}
           </View>
 
           {/* ——— ERROR ——— */}
@@ -272,27 +471,21 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
             </View>
           ) : null}
 
-          {/* ———————————————————————————————————— */}
-          {/*  RESUMEN EJECUTIVO                    */}
-          {/* ———————————————————————————————————— */}
+          {/* ——— RESUMEN EJECUTIVO ——— */}
           {summary ? (
             <View style={styles.editorialBlock}>
               <View style={styles.editorialRail} />
               <View style={styles.editorialContent}>
                 <ThemedText style={styles.editorialEyebrow}>RESUMEN · EJECUTIVO</ThemedText>
-
                 {summary.headline ? (
                   <ThemedText style={styles.editorialHeadline}>{summary.headline}</ThemedText>
                 ) : null}
-
                 <ThemedText style={styles.editorialBody}>{summary.executive_summary}</ThemedText>
               </View>
             </View>
           ) : null}
 
-          {/* ———————————————————————————————————— */}
-          {/*  INSIGHTS · secciones editoriales    */}
-          {/* ———————————————————————————————————— */}
+          {/* ——— INSIGHTS ——— */}
           {summary && insightSections.length > 0 ? (
             <View style={styles.insightsWrap}>
               <View style={styles.insightsHeader}>
@@ -320,6 +513,14 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
                 ))}
               </View>
             </View>
+          ) : null}
+
+          {/* ——— ALERTAS DEL AGENTE (source insights) ——— */}
+          {hasSourceData && alerts.length > 0 ? <MeetingAlertsSection insights={alerts} /> : null}
+
+          {/* ——— ENTIDADES DETECTADAS ——— */}
+          {hasSourceData && entities.length > 0 ? (
+            <MeetingEntitiesSection entities={entities} />
           ) : null}
 
           {/* ——— TRANSCRIPCIÓN ——— */}
@@ -427,13 +628,76 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.4)",
     letterSpacing: 1.8,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
   heroTitle: {
+    flex: 1,
     fontFamily: Fonts.montserratBold,
     fontSize: 34,
     lineHeight: 40,
     color: SemanticColors.textPrimary,
     letterSpacing: -0.9,
     marginTop: 2,
+  },
+  titleEditTrigger: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
+  },
+  titleEditColumn: {
+    gap: Spacing.one,
+    marginTop: 2,
+  },
+  titleEditWrap: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  titleEditError: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: SemanticColors.error,
+    letterSpacing: 0.1,
+  },
+  titleInput: {
+    flex: 1,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 30,
+    lineHeight: 36,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.7,
+    borderBottomWidth: 2,
+    borderBottomColor: SemanticColors.success,
+    paddingBottom: 4,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    ...(Platform.OS === "web" ? { outlineStyle: "none" as never } : {}),
+  },
+  titleEditActions: {
+    flexDirection: "row",
+    gap: 4,
+    paddingTop: 4,
+  },
+  titleEditBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.18)",
+  },
+  titleEditBtnGhost: {
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   heroAxis: {
     flexDirection: "row",
@@ -489,6 +753,32 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: "rgba(255,255,255,0.06)",
   },
+  sourceIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingTop: Spacing.one,
+  },
+  sourceDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  sourceText: {
+    flex: 1,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.3,
+  },
+  sourceBadge: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 10,
+    lineHeight: 12,
+    color: SemanticColors.error,
+    letterSpacing: 1.6,
+  },
 
   /* ═══════════════════════════════════════════ */
   /*  ERROR                                       */
@@ -521,7 +811,7 @@ const styles = StyleSheet.create({
   },
 
   /* ═══════════════════════════════════════════ */
-  /*  RESUMEN EJECUTIVO · bloco editorial         */
+  /*  RESUMEN EJECUTIVO                           */
   /* ═══════════════════════════════════════════ */
   editorialBlock: {
     flexDirection: "row",
