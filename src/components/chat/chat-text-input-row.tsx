@@ -1,8 +1,9 @@
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { PressableScale } from "@/components/pressable-scale";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 
 interface ChatTextInputRowProps {
@@ -46,9 +47,8 @@ export function ChatTextInputRow({
       </LinearGradient>
 
       {hasText ? (
-        <TouchableOpacity
+        <PressableScale
           style={[styles.actionBtn, !canSend && styles.actionBtnDisabled]}
-          activeOpacity={0.8}
           onPress={onSend}
           disabled={!canSend}
           accessibilityLabel="Enviar mensaje"
@@ -61,11 +61,10 @@ export function ChatTextInputRow({
           >
             <Ionicons name="send" size={18} color={canSend ? "#000000" : "rgba(0,0,0,0.4)"} />
           </LinearGradient>
-        </TouchableOpacity>
+        </PressableScale>
       ) : (
-        <TouchableOpacity
+        <PressableScale
           style={[styles.actionBtn, disabled && styles.actionBtnDisabled]}
-          activeOpacity={0.8}
           onPress={onStartRecording}
           disabled={disabled}
           accessibilityLabel="Grabar audio"
@@ -73,7 +72,7 @@ export function ChatTextInputRow({
           <LinearGradient colors={["#00FF84", "#00CC6A"]} style={styles.actionGradient}>
             <Ionicons name="mic" size={20} color={SemanticColors.onSuccess} />
           </LinearGradient>
-        </TouchableOpacity>
+        </PressableScale>
       )}
     </View>
   );
