@@ -63,6 +63,8 @@ export default function ChatScreen() {
 
   const chatBusy = isStreaming || isSubmittingAudio;
 
+  // TODO(native): rascunho de áudio ao sair e voltar ainda instável; sinalizador
+  // `CHAT_AUDIO_DRAFT_ON_LEAVE_UNSTABLE_ON_NATIVE` em `@/constants/audio`.
   const audioDraft = user ? (audioDraftsByUser[user.userId]?.[draftKey] ?? null) : null;
 
   const handleSubmitAudio = useCallback(

@@ -4,6 +4,8 @@ import { Alert } from "react-native";
 import { useFocusEffect } from "expo-router";
 
 import { AUDIO_MAX_DURATION_MS } from "@/constants/audio";
+
+// TODO(native): draft de áudio ao blur/unmount — ver CHAT_AUDIO_DRAFT_ON_LEAVE_UNSTABLE_ON_NATIVE em `@/constants/audio`.
 import {
   enableRecordingMode,
   RecordingPresets,
@@ -172,9 +174,7 @@ export function useChatAudioRecorder({
         callback({ uri: tempUri, durationMs });
       }
     })();
-    // Sem deps: usa refs. Função estável — evita re-registrar efeitos que a
-    // referenciam.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Sem deps intencional: refs estáveis para evitar re-registrar efeitos.
   }, []);
 
   // No Expo Router, o `Stack` nativo **não desmonta** a tela ao navegar —
