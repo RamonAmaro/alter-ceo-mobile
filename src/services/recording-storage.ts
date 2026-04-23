@@ -31,3 +31,16 @@ export async function deletePersistedRecording(uri: string): Promise<void> {
     // best-effort
   }
 }
+
+// Verifica se o arquivo ainda existe em disco. Usado na hidratação de drafts
+// para detectar arquivos que sumiram (limpeza de cache do app pelo SO, usuário
+// limpou dados, bug raro) e marcar o draft como "lost" antes de exibir no UI.
+export async function recordingFileExists(uri: string): Promise<boolean> {
+  if (!uri.startsWith("file://") && !uri.startsWith("/")) return false;
+  try {
+    const info = await getInfoAsync(uri);
+    return info.exists && (info.size ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
