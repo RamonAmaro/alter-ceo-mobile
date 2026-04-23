@@ -229,6 +229,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (err) {
       set({
         isSubmittingAudio: false,
+        isStreaming: false,
+        streamingText: "",
+        _sseConnection: null,
         error: toErrorMessage(err),
       });
     }

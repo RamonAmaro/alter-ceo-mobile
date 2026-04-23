@@ -157,6 +157,9 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
       sessionRef.current = session;
     } catch {
       sessionRef.current = null;
+      setTranscriptionError(
+        "No se pudo conectar al servicio de transcripción. La grabación seguirá funcionando.",
+      );
     }
 
     try {

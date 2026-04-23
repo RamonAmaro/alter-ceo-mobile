@@ -2,6 +2,7 @@ import { Platform } from "react-native";
 
 import { get, post, postFormData } from "@/lib/api-client";
 import { connectSSE, type SSEConnection } from "@/lib/sse-client";
+import { resolveRecordingBlob } from "@/services/resolve-recording-uri";
 import type { SSETypedEvent } from "@/types/sse";
 import type {
   ChatAudioTurnCreateRequest,
@@ -89,9 +90,25 @@ async function appendAudioFile(formData: FormData, uri: string, turnId: string):
   const inferredType = inferContentType(uri);
   const fileName = `voice-note-${turnId}.${inferExtension(inferredType)}`;
 
-  if (Platform.OS === "web" || uri.startsWith("blob:")) {
-    const response = await fetch(uri);
-    const blob = await response.blob();
+  // Caminho de Blob: usado no web (qualquer URI) e também quando o URI é
+  // `blob:` ou `idb-audio://` em qualquer plataforma. Esses schemes não são
+  // reconhecidos pelo `fetch` do RN nativo, então precisamos do Blob real.
+  const needsBlobPath =
+    Platform.OS === "web" || uri.startsWith("blob:") || uri.startsWith("idb-audio://");
+
+  if (needsBlobPath) {
+    // Drafts web usam URIs `idb-audio://` (blob persistido em IndexedDB).
+    // `resolveRecordingBlob` retorna o Blob direto, sem passar por `fetch`.
+    const direct = await resolveRecordingBlob(uri);
+    const blob =
+      direct ??
+      (await fetch(uri)
+        .then((r) => r.blob())
+        .catch(() => {
+          throw new Error(
+            "No se pudo leer el audio. Puede que el navegador lo haya eliminado. Inténtalo de nuevo.",
+          );
+        }));
     const contentType = blob.type || inferredType;
     formData.append("file", blob, `voice-note-${turnId}.${inferExtension(contentType)}`);
     return;
