@@ -1,3 +1,4 @@
+import { resolveRecordingBlob } from "@/services/resolve-recording-uri";
 import { ApiError } from "@/types/api";
 import type { MeetingDirectUploadPayload } from "@/types/meeting";
 
@@ -10,8 +11,17 @@ export async function uploadFileToS3(
   // some mobile browsers (Android Chrome/WebView in particular) send
   // ArrayBuffer payloads as multipart or drop them entirely, producing
   // "Network Error" against S3 pre-signed URLs.
-  const response = await fetch(fileUri);
-  const rawBlob = await response.blob();
+  //
+  // Suporte a URIs persistidas em IndexedDB (`idb-audio://...`): `fetch`
+  // não reconhece esse scheme, então recuperamos o Blob direto antes.
+  const durable = await resolveRecordingBlob(fileUri);
+  let rawBlob: Blob;
+  if (durable) {
+    rawBlob = durable;
+  } else {
+    const response = await fetch(fileUri);
+    rawBlob = await response.blob();
+  }
 
   // S3 signed URLs validate Content-Type against what was signed on the
   // backend. The Blob's own .type can be "audio/webm;codecs=opus" which does
