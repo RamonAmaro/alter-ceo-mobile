@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
+import { useFocusEffect } from "expo-router";
+
 import { AUDIO_MAX_DURATION_MS } from "@/constants/audio";
 import {
   enableRecordingMode,
@@ -64,6 +66,12 @@ export function useChatAudioRecorder({
   const interruptedCallbackRef = useRef(onRecordingInterrupted);
   interruptedCallbackRef.current = onRecordingInterrupted;
 
+  // Guard contra dupla captura: no Expo Router nativo, um pop da tela dispara
+  // `useFocusEffect` cleanup (blur) E em seguida `useEffect` cleanup (unmount).
+  // Sem esse flag, a segunda chamada tentaria parar um recorder já parado,
+  // resultando em "Unable to find the native shared object" (expo-audio).
+  const capturedRef = useRef(false);
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -73,6 +81,10 @@ export function useChatAudioRecorder({
 
   const stopAndSubmit = useCallback(
     async (startedAt: number): Promise<void> => {
+      // Marca como "já capturado": se a tela perder foco durante o envio,
+      // `captureInFlightRecording` deve ser no-op (o áudio está sendo enviado,
+      // não é um draft).
+      capturedRef.current = true;
       setState({ kind: "submitting" });
       setElapsedMs(Math.min(Date.now() - startedAt, AUDIO_MAX_DURATION_MS));
 
@@ -100,6 +112,9 @@ export function useChatAudioRecorder({
   );
 
   const cancelRecording = useCallback(async (): Promise<void> => {
+    // Mesma ideia do stopAndSubmit: ao cancelar, o áudio é explicitamente
+    // descartado — nenhum draft deve ser criado se a tela perder foco agora.
+    capturedRef.current = true;
     setState({ kind: "idle" });
     setElapsedMs(0);
     await stopRecorderAndGetUri(recorder).catch(() => null);
@@ -120,28 +135,73 @@ export function useChatAudioRecorder({
     return () => clearInterval(interval);
   }, [state, stopAndSubmit]);
 
+  // Captura a gravação em andamento e entrega à tela como draft. Sem isso,
+  // o recorder seria parado e o áudio descartado silenciosamente. O flag
+  // `capturedRef` é idempotente: múltiplas chamadas (ex: blur + unmount em
+  // sequência) só acionam a lógica uma vez — a segunda tentaria operar num
+  // recorder já parado, que o expo-audio rejeita com "Unable to find the
+  // native shared object".
+  //
+  // O ref ao `recorder` é mantido num ref separado (não deps de useCallback)
+  // para que esta função seja estável entre renders — caso contrário o
+  // `useFocusEffect` abaixo re-registraria o listener a cada render, podendo
+  // disparar cleanups espúrios.
+  const recorderRef = useRef(recorder);
+  recorderRef.current = recorder;
+
+  const captureInFlightRecording = useCallback(() => {
+    if (capturedRef.current) return;
+    const finalState = stateRef.current;
+    const callback = interruptedCallbackRef.current;
+    if (finalState.kind !== "recording" || !callback) return;
+
+    capturedRef.current = true;
+    const durationMs = Math.min(Date.now() - finalState.startedAt, AUDIO_MAX_DURATION_MS);
+    stateRef.current = { kind: "idle" };
+    setState({ kind: "idle" });
+    setElapsedMs(0);
+
+    const currentRecorder = recorderRef.current;
+    void (async () => {
+      const tempUri = await stopRecorderAndGetUri(currentRecorder).catch(() => null);
+      if (!tempUri) return;
+      try {
+        const persistedUri = await persistRecordingFile(tempUri);
+        callback({ uri: persistedUri, durationMs });
+      } catch {
+        callback({ uri: tempUri, durationMs });
+      }
+    })();
+    // Sem deps: usa refs. Função estável — evita re-registrar efeitos que a
+    // referenciam.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // No Expo Router, o `Stack` nativo **não desmonta** a tela ao navegar —
+  // ela fica montada em segundo plano. Isso significa que `useEffect` cleanup
+  // só roda em unmount real (pop do stack, troca de usuário, reload). Para
+  // capturar o caso comum de "usuário navegou pra outra tela", usamos
+  // `useFocusEffect` cujo cleanup roda no blur.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        captureInFlightRecording();
+      };
+    }, [captureInFlightRecording]),
+  );
+
+  // Rede de segurança para unmount real (reload no web, logout, pop do
+  // stack). Na maioria das vezes o `useFocusEffect` acima já capturou o
+  // draft e resetou o state — a condição abaixo só entra quando o unmount
+  // acontece sem passar por um blur.
   useEffect(() => {
     return () => {
-      // Ao desmontar durante gravação (usuário saiu da tela, app foi recarregado,
-      // logout), capturamos o áudio parcial e entregamos à tela via callback
-      // para virar um draft. Sem isso, o áudio seria descartado silenciosamente.
       const finalState = stateRef.current;
-      const callback = interruptedCallbackRef.current;
-      if (finalState.kind === "recording" && callback) {
-        const durationMs = Math.min(Date.now() - finalState.startedAt, AUDIO_MAX_DURATION_MS);
-        void (async () => {
-          const tempUri = await stopRecorderAndGetUri(recorder).catch(() => null);
-          if (!tempUri) return;
-          try {
-            const persistedUri = await persistRecordingFile(tempUri);
-            callback({ uri: persistedUri, durationMs });
-          } catch {
-            callback({ uri: tempUri, durationMs });
-          }
-        })();
+      if (finalState.kind === "recording") {
+        captureInFlightRecording();
         return;
       }
-      void recorder.stop();
+      void recorderRef.current.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -159,6 +219,9 @@ export function useChatAudioRecorder({
       await recorder.prepareToRecordAsync();
       recorder.record();
       if (!mountedRef.current) return;
+      // Reset do guard de captura: uma nova sessão de gravação deve poder ser
+      // capturada de novo ao sair da tela, mesmo que a anterior já tenha sido.
+      capturedRef.current = false;
       setElapsedMs(0);
       setState({ kind: "recording", startedAt: Date.now() });
     } catch {
