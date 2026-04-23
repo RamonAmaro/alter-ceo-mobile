@@ -4,9 +4,9 @@ import { Alert } from "react-native";
 import { useAudioRecorder } from "@siteed/audio-studio";
 import type { AudioDataEvent } from "@siteed/audio-studio";
 
+import { AUDIO_MAX_DURATION_MS } from "@/constants/audio";
 import {
   enableRecordingMode,
-  MAX_DURATION_MS,
   openAppSettings,
   requestAudioPermission,
 } from "@/services/audio-service";
@@ -55,7 +55,7 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
   const prevQuestionIndexRef = useRef(currentQuestionIndex);
   const finishingRef = useRef(false);
 
-  const elapsedMs = Math.min(durationMs, MAX_DURATION_MS);
+  const elapsedMs = Math.min(durationMs, AUDIO_MAX_DURATION_MS);
 
   const finishRecording = useCallback(async (): Promise<void> => {
     if (finishingRef.current) return;
@@ -85,7 +85,7 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
 
   // Auto-stop at max duration
   useEffect(() => {
-    if (durationMs >= MAX_DURATION_MS && recordState === "recording") {
+    if (durationMs >= AUDIO_MAX_DURATION_MS && recordState === "recording") {
       void finishRecording();
     }
   }, [durationMs, recordState, finishRecording]);

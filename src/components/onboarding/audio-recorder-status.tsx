@@ -4,9 +4,9 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { LiveTranscriptBox } from "@/components/onboarding/live-transcript-box";
 import { AudioWave } from "@/components/recording/audio-wave";
 import { ThemedText } from "@/components/themed-text";
+import { AUDIO_MAX_DURATION_MS } from "@/constants/audio";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import type { RecordingResult, RecordingState } from "@/hooks/use-onboarding-recorder";
-import { MAX_DURATION_MS } from "@/services/audio-service";
 import { formatTimer } from "@/utils/format-timer";
 
 interface AudioRecorderStatusProps {
@@ -54,7 +54,7 @@ export function AudioRecorderStatus({
               {formatTimer(elapsedMs)}
             </ThemedText>
             <ThemedText type="bodyMd" style={styles.timerLimit}>
-              / {formatTimer(MAX_DURATION_MS)}
+              / {formatTimer(AUDIO_MAX_DURATION_MS)}
             </ThemedText>
           </View>
         </>

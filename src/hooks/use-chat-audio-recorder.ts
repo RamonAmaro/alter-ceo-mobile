@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
+import { AUDIO_MAX_DURATION_MS } from "@/constants/audio";
 import {
   enableRecordingMode,
-  MAX_DURATION_MS,
   RecordingPresets,
   stopRecorderAndGetUri,
   useAudioRecorder,
@@ -55,7 +55,7 @@ export function useChatAudioRecorder({
   const stopAndSubmit = useCallback(
     async (startedAt: number): Promise<void> => {
       setState({ kind: "submitting" });
-      setElapsedMs(Math.min(Date.now() - startedAt, MAX_DURATION_MS));
+      setElapsedMs(Math.min(Date.now() - startedAt, AUDIO_MAX_DURATION_MS));
 
       const uri = await stopRecorderAndGetUri(recorder).catch(() => null);
 
@@ -90,9 +90,9 @@ export function useChatAudioRecorder({
     if (state.kind !== "recording") return;
 
     const tick = () => {
-      const next = Math.min(Date.now() - state.startedAt, MAX_DURATION_MS);
+      const next = Math.min(Date.now() - state.startedAt, AUDIO_MAX_DURATION_MS);
       setElapsedMs(next);
-      if (next >= MAX_DURATION_MS) {
+      if (next >= AUDIO_MAX_DURATION_MS) {
         void stopAndSubmit(state.startedAt);
       }
     };

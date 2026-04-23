@@ -106,6 +106,14 @@ export async function patch<T>(path: string, body?: unknown): Promise<T> {
   }
 }
 
+export async function del(path: string): Promise<void> {
+  try {
+    await apiClient.delete(path);
+  } catch (err) {
+    handleAxiosError(err);
+  }
+}
+
 export async function postFormData<T>(path: string, formData: FormData): Promise<T> {
   try {
     // Do not set Content-Type: axios/fetch generates the multipart boundary automatically.
@@ -115,4 +123,3 @@ export async function postFormData<T>(path: string, formData: FormData): Promise
     return handleAxiosError(err);
   }
 }
-

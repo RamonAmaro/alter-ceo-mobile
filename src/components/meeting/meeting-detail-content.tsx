@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -20,8 +20,8 @@ import { useMeetingStore } from "@/stores/meeting-store";
 import { formatDurationSeconds } from "@/utils/format-date";
 import { goBackOrHome } from "@/utils/navigation";
 
-import { MeetingActionItemsSection } from "./meeting-action-items-section";
 import { MeetingSummarySection } from "./meeting-summary-section";
+import { MeetingTechnicalDetails } from "./meeting-technical-details";
 import { MeetingTranscriptSection } from "./meeting-transcript-section";
 
 interface MeetingDetailContentProps {
@@ -31,7 +31,15 @@ interface MeetingDetailContentProps {
 function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+  return d
+    .toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })
+    .toUpperCase();
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
 function statusColor(status: string): string {
@@ -44,28 +52,57 @@ function statusLabel(status: string): string {
   if (status === "COMPLETED") return "COMPLETADO";
   if (status === "FAILED") return "ERROR";
   if (status === "PROCESSING") return "PROCESANDO";
+  if (status === "UPLOADED") return "SUBIDO";
+  if (status === "PENDING_UPLOAD") return "PENDIENTE";
   return status.toUpperCase();
 }
 
 function processingStageLabel(stage: string | null | undefined): string | null {
   switch (stage) {
     case "transcribing":
-      return "TRANSCRIBIENDO AUDIO";
+      return "Transcribiendo audio";
     case "summarizing":
-      return "GENERANDO RESUMEN";
+      return "Generando resumen";
     case "updating_memory":
-      return "ACTUALIZANDO INSIGHTS";
+      return "Actualizando insights";
     case "uploaded":
-      return "ARCHIVO SUBIDO";
+      return "Archivo subido";
     case "completed":
-      return "PROCESAMIENTO COMPLETO";
+      return null;
     case "failed":
-      return "FALLO EN PROCESO";
+      return "Fallo en el proceso";
     case "pending_upload":
-      return "PENDIENTE DE SUBIDA";
+      return "Pendiente de subida";
     default:
       return null;
   }
+}
+
+function confirmDelete(onConfirm: () => void): void {
+  if (Platform.OS === "web") {
+    const ok =
+      typeof window !== "undefined" &&
+      window.confirm("¿Eliminar esta reunión? Esta acción no se puede deshacer.");
+    if (ok) onConfirm();
+    return;
+  }
+  Alert.alert(
+    "Eliminar reunión",
+    "¿Seguro que quieres eliminar esta reunión? Esta acción no se puede deshacer.",
+    [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: onConfirm },
+    ],
+  );
+}
+
+interface InsightSection {
+  key: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  iconColor: string;
+  title: string;
+  items: readonly string[];
+  emptyMessage: string;
 }
 
 export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
@@ -74,11 +111,9 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const meeting = useMeetingStore((s) => s.activeMeeting);
   const isLoading = useMeetingStore((s) => s.isLoading);
   const getMeetingDetails = useMeetingStore((s) => s.getMeetingDetails);
-  const updateMeetingTitleLocally = useMeetingStore((s) => s.updateMeetingTitleLocally);
+  const deleteMeeting = useMeetingStore((s) => s.deleteMeeting);
 
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState("");
-  const inputRef = useRef<TextInput>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (meetingId) {
@@ -91,34 +126,67 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const sColor = meeting ? statusColor(meeting.status) : SemanticColors.textMuted;
   const stageLabel = meeting ? processingStageLabel(meeting.processing_stage) : null;
 
-  function handleStartEditTitle(): void {
-    if (!meeting) return;
-    setEditedTitle(meeting.title);
-    setIsEditingTitle(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  }
-
-  function handleCancelEditTitle(): void {
-    setIsEditingTitle(false);
-    setEditedTitle("");
-  }
-
-  function handleConfirmEditTitle(): void {
-    const trimmed = editedTitle.trim();
-    if (!trimmed || !meeting || trimmed === meeting.title) {
-      handleCancelEditTitle();
-      return;
-    }
-    updateMeetingTitleLocally(meeting.meeting_id, trimmed);
-    handleCancelEditTitle();
-  }
-
-  const topics = summary?.topics ?? [];
-  const blockers = summary?.blockers ?? [];
   const decisions = summary?.decisions ?? [];
-  const actionItems = summary?.action_items ?? [];
+  const blockers = summary?.blockers ?? [];
+  const nextSteps = summary?.next_steps ?? [];
+  const kernelSignals = summary?.business_kernel_signals ?? [];
 
-  const totalInsights = topics.length + blockers.length + decisions.length;
+  const insightSections: InsightSection[] = summary
+    ? [
+        {
+          key: "decisions",
+          icon: "checkmark-circle-outline",
+          iconColor: SemanticColors.success,
+          title: "Decisiones",
+          items: decisions,
+          emptyMessage: "Sin decisiones extraídas",
+        },
+        {
+          key: "next_steps",
+          icon: "arrow-forward-circle-outline",
+          iconColor: SemanticColors.info,
+          title: "Puntos de acción",
+          items: nextSteps,
+          emptyMessage: "Sin puntos de acción definidos",
+        },
+        {
+          key: "blockers",
+          icon: "warning-outline",
+          iconColor: SemanticColors.warning,
+          title: "Bloqueos",
+          items: blockers,
+          emptyMessage: "Sin bloqueos detectados",
+        },
+        ...(kernelSignals.length > 0
+          ? ([
+              {
+                key: "kernel",
+                icon: "pulse-outline",
+                iconColor: SemanticColors.tealLight,
+                title: "Señales de negocio",
+                items: kernelSignals,
+                emptyMessage: "",
+              },
+            ] as InsightSection[])
+          : []),
+      ]
+    : [];
+
+  const totalInsights =
+    decisions.length + blockers.length + nextSteps.length + kernelSignals.length;
+
+  function handleDelete(): void {
+    if (!meeting || isDeleting) return;
+    confirmDelete(async () => {
+      setIsDeleting(true);
+      try {
+        await deleteMeeting(meeting.meeting_id);
+        goBackOrHome();
+      } catch {
+        setIsDeleting(false);
+      }
+    });
+  }
 
   return (
     <View style={styles.root}>
@@ -144,167 +212,161 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           ]}
           showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         >
-          {/* ——— TITLE / DATE / DURATION ——— */}
-          <View style={styles.headerCard}>
-            <View style={styles.titleRow}>
-              {isEditingTitle ? (
-                <TextInput
-                  ref={inputRef}
-                  value={editedTitle}
-                  onChangeText={setEditedTitle}
-                  style={styles.titleInput}
-                  onSubmitEditing={handleConfirmEditTitle}
-                  placeholderTextColor={SemanticColors.textPlaceholder}
-                  returnKeyType="done"
-                  autoCorrect={false}
-                />
-              ) : (
-                <ThemedText style={styles.title} numberOfLines={3}>
-                  {meeting.title}
-                </ThemedText>
-              )}
-              {isEditingTitle ? (
-                <View style={styles.editActions}>
-                  <TouchableOpacity
-                    onPress={handleCancelEditTitle}
-                    style={[styles.editBtn, styles.editBtnCancel]}
-                    activeOpacity={0.7}
-                    accessibilityLabel="Cancelar edición"
-                  >
-                    <Ionicons name="close" size={18} color={SemanticColors.textMuted} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleConfirmEditTitle}
-                    style={styles.editBtn}
-                    activeOpacity={0.7}
-                    accessibilityLabel="Guardar título"
-                  >
-                    <Ionicons name="checkmark" size={18} color={SemanticColors.success} />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  onPress={handleStartEditTitle}
-                  style={styles.editBtn}
-                  activeOpacity={0.7}
-                  accessibilityLabel="Editar título"
-                >
-                  <Ionicons name="create-outline" size={18} color={SemanticColors.success} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <ThemedText style={styles.date}>{formatDate(meeting.created_at)}</ThemedText>
-
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Ionicons name="time-outline" size={13} color={SemanticColors.textMuted} />
-                <ThemedText style={styles.metaText}>{dur}</ThemedText>
-              </View>
-
-              <View style={styles.metaDot} />
-
-              <View style={[styles.statusFlag, { backgroundColor: `${sColor}15`, borderColor: `${sColor}44` }]}>
-                <View style={[styles.statusFlagDot, { backgroundColor: sColor }]} />
-                <ThemedText style={[styles.statusFlagLabel, { color: sColor }]}>
+          {/* ———————————————————————————————————— */}
+          {/*  HERO · folio + título + duración     */}
+          {/* ———————————————————————————————————— */}
+          <View style={styles.hero}>
+            <View style={styles.heroTopRow}>
+              <ThemedText style={styles.heroFolio}>ACTA · 01</ThemedText>
+              <View style={styles.statusPill}>
+                <View style={[styles.statusDot, { backgroundColor: sColor }]} />
+                <ThemedText style={[styles.statusText, { color: sColor }]}>
                   {statusLabel(meeting.status)}
                 </ThemedText>
               </View>
+            </View>
 
-              {stageLabel && meeting.status !== "COMPLETED" ? (
-                <>
-                  <View style={styles.metaDot} />
-                  <ThemedText style={[styles.stageText, { color: sColor }]} numberOfLines={1}>
-                    {stageLabel}
-                  </ThemedText>
-                </>
-              ) : null}
+            <ThemedText style={styles.heroDate}>
+              {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
+            </ThemedText>
+
+            <ThemedText style={styles.heroTitle} numberOfLines={5}>
+              {meeting.title}
+            </ThemedText>
+
+            <View style={styles.heroAxis}>
+              <View style={styles.heroAxisRule} />
+              <View style={styles.heroAxisDot} />
+            </View>
+
+            <View style={styles.heroStats}>
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>DURACIÓN</ThemedText>
+                <ThemedText style={styles.statValue}>{dur}</ThemedText>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>INSIGHTS</ThemedText>
+                <ThemedText style={styles.statValue}>
+                  {String(totalInsights).padStart(2, "0")}
+                </ThemedText>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>ETAPA</ThemedText>
+                <ThemedText style={styles.statValueText} numberOfLines={1}>
+                  {stageLabel ?? "Finalizada"}
+                </ThemedText>
+              </View>
             </View>
           </View>
 
-          {/* ——— RESUMEN EJECUTIVO ——— */}
-          {summary ? (
-            <View style={styles.summaryBlock}>
-              <View style={styles.summaryEyebrowRow}>
-                <View style={styles.summaryEyebrowBar} />
-                <ThemedText style={styles.summaryEyebrow}>RESUMEN · EJECUTIVO</ThemedText>
+          {/* ——— ERROR ——— */}
+          {meeting.error_message ? (
+            <View style={styles.errorBox}>
+              <View style={styles.errorRail} />
+              <View style={styles.errorContent}>
+                <ThemedText style={styles.errorEyebrow}>INCIDENCIA</ThemedText>
+                <ThemedText style={styles.errorText}>{meeting.error_message}</ThemedText>
               </View>
-
-              {summary.headline ? (
-                <ThemedText style={styles.summaryHeadline}>{summary.headline}</ThemedText>
-              ) : null}
-
-              <ThemedText style={styles.summaryBody}>{summary.executive_summary}</ThemedText>
             </View>
           ) : null}
 
-          {/* ——— INSIGHTS ——— */}
+          {/* ———————————————————————————————————— */}
+          {/*  RESUMEN EJECUTIVO                    */}
+          {/* ———————————————————————————————————— */}
           {summary ? (
-            <View style={styles.insightsBlock}>
+            <View style={styles.editorialBlock}>
+              <View style={styles.editorialRail} />
+              <View style={styles.editorialContent}>
+                <ThemedText style={styles.editorialEyebrow}>RESUMEN · EJECUTIVO</ThemedText>
+
+                {summary.headline ? (
+                  <ThemedText style={styles.editorialHeadline}>{summary.headline}</ThemedText>
+                ) : null}
+
+                <ThemedText style={styles.editorialBody}>{summary.executive_summary}</ThemedText>
+              </View>
+            </View>
+          ) : null}
+
+          {/* ———————————————————————————————————— */}
+          {/*  INSIGHTS · secciones editoriales    */}
+          {/* ———————————————————————————————————— */}
+          {summary && insightSections.length > 0 ? (
+            <View style={styles.insightsWrap}>
               <View style={styles.insightsHeader}>
-                <ThemedText style={styles.insightsCount}>
+                <ThemedText style={styles.insightsEyebrow}>
+                  INSIGHTS · CAPTURADOS POR ALTER
+                </ThemedText>
+                <ThemedText style={styles.insightsCountBig}>
                   {String(totalInsights).padStart(2, "0")}
                 </ThemedText>
-                <View style={styles.insightsLabelBlock}>
-                  <ThemedText style={styles.insightsLabel}>INSIGHTS</ThemedText>
-                  <ThemedText style={styles.insightsSub}>DETECTADOS · POR ALTER</ThemedText>
-                </View>
               </View>
 
-              <View style={styles.sectionsList}>
-                <MeetingSummarySection
-                  icon="list"
-                  iconColor={SemanticColors.teal}
-                  title="Temas tratados"
-                  items={topics}
-                  emptyMessage="Sin temas identificados"
-                />
-                <MeetingSummarySection
-                  icon="warning"
-                  iconColor={SemanticColors.warning}
-                  title="Bloqueos"
-                  items={blockers}
-                  emptyMessage="Sin bloqueos detectados"
-                />
-                <MeetingSummarySection
-                  icon="checkmark-circle"
-                  iconColor={SemanticColors.success}
-                  title="Decisiones"
-                  items={decisions}
-                  emptyMessage="Sin decisiones extraídas"
-                />
+              <View style={styles.insightsRule} />
+
+              <View style={styles.insightsList}>
+                {insightSections.map((section, idx) => (
+                  <MeetingSummarySection
+                    key={section.key}
+                    index={idx + 1}
+                    icon={section.icon}
+                    iconColor={section.iconColor}
+                    title={section.title}
+                    items={section.items}
+                    emptyMessage={section.emptyMessage}
+                  />
+                ))}
               </View>
             </View>
           ) : null}
-
-          {/* ——— PUNTOS DE ACCIÓN ——— */}
-          {summary ? <MeetingActionItemsSection items={actionItems} /> : null}
 
           {/* ——— TRANSCRIPCIÓN ——— */}
           {meeting.transcript ? <MeetingTranscriptSection transcript={meeting.transcript} /> : null}
 
-          {meeting.error_message ? (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color={SemanticColors.error} />
-              <ThemedText style={styles.errorText}>{meeting.error_message}</ThemedText>
+          {/* ——— METADATOS TÉCNICOS ——— */}
+          <MeetingTechnicalDetails
+            fileName={meeting.file_name}
+            contentType={meeting.content_type}
+            sizeBytes={meeting.size_bytes}
+            recordedStartedAt={meeting.recorded_started_at}
+            recordedFinishedAt={meeting.recorded_finished_at}
+            processingStartedAt={meeting.processing_started_at}
+            processingFinishedAt={meeting.processing_finished_at}
+            processingRunId={meeting.processing_run_id}
+            updatedAt={meeting.updated_at}
+          />
+
+          {/* ——— ZONA DE ARCHIVO ——— */}
+          <View style={styles.archiveZone}>
+            <View style={styles.archiveHeader}>
+              <ThemedText style={styles.archiveEyebrow}>ZONA DE ARCHIVO</ThemedText>
+              <View style={styles.archiveDash} />
             </View>
-          ) : null}
+            <TouchableOpacity
+              onPress={handleDelete}
+              activeOpacity={0.6}
+              disabled={isDeleting}
+              style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
+              accessibilityRole="button"
+              accessibilityLabel="Eliminar reunión permanentemente"
+            >
+              {isDeleting ? (
+                <ActivityIndicator size="small" color={SemanticColors.error} />
+              ) : (
+                <Ionicons name="trash-outline" size={14} color={SemanticColors.error} />
+              )}
+              <ThemedText style={styles.deleteButtonText}>
+                {isDeleting ? "ELIMINANDO" : "ELIMINAR REUNIÓN PERMANENTEMENTE"}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       )}
     </View>
   );
 }
-
-const headerShadow = Platform.select({
-  ios: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 22,
-  },
-  android: { elevation: 8 },
-  web: { boxShadow: "0 10px 28px rgba(0,0,0,0.3)" },
-});
 
 const styles = StyleSheet.create({
   root: {
@@ -319,219 +381,266 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.three,
-    gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.five,
     paddingTop: Spacing.two,
   },
 
-  /* ——— Header card (title + date + duration) ——— */
-  headerCard: {
-    padding: Spacing.four,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    gap: Spacing.two,
-    ...headerShadow,
+  /* ═══════════════════════════════════════════ */
+  /*  HERO                                        */
+  /* ═══════════════════════════════════════════ */
+  hero: {
+    gap: Spacing.three,
   },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: Spacing.two,
-  },
-  title: {
-    flex: 1,
-    fontFamily: Fonts.montserratBold,
-    fontSize: 26,
-    lineHeight: 32,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.4,
-  },
-  titleInput: {
-    flex: 1,
-    fontFamily: Fonts.montserratBold,
-    fontSize: 26,
-    lineHeight: 32,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.4,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.3)",
-    borderRadius: 10,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 4,
-    outlineStyle: "none" as never,
-  },
-  editBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.24)",
-  },
-  editBtnCancel: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderColor: "rgba(255,255,255,0.12)",
-  },
-  editActions: {
-    flexDirection: "row",
-    gap: Spacing.one,
-  },
-  date: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 15,
-    lineHeight: 20,
-    color: SemanticColors.textSecondaryLight,
-  },
-  metaRow: {
+  heroTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    flexWrap: "wrap",
-    gap: Spacing.two,
-    paddingTop: Spacing.one,
+    justifyContent: "space-between",
   },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  metaText: {
+  heroFolio: {
     fontFamily: Fonts.octosquaresBlack,
-    fontSize: 12,
-    lineHeight: 14,
-    color: SemanticColors.textSecondaryLight,
-    letterSpacing: 0.4,
-    fontVariant: ["tabular-nums"],
-  },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-  statusFlag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  statusFlagDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-  },
-  statusFlagLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 12,
-    letterSpacing: 1.5,
-  },
-  stageText: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    letterSpacing: 1.5,
-  },
-
-  /* ——— Resumen Ejecutivo ——— */
-  summaryBlock: {
-    paddingVertical: Spacing.two,
-    paddingLeft: Spacing.three,
-    borderLeftWidth: 2,
-    borderLeftColor: "rgba(0,255,132,0.35)",
-    gap: Spacing.two,
-  },
-  summaryEyebrowRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-  },
-  summaryEyebrowBar: {
-    width: 14,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: SemanticColors.success,
-  },
-  summaryEyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.textMuted,
     letterSpacing: 2.4,
   },
-  summaryHeadline: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 20,
-    lineHeight: 28,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.3,
-    marginTop: Spacing.one,
-  },
-  summaryBody: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 23,
-    color: SemanticColors.textSecondaryLight,
-    marginTop: Spacing.one,
-  },
-
-  /* ——— Insights ——— */
-  insightsBlock: {
-    gap: Spacing.three,
-  },
-  insightsHeader: {
+  statusPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.three,
+    gap: 6,
   },
-  insightsCount: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 40,
-    lineHeight: 42,
-    color: SemanticColors.success,
-    letterSpacing: -1,
-    fontVariant: ["tabular-nums"],
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  insightsLabelBlock: {
-    gap: 2,
-  },
-  insightsLabel: {
+  statusText: {
     fontFamily: Fonts.montserratBold,
-    fontSize: 14,
-    lineHeight: 18,
-    color: SemanticColors.textPrimary,
-    letterSpacing: 2.4,
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 2,
   },
-  insightsSub: {
+  heroDate: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.4)",
+    letterSpacing: 1.8,
+  },
+  heroTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 34,
+    lineHeight: 40,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.9,
+    marginTop: 2,
+  },
+  heroAxis: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingTop: Spacing.one,
+  },
+  heroAxisRule: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  heroAxisDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: SemanticColors.success,
+  },
+  heroStats: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: Spacing.three,
+    paddingTop: Spacing.one,
+  },
+  statBlock: {
+    flex: 1,
+    gap: 4,
+  },
+  statLabel: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 9,
     lineHeight: 12,
     color: SemanticColors.textMuted,
-    letterSpacing: 1.8,
+    letterSpacing: 2,
   },
-  sectionsList: {
-    gap: Spacing.two,
+  statValue: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 28,
+    lineHeight: 30,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.5,
+    fontVariant: ["tabular-nums"],
+  },
+  statValueText: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.2,
+    marginTop: 4,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
   },
 
+  /* ═══════════════════════════════════════════ */
+  /*  ERROR                                       */
+  /* ═══════════════════════════════════════════ */
   errorBox: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-    backgroundColor: SemanticColors.errorMuted,
-    borderRadius: 14,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: "rgba(255,68,68,0.25)",
+    gap: Spacing.three,
+  },
+  errorRail: {
+    width: 2,
+    backgroundColor: SemanticColors.error,
+    borderRadius: 1,
+  },
+  errorContent: {
+    flex: 1,
+    gap: 4,
+  },
+  errorEyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.error,
+    letterSpacing: 2.4,
   },
   errorText: {
     fontFamily: Fonts.montserratMedium,
     fontSize: 13,
-    color: SemanticColors.error,
+    lineHeight: 19,
+    color: SemanticColors.textSecondaryLight,
+  },
+
+  /* ═══════════════════════════════════════════ */
+  /*  RESUMEN EJECUTIVO · bloco editorial         */
+  /* ═══════════════════════════════════════════ */
+  editorialBlock: {
+    flexDirection: "row",
+    gap: Spacing.three,
+  },
+  editorialRail: {
+    width: 2,
+    backgroundColor: SemanticColors.success,
+    borderRadius: 1,
+  },
+  editorialContent: {
     flex: 1,
+    gap: Spacing.two,
+  },
+  editorialEyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    letterSpacing: 2.4,
+  },
+  editorialHeadline: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 22,
+    lineHeight: 30,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.5,
+    marginTop: 2,
+  },
+  editorialBody: {
+    fontFamily: Fonts.montserrat,
+    fontSize: 15,
+    lineHeight: 24,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.1,
+    marginTop: 2,
+  },
+
+  /* ═══════════════════════════════════════════ */
+  /*  INSIGHTS                                    */
+  /* ═══════════════════════════════════════════ */
+  insightsWrap: {
+    gap: Spacing.three,
+  },
+  insightsHeader: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: Spacing.three,
+  },
+  insightsEyebrow: {
+    flex: 1,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.textMuted,
+    letterSpacing: 2.4,
+    paddingBottom: 4,
+  },
+  insightsCountBig: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 48,
+    lineHeight: 50,
+    color: SemanticColors.success,
+    letterSpacing: -1.5,
+    fontVariant: ["tabular-nums"],
+  },
+  insightsRule: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  insightsList: {
+    paddingTop: Spacing.two,
+  },
+
+  /* ═══════════════════════════════════════════ */
+  /*  ZONA DE ARCHIVO                             */
+  /* ═══════════════════════════════════════════ */
+  archiveZone: {
+    gap: Spacing.three,
+    paddingTop: Spacing.three,
+  },
+  archiveHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  archiveEyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: "rgba(255,68,68,0.5)",
+    letterSpacing: 2.4,
+  },
+  archiveDash: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,68,68,0.12)",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderWidth: 1,
+    borderColor: "rgba(255,68,68,0.18)",
+    borderStyle: Platform.select({ web: "dashed", default: "solid" }),
+    borderRadius: 4,
+    backgroundColor: "rgba(255,68,68,0.02)",
+  },
+  deleteButtonDisabled: {
+    opacity: 0.5,
+  },
+  deleteButtonText: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.error,
+    letterSpacing: 2,
   },
 });

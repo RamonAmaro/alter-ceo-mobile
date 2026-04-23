@@ -48,7 +48,7 @@ interface MeetingState {
 
   fetchMeetings: (userId: string, limit?: number) => Promise<void>;
   getMeetingDetails: (meetingId: string) => Promise<void>;
-  updateMeetingTitleLocally: (meetingId: string, title: string) => void;
+  deleteMeeting: (meetingId: string) => Promise<void>;
   startMeetingUpload: (
     userId: string,
     title: string,
@@ -89,19 +89,23 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     }
   },
 
-  updateMeetingTitleLocally: (meetingId: string, title: string) => {
-    const trimmed = title.trim();
-    if (!trimmed) return;
-    const { activeMeeting, meetings } = get();
-    set({
-      activeMeeting:
-        activeMeeting && activeMeeting.meeting_id === meetingId
-          ? { ...activeMeeting, title: trimmed }
-          : activeMeeting,
-      meetings: meetings.map((m) =>
-        m.meeting_id === meetingId ? { ...m, title: trimmed } : m,
-      ),
-    });
+  deleteMeeting: async (meetingId: string) => {
+    const { activeMeeting, meetings, _activePoller } = get();
+    try {
+      await meetingService.deleteMeeting(meetingId);
+      if (_activePoller && activeMeeting?.meeting_id === meetingId) {
+        _activePoller.stop();
+      }
+      set({
+        meetings: meetings.filter((m) => m.meeting_id !== meetingId),
+        activeMeeting: activeMeeting?.meeting_id === meetingId ? null : activeMeeting,
+        _activePoller:
+          _activePoller && activeMeeting?.meeting_id === meetingId ? null : _activePoller,
+      });
+    } catch (err) {
+      set({ error: toErrorMessage(err) });
+      throw err;
+    }
   },
 
   startMeetingUpload: async (

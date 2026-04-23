@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const MAX_DURATION_MS = 30_000;
-
 export interface AudioPermissionResult {
   readonly granted: boolean;
   readonly canAskAgain: boolean;

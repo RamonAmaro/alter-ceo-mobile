@@ -7,8 +7,6 @@ import {
 } from "expo-audio";
 import { Linking, Platform } from "react-native";
 
-export const MAX_DURATION_MS = 30_000;
-
 export interface AudioPermissionResult {
   readonly granted: boolean;
   readonly canAskAgain: boolean;
