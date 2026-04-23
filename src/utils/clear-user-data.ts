@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useActiveRecordingStore } from "@/stores/active-recording-store";
+import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
 import { useChatStore } from "@/stores/chat-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
@@ -18,6 +19,7 @@ export async function clearUserScopedStores(): Promise<void> {
   useActiveRecordingStore.getState().setActiveId(null);
   await useOnboardingStore.getState().reset();
   await useRecordingsStore.getState().reset();
+  await useChatAudioDraftStore.getState().reset();
 }
 
 // Like `clearUserScopedStores`, but preserves user drafts & pending local work
@@ -31,6 +33,7 @@ export async function clearUserScopedStoresKeepingPending(): Promise<void> {
   useActiveRecordingStore.getState().setActiveId(null);
   useOnboardingStore.getState().resetKeepingDraft();
   await useRecordingsStore.getState().resetKeepingPending();
+  useChatAudioDraftStore.getState().resetKeepingDrafts();
 }
 
 export async function getLastAuthenticatedUserId(): Promise<string | null> {

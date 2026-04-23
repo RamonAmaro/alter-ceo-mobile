@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
+import { ChatAudioDraftBanner } from "@/components/chat/chat-audio-draft-banner";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { KeyboardView } from "@/components/keyboard-view";
@@ -12,6 +13,7 @@ import { SemanticColors, Spacing } from "@/constants/theme";
 import { useChatAudioRecorder } from "@/hooks/use-chat-audio-recorder";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
+import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
 import { NEW_THREAD_DRAFT_KEY, useChatStore } from "@/stores/chat-store";
 
 function extractInitial(displayName: string | null, email: string | null): string {
@@ -51,9 +53,17 @@ export default function ChatScreen() {
   const setDraft = useChatStore((s) => s.setDraft);
   const clearDraft = useChatStore((s) => s.clearDraft);
 
+  const audioDraftsHydrated = useChatAudioDraftStore((s) => s.hydrated);
+  const loadAudioDrafts = useChatAudioDraftStore((s) => s.loadDrafts);
+  const saveAudioDraft = useChatAudioDraftStore((s) => s.saveDraft);
+  const clearAudioDraft = useChatAudioDraftStore((s) => s.clearDraft);
+  const audioDraftsByUser = useChatAudioDraftStore((s) => s.drafts);
+
   const draftKey = activeThreadId ?? NEW_THREAD_DRAFT_KEY;
 
   const chatBusy = isStreaming || isSubmittingAudio;
+
+  const audioDraft = user ? (audioDraftsByUser[user.userId]?.[draftKey] ?? null) : null;
 
   const handleSubmitAudio = useCallback(
     async (uri: string): Promise<void> => {
@@ -64,16 +74,42 @@ export default function ChatScreen() {
     [activeThreadId, createThread, sendAudioMessage, user],
   );
 
+  const handleRecordingInterrupted = useCallback(
+    (draft: { uri: string; durationMs: number }) => {
+      if (!user) return;
+      // Snapshot do draftKey no momento da interrupção. Usar closure do React é
+      // seguro aqui porque o componente é desmontado em seguida e o valor
+      // capturado era o corrente.
+      void saveAudioDraft(user.userId, draftKey, {
+        uri: draft.uri,
+        durationMs: draft.durationMs,
+        createdAt: new Date().toISOString(),
+      });
+    },
+    [user, draftKey, saveAudioDraft],
+  );
+
   const {
     audioState,
     elapsedMs,
-    handleStartRecording,
+    handleStartRecording: handleStartRecordingRaw,
     handleStopRecording,
     handleCancelRecording,
   } = useChatAudioRecorder({
     disabled: chatBusy,
     onSubmitAudio: handleSubmitAudio,
+    onRecordingInterrupted: handleRecordingInterrupted,
   });
+
+  const handleStartRecording = useCallback((): void => {
+    // Se há draft antigo e o usuário decide gravar algo novo, ele está
+    // efetivamente abandonando o draft. Limpar antes evita que, ao terminar,
+    // o banner reapareça oferecendo o audio antigo.
+    if (user && audioDraft) {
+      void clearAudioDraft(user.userId, draftKey);
+    }
+    handleStartRecordingRaw();
+  }, [user, audioDraft, draftKey, clearAudioDraft, handleStartRecordingRaw]);
 
   useEffect(() => {
     if (!user) return;
@@ -83,6 +119,12 @@ export default function ChatScreen() {
   useEffect(() => {
     void loadDrafts().finally(() => setDraftsHydrated(true));
   }, [loadDrafts]);
+
+  useEffect(() => {
+    if (!audioDraftsHydrated) {
+      void loadAudioDrafts();
+    }
+  }, [audioDraftsHydrated, loadAudioDrafts]);
 
   useEffect(() => {
     if (threads.length > 0 && !activeThreadId) {
@@ -125,6 +167,38 @@ export default function ChatScreen() {
     }
   }
 
+  const handleSendAudioDraft = useCallback(async (): Promise<void> => {
+    if (!user || !audioDraft) return;
+    // Draft marcado como perdido não tem bytes no IndexedDB (ou é blob legado).
+    // Tentar enviar falharia com mensagem de erro; melhor bloquear de vez.
+    if (audioDraft.lost) return;
+    // Guard contra double-tap: `disabled` em TouchableOpacity não bloqueia
+    // cliques rápidos de forma confiável, então checamos explicitamente se já
+    // há um envio em andamento para evitar disparar `createAudioTurn` duas
+    // vezes com o mesmo arquivo (criaria mensagens duplicadas no backend).
+    if (useChatStore.getState().isSubmittingAudio) return;
+    const uri = audioDraft.uri;
+    await handleSubmitAudio(uri);
+    // `sendAudioMessage` não re-throw: trata o erro internamente e grava em
+    // `chat-store.error`. Checamos aqui se o envio deu certo antes de apagar
+    // o draft. Se falhou, o banner continua visível e o usuário pode tentar
+    // novamente ou descartar manualmente — áudio nunca se perde sem intenção.
+    //
+    // Edge case: o stream SSE pode ter setado `error` entre o await retornar e
+    // esta leitura. Nesse caso tratamos como falha (conservador: mantemos o
+    // draft), mesmo que o backend já tenha o áudio. Preferir não perder
+    // audio > preferir não mostrar banner redundante.
+    const submitError = useChatStore.getState().error;
+    if (!submitError) {
+      await clearAudioDraft(user.userId, draftKey);
+    }
+  }, [user, audioDraft, draftKey, clearAudioDraft, handleSubmitAudio]);
+
+  const handleDiscardAudioDraft = useCallback((): void => {
+    if (!user) return;
+    void clearAudioDraft(user.userId, draftKey);
+  }, [user, draftKey, clearAudioDraft]);
+
   return (
     <AppBackground style={{ paddingBottom: insets.bottom }}>
       <KeyboardView>
@@ -156,6 +230,17 @@ export default function ChatScreen() {
               {error}
             </ThemedText>
           )}
+
+          {audioDraft && audioState === "idle" && !isStreaming ? (
+            <ChatAudioDraftBanner
+              uri={audioDraft.lost ? null : audioDraft.uri}
+              durationMs={audioDraft.durationMs}
+              onSend={handleSendAudioDraft}
+              onDiscard={handleDiscardAudioDraft}
+              isSubmitting={isSubmittingAudio}
+              lost={audioDraft.lost ?? false}
+            />
+          ) : null}
 
           <ChatInput
             value={inputValue}
