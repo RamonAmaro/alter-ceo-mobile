@@ -2,10 +2,27 @@ import { useCallback } from "react";
 import { Platform } from "react-native";
 import { getInfoAsync } from "expo-file-system/legacy";
 
+import { resolveRecordingBlob } from "@/services/resolve-recording-uri";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useRecordingsStore } from "@/stores/recordings-store";
 import { toErrorMessage } from "@/utils/to-error-message";
+
+// No web, um URI pode ser tanto uma `blob:` URL (sessão atual) quanto um
+// `idb-audio://` (persistido em IndexedDB). Essa função abstrai a diferença
+// e retorna o Blob para ambos — necessário porque `fetch("idb-audio://...")`
+// falharia com scheme não-reconhecido.
+async function loadWebBlob(uri: string): Promise<Blob | null> {
+  const durable = await resolveRecordingBlob(uri);
+  if (durable) return durable;
+  try {
+    const response = await fetch(uri);
+    if (!response.ok) return null;
+    return await response.blob();
+  } catch {
+    return null;
+  }
+}
 
 function getContentTypeFromExt(uri: string): string {
   const ext = uri.split(".").pop()?.toLowerCase();
@@ -16,57 +33,48 @@ function getContentTypeFromExt(uri: string): string {
   return "audio/mp4";
 }
 
-async function resolveContentType(uri: string): Promise<string> {
-  // On web, the blob's own `.type` is authoritative — it reflects what the
-  // browser actually recorded, which varies by device (desktop → webm/opus,
-  // iOS → mp4, some Android webviews → ogg). Assuming webm breaks S3 uploads
-  // on those clients because the Content-Type header mismatches the bytes.
-  if (Platform.OS === "web" && uri.startsWith("blob:")) {
-    try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      if (blob.type) {
-        // Normalize: strip codecs parameter ("audio/webm;codecs=opus" → "audio/webm"),
-        // S3 signed URLs expect the exact Content-Type used at signing time.
-        return blob.type.split(";")[0].trim();
-      }
-    } catch {
-      // fall through
-    }
-  }
-  return getContentTypeFromExt(uri);
+function contentTypeFromBlob(blob: Blob, fallback: string): string {
+  if (!blob.type) return fallback;
+  // Normalize: strip codecs parameter ("audio/webm;codecs=opus" → "audio/webm"),
+  // S3 signed URLs expect the exact Content-Type used at signing time.
+  return blob.type.split(";")[0].trim();
 }
 
-async function getFileSize(uri: string): Promise<number> {
-  if (Platform.OS === "web") {
-    try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      return blob.size;
-    } catch {
-      return 0;
-    }
-  }
-
-  const info = await getInfoAsync(uri);
-  if (!info.exists) return 0;
-  return info.size ?? 0;
+interface SourceMetadata {
+  readonly available: boolean;
+  readonly contentType: string;
+  readonly sizeBytes: number;
 }
 
-async function isSourceAvailable(uri: string): Promise<boolean> {
+// Uma única leitura do arquivo/blob para extrair tudo que precisamos. No web,
+// `loadWebBlob` lê do IndexedDB uma vez e reutiliza o mesmo Blob pra todas as
+// checagens — evita abrir 4 transações IndexedDB para um arquivo de 50MB.
+// No native, `getInfoAsync` é barato (metadata), mas mesmo assim consolidar
+// aqui mantém o fluxo simétrico entre plataformas.
+async function inspectSource(uri: string): Promise<SourceMetadata> {
   if (Platform.OS === "web") {
-    try {
-      const response = await fetch(uri);
-      if (!response.ok) return false;
-      const blob = await response.blob();
-      return blob.size > 0;
-    } catch {
-      return false;
+    const blob = await loadWebBlob(uri);
+    if (!blob || blob.size === 0) {
+      return { available: false, contentType: getContentTypeFromExt(uri), sizeBytes: 0 };
     }
+    return {
+      available: true,
+      contentType: contentTypeFromBlob(blob, getContentTypeFromExt(uri)),
+      sizeBytes: blob.size,
+    };
   }
 
-  const info = await getInfoAsync(uri);
-  return info.exists && (info.size ?? 0) > 0;
+  try {
+    const info = await getInfoAsync(uri);
+    const exists = info.exists && (info.size ?? 0) > 0;
+    return {
+      available: exists,
+      contentType: getContentTypeFromExt(uri),
+      sizeBytes: exists ? (info.size ?? 0) : 0,
+    };
+  } catch {
+    return { available: false, contentType: getContentTypeFromExt(uri), sizeBytes: 0 };
+  }
 }
 
 const LOST_SOURCE_ERROR_ES =
@@ -95,11 +103,15 @@ export function useUploadRecording(): {
 
       const recordingsStore = useRecordingsStore.getState();
 
+      // Uma única inspeção do arquivo: verifica disponibilidade + content-type
+      // + tamanho. No web isso é especialmente importante — cada leitura abre
+      // uma transação IndexedDB, e fazer 3-4 delas sequenciais para um blob
+      // de 50MB é lento.
+      const { available, contentType, sizeBytes } = await inspectSource(uri);
       // On web, a blob URL from a previous session is revoked after reload and
       // any retry would fail with ERR_FILE_NOT_FOUND. Detect that up front so
       // we don't create an orphan meeting on the backend for a file we can no
       // longer upload.
-      const available = await isSourceAvailable(uri);
       if (!available) {
         await recordingsStore.updateRecordingStatus(recordingId, {
           uploadStatus: "failed",
@@ -108,7 +120,6 @@ export function useUploadRecording(): {
         return;
       }
 
-      const contentType = await resolveContentType(uri);
       const ext =
         contentType === "audio/3gpp"
           ? "3gp"
@@ -118,7 +129,6 @@ export function useUploadRecording(): {
               ? "ogg"
               : "m4a";
       const fileName = `${title.replace(/\s+/g, "-").toLowerCase()}.${ext}`;
-      const sizeBytes = await getFileSize(uri);
       const durationSeconds = durationMs / 1000;
 
       await recordingsStore.updateRecordingStatus(recordingId, { uploadStatus: "uploading" });

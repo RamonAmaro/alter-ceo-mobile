@@ -56,6 +56,14 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
         if (!r.meetingId) return true;
         return r.uploadStatus === "local_only" || r.uploadStatus === "failed";
       });
+      // Quando um recording é podado do AsyncStorage por ter sido handed off
+      // ao backend, o arquivo local também precisa ser apagado — do contrário
+      // acumula lixo em `documentDirectory/recordings/` (nativo) ou no
+      // IndexedDB (web) até o usuário reinstalar o app.
+      const removedUris = parsed
+        .filter((r) => !pruned.some((p) => p.id === r.id))
+        .map((r) => r.uri);
+      await Promise.all(removedUris.map((uri) => deletePersistedRecording(uri)));
       // In-memory state is scoped to the current user; other users' recordings
       // remain in the persisted blob so they are restored when those users sign
       // back in on this device.
