@@ -38,12 +38,23 @@ async function saveSession(cookie: string): Promise<void> {
   await SecureStore.setItemAsync(SESSION_COOKIE_KEY, cookie);
 }
 
+// On web the browser owns the session cookie (HttpOnly) and JavaScript cannot
+// read Set-Cookie off a response — so we can never capture the cookie value
+// itself. We persist a marker flag instead so the bootstrap layer knows "a
+// session probably exists" and can optimistically route into the app while
+// /auth/session confirms in the background.
+async function markWebSession(): Promise<void> {
+  if (Platform.OS !== "web") return;
+  await SecureStore.setItemAsync(SESSION_COOKIE_KEY, "1");
+}
+
 export async function clearStoredSession(): Promise<void> {
   setAuthCookieGetter(() => null);
   await SecureStore.deleteItemAsync(SESSION_COOKIE_KEY);
 }
 
 export async function initAuthCookie(): Promise<void> {
+  if (Platform.OS === "web") return;
   const stored = await SecureStore.getItemAsync(SESSION_COOKIE_KEY);
   setAuthCookieGetter(() => stored ?? null);
 }
@@ -72,6 +83,7 @@ export async function login(email: string, password: string): Promise<AuthSessio
     });
     const cookie = extractSessionCookie(response.headers);
     if (cookie) await saveSession(cookie);
+    await markWebSession();
     await verifyCookieAccepted();
     return mapSession(response.data);
   } catch (err) {
@@ -92,6 +104,7 @@ export async function register(
     });
     const cookie = extractSessionCookie(response.headers);
     if (cookie) await saveSession(cookie);
+    await markWebSession();
     await verifyCookieAccepted();
     return mapSession(response.data);
   } catch (err) {
@@ -102,6 +115,7 @@ export async function register(
 export async function getSession(): Promise<SessionResult> {
   try {
     const response = await apiClient.get<RawAuthSessionResponse>("/auth/session");
+    await markWebSession();
     return { kind: "ok", session: mapSession(response.data) };
   } catch (err) {
     if (isAxiosError(err) && err.response?.status === 401) {
