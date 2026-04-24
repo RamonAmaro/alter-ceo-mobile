@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { isAxiosError } from "axios";
 
 import * as SecureStore from "@/services/secure-store";
 
@@ -6,6 +7,16 @@ import { apiClient, handleAxiosError, setAuthCookieGetter } from "@/lib/api-clie
 import { ApiError } from "@/types/api";
 import { SESSION_COOKIE_KEY, type AuthSession } from "@/types/auth";
 import { extractSessionCookie } from "@/utils/extract-session-cookie";
+
+export type SessionResult =
+  | { kind: "ok"; session: AuthSession }
+  | { kind: "unauthorized" }
+  | { kind: "network-error" };
+
+export async function hasStoredSessionCookie(): Promise<boolean> {
+  const stored = await SecureStore.getItemAsync(SESSION_COOKIE_KEY);
+  return Boolean(stored);
+}
 
 interface RawAuthSessionResponse {
   user_id: string;
@@ -88,13 +99,16 @@ export async function register(
   }
 }
 
-export async function getSession(): Promise<AuthSession | null> {
+export async function getSession(): Promise<SessionResult> {
   try {
     const response = await apiClient.get<RawAuthSessionResponse>("/auth/session");
-    return mapSession(response.data);
-  } catch {
-    await clearStoredSession();
-    return null;
+    return { kind: "ok", session: mapSession(response.data) };
+  } catch (err) {
+    if (isAxiosError(err) && err.response?.status === 401) {
+      await clearStoredSession();
+      return { kind: "unauthorized" };
+    }
+    return { kind: "network-error" };
   }
 }
 

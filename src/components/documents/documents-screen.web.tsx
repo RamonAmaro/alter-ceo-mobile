@@ -48,11 +48,7 @@ export function DocumentsScreen() {
 
         <View style={styles.content} onLayout={onContentLayout}>
           {activeIndex === 0 ? (
-            <UploadPage
-              width={width}
-              height={contentHeight}
-              onUploaded={() => setActiveIndex(1)}
-            />
+            <UploadPage width={width} height={contentHeight} onUploaded={() => setActiveIndex(1)} />
           ) : (
             <DocumentsHistoryPage width={width} height={contentHeight} />
           )}

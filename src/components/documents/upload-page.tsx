@@ -1,10 +1,47 @@
+import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useRef } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
 import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef } from "react";
-import { Alert, Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useBusinessMemoryDashboard } from "@/hooks/use-business-memory-dashboard";
+import { useAuthStore } from "@/stores/auth-store";
+import { useSourcesStore } from "@/stores/sources-store";
+
+const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024; // 50MB — matches backend cap.
+
+// Resolves the company name set by the user in business-memory. Returns
+// undefined when the user hasn't filled it out — the upload service sends
+// the field only when present, so the post-merge backend (where
+// `company_name` is no longer required) accepts the upload cleanly, and the
+// pre-merge backend rejects with 422 (which is the correct signal).
+function resolveCompanyName(
+  steps: ReturnType<typeof useBusinessMemoryDashboard>["steps"],
+): string | undefined {
+  const companyStep = steps.find((s) => s.id === "company_profile");
+  const raw = companyStep?.data.business_name;
+  if (typeof raw === "string" && raw.trim()) return raw.trim();
+  return undefined;
+}
+
+function notifyError(message: string): void {
+  if (Platform.OS === "web") {
+    window.alert(message);
+    return;
+  }
+  Alert.alert("No se pudo subir", message);
+}
 
 interface UploadPageProps {
   width: number;
@@ -12,8 +49,15 @@ interface UploadPageProps {
   onUploaded?: () => void;
 }
 
-export function UploadPage({ width, height }: UploadPageProps) {
+export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
   const pulseScale = useRef(new Animated.Value(1)).current;
+  const userId = useAuthStore((s) => s.user?.userId);
+  const { steps } = useBusinessMemoryDashboard();
+  const uploadPdf = useSourcesStore((s) => s.uploadPdf);
+  const uploadProgress = useSourcesStore((s) => s.uploadProgress);
+
+  const isUploading =
+    uploadProgress?.stage === "uploading" || uploadProgress?.stage === "processing";
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -35,15 +79,65 @@ export function UploadPage({ width, height }: UploadPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handlePick(): void {
-    const title = "Función en desarrollo";
-    const message =
-      "La subida y el análisis de documentos aún no está disponible. Estamos trabajando para activarla muy pronto.";
-    if (Platform.OS === "web") {
-      window.alert(`${title}\n\n${message}`);
+  async function handlePick(): Promise<void> {
+    if (isUploading) return;
+    if (!userId) {
+      notifyError("Debes iniciar sesión para subir documentos.");
       return;
     }
-    Alert.alert(title, message);
+
+    let result: DocumentPicker.DocumentPickerResult;
+    try {
+      result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+    } catch {
+      notifyError("No se pudo abrir el selector de archivos.");
+      return;
+    }
+
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    if (!asset) return;
+
+    const sizeBytes = asset.size ?? asset.file?.size ?? 0;
+    if (sizeBytes === 0) {
+      notifyError("El archivo está vacío.");
+      return;
+    }
+    if (sizeBytes > MAX_PDF_SIZE_BYTES) {
+      notifyError("El archivo supera el límite de 50 MB.");
+      return;
+    }
+
+    const mimeType = asset.mimeType ?? asset.file?.type ?? "application/pdf";
+    if (!mimeType.toLowerCase().includes("pdf")) {
+      notifyError("Solo se admiten archivos PDF.");
+      return;
+    }
+
+    const companyName = resolveCompanyName(steps);
+    await uploadPdf({
+      userId,
+      companyName,
+      title: asset.name,
+      file: {
+        uri: asset.uri,
+        name: asset.name,
+        contentType: "application/pdf",
+        sizeBytes,
+        webFile: asset.file,
+      },
+    });
+    // uploadPdf captures errors internally and sets stage: "failed" without
+    // throwing. Only navigate to Historial when the upload actually succeeded
+    // (stage transitioned to processing/ready).
+    const finalStage = useSourcesStore.getState().uploadProgress?.stage;
+    if (finalStage === "processing" || finalStage === "ready") {
+      onUploaded?.();
+    }
   }
 
   const dragProps =
@@ -60,7 +154,7 @@ export function UploadPage({ width, height }: UploadPageProps) {
   return (
     <View style={[styles.page, { width, height }]} {...dragProps}>
       <View style={styles.content}>
-        <TouchableOpacity activeOpacity={0.8} onPress={handlePick}>
+        <TouchableOpacity activeOpacity={0.8} onPress={handlePick} disabled={isUploading}>
           <Animated.View style={[styles.heroButton, { transform: [{ scale: pulseScale }] }]}>
             <LinearGradient
               colors={["#00C0EE", "#0060FF"]}
@@ -68,16 +162,26 @@ export function UploadPage({ width, height }: UploadPageProps) {
               end={{ x: 0.8, y: 0.9 }}
               style={StyleSheet.absoluteFill}
             />
-            <Ionicons name="cloud-upload" size={64} color="#FFFFFF" />
+            {isUploading ? (
+              <ActivityIndicator size="large" color="#FFFFFF" />
+            ) : (
+              <Ionicons name="cloud-upload" size={64} color="#FFFFFF" />
+            )}
           </Animated.View>
         </TouchableOpacity>
 
         <View style={styles.textWrap}>
-          <ThemedText style={styles.title}>Adjuntar documento</ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Sube un PDF, documento o presentación y Alter CEO lo procesa para extraer resumen,
-            insights y puntos de acción.
+          <ThemedText style={styles.title}>
+            {isUploading ? "Subiendo documento…" : "Adjuntar documento"}
           </ThemedText>
+          <ThemedText style={styles.subtitle}>
+            {isUploading
+              ? (uploadProgress?.filename ?? "Procesando el archivo.")
+              : "Sube un PDF y Alter CEO lo procesa para extraer resumen, entidades e insights."}
+          </ThemedText>
+          {uploadProgress?.stage === "failed" && uploadProgress.error ? (
+            <ThemedText style={styles.errorText}>{uploadProgress.error}</ThemedText>
+          ) : null}
         </View>
       </View>
     </View>
@@ -134,5 +238,13 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: SemanticColors.textSecondaryLight,
     textAlign: "center",
+  },
+  errorText: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 12,
+    lineHeight: 18,
+    color: SemanticColors.error,
+    textAlign: "center",
+    marginTop: Spacing.one,
   },
 });

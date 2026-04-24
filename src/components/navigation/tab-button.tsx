@@ -71,7 +71,10 @@ export function TabButton({ item, focused, onPress }: TabButtonProps) {
         <View style={styles.labelSlot}>
           <ThemedText
             type="caption"
-            style={[styles.tabLabel, { color: focused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR }]}
+            style={[
+              styles.tabLabel,
+              { color: focused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR },
+            ]}
             numberOfLines={LABEL_LINES}
           >
             {formatTabLabel(item.label)}

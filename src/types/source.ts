@@ -82,6 +82,38 @@ export interface SourceTable {
   created_at?: string | null;
 }
 
+export interface SourceSummaryItem {
+  source_id: string;
+  source_type: SourceType | string;
+  status: SourceStatus | string;
+  title?: string | null;
+  filename?: string | null;
+  meeting_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface SourceListResponse {
+  items: SourceSummaryItem[];
+  next_before: string | null;
+}
+
+export interface PdfSourceIngestAccepted {
+  source_id: string;
+  run_id: string;
+  user_id: string;
+  company_name: string;
+  title?: string | null;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  storage_provider: string;
+  storage_bucket: string;
+  storage_key: string;
+  storage_url: string;
+  status: string;
+}
+
 export interface SourceDetailResponse {
   source_id: string;
   user_id: string;

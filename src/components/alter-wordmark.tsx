@@ -7,7 +7,10 @@ interface AlterWordmarkProps {
   color?: string;
 }
 
-export function AlterWordmark({ size = 24, color = SemanticColors.textPrimary }: AlterWordmarkProps) {
+export function AlterWordmark({
+  size = 24,
+  color = SemanticColors.textPrimary,
+}: AlterWordmarkProps) {
   const letterSpacing = size * 0.02;
   const lineHeight = size * 1.1;
 

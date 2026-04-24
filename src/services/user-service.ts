@@ -6,5 +6,8 @@ export async function createUser(request: UserCreateRequest): Promise<UserRespon
 }
 
 export async function getUser(userId: string): Promise<UserResponse> {
+  if (!userId) {
+    throw new Error("getUser called without userId");
+  }
   return get<UserResponse>(`/users/${userId}`);
 }

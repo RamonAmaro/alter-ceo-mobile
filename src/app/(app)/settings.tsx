@@ -70,22 +70,18 @@ export default function SettingsScreen() {
         >
           <EyebrowPill label="AJUSTES · ALTER CEO" />
 
-          <SectionHeading
-            eyebrow="INFORMACIÓN"
-            titlePrefix="Qué es"
-            titleAccent="Alter CEO"
-          />
+          <SectionHeading eyebrow="INFORMACIÓN" titlePrefix="Qué es" titleAccent="Alter CEO" />
 
           <View style={styles.accordionList}>
             <InfoAccordion title="Qué es Alter CEO" initiallyOpen>
               <ThemedText style={styles.body}>
                 Alter CEO es tu copiloto estratégico de bolsillo: un asistente inteligente que
                 observa tu negocio, escucha tus reuniones, lee tus documentos y te ayuda a tomar
-                decisiones más rápidas y acertadas. No sustituye al CEO, lo potencia. Actúa como
-                un segundo cerebro que organiza la información crítica de la empresa, detecta
-                bloqueos, sugiere próximos pasos y te acompaña al diseñar planes de crecimiento.
-                Piensa en él como un consultor siempre disponible, formado con la memoria de tu
-                negocio, que convierte conversaciones y archivos en acción concreta.
+                decisiones más rápidas y acertadas. No sustituye al CEO, lo potencia. Actúa como un
+                segundo cerebro que organiza la información crítica de la empresa, detecta bloqueos,
+                sugiere próximos pasos y te acompaña al diseñar planes de crecimiento. Piensa en él
+                como un consultor siempre disponible, formado con la memoria de tu negocio, que
+                convierte conversaciones y archivos en acción concreta.
               </ThemedText>
             </InfoAccordion>
 

@@ -1,4 +1,5 @@
 import { KeyboardProvider } from "@/components/keyboard-provider";
+import { NetworkStatusOverlay } from "@/components/network-status-overlay";
 import {
   Montserrat_300Light,
   Montserrat_400Regular,
@@ -14,11 +15,12 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
-import { initAuthCookie } from "@/services/auth-service";
+import { hasStoredSessionCookie, initAuthCookie } from "@/services/auth-service";
 import { checkAndApplyUpdate } from "@/services/updates-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useDebugStore } from "@/stores/debug-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { getLastAuthenticatedUserId } from "@/utils/clear-user-data";
 import { injectWebStyles } from "@/utils/inject-web-styles";
 
 injectWebStyles();
@@ -50,7 +52,18 @@ export default function RootLayout() {
       try {
         await Promise.all([loadDebugState(), loadOnboarding()]);
         await initAuthCookie();
-        await Promise.race([checkSession(), new Promise((resolve) => setTimeout(resolve, 5000))]);
+        // Bootstrap optimistically from the stored cookie (no network call) so
+        // the first paint after the splash already routes correctly. The
+        // /auth/session validation then runs in the background — no artificial
+        // timeout, network errors don't kick the user out. We also restore the
+        // last known userId so screens that read user?.userId during the
+        // bootstrap window do not race against an undefined id.
+        const [hasCookie, lastUserId] = await Promise.all([
+          hasStoredSessionCookie(),
+          getLastAuthenticatedUserId(),
+        ]);
+        useAuthStore.getState().applyOptimisticBootstrap(hasCookie, lastUserId);
+        void checkSession();
         void checkBiometricsStatus();
       } finally {
         await SplashScreen.hideAsync();
@@ -69,6 +82,7 @@ export default function RootLayout() {
     <KeyboardProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }} />
+        <NetworkStatusOverlay />
       </ThemeProvider>
     </KeyboardProvider>
   );

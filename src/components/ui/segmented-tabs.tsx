@@ -34,11 +34,11 @@ export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProp
 
   useEffect(() => {
     if (widths.length !== tabs.length) return;
-    // `Animated.parallel` com drivers mistos (um com `useNativeDriver: true` e
-    // outro com `false`) dispara "Attempting to run JS driven animation on
-    // animated node that has been moved to 'native' earlier". `width` não é
-    // suportado pelo native driver, então ambas as animações rodam no driver
-    // JS aqui — visualmente idêntico, sem o bug nativo.
+    // `Animated.parallel` with mixed drivers (one native, one JS) crashes on
+    // iOS with "Attempting to run JS driven animation on animated node that
+    // has been moved to 'native' earlier". `width` isn't supported by the
+    // native driver, so run BOTH springs on the JS driver — visually
+    // identical, no mixed-driver crash.
     Animated.spring(translateX, {
       toValue: activeOffset,
       useNativeDriver: false,
@@ -51,7 +51,15 @@ export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProp
       speed: 20,
       bounciness: 6,
     }).start();
-  }, [activeIndex, activeOffset, activeWidth, widths.length, tabs.length, translateX, indicatorWidth]);
+  }, [
+    activeIndex,
+    activeOffset,
+    activeWidth,
+    widths.length,
+    tabs.length,
+    translateX,
+    indicatorWidth,
+  ]);
 
   function handleLayout(index: number, e: LayoutChangeEvent): void {
     const width = e.nativeEvent.layout.width;

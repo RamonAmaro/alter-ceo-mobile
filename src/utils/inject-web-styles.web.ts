@@ -25,6 +25,17 @@ const CSS = `
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 255, 132, 0.32) transparent;
 }
+/* Scoped override: hide native scrollbar inside table scrollers so the
+   paging arrows on the right/left are the only affordance. Drag still
+   works; users just don't see the default browser bar. */
+[data-hide-scrollbar="true"] {
+  scrollbar-width: none;
+}
+[data-hide-scrollbar="true"]::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
