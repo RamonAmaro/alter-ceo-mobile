@@ -24,7 +24,12 @@ function CustomTabBar({ state }: BottomTabBarProps) {
         {NAV_ITEMS.map((item) => {
           const focused = activeRouteName === item.key;
           return (
-            <TabButton key={item.key} item={item} focused={focused} onPress={() => handlePress(item)} />
+            <TabButton
+              key={item.key}
+              item={item}
+              focused={focused}
+              onPress={() => handlePress(item)}
+            />
           );
         })}
       </View>

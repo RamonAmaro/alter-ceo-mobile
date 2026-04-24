@@ -53,9 +53,9 @@ export default function PlanSelectionScreen() {
               {"\n"}Para poder ayudarte de forma inmediata, lo primero que vamos a diseñar es un
               Plan para Duplicar tus Ventas y Trabajar la Mitad.
               {"\n\n"}Para ello, te vamos a solicitar algunos datos de tu negocio (son muy
-              sencillos, no te preocupes). Elige entre inicio Express (3 minutos de tiempo aprox)
-              o Profesional (6 minutos aprox). A más información, más podemos afinar en el
-              desarrollo del plan.
+              sencillos, no te preocupes). Elige entre inicio Express (3 minutos de tiempo aprox) o
+              Profesional (6 minutos aprox). A más información, más podemos afinar en el desarrollo
+              del plan.
             </ThemedText>
           </View>
 

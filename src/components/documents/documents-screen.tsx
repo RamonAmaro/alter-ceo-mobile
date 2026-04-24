@@ -57,9 +57,7 @@ export function DocumentsScreen() {
     ({ item }: { item: PageKey }) => {
       if (carouselHeight === 0) return null;
       if (item === "upload") {
-        return (
-          <UploadPage width={width} height={carouselHeight} onUploaded={() => goToIndex(1)} />
-        );
+        return <UploadPage width={width} height={carouselHeight} onUploaded={() => goToIndex(1)} />;
       }
       return <DocumentsHistoryPage width={width} height={carouselHeight} />;
     },

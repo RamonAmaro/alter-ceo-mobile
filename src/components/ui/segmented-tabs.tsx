@@ -49,7 +49,15 @@ export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProp
         bounciness: 6,
       }),
     ]).start();
-  }, [activeIndex, activeOffset, activeWidth, widths.length, tabs.length, translateX, indicatorWidth]);
+  }, [
+    activeIndex,
+    activeOffset,
+    activeWidth,
+    widths.length,
+    tabs.length,
+    translateX,
+    indicatorWidth,
+  ]);
 
   function handleLayout(index: number, e: LayoutChangeEvent): void {
     const width = e.nativeEvent.layout.width;
