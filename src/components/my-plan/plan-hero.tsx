@@ -27,7 +27,7 @@ export function PlanHero({ introduction, sector, annualRevenue }: PlanHeroProps)
         </View>
 
         <ThemedText style={styles.title}>
-          Construye tu <ThemedText style={styles.titleAccent}>futuro</ThemedText>
+          Situación <ThemedText style={styles.titleAccent}>Actual</ThemedText>
         </ThemedText>
 
         {hasPills ? (
