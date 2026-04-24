@@ -13,6 +13,9 @@ import {
   requestAudioPermission,
   useAudioRecorder,
 } from "@/services/audio-service";
+import { persistRecordingFile } from "@/services/recording-storage";
+import { useAuthStore } from "@/stores/auth-store";
+import { useRecordingsStore } from "@/stores/recordings-store";
 import { formatShortDate } from "@/utils/format-date";
 
 import { AudioWave } from "./audio-wave";
@@ -150,16 +153,34 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
       if (!pending) return;
       pendingSaveRef.current = null;
 
-      await uploadRecording({
-        uri: pending.uri,
+      const userId = useAuthStore.getState().user?.userId;
+      if (!userId) return;
+
+      const persistedUri = await persistRecordingFile(pending.uri);
+      const recordingId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const now = new Date();
+
+      await useRecordingsStore.getState().addRecording({
+        id: recordingId,
+        userId,
+        uri: persistedUri,
         title,
+        date: formatShortDate(now),
         durationMs: pending.durationMs,
+        createdAt: now.toISOString(),
+        uploadStatus: "local_only",
       });
 
       onUploadComplete?.();
-
       setShowToast(true);
       setTimeout(() => setShowToast(false), TOAST_DURATION_MS);
+
+      await uploadRecording({
+        recordingId,
+        uri: persistedUri,
+        title,
+        durationMs: pending.durationMs,
+      });
     },
     [uploadRecording, onUploadComplete],
   );

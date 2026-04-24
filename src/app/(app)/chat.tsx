@@ -12,7 +12,7 @@ import { SemanticColors, Spacing } from "@/constants/theme";
 import { useChatAudioRecorder } from "@/hooks/use-chat-audio-recorder";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
-import { useChatStore } from "@/stores/chat-store";
+import { NEW_THREAD_DRAFT_KEY, useChatStore } from "@/stores/chat-store";
 
 function extractInitial(displayName: string | null, email: string | null): string {
   const source = displayName ?? email;
@@ -24,6 +24,7 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const [inputValue, setInputValue] = useState("");
+  const [draftsHydrated, setDraftsHydrated] = useState(false);
 
   const user = useAuthStore((s) => s.user);
   const userInitial = useMemo(
@@ -46,6 +47,11 @@ export default function ChatScreen() {
   const sendAudioMessage = useChatStore((s) => s.sendAudioMessage);
   const retryMessage = useChatStore((s) => s.retryMessage);
   const cancelStream = useChatStore((s) => s.cancelStream);
+  const loadDrafts = useChatStore((s) => s.loadDrafts);
+  const setDraft = useChatStore((s) => s.setDraft);
+  const clearDraft = useChatStore((s) => s.clearDraft);
+
+  const draftKey = activeThreadId ?? NEW_THREAD_DRAFT_KEY;
 
   const chatBusy = isStreaming || isSubmittingAudio;
 
@@ -75,6 +81,10 @@ export default function ChatScreen() {
   }, [user, fetchThreads]);
 
   useEffect(() => {
+    void loadDrafts().finally(() => setDraftsHydrated(true));
+  }, [loadDrafts]);
+
+  useEffect(() => {
     if (threads.length > 0 && !activeThreadId) {
       selectThread(threads[0].thread_id);
     }
@@ -84,16 +94,34 @@ export default function ChatScreen() {
     return () => cancelStream();
   }, [cancelStream]);
 
+  useEffect(() => {
+    if (!draftsHydrated || !user) return;
+    const stored = useChatStore.getState().getDraft(user.userId, draftKey);
+    setInputValue(stored);
+  }, [draftsHydrated, user, draftKey]);
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      setInputValue(text);
+      if (user) setDraft(user.userId, draftKey, text);
+    },
+    [user, draftKey, setDraft],
+  );
+
   async function handleSend(): Promise<void> {
     const text = inputValue.trim();
     if (!text || !user) return;
     setInputValue("");
+    clearDraft(user.userId, draftKey);
 
     try {
       const threadId = activeThreadId ?? (await createThread(user.userId));
+      // Move draft from "__new__" bucket to the real threadId once the thread exists.
+      if (threadId !== draftKey) clearDraft(user.userId, draftKey);
       await sendMessage(threadId, text);
     } catch {
       setInputValue(text);
+      if (user) setDraft(user.userId, draftKey, text);
     }
   }
 
@@ -131,7 +159,7 @@ export default function ChatScreen() {
 
           <ChatInput
             value={inputValue}
-            onChangeText={setInputValue}
+            onChangeText={handleChangeText}
             onSend={handleSend}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}

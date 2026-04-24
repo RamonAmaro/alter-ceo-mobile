@@ -128,6 +128,8 @@ export default function SignUpScreen() {
                   clearError("name");
                 }}
                 autoCapitalize="words"
+                autoComplete="name"
+                textContentType="name"
                 error={!!errors.name}
                 errorMessage={errors.name || undefined}
                 style={styles.inputSpacing}
@@ -143,6 +145,8 @@ export default function SignUpScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
                 error={!!errors.email}
                 errorMessage={errors.email || undefined}
                 style={styles.inputSpacing}
@@ -156,6 +160,8 @@ export default function SignUpScreen() {
                   clearError("password");
                 }}
                 secureTextEntry
+                autoComplete="new-password"
+                textContentType="newPassword"
                 error={!!errors.password}
                 errorMessage={errors.password || undefined}
                 style={styles.inputSpacing}

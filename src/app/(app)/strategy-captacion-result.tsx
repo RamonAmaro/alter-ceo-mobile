@@ -619,7 +619,7 @@ export default function StrategyCaptacionResultScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const generatedReport = useStrategyReportStore((s) => s.generatedReport);
-  const reset = useStrategyReportStore((s) => s.reset);
+  const discardDraft = useStrategyReportStore((s) => s.discardDraft);
 
   useEffect(() => {
     if (!generatedReport) {
@@ -630,7 +630,7 @@ export default function StrategyCaptacionResultScreen() {
   if (!generatedReport) return null;
 
   function handleStartAgain(): void {
-    reset();
+    discardDraft();
     router.replace("/(app)/strategy");
   }
 

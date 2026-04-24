@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { router } from "expo-router";
 
@@ -9,6 +17,7 @@ import { AppBackground } from "@/components/app-background";
 import { AuthLayout } from "@/components/auth-layout";
 import { AuthTagline } from "@/components/auth-tagline";
 import { Button } from "@/components/button";
+import { FormCheckbox } from "@/components/form-checkbox";
 import { Input } from "@/components/input";
 import { KeyboardView } from "@/components/keyboard-view";
 import { ThemedText } from "@/components/themed-text";
@@ -17,7 +26,14 @@ import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { isBiometricsAvailable } from "@/services/biometrics-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { parseAuthError } from "@/utils/parse-auth-error";
+import {
+  clearRememberedEmail,
+  getRememberedEmail,
+  setRememberedEmail,
+} from "@/utils/remembered-email";
 import { hasErrors, validateRequiredFields } from "@/utils/validate-auth-form";
+
+const IS_WEB = Platform.OS === "web";
 
 export default function LoginScreen() {
   const signIn = useAuthStore((s) => s.signIn);
@@ -30,6 +46,7 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState({ email: false, password: false });
   const [apiError, setApiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(false);
 
   useEffect(() => {
     async function attemptBiometricLogin() {
@@ -41,6 +58,16 @@ export default function LoginScreen() {
 
     void attemptBiometricLogin();
   }, [tryBiometricLogin]);
+
+  useEffect(() => {
+    if (!IS_WEB) return;
+    void getRememberedEmail().then((stored) => {
+      if (stored) {
+        setEmail(stored);
+        setRememberEmail(true);
+      }
+    });
+  }, []);
 
   function validate(): boolean {
     const newErrors = validateRequiredFields({ email, password }) as {
@@ -58,6 +85,11 @@ export default function LoginScreen() {
 
     try {
       await signIn(email, password);
+
+      if (IS_WEB) {
+        if (rememberEmail) await setRememberedEmail(email);
+        else await clearRememberedEmail();
+      }
 
       const available = await isBiometricsAvailable();
       if (available) {
@@ -125,6 +157,8 @@ export default function LoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="email"
+                textContentType="username"
                 error={errors.email}
                 errorMessage="Introduce tu usuario"
                 style={styles.inputSpacing}
@@ -140,10 +174,22 @@ export default function LoginScreen() {
                 secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
+                autoComplete="current-password"
+                textContentType="password"
                 error={errors.password}
                 errorMessage="Introduce tu contraseña"
                 style={styles.inputSpacing}
               />
+
+              {IS_WEB && (
+                <View style={styles.rememberRow}>
+                  <FormCheckbox
+                    label="Recordar mi correo"
+                    checked={rememberEmail}
+                    onToggle={() => setRememberEmail((v) => !v)}
+                  />
+                </View>
+              )}
 
               {apiError && (
                 <ThemedText type="bodySm" style={styles.apiError}>
@@ -208,6 +254,12 @@ const styles = StyleSheet.create({
   },
   inputSpacing: {
     marginBottom: Spacing.three,
+  },
+  rememberRow: {
+    width: "100%",
+    alignItems: "flex-start",
+    marginTop: -Spacing.one,
+    marginBottom: Spacing.two,
   },
   apiError: {
     color: SemanticColors.error,

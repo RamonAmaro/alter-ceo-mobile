@@ -14,7 +14,10 @@ interface TeamBlockFormProps {
   fields: readonly FormFieldConfig[];
   initialRoleDrafts: TeamRoleDraft[];
   initialValues?: Readonly<Record<string, string>>;
-  onSave?: (payload: { roles: TeamRoleDraft[]; values: Record<string, string> }) => void | Promise<void>;
+  onSave?: (payload: {
+    roles: TeamRoleDraft[];
+    values: Record<string, string>;
+  }) => void | Promise<void>;
   saveDisabled?: boolean;
   saveLabel?: string;
 }
@@ -118,7 +121,11 @@ export function TeamBlockForm({
         </View>
       </View>
 
-      <MemorySaveButton label={saveLabel} onPress={() => void handleSave()} disabled={isEmpty || saveDisabled} />
+      <MemorySaveButton
+        label={saveLabel}
+        onPress={() => void handleSave()}
+        disabled={isEmpty || saveDisabled}
+      />
     </View>
   );
 }

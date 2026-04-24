@@ -42,7 +42,10 @@ function hasAnyValue(
   if (focusAreas.some((item) => item.trim().length > 0)) return true;
 
   return microGoals.some(
-    (goal) => goal.title.trim().length > 0 || goal.due_date.trim().length > 0 || goal.status.trim().length > 0,
+    (goal) =>
+      goal.title.trim().length > 0 ||
+      goal.due_date.trim().length > 0 ||
+      goal.status.trim().length > 0,
   );
 }
 
@@ -109,10 +112,16 @@ function ListSectionEditor({
                   {String(index + 1).padStart(2, "0")}
                 </ThemedText>
               </View>
-              <ThemedText style={styles.cardTitle}>{item.trim() || "Pendiente de definir"}</ThemedText>
+              <ThemedText style={styles.cardTitle}>
+                {item.trim() || "Pendiente de definir"}
+              </ThemedText>
             </View>
 
-            <Pressable accessibilityRole="button" onPress={() => onDeleteItem(index)} style={styles.deleteButton}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onDeleteItem(index)}
+              style={styles.deleteButton}
+            >
               <Ionicons name="trash-outline" size={16} color="#FF8F8F" />
               <ThemedText style={styles.deleteButtonLabel}>Borrar</ThemedText>
             </Pressable>
@@ -150,7 +159,13 @@ interface MicroGoalsEditorProps {
   onDeleteGoal: (clientId: string) => void;
 }
 
-function MicroGoalsEditor({ draftValue, goals, onAddGoal, onChangeDraft, onDeleteGoal }: MicroGoalsEditorProps) {
+function MicroGoalsEditor({
+  draftValue,
+  goals,
+  onAddGoal,
+  onChangeDraft,
+  onDeleteGoal,
+}: MicroGoalsEditorProps) {
   const countLabel = `${goals.length} ${goals.length === 1 ? "objetivo" : "objetivos"}`;
 
   return (
@@ -194,15 +209,23 @@ function MicroGoalsEditor({ draftValue, goals, onAddGoal, onChangeDraft, onDelet
                   OBJETIVO {String(index + 1).padStart(2, "0")}
                 </ThemedText>
               </View>
-              <ThemedText style={styles.cardTitle}>{goal.title.trim() || "Objetivo sin titulo"}</ThemedText>
+              <ThemedText style={styles.cardTitle}>
+                {goal.title.trim() || "Objetivo sin titulo"}
+              </ThemedText>
               <View style={styles.metaRow}>
                 <View style={[styles.metaBadge, getStatusBadgeStyle(goal.status)]}>
-                  <ThemedText style={[styles.metaBadgeLabel, getStatusBadgeLabelStyle(goal.status)]}>
+                  <ThemedText
+                    style={[styles.metaBadgeLabel, getStatusBadgeLabelStyle(goal.status)]}
+                  >
                     {getStatusLabel(goal.status)}
                   </ThemedText>
                 </View>
                 <View style={[styles.metaBadge, styles.deadlineBadge]}>
-                  <Ionicons name="calendar-outline" size={13} color={SemanticColors.textSecondaryLight} />
+                  <Ionicons
+                    name="calendar-outline"
+                    size={13}
+                    color={SemanticColors.textSecondaryLight}
+                  />
                   <ThemedText style={styles.deadlineBadgeLabel}>
                     {goal.due_date.trim() ? goal.due_date.trim() : "Sin deadline"}
                   </ThemedText>
@@ -351,7 +374,11 @@ export function ExecutionBlockForm({
         onDeleteGoal={handleDeleteGoal}
       />
 
-      <MemorySaveButton label={saveLabel} onPress={() => void handleSave()} disabled={isEmpty || saveDisabled} />
+      <MemorySaveButton
+        label={saveLabel}
+        onPress={() => void handleSave()}
+        disabled={isEmpty || saveDisabled}
+      />
     </View>
   );
 }

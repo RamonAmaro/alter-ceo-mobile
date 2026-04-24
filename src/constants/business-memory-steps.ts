@@ -93,7 +93,11 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
           { value: "improvised", label: "Improvisado" },
         ],
       },
-      { id: "pipeline_conversion_summary", label: "Resumen de conversion del embudo", type: "textarea" },
+      {
+        id: "pipeline_conversion_summary",
+        label: "Resumen de conversion del embudo",
+        type: "textarea",
+      },
     ],
   },
   {
@@ -139,7 +143,11 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
           { value: "none", label: "Ninguna" },
         ],
       },
-      { id: "monthly_sales_history_eur", label: "Historico mensual de ventas (EUR)", type: "textarea" },
+      {
+        id: "monthly_sales_history_eur",
+        label: "Historico mensual de ventas (EUR)",
+        type: "textarea",
+      },
     ],
   },
   {
@@ -160,7 +168,8 @@ export const BUSINESS_MEMORY_SECTION_TEMPLATES: readonly BusinessMemorySectionTe
         id: "founder_dependency_detail",
         label: "Detalle de la dependencia",
         type: "textarea",
-        placeholder: "Explica en que decisiones, relaciones o procesos se concentra esa dependencia",
+        placeholder:
+          "Explica en que decisiones, relaciones o procesos se concentra esa dependencia",
       },
       { id: "leadership_summary", label: "Resumen de liderazgo", type: "textarea" },
     ],
@@ -182,7 +191,9 @@ const TEMPLATE_BY_ID = new Map(
 
 const DEFAULT_ICON: StepIconConfig = { library: "MaterialCommunityIcons", name: "shape-outline" };
 
-export function buildBusinessMemoryStep(section: BusinessKernelSectionResponse): BusinessMemoryStep {
+export function buildBusinessMemoryStep(
+  section: BusinessKernelSectionResponse,
+): BusinessMemoryStep {
   const template = TEMPLATE_BY_ID.get(section.id);
   return {
     ...section,

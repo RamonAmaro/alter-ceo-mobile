@@ -6,19 +6,30 @@ import { HeroOverviewCard } from "@/components/ui/hero-overview-card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
+import { useAuthStore } from "@/stores/auth-store";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import { router } from "expo-router";
+import { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StrategyScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
+  const userId = useAuthStore((s) => s.user?.userId);
   const beginDraft = useStrategyReportStore((s) => s.beginDraft);
+  const restoreDraft = useStrategyReportStore((s) => s.restoreDraft);
+
+  useEffect(() => {
+    if (!userId) return;
+    void restoreDraft(userId).then((hasDraft) => {
+      if (hasDraft) router.push("/(app)/strategy-captacion");
+    });
+  }, [userId, restoreDraft]);
 
   function handleSelectTopic(topic: string): void {
-    if (topic !== "captacion") return;
-    beginDraft("captacion_5_fases");
+    if (topic !== "captacion" || !userId) return;
+    beginDraft(userId, "captacion_5_fases");
     router.push("/(app)/strategy-captacion");
   }
 
