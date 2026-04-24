@@ -13,6 +13,8 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerShown: false, animation: "default" }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="recording" />
+      <Stack.Screen name="documents" />
+      <Stack.Screen name="tasks" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="my-plan" />
       <Stack.Screen name="strategy" />

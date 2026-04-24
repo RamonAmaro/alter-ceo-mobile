@@ -106,6 +106,27 @@ export function statusToColor(status?: string): string {
   return STATUS_COLOR_MAP[status] ?? SemanticColors.textMuted;
 }
 
+// Backend sends labels without Spanish diacritics (e.g. "Critica", "Solidos").
+// UI must render them with proper orthography (es-ES): "Crítica", "Sólidos".
+// Keep backend keys untouched (used by the value/color maps above) and only
+// translate at the render boundary.
+const STATUS_DISPLAY_LABEL: Record<string, string> = {
+  Solidos: "Sólidos",
+  Solida: "Sólida",
+  Estrategica: "Estratégica",
+  Basicos: "Básicos",
+  Basica: "Básica",
+  Critica: "Crítica",
+  Esporadico: "Esporádico",
+  Unico: "Único",
+  Debil: "Débil",
+};
+
+export function statusToDisplayLabel(status?: string): string {
+  if (!status) return "";
+  return STATUS_DISPLAY_LABEL[status] ?? status;
+}
+
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",

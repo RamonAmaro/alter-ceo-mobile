@@ -106,6 +106,14 @@ export async function patch<T>(path: string, body?: unknown): Promise<T> {
   }
 }
 
+export async function del(path: string): Promise<void> {
+  try {
+    await apiClient.delete(path);
+  } catch (err) {
+    handleAxiosError(err);
+  }
+}
+
 export async function postFormData<T>(path: string, formData: FormData): Promise<T> {
   try {
     // Do not set Content-Type: axios/fetch generates the multipart boundary automatically.
@@ -113,23 +121,5 @@ export async function postFormData<T>(path: string, formData: FormData): Promise
     return response.data;
   } catch (err) {
     return handleAxiosError(err);
-  }
-}
-
-export async function putExternal(
-  url: string,
-  body: Blob | ArrayBuffer,
-  headers: Record<string, string>,
-): Promise<void> {
-  try {
-    await axios.put(url, body, {
-      headers,
-      timeout: API_TIMEOUT * 4,
-    });
-  } catch (err) {
-    if (isAxiosError(err) && err.response) {
-      throw new ApiError(err.response.status, `Upload failed with status ${err.response.status}`);
-    }
-    throw err;
   }
 }

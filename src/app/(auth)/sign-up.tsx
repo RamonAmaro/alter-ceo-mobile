@@ -12,6 +12,7 @@ import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { KeyboardView } from "@/components/keyboard-view";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
@@ -101,7 +102,7 @@ export default function SignUpScreen() {
               },
             ]}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           >
             {isMobile && <BackButton />}
 

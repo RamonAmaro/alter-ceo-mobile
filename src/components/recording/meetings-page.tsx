@@ -5,13 +5,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import type { MeetingSummaryResponse } from "@/types/meeting";
+import { formatDurationSeconds } from "@/utils/format-date";
 
 import { MeetingListItem, type MeetingItem } from "./meeting-list-item";
-import { PendingRecordingsSection } from "./pending-recordings-section";
 
 interface MeetingsPageProps {
   width: number;
@@ -20,16 +21,15 @@ interface MeetingsPageProps {
 
 function toUploadStatus(status: string): "processing" | "completed" | "failed" | undefined {
   if (status === "COMPLETED") return "completed";
-  if (status === "FAILED" || status === "PENDING_UPLOAD") return "failed";
-  if (status === "PROCESSING" || status === "UPLOADED") return "processing";
+  if (status === "FAILED") return "failed";
+  if (status === "PROCESSING" || status === "UPLOADED" || status === "PENDING_UPLOAD") {
+    return "processing";
+  }
   return undefined;
 }
 
 function toMeetingItem(m: MeetingSummaryResponse): MeetingItem {
-  const durationSec = m.duration_seconds ?? 0;
-  const mins = Math.floor(durationSec / 60);
-  const secs = Math.floor(durationSec % 60);
-  const duration = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  const duration = formatDurationSeconds(m.duration_seconds ?? 0);
   const d = new Date(m.updated_at);
   const dateStr = d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 
@@ -74,7 +74,6 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
   return (
     <View style={[styles.page, { width, height }]}>
       <View style={styles.listContainer}>
-        <PendingRecordingsSection />
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={styles.accentBar} />
@@ -111,7 +110,7 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
                 onDelete={handleDelete}
               />
             )}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
             contentContainerStyle={[
               styles.listContent,
               { paddingBottom: insets.bottom + Spacing.four },

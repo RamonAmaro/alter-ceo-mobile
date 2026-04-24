@@ -1,4 +1,4 @@
-import { get, post } from "@/lib/api-client";
+import { del, get, patch, post } from "@/lib/api-client";
 import { uploadFileToS3 } from "@/services/file-upload";
 import { createPoller } from "@/utils/create-poller";
 import { POLL_INTERVAL } from "@/constants/env";
@@ -7,6 +7,7 @@ import type {
   MeetingCreateResponse,
   MeetingProcessingAccepted,
   MeetingResponse,
+  MeetingUpdateRequest,
   MeetingUploadCompletedRequest,
   UserMeetingsResponse,
 } from "@/types/meeting";
@@ -33,6 +34,17 @@ export async function completeUpload(
   request: MeetingUploadCompletedRequest,
 ): Promise<MeetingProcessingAccepted> {
   return post<MeetingProcessingAccepted>(`/meetings/${meetingId}/upload-complete`, request);
+}
+
+export async function deleteMeeting(meetingId: string): Promise<void> {
+  return del(`/meetings/${meetingId}`);
+}
+
+export async function updateMeeting(
+  meetingId: string,
+  request: MeetingUpdateRequest,
+): Promise<MeetingResponse> {
+  return patch<MeetingResponse>(`/meetings/${meetingId}`, request);
 }
 
 export { uploadFileToS3 };

@@ -16,7 +16,7 @@ interface RecordButtonProps {
   onRestart: () => void;
 }
 
-const CONTAINER_HEIGHT = 140;
+const CONTAINER_HEIGHT = 120;
 const TRANSITION_MS = 200;
 
 export function RecordButton({
@@ -79,7 +79,7 @@ export function RecordButton({
         pointerEvents={isIdle ? "auto" : "none"}
       >
         <CircleButton
-          size={120}
+          size={96}
           gradientId="gradMic"
           colors={["#00C0EE", "#0060FF"]}
           icon={MicIcon}
@@ -101,7 +101,7 @@ export function RecordButton({
         <View style={styles.controlsRow}>
           {state === "recording" || isIdle ? (
             <CircleButton
-              size={70}
+              size={64}
               gradientId="gradPause"
               colors={["#E05555", "#B83030"]}
               icon={PauseIcon}
@@ -111,7 +111,7 @@ export function RecordButton({
             />
           ) : (
             <CircleButton
-              size={70}
+              size={64}
               gradientId="gradResume"
               colors={["#00C0EE", "#0060FF"]}
               icon={PlayIcon}
@@ -121,7 +121,7 @@ export function RecordButton({
           )}
 
           <CircleButton
-            size={70}
+            size={64}
             gradientId="gradRestart"
             colors={["#FF9500", "#E68400"]}
             icon={RestartIcon}
@@ -130,7 +130,7 @@ export function RecordButton({
           />
 
           <CircleButton
-            size={70}
+            size={64}
             gradientId="gradFinish"
             colors={["#00D68F", "#00A86B"]}
             icon={StopIcon}

@@ -1,18 +1,44 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect } from "react";
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
+import * as meetingService from "@/services/meeting-service";
 import { useMeetingStore } from "@/stores/meeting-store";
+import { createPoller } from "@/utils/create-poller";
+import { formatDurationSeconds } from "@/utils/format-date";
 import { goBackOrHome } from "@/utils/navigation";
 
-import { MeetingAudioPlayer } from "./meeting-audio-player";
+import { MeetingAlertsSection } from "./meeting-alerts-section";
+import { MeetingEntitiesSection } from "./meeting-entities-section";
 import { MeetingSummarySection } from "./meeting-summary-section";
+import { MeetingTechnicalDetails } from "./meeting-technical-details";
 import { MeetingTranscriptSection } from "./meeting-transcript-section";
+
+const STATUS_POLL_INTERVAL_MS = 5000;
+const STATUS_POLL_MAX_ATTEMPTS = 40;
+
+function isMeetingInProgress(status: string | undefined | null): boolean {
+  return status === "PROCESSING" || status === "UPLOADED" || status === "PENDING_UPLOAD";
+}
+
+function isSourceInProgress(status: string | undefined | null): boolean {
+  return status === "processing" || status === "pending";
+}
 
 interface MeetingDetailContentProps {
   meetingId: string;
@@ -21,27 +47,15 @@ interface MeetingDetailContentProps {
 function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+  return d
+    .toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })
+    .toUpperCase();
 }
 
-function formatDuration(seconds: number | null | undefined): string {
-  if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds <= 0) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function formatSize(bytes: number | null | undefined): string {
-  if (typeof bytes !== "number" || !Number.isFinite(bytes) || bytes <= 0) return "—";
-  const units = ["B", "KB", "MB", "GB"];
-  let v = bytes;
-  let i = 0;
-  while (v >= 1024 && i < units.length - 1) {
-    v /= 1024;
-    i += 1;
-  }
-  const precision = v >= 100 || i === 0 ? 0 : v >= 10 ? 1 : 2;
-  return `${v.toFixed(precision)} ${units[i]}`;
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
 function statusColor(status: string): string {
@@ -54,52 +68,92 @@ function statusLabel(status: string): string {
   if (status === "COMPLETED") return "COMPLETADO";
   if (status === "FAILED") return "ERROR";
   if (status === "PROCESSING") return "PROCESANDO";
+  if (status === "UPLOADED") return "SUBIDO";
+  if (status === "PENDING_UPLOAD") return "PENDIENTE";
   return status.toUpperCase();
 }
 
 function processingStageLabel(stage: string | null | undefined): string | null {
   switch (stage) {
     case "transcribing":
-      return "TRANSCRIBIENDO AUDIO";
+      return "Transcribiendo audio";
     case "summarizing":
-      return "GENERANDO RESUMEN";
+      return "Generando resumen";
     case "updating_memory":
-      return "ACTUALIZANDO MEMORIA";
+      return "Actualizando insights";
     case "uploaded":
-      return "ARCHIVO SUBIDO";
+      return "Archivo subido";
     case "completed":
-      return "FLUJO COMPLETO";
+      return null;
     case "failed":
-      return "FALLO EN PROCESO";
+      return "Fallo en el proceso";
     case "pending_upload":
-      return "PENDIENTE DE SUBIDA";
+      return "Pendiente de subida";
     default:
       return null;
   }
 }
 
-function shortId(id: string | undefined): string {
-  if (!id) return "—";
-  return id.length > 10 ? `${id.slice(0, 4)}…${id.slice(-6)}` : id;
+function sourceStatusLabel(status: string | null | undefined): string {
+  if (status === "ready") return "Análisis profundo listo";
+  if (status === "processing") return "Analizando…";
+  if (status === "pending") return "En cola de análisis";
+  if (status === "failed") return "Análisis fallido";
+  return "Sin análisis";
 }
 
-type SectionKey = "decisions" | "blockers" | "next" | "signals";
+function sourceStatusColor(status: string | null | undefined): string {
+  if (status === "ready") return SemanticColors.success;
+  if (status === "failed") return SemanticColors.error;
+  if (status === "processing" || status === "pending") return SemanticColors.warning;
+  return SemanticColors.textMuted;
+}
 
-interface SectionStat {
-  readonly key: SectionKey;
-  readonly icon: React.ComponentProps<typeof Ionicons>["name"];
-  readonly color: string;
-  readonly title: string;
-  readonly items: readonly string[];
-  readonly emptyMessage: string;
+function confirmDelete(onConfirm: () => void): void {
+  if (Platform.OS === "web") {
+    const ok =
+      typeof window !== "undefined" &&
+      window.confirm("¿Eliminar esta reunión? Esta acción no se puede deshacer.");
+    if (ok) onConfirm();
+    return;
+  }
+  Alert.alert(
+    "Eliminar reunión",
+    "¿Seguro que quieres eliminar esta reunión? Esta acción no se puede deshacer.",
+    [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: onConfirm },
+    ],
+  );
+}
+
+interface InsightSection {
+  key: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  iconColor: string;
+  title: string;
+  items: readonly string[];
+  emptyMessage: string;
 }
 
 export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const insets = useSafeAreaInsets();
-  const { isDesktop } = useResponsiveLayout();
+  const { isMobile } = useResponsiveLayout();
   const meeting = useMeetingStore((s) => s.activeMeeting);
+  const activeSource = useMeetingStore((s) => s.activeSource);
   const isLoading = useMeetingStore((s) => s.isLoading);
+  const isSourceLoading = useMeetingStore((s) => s.isSourceLoading);
   const getMeetingDetails = useMeetingStore((s) => s.getMeetingDetails);
+  const fetchSourceDetail = useMeetingStore((s) => s.fetchSourceDetail);
+  const renameMeeting = useMeetingStore((s) => s.renameMeeting);
+  const deleteMeeting = useMeetingStore((s) => s.deleteMeeting);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const titleInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (meetingId) {
@@ -107,50 +161,151 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
     }
   }, [meetingId, getMeetingDetails]);
 
+  const sourceId = meeting?.source?.source_id ?? null;
+  const sourceStatus = meeting?.source?.status ?? null;
+
+  useEffect(() => {
+    if (!sourceId || sourceStatus !== "ready") return;
+    if (activeSource?.source_id === sourceId) return;
+    fetchSourceDetail(sourceId);
+  }, [sourceId, sourceStatus, activeSource?.source_id, fetchSourceDetail]);
+
+  const meetingStatus = meeting?.status ?? null;
+  const shouldPoll =
+    !!meeting && (isMeetingInProgress(meetingStatus) || isSourceInProgress(sourceStatus));
+  const pollTargetId = shouldPoll ? (meeting?.meeting_id ?? null) : null;
+
+  useEffect(() => {
+    if (!pollTargetId) return;
+
+    let attempts = 0;
+    const poller = createPoller({
+      fn: () => meetingService.getMeeting(pollTargetId),
+      interval: STATUS_POLL_INTERVAL_MS,
+      shouldStop: (next) => {
+        attempts += 1;
+        const meetingDone = !isMeetingInProgress(next.status);
+        const sourceDone = !isSourceInProgress(next.source?.status ?? null);
+        if (meetingDone && sourceDone) return true;
+        return attempts >= STATUS_POLL_MAX_ATTEMPTS;
+      },
+      onUpdate: (next) => {
+        useMeetingStore.setState({ activeMeeting: next });
+      },
+      onError: () => {
+        // silent; UI already reflects the processing state
+      },
+    });
+
+    poller.start();
+    return () => poller.stop();
+  }, [pollTargetId]);
+
   const summary = meeting?.summary;
-  const dur = formatDuration(meeting?.duration_seconds);
+  const dur = formatDurationSeconds(meeting?.duration_seconds);
   const sColor = meeting ? statusColor(meeting.status) : SemanticColors.textMuted;
   const stageLabel = meeting ? processingStageLabel(meeting.processing_stage) : null;
 
-  const sections: readonly SectionStat[] = summary
+  const decisions = summary?.decisions ?? [];
+  const blockers = summary?.blockers ?? [];
+  const nextSteps = summary?.next_steps ?? [];
+  const kernelSignals = summary?.business_kernel_signals ?? [];
+
+  const insightSections: InsightSection[] = summary
     ? [
         {
           key: "decisions",
-          icon: "checkmark-circle",
-          color: SemanticColors.success,
+          icon: "checkmark-circle-outline",
+          iconColor: SemanticColors.success,
           title: "Decisiones",
-          items: summary.decisions ?? [],
+          items: decisions,
           emptyMessage: "Sin decisiones extraídas",
         },
         {
+          key: "next_steps",
+          icon: "arrow-forward-circle-outline",
+          iconColor: SemanticColors.info,
+          title: "Puntos de acción",
+          items: nextSteps,
+          emptyMessage: "Sin puntos de acción definidos",
+        },
+        {
           key: "blockers",
-          icon: "warning",
-          color: SemanticColors.warning,
+          icon: "warning-outline",
+          iconColor: SemanticColors.warning,
           title: "Bloqueos",
-          items: summary.blockers ?? [],
-          emptyMessage: "Sin bloqueos extraídos",
+          items: blockers,
+          emptyMessage: "Sin bloqueos detectados",
         },
-        {
-          key: "next",
-          icon: "arrow-forward-circle",
-          color: SemanticColors.info,
-          title: "Próximos pasos",
-          items: summary.next_steps ?? [],
-          emptyMessage: "Sin siguientes pasos",
-        },
-        {
-          key: "signals",
-          icon: "pulse",
-          color: SemanticColors.accent,
-          title: "Señales Business Kernel",
-          items: summary.business_kernel_signals ?? [],
-          emptyMessage: "Sin señales extraídas",
-        },
+        ...(kernelSignals.length > 0
+          ? ([
+              {
+                key: "kernel",
+                icon: "pulse-outline",
+                iconColor: SemanticColors.tealLight,
+                title: "Señales de negocio",
+                items: kernelSignals,
+                emptyMessage: "",
+              },
+            ] as InsightSection[])
+          : []),
       ]
     : [];
 
-  const totalInsights = sections.reduce((acc, s) => acc + s.items.length, 0);
-  const hasAnySectionData = sections.some((s) => s.items.length > 0);
+  const totalInsights =
+    decisions.length + blockers.length + nextSteps.length + kernelSignals.length;
+
+  const entities = activeSource?.entities ?? [];
+  const alerts = activeSource?.insights ?? [];
+  const hasSourceData = sourceStatus === "ready" && (entities.length > 0 || alerts.length > 0);
+
+  function handleStartEditTitle(): void {
+    if (!meeting) return;
+    setEditedTitle(meeting.title);
+    setTitleError(null);
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 50);
+  }
+
+  function handleCancelEditTitle(): void {
+    setIsEditingTitle(false);
+    setEditedTitle("");
+    setTitleError(null);
+  }
+
+  async function handleConfirmEditTitle(): Promise<void> {
+    if (!meeting || isSavingTitle) return;
+    const trimmed = editedTitle.trim();
+    if (!trimmed || trimmed === meeting.title) {
+      handleCancelEditTitle();
+      return;
+    }
+    setIsSavingTitle(true);
+    setTitleError(null);
+    try {
+      await renameMeeting(meeting.meeting_id, trimmed);
+      setIsEditingTitle(false);
+      setEditedTitle("");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No se pudo guardar el título.";
+      setTitleError(message);
+    } finally {
+      setIsSavingTitle(false);
+    }
+  }
+
+  function handleDelete(): void {
+    if (!meeting || isDeleting) return;
+    confirmDelete(async () => {
+      setIsDeleting(true);
+      try {
+        await deleteMeeting(meeting.meeting_id);
+        goBackOrHome();
+      } catch {
+        setIsDeleting(false);
+      }
+    });
+  }
 
   return (
     <View style={styles.root}>
@@ -159,7 +314,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
         icon="document-text"
         titlePrefix="Detalle"
         titleAccent="Reunión"
-        showBack
+        showBack={isMobile}
         onBack={() => goBackOrHome()}
       />
 
@@ -174,240 +329,245 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
             styles.scrollContent,
             { paddingBottom: insets.bottom + Spacing.six },
           ]}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         >
-          {/* ——— DOSSIER STRIP (technical identity) ——— */}
-          <View style={styles.dossierStrip}>
-            <View style={styles.dossierChip}>
-              <ThemedText style={styles.dossierChipKey}>ID</ThemedText>
-              <ThemedText style={styles.dossierChipValue}>{shortId(meeting.meeting_id)}</ThemedText>
-            </View>
-            <View style={styles.dossierDot} />
-            <View style={styles.dossierChip}>
-              <ThemedText style={styles.dossierChipKey}>ARCHIVO</ThemedText>
-              <ThemedText style={styles.dossierChipValue} numberOfLines={1}>
-                {meeting.file_name ?? "—"}
-              </ThemedText>
-            </View>
-            <View style={styles.dossierDot} />
-            <View style={styles.dossierChip}>
-              <ThemedText style={styles.dossierChipKey}>PESO</ThemedText>
-              <ThemedText style={styles.dossierChipValue}>
-                {formatSize(meeting.size_bytes)}
-              </ThemedText>
-            </View>
-          </View>
-
-          {/* ——— BRIEFING HEADLINE ——— */}
-          <View style={[styles.briefing, isDesktop && styles.briefingDesktop]}>
-            <View style={[styles.briefingNumeric, isDesktop && styles.briefingNumericDesktop]}>
-              <View style={styles.cornerTl} />
-              <View style={styles.cornerTr} />
-              <View style={styles.cornerBl} />
-              <View style={styles.cornerBr} />
-
-              <ThemedText style={styles.briefingStat}>{dur}</ThemedText>
-              <View style={styles.briefingStatRow}>
-                <View style={styles.briefingStatBar} />
-                <ThemedText style={styles.briefingStatLabel}>TIEMPO · MIN SEG</ThemedText>
+          {/* ———————————————————————————————————— */}
+          {/*  HERO                                 */}
+          {/* ———————————————————————————————————— */}
+          <View style={styles.hero}>
+            <View style={styles.heroTopRow}>
+              <ThemedText style={styles.heroFolio}>ACTA · 01</ThemedText>
+              <View style={styles.statusPill}>
+                <View style={[styles.statusDot, { backgroundColor: sColor }]} />
+                <ThemedText style={[styles.statusText, { color: sColor }]}>
+                  {statusLabel(meeting.status)}
+                </ThemedText>
               </View>
             </View>
 
-            <View style={[styles.briefingBody, isDesktop && styles.briefingBodyDesktop]}>
-              <View style={styles.briefingTopRow}>
-                <ThemedText style={styles.briefingTitle} numberOfLines={3}>
+            <ThemedText style={styles.heroDate}>
+              {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
+            </ThemedText>
+
+            {isEditingTitle ? (
+              <View style={styles.titleEditColumn}>
+                <View style={styles.titleEditWrap}>
+                  <TextInput
+                    ref={titleInputRef}
+                    value={editedTitle}
+                    onChangeText={setEditedTitle}
+                    style={styles.titleInput}
+                    onSubmitEditing={handleConfirmEditTitle}
+                    placeholderTextColor={SemanticColors.textPlaceholder}
+                    returnKeyType="done"
+                    autoCorrect={false}
+                    multiline
+                    editable={!isSavingTitle}
+                    maxLength={300}
+                  />
+                  <View style={styles.titleEditActions}>
+                    <TouchableOpacity
+                      onPress={handleCancelEditTitle}
+                      style={[styles.titleEditBtn, styles.titleEditBtnGhost]}
+                      activeOpacity={0.6}
+                      disabled={isSavingTitle}
+                      accessibilityLabel="Cancelar edición"
+                    >
+                      <Ionicons name="close" size={16} color={SemanticColors.textMuted} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleConfirmEditTitle}
+                      style={styles.titleEditBtn}
+                      activeOpacity={0.6}
+                      disabled={isSavingTitle}
+                      accessibilityLabel="Guardar título"
+                    >
+                      {isSavingTitle ? (
+                        <ActivityIndicator size="small" color={SemanticColors.success} />
+                      ) : (
+                        <Ionicons name="checkmark" size={16} color={SemanticColors.success} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                {titleError ? (
+                  <ThemedText style={styles.titleEditError}>{titleError}</ThemedText>
+                ) : null}
+              </View>
+            ) : (
+              <View style={styles.titleRow}>
+                <ThemedText style={styles.heroTitle} numberOfLines={5}>
                   {meeting.title}
                 </ThemedText>
-                {isDesktop ? (
+                <TouchableOpacity
+                  onPress={handleStartEditTitle}
+                  style={styles.titleEditTrigger}
+                  activeOpacity={0.6}
+                  hitSlop={8}
+                  accessibilityLabel="Editar título"
+                >
+                  <Ionicons name="create-outline" size={16} color={SemanticColors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View style={styles.heroAxis}>
+              <View style={styles.heroAxisRule} />
+              <View style={styles.heroAxisDot} />
+            </View>
+
+            <View style={styles.heroStats}>
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>DURACIÓN</ThemedText>
+                <ThemedText style={styles.statValue}>{dur}</ThemedText>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>INSIGHTS</ThemedText>
+                <ThemedText style={styles.statValue}>
+                  {String(totalInsights).padStart(2, "0")}
+                </ThemedText>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>ETAPA</ThemedText>
+                <ThemedText style={styles.statValueText} numberOfLines={1}>
+                  {stageLabel ?? "Finalizada"}
+                </ThemedText>
+              </View>
+            </View>
+
+            {meeting.source ? (
+              <View style={styles.sourceIndicator}>
+                {isSourceLoading && sourceStatus === "ready" ? (
+                  <ActivityIndicator size="small" color={SemanticColors.tealLight} />
+                ) : (
                   <View
-                    style={[
-                      styles.statusFlag,
-                      { backgroundColor: `${sColor}15`, borderColor: `${sColor}44` },
-                    ]}
-                  >
-                    <View style={[styles.statusFlagDot, { backgroundColor: sColor }]} />
-                    <ThemedText style={[styles.statusFlagLabel, { color: sColor }]}>
-                      {statusLabel(meeting.status)}
-                    </ThemedText>
-                  </View>
-                ) : null}
-              </View>
-
-              <View style={styles.briefingGrid}>
-                <View style={styles.briefingCell}>
-                  <ThemedText style={styles.briefingCellLabel}>FECHA</ThemedText>
-                  <ThemedText style={styles.briefingCellValue}>
-                    {formatDate(meeting.created_at)}
+                    style={[styles.sourceDot, { backgroundColor: sourceStatusColor(sourceStatus) }]}
+                  />
+                )}
+                <ThemedText style={styles.sourceText}>
+                  {isSourceLoading && sourceStatus === "ready"
+                    ? "Cargando análisis…"
+                    : sourceStatusLabel(sourceStatus)}
+                </ThemedText>
+                {alerts.length > 0 ? (
+                  <ThemedText style={styles.sourceBadge}>
+                    {String(alerts.length).padStart(2, "0")} ALERTAS
                   </ThemedText>
-                </View>
-
-                {!isDesktop ? (
-                  <>
-                    <View style={styles.briefingCellDivider} />
-                    <View
-                      style={[
-                        styles.statusFlag,
-                        styles.briefingCellStatus,
-                        { backgroundColor: `${sColor}15`, borderColor: `${sColor}44` },
-                      ]}
-                    >
-                      <View style={[styles.statusFlagDot, { backgroundColor: sColor }]} />
-                      <ThemedText style={[styles.statusFlagLabel, { color: sColor }]}>
-                        {statusLabel(meeting.status)}
-                      </ThemedText>
-                    </View>
-                  </>
-                ) : null}
-
-                {stageLabel && meeting.status !== "COMPLETED" ? (
-                  <>
-                    <View style={styles.briefingCellDivider} />
-                    <View style={styles.briefingCell}>
-                      <ThemedText style={styles.briefingCellLabel}>ETAPA</ThemedText>
-                      <ThemedText
-                        style={[styles.briefingCellValue, { color: sColor }]}
-                        numberOfLines={1}
-                      >
-                        {stageLabel}
-                      </ThemedText>
-                    </View>
-                  </>
                 ) : null}
               </View>
-            </View>
+            ) : null}
           </View>
 
-          {/* ——— AUDIO PLAYER (console bar) ——— */}
-          <View style={styles.audioConsole}>
-            <MeetingAudioPlayer
-              audioUrl={meeting.audio_url}
-              durationSeconds={meeting.duration_seconds}
-            />
-          </View>
-
-          {/* ——— RESUMEN EJECUTIVO (editorial) ——— */}
-          {summary ? (
-            <View style={styles.summaryBlock}>
-              <View style={styles.summaryEyebrowRow}>
-                <View style={styles.summaryEyebrowBar} />
-                <ThemedText style={styles.summaryEyebrow}>RESUMEN · EJECUTIVO</ThemedText>
-              </View>
-
-              <ThemedText style={styles.summaryHeadline}>{summary.headline}</ThemedText>
-
-              <ThemedText style={styles.summaryBody}>{summary.executive_summary}</ThemedText>
-            </View>
-          ) : null}
-
-          {/* ——— ANATOMY BREAKDOWN ——— */}
-          {sections.length > 0 ? (
-            <View style={styles.anatomyWrap}>
-              <View style={styles.anatomyHeader}>
-                <View style={styles.anatomyHeaderLeft}>
-                  <ThemedText style={styles.anatomyCount}>
-                    {String(totalInsights).padStart(2, "0")}
-                  </ThemedText>
-                  <View style={styles.anatomyLabelBlock}>
-                    <ThemedText style={styles.anatomyLabel}>INSIGHTS</ThemedText>
-                    <ThemedText style={styles.anatomySub}>DETECTADOS · POR ALTER</ThemedText>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.anatomyBar}>
-                {sections.map((sec, idx) => {
-                  const empty = sec.items.length === 0;
-                  return (
-                    <View
-                      key={`bd-${sec.key}`}
-                      style={[
-                        styles.anatomySeg,
-                        idx < sections.length - 1 && styles.anatomyDivider,
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.anatomySegAccent,
-                          { backgroundColor: empty ? "rgba(255,255,255,0.1)" : sec.color },
-                        ]}
-                      />
-                      <View style={styles.anatomySegTop}>
-                        <Ionicons
-                          name={sec.icon}
-                          size={12}
-                          color={empty ? SemanticColors.textMuted : sec.color}
-                        />
-                        <ThemedText
-                          style={[
-                            styles.anatomyNum,
-                            { color: empty ? SemanticColors.textMuted : sec.color },
-                          ]}
-                        >
-                          {sec.items.length}
-                        </ThemedText>
-                      </View>
-                      <ThemedText
-                        style={[styles.anatomySegTitle, empty && styles.anatomySegTitleEmpty]}
-                        numberOfLines={2}
-                      >
-                        {sec.title}
-                      </ThemedText>
-                    </View>
-                  );
-                })}
-              </View>
-
-              {hasAnySectionData ? (
-                <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
-                  {sections
-                    .filter((s) => s.items.length > 0)
-                    .map((sec) => (
-                      <View
-                        key={sec.key}
-                        style={[styles.gridItem, isDesktop && styles.gridItemDesktop]}
-                      >
-                        <MeetingSummarySection
-                          icon={sec.icon}
-                          iconColor={sec.color}
-                          title={sec.title}
-                          items={sec.items}
-                          emptyMessage={sec.emptyMessage}
-                        />
-                      </View>
-                    ))}
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-
-          {meeting.transcript ? <MeetingTranscriptSection transcript={meeting.transcript} /> : null}
-
+          {/* ——— ERROR ——— */}
           {meeting.error_message ? (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color={SemanticColors.error} />
-              <ThemedText style={styles.errorText}>{meeting.error_message}</ThemedText>
+              <View style={styles.errorRail} />
+              <View style={styles.errorContent}>
+                <ThemedText style={styles.errorEyebrow}>INCIDENCIA</ThemedText>
+                <ThemedText style={styles.errorText}>{meeting.error_message}</ThemedText>
+              </View>
             </View>
           ) : null}
+
+          {/* ——— RESUMEN EJECUTIVO ——— */}
+          {summary ? (
+            <View style={styles.editorialBlock}>
+              <View style={styles.editorialRail} />
+              <View style={styles.editorialContent}>
+                <ThemedText style={styles.editorialEyebrow}>RESUMEN · EJECUTIVO</ThemedText>
+                {summary.headline ? (
+                  <ThemedText style={styles.editorialHeadline}>{summary.headline}</ThemedText>
+                ) : null}
+                <ThemedText style={styles.editorialBody}>{summary.executive_summary}</ThemedText>
+              </View>
+            </View>
+          ) : null}
+
+          {/* ——— INSIGHTS ——— */}
+          {summary && insightSections.length > 0 ? (
+            <View style={styles.insightsWrap}>
+              <View style={styles.insightsHeader}>
+                <ThemedText style={styles.insightsEyebrow}>
+                  INSIGHTS · CAPTURADOS POR ALTER
+                </ThemedText>
+                <ThemedText style={styles.insightsCountBig}>
+                  {String(totalInsights).padStart(2, "0")}
+                </ThemedText>
+              </View>
+
+              <View style={styles.insightsRule} />
+
+              <View style={styles.insightsList}>
+                {insightSections.map((section, idx) => (
+                  <MeetingSummarySection
+                    key={section.key}
+                    index={idx + 1}
+                    icon={section.icon}
+                    iconColor={section.iconColor}
+                    title={section.title}
+                    items={section.items}
+                    emptyMessage={section.emptyMessage}
+                  />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {/* ——— ALERTAS DEL AGENTE (source insights) ——— */}
+          {hasSourceData && alerts.length > 0 ? <MeetingAlertsSection insights={alerts} /> : null}
+
+          {/* ——— ENTIDADES DETECTADAS ——— */}
+          {hasSourceData && entities.length > 0 ? (
+            <MeetingEntitiesSection entities={entities} />
+          ) : null}
+
+          {/* ——— TRANSCRIPCIÓN ——— */}
+          {meeting.transcript ? <MeetingTranscriptSection transcript={meeting.transcript} /> : null}
+
+          {/* ——— METADATOS TÉCNICOS ——— */}
+          <MeetingTechnicalDetails
+            fileName={meeting.file_name}
+            contentType={meeting.content_type}
+            sizeBytes={meeting.size_bytes}
+            recordedStartedAt={meeting.recorded_started_at}
+            recordedFinishedAt={meeting.recorded_finished_at}
+            processingStartedAt={meeting.processing_started_at}
+            processingFinishedAt={meeting.processing_finished_at}
+            processingRunId={meeting.processing_run_id}
+            updatedAt={meeting.updated_at}
+          />
+
+          {/* ——— ZONA DE ARCHIVO ——— */}
+          <View style={styles.archiveZone}>
+            <View style={styles.archiveHeader}>
+              <ThemedText style={styles.archiveEyebrow}>ZONA DE ARCHIVO</ThemedText>
+              <View style={styles.archiveDash} />
+            </View>
+            <TouchableOpacity
+              onPress={handleDelete}
+              activeOpacity={0.6}
+              disabled={isDeleting}
+              style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
+              accessibilityRole="button"
+              accessibilityLabel="Eliminar reunión permanentemente"
+            >
+              {isDeleting ? (
+                <ActivityIndicator size="small" color={SemanticColors.error} />
+              ) : (
+                <Ionicons name="trash-outline" size={14} color={SemanticColors.error} />
+              )}
+              <ThemedText style={styles.deleteButtonText}>
+                {isDeleting ? "ELIMINANDO" : "ELIMINAR REUNIÓN PERMANENTEMENTE"}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       )}
     </View>
   );
 }
-
-const briefingShadow = Platform.select({
-  ios: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 22,
-  },
-  android: { elevation: 8 },
-  web: { boxShadow: "0 10px 28px rgba(0,0,0,0.3)" },
-});
-
-const CORNER_SIZE = 10;
-const CORNER_THICKNESS = 1.5;
-const CORNER_COLOR = "rgba(0,255,132,0.35)";
 
 const styles = StyleSheet.create({
   root: {
@@ -422,395 +582,355 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.three,
-    gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.five,
     paddingTop: Spacing.two,
   },
 
-  /* ——— Dossier Strip (technical identity) ——— */
-  dossierStrip: {
+  /* ═══════════════════════════════════════════ */
+  /*  HERO                                        */
+  /* ═══════════════════════════════════════════ */
+  hero: {
+    gap: Spacing.three,
+  },
+  heroTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    flexWrap: "wrap",
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.one,
+    justifyContent: "space-between",
   },
-  dossierChip: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 6,
-  },
-  dossierChipKey: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 9,
-    lineHeight: 12,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
-  },
-  dossierChipValue: {
+  heroFolio: {
     fontFamily: Fonts.octosquaresBlack,
     fontSize: 11,
     lineHeight: 14,
-    color: SemanticColors.textSecondaryLight,
-    letterSpacing: 0.6,
-    maxWidth: 220,
+    color: SemanticColors.textMuted,
+    letterSpacing: 2.4,
   },
-  dossierDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-
-  /* ——— Briefing (hero asymmetric) ——— */
-  briefing: {
-    flexDirection: "column",
-    gap: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    ...briefingShadow,
-  },
-  briefingDesktop: {
+  statusPill: {
     flexDirection: "row",
-    alignItems: "stretch",
-    gap: Spacing.four,
-    padding: Spacing.four,
+    alignItems: "center",
+    gap: 6,
   },
-  briefingNumeric: {
-    position: "relative",
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 2,
+  },
+  heroDate: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.4)",
+    letterSpacing: 1.8,
+  },
+  titleRow: {
+    flexDirection: "row",
     alignItems: "flex-start",
-    justifyContent: "center",
     gap: Spacing.two,
-    minHeight: 128,
   },
-  briefingNumericDesktop: {
-    paddingRight: Spacing.four,
-    borderRightWidth: 1,
-    borderRightColor: "rgba(255,255,255,0.08)",
-    minWidth: 220,
+  heroTitle: {
+    flex: 1,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 34,
+    lineHeight: 40,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.9,
+    marginTop: 2,
   },
-  cornerTl: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-    borderTopWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-    borderColor: CORNER_COLOR,
+  titleEditTrigger: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
   },
-  cornerTr: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-    borderTopWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-    borderColor: CORNER_COLOR,
+  titleEditColumn: {
+    gap: Spacing.one,
+    marginTop: 2,
   },
-  cornerBl: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-    borderColor: CORNER_COLOR,
+  titleEditWrap: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
   },
-  cornerBr: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-    borderColor: CORNER_COLOR,
+  titleEditError: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: SemanticColors.error,
+    letterSpacing: 0.1,
   },
-  briefingStat: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 72,
-    lineHeight: 74,
-    color: SemanticColors.success,
-    letterSpacing: -1.2,
-    fontVariant: ["tabular-nums"],
+  titleInput: {
+    flex: 1,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 30,
+    lineHeight: 36,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.7,
+    borderBottomWidth: 2,
+    borderBottomColor: SemanticColors.success,
+    paddingBottom: 4,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    ...(Platform.OS === "web" ? { outlineStyle: "none" as never } : {}),
   },
-  briefingStatRow: {
+  titleEditActions: {
+    flexDirection: "row",
+    gap: 4,
+    paddingTop: 4,
+  },
+  titleEditBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.18)",
+  },
+  titleEditBtnGhost: {
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  heroAxis: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
+    paddingTop: Spacing.one,
   },
-  briefingStatBar: {
-    width: 14,
-    height: 2,
-    borderRadius: 1,
+  heroAxisRule: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  heroAxisDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
     backgroundColor: SemanticColors.success,
   },
-  briefingStatLabel: {
+  heroStats: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: Spacing.three,
+    paddingTop: Spacing.one,
+  },
+  statBlock: {
+    flex: 1,
+    gap: 4,
+  },
+  statLabel: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 9,
     lineHeight: 12,
     color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
+    letterSpacing: 2,
   },
-  briefingBody: {
-    flex: 1,
-    gap: Spacing.three,
-    justifyContent: "space-between",
+  statValue: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 28,
+    lineHeight: 30,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.5,
+    fontVariant: ["tabular-nums"],
   },
-  briefingBodyDesktop: {
-    paddingLeft: Spacing.two,
+  statValueText: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.2,
+    marginTop: 4,
   },
-  briefingTopRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: Spacing.two,
+  statDivider: {
+    width: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
   },
-  statusFlag: {
+  sourceIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
+    gap: Spacing.two,
+    paddingTop: Spacing.one,
   },
-  statusFlagDot: {
+  sourceDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
   },
-  statusFlagLabel: {
+  sourceText: {
+    flex: 1,
     fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.3,
+  },
+  sourceBadge: {
+    fontFamily: Fonts.octosquaresBlack,
     fontSize: 10,
     lineHeight: 12,
-    letterSpacing: 2,
+    color: SemanticColors.error,
+    letterSpacing: 1.6,
   },
-  briefingTitle: {
+
+  /* ═══════════════════════════════════════════ */
+  /*  ERROR                                       */
+  /* ═══════════════════════════════════════════ */
+  errorBox: {
+    flexDirection: "row",
+    gap: Spacing.three,
+  },
+  errorRail: {
+    width: 2,
+    backgroundColor: SemanticColors.error,
+    borderRadius: 1,
+  },
+  errorContent: {
     flex: 1,
+    gap: 4,
+  },
+  errorEyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.error,
+    letterSpacing: 2.4,
+  },
+  errorText: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: SemanticColors.textSecondaryLight,
+  },
+
+  /* ═══════════════════════════════════════════ */
+  /*  RESUMEN EJECUTIVO                           */
+  /* ═══════════════════════════════════════════ */
+  editorialBlock: {
+    flexDirection: "row",
+    gap: Spacing.three,
+  },
+  editorialRail: {
+    width: 2,
+    backgroundColor: SemanticColors.success,
+    borderRadius: 1,
+  },
+  editorialContent: {
+    flex: 1,
+    gap: Spacing.two,
+  },
+  editorialEyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    letterSpacing: 2.4,
+  },
+  editorialHeadline: {
     fontFamily: Fonts.montserratBold,
-    fontSize: 24,
+    fontSize: 22,
     lineHeight: 30,
     color: SemanticColors.textPrimary,
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
+    marginTop: 2,
   },
-  briefingGrid: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: Spacing.two,
-    paddingTop: Spacing.two,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
-  },
-  briefingCell: {
-    gap: 2,
-    minWidth: 90,
-  },
-  briefingCellDivider: {
-    width: 1,
-    alignSelf: "stretch",
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  briefingCellLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 9,
-    lineHeight: 12,
-    color: SemanticColors.textMuted,
-    letterSpacing: 1.8,
-  },
-  briefingCellValue: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 13,
-    lineHeight: 16,
-    color: SemanticColors.textPrimary,
-    letterSpacing: 0.4,
-  },
-  briefingCellStatus: {
-    alignSelf: "center",
+  editorialBody: {
+    fontFamily: Fonts.montserrat,
+    fontSize: 15,
+    lineHeight: 24,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.1,
+    marginTop: 2,
   },
 
-  /* ——— Audio Console ——— */
-  audioConsole: {
-    marginTop: -Spacing.one,
+  /* ═══════════════════════════════════════════ */
+  /*  INSIGHTS                                    */
+  /* ═══════════════════════════════════════════ */
+  insightsWrap: {
+    gap: Spacing.three,
   },
-
-  /* ——— Resumen Ejecutivo (editorial) ——— */
-  summaryBlock: {
-    paddingVertical: Spacing.two,
-    paddingLeft: Spacing.three,
-    borderLeftWidth: 2,
-    borderLeftColor: "rgba(0,255,132,0.35)",
-    gap: Spacing.two,
-  },
-  summaryEyebrowRow: {
+  insightsHeader: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: Spacing.three,
   },
-  summaryEyebrowBar: {
-    width: 14,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: SemanticColors.success,
-  },
-  summaryEyebrow: {
+  insightsEyebrow: {
+    flex: 1,
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 10,
     lineHeight: 14,
     color: SemanticColors.textMuted,
     letterSpacing: 2.4,
+    paddingBottom: 4,
   },
-  summaryHeadline: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 22,
-    lineHeight: 30,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.3,
-    marginTop: Spacing.one,
+  insightsCountBig: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 48,
+    lineHeight: 50,
+    color: SemanticColors.success,
+    letterSpacing: -1.5,
+    fontVariant: ["tabular-nums"],
   },
-  summaryBody: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 23,
-    color: SemanticColors.textSecondaryLight,
-    marginTop: Spacing.one,
+  insightsRule: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  insightsList: {
+    paddingTop: Spacing.two,
   },
 
-  /* ——— Anatomy ——— */
-  anatomyWrap: {
+  /* ═══════════════════════════════════════════ */
+  /*  ZONA DE ARCHIVO                             */
+  /* ═══════════════════════════════════════════ */
+  archiveZone: {
     gap: Spacing.three,
+    paddingTop: Spacing.three,
   },
-  anatomyHeader: {
+  archiveHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: Spacing.two,
   },
-  anatomyHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
-  },
-  anatomyCount: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 44,
-    lineHeight: 46,
-    color: SemanticColors.success,
-    letterSpacing: -1,
-    fontVariant: ["tabular-nums"],
-  },
-  anatomyLabelBlock: {
-    gap: 2,
-  },
-  anatomyLabel: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 14,
-    lineHeight: 18,
-    color: SemanticColors.textPrimary,
-    letterSpacing: 2.4,
-  },
-  anatomySub: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 9,
-    lineHeight: 12,
-    color: SemanticColors.textMuted,
-    letterSpacing: 1.8,
-  },
-  anatomyBar: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    borderRadius: 14,
-    paddingVertical: Spacing.two,
-  },
-  anatomySeg: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    gap: 4,
-    paddingHorizontal: Spacing.one,
-    paddingVertical: Spacing.one,
-    position: "relative",
-  },
-  anatomySegAccent: {
-    position: "absolute",
-    bottom: -Spacing.two,
-    left: "25%",
-    right: "25%",
-    height: 2,
-    borderRadius: 1,
-  },
-  anatomyDivider: {
-    borderRightWidth: 1,
-    borderRightColor: "rgba(255,255,255,0.06)",
-  },
-  anatomySegTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  anatomyNum: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 18,
-    lineHeight: 20,
-    letterSpacing: -0.2,
-    fontVariant: ["tabular-nums"],
-  },
-  anatomySegTitle: {
+  archiveEyebrow: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 10,
-    lineHeight: 13,
-    color: SemanticColors.textSecondaryLight,
-    letterSpacing: 0.6,
-    textAlign: "center",
+    lineHeight: 14,
+    color: "rgba(255,68,68,0.5)",
+    letterSpacing: 2.4,
   },
-  anatomySegTitleEmpty: {
-    color: SemanticColors.textMuted,
+  archiveDash: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,68,68,0.12)",
   },
-
-  /* ——— Details grid ——— */
-  grid: {
-    gap: Spacing.two,
-  },
-  gridDesktop: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.two,
-  },
-  gridItem: {
-    width: "100%",
-  },
-  gridItemDesktop: {
-    flexGrow: 1,
-    flexBasis: "48%",
-    minWidth: 280,
-    alignSelf: "stretch",
-  },
-
-  errorBox: {
+  deleteButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.two,
-    backgroundColor: SemanticColors.errorMuted,
-    borderRadius: 14,
-    padding: Spacing.three,
+    paddingVertical: Spacing.three,
     borderWidth: 1,
-    borderColor: "rgba(255,68,68,0.25)",
+    borderColor: "rgba(255,68,68,0.18)",
+    borderStyle: Platform.select({ web: "dashed", default: "solid" }),
+    borderRadius: 4,
+    backgroundColor: "rgba(255,68,68,0.02)",
   },
-  errorText: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 13,
+  deleteButtonDisabled: {
+    opacity: 0.5,
+  },
+  deleteButtonText: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 10,
+    lineHeight: 14,
     color: SemanticColors.error,
-    flex: 1,
+    letterSpacing: 2,
   },
 });

@@ -5,12 +5,11 @@ import { router } from "expo-router";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { AudioRecorderView } from "@/components/onboarding/audio-recorder-view";
 import { ScreenLayout } from "@/components/screen-layout";
 import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
-import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import { SHOW_SCROLL_INDICATOR, USE_NATIVE_DRIVER } from "@/constants/platform";
 import { Spacing } from "@/constants/theme";
 import { prefetchUrlContext } from "@/services/onboarding-service";
 import { useAuthStore } from "@/stores/auth-store";
@@ -67,9 +66,9 @@ export default function QuestionsScreen() {
 
   if (question.type === "audio") {
     return (
-      <AppBackground>
+      <ScreenLayout paddingHorizontal={0}>
         <AudioRecorderView onConfirm={handleConfirmAudio} onBack={handleBack} />
-      </AppBackground>
+      </ScreenLayout>
     );
   }
 
@@ -230,7 +229,7 @@ export default function QuestionsScreen() {
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           keyboardShouldPersistTaps="handled"
         >
           <QuestionHeader planLabel={planLabel} onBack={handleBack} />

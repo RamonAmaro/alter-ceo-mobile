@@ -9,6 +9,7 @@ import { Button } from "@/components/button";
 import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { API_BASE_URL, API_VERSION } from "@/constants/env";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
@@ -264,7 +265,7 @@ export default function DebugScreen() {
 
           <ScrollView
             contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           >
             <SectionCard
               title="Entorno"
@@ -278,7 +279,7 @@ export default function DebugScreen() {
             </SectionCard>
 
             <SectionCard
-              title="Sesion"
+              title="Sesión"
               description="Estado actual de autenticación del usuario cargado en la app."
             >
               <InfoRow label="Autenticado" value={isAuthenticated ? "Sí" : "No"} />

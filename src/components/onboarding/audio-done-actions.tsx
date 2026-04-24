@@ -17,7 +17,7 @@ export function AudioDoneActions({
   return (
     <View style={styles.doneActions}>
       <CircleButton
-        size={120}
+        size={84}
         gradientId="gradRestart"
         colors={["#FF9500", "#E68400"]}
         icon={RestartIcon}
@@ -25,7 +25,7 @@ export function AudioDoneActions({
         onPress={onRestart}
       />
       <CircleButton
-        size={120}
+        size={84}
         gradientId="gradConfirm"
         colors={["#00D68F", "#00A86B"]}
         icon={CheckIcon}

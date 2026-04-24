@@ -1,6 +1,7 @@
-import { putExternal } from "@/lib/api-client";
-import type { MeetingDirectUploadPayload } from "@/types/meeting";
 import { EncodingType, getInfoAsync, readAsStringAsync } from "expo-file-system/legacy";
+
+import { ApiError } from "@/types/api";
+import type { MeetingDirectUploadPayload } from "@/types/meeting";
 
 export async function uploadFileToS3(
   upload: MeetingDirectUploadPayload,
@@ -12,6 +13,8 @@ export async function uploadFileToS3(
     throw new Error(`File not found: ${fileUri}`);
   }
 
+  // React Native's fetch() cannot read `file://` URIs directly on Android in
+  // a portable way, so we read as base64 and decode to bytes ourselves.
   const base64 = await readAsStringAsync(fileUri, {
     encoding: EncodingType.Base64,
   });
@@ -27,5 +30,23 @@ export async function uploadFileToS3(
     ...upload.headers,
   };
 
-  await putExternal(upload.upload_url, bytes.buffer as ArrayBuffer, headers);
+  // Use fetch() for the S3 PUT (not axios) to match the web upload path.
+  // Keeps upload behavior identical across native and web: same method, same
+  // headers, no credentials, same error surface.
+  let response: Response;
+  try {
+    response = await fetch(upload.upload_url, {
+      method: "PUT",
+      body: bytes,
+      headers,
+      credentials: "omit",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Network error";
+    throw new Error(`S3 upload network error: ${message}`);
+  }
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Upload failed with status ${response.status}`);
+  }
 }

@@ -4,6 +4,7 @@ import { ProfileMenuCard } from "@/components/profile/profile-menu-card";
 import { ScreenHeader } from "@/components/screen-header";
 import { EyebrowPill } from "@/components/ui/eyebrow-pill";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
@@ -97,7 +98,7 @@ export default function ProfileScreen() {
 
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         >
           <EyebrowPill label="IDENTIDAD · CONFIGURACIÓN" />
 

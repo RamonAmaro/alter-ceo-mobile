@@ -11,15 +11,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
 import { ScreenHeader } from "@/components/screen-header";
+import { SegmentedTabs, type SegmentedTabConfig } from "@/components/ui/segmented-tabs";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 
 import { MeetingsPage } from "./meetings-page";
-import { RecordingMotto } from "./recording-motto";
 import { RecordingPage } from "./recording-page";
 
 const PAGES = ["recording", "meetings"] as const;
+
+const TABS: readonly SegmentedTabConfig[] = [
+  { key: "recording", label: "Grabar", icon: "mic" },
+  { key: "meetings", label: "Historial", icon: "albums" },
+];
 
 export function RecordingScreen() {
   const insets = useSafeAreaInsets();
@@ -29,6 +34,7 @@ export function RecordingScreen() {
   const width = containerWidth || Math.min(windowWidth, 900);
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(0);
+  const listRef = useRef<FlatList<(typeof PAGES)[number]>>(null);
 
   const userId = useAuthStore((s) => s.user?.userId);
   const fetchMeetings = useMeetingStore((s) => s.fetchMeetings);
@@ -38,6 +44,16 @@ export function RecordingScreen() {
       fetchMeetings(userId);
     }
   }, [userId, fetchMeetings]);
+
+  const goToIndex = useCallback(
+    (index: number) => {
+      listRef.current?.scrollToIndex({ index, animated: true });
+      if (index === 1 && userId) fetchMeetings(userId);
+    },
+    [userId, fetchMeetings],
+  );
+
+  const goToHistory = useCallback(() => goToIndex(1), [goToIndex]);
 
   const viewabilityConfig = useRef({
     viewAreaCoveragePercentThreshold: 50,
@@ -62,12 +78,13 @@ export function RecordingScreen() {
             width={width}
             height={carouselHeight}
             onUploadComplete={handleUploadComplete}
+            onGoToHistory={goToHistory}
           />
         );
       }
       return <MeetingsPage width={width} height={carouselHeight} />;
     },
-    [width, carouselHeight, handleUploadComplete],
+    [width, carouselHeight, handleUploadComplete, goToHistory],
   );
 
   return (
@@ -79,14 +96,15 @@ export function RecordingScreen() {
         <ScreenHeader
           topInset={insets.top}
           icon="mic"
-          titlePrefix="Grabar"
-          titleAccent="Reunión"
+          titlePrefix="Reuniones"
+          titleAccent={activeIndex === 0 ? "Grabar" : "Historial"}
           showBack={isMobile}
         />
 
-        <RecordingMotto activeIndex={activeIndex} />
+        <SegmentedTabs tabs={TABS} activeIndex={activeIndex} onChange={goToIndex} />
 
         <FlatList
+          ref={listRef}
           data={PAGES}
           keyExtractor={(item) => item}
           renderItem={renderPage}

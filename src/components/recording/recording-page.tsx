@@ -7,10 +7,12 @@ import { Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useUploadRecording } from "@/hooks/use-upload-recording";
 import {
+  checkAudioPermission,
   enableRecordingMode,
   openAppSettings,
   RecordingPresets,
   requestAudioPermission,
+  stopRecorderAndGetUri,
   useAudioRecorder,
 } from "@/services/audio-service";
 import { persistRecordingFile } from "@/services/recording-storage";
@@ -51,11 +53,17 @@ interface RecordingPageProps {
   width: number;
   height: number;
   onUploadComplete?: () => void;
+  onGoToHistory?: () => void;
 }
 
 // --- Component -----------------------------------------------------------
 
-export function RecordingPage({ width, height, onUploadComplete }: RecordingPageProps) {
+export function RecordingPage({
+  width,
+  height,
+  onUploadComplete,
+  onGoToHistory,
+}: RecordingPageProps) {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const [state, setState] = useState<RecordingState>("idle");
@@ -70,37 +78,42 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   const { uploadRecording } = useUploadRecording();
 
-  const handleRecord = useCallback(async () => {
-    if (state === "idle") {
-      const { granted, canAskAgain } = await requestAudioPermission();
-      if (!granted) {
-        if (!canAskAgain) {
-          Alert.alert(
-            "Micrófono desactivado",
-            "Activa el permiso de micrófono en los ajustes de tu dispositivo para poder grabar.",
-            [
-              { text: "Cancelar", style: "cancel" },
-              { text: "Ir a ajustes", onPress: openAppSettings },
-            ],
-          );
-        } else {
-          Alert.alert("Permiso requerido", "Necesitamos acceso al micrófono para grabar.");
-        }
-        return;
+  const handleStart = useCallback(async () => {
+    if (state !== "idle") return;
+
+    const existing = await checkAudioPermission();
+    const permission = existing.granted ? existing : await requestAudioPermission();
+    if (!permission.granted) {
+      if (!permission.canAskAgain) {
+        Alert.alert(
+          "Micrófono desactivado",
+          "Activa el permiso de micrófono en los ajustes de tu dispositivo para poder grabar.",
+          [
+            { text: "Cancelar", style: "cancel" },
+            { text: "Ir a ajustes", onPress: openAppSettings },
+          ],
+        );
+      } else {
+        Alert.alert("Permiso requerido", "Necesitamos acceso al micrófono para grabar.");
       }
+      return;
+    }
 
-      await enableRecordingMode();
+    await enableRecordingMode();
 
-      if (!preparedRef.current) {
-        await recorder.prepareToRecordAsync();
-        preparedRef.current = true;
-      }
+    if (!preparedRef.current) {
+      await recorder.prepareToRecordAsync();
+      preparedRef.current = true;
+    }
 
-      recorder.record();
-      segmentStartRef.current = Date.now();
-      accumulatedMsRef.current = 0;
-      setState("recording");
-    } else if (state === "recording") {
+    recorder.record();
+    segmentStartRef.current = Date.now();
+    accumulatedMsRef.current = 0;
+    setState("recording");
+  }, [state, recorder]);
+
+  const handlePauseResume = useCallback(() => {
+    if (state === "recording") {
       recorder.pause();
       accumulatedMsRef.current += Date.now() - segmentStartRef.current;
       setState("paused");
@@ -112,37 +125,33 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
   }, [state, recorder]);
 
   const handleDelete = useCallback(async () => {
-    if (state === "recording" || state === "paused") {
-      recorder.stop();
-    }
-    preparedRef.current = false;
     accumulatedMsRef.current = 0;
     segmentStartRef.current = 0;
     setState("idle");
+    if (state === "recording" || state === "paused") {
+      await stopRecorderAndGetUri(recorder).catch(() => null);
+    }
+    preparedRef.current = false;
   }, [state, recorder]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (state === "idle") return;
 
     if (state === "recording") {
       accumulatedMsRef.current += Date.now() - segmentStartRef.current;
     }
 
-    recorder.stop();
-    preparedRef.current = false;
-
-    const uri = recorder.uri;
-    if (!uri) {
-      accumulatedMsRef.current = 0;
-      segmentStartRef.current = 0;
-      setState("idle");
-      return;
-    }
-
-    pendingSaveRef.current = { uri, durationMs: accumulatedMsRef.current };
+    const durationMs = accumulatedMsRef.current;
     accumulatedMsRef.current = 0;
     segmentStartRef.current = 0;
     setState("idle");
+
+    const uri = await stopRecorderAndGetUri(recorder).catch(() => null);
+    preparedRef.current = false;
+
+    if (!uri) return;
+
+    pendingSaveRef.current = { uri, durationMs };
     setShowTitlePrompt(true);
   }, [state, recorder]);
 
@@ -172,6 +181,7 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
       });
 
       onUploadComplete?.();
+      onGoToHistory?.();
       setShowToast(true);
       setTimeout(() => setShowToast(false), TOAST_DURATION_MS);
 
@@ -182,7 +192,7 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
         durationMs: pending.durationMs,
       });
     },
-    [uploadRecording, onUploadComplete],
+    [uploadRecording, onUploadComplete, onGoToHistory],
   );
 
   const handleTitleCancel = useCallback(() => {
@@ -210,7 +220,8 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
           >
             <RecordingControls
               state={state}
-              onRecord={handleRecord}
+              onRecord={handleStart}
+              onPauseResume={handlePauseResume}
               onDelete={handleDelete}
               onSave={handleSave}
             />
@@ -220,7 +231,8 @@ export function RecordingPage({ width, height, onUploadComplete }: RecordingPage
         <RecordingStageDesktop
           state={state}
           recorder={recorder}
-          onRecord={handleRecord}
+          onRecord={handleStart}
+          onPauseResume={handlePauseResume}
           onDelete={handleDelete}
           onSave={handleSave}
         />

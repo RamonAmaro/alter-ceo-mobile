@@ -1,18 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Image,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { router } from "expo-router";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AlterBrand } from "@/components/alter-brand";
 import { AppBackground } from "@/components/app-background";
 import { AuthLayout } from "@/components/auth-layout";
 import { AuthTagline } from "@/components/auth-tagline";
@@ -21,6 +14,7 @@ import { FormCheckbox } from "@/components/form-checkbox";
 import { Input } from "@/components/input";
 import { KeyboardView } from "@/components/keyboard-view";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { isBiometricsAvailable } from "@/services/biometrics-service";
@@ -130,22 +124,27 @@ export default function LoginScreen() {
               },
             ]}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           >
             {isMobile && (
               <View style={styles.logoContainer}>
-                <Image
-                  source={require("@/assets/ui/logo-alterceo.png")}
-                  style={styles.logo}
-                  resizeMode="contain"
+                <AlterBrand
+                  iconSize={96}
+                  wordmarkSize={28}
+                  orientation="vertical"
+                  gap={Spacing.three}
                 />
               </View>
             )}
 
             <View style={styles.formContainer}>
-              <ThemedText type="bodyLg" style={styles.formTitle}>
-                Iniciar Sesión
-              </ThemedText>
+              <View style={styles.formHeader}>
+                <ThemedText style={styles.eyebrow}>BIENVENIDO</ThemedText>
+                <ThemedText style={styles.formTitle}>Iniciar sesión</ThemedText>
+                <ThemedText style={styles.formSubtitle}>
+                  Accede a tu copiloto estratégico
+                </ThemedText>
+              </View>
 
               <Input
                 placeholder="Usuario"
@@ -243,14 +242,37 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
   },
-  logo: {
-    width: 197,
-    height: 185,
-  },
   formContainer: {
-    width: 276,
+    width: 320,
     alignSelf: "center",
     alignItems: "center",
+  },
+  formHeader: {
+    alignItems: "center",
+    marginBottom: Spacing.four,
+    gap: Spacing.one,
+  },
+  eyebrow: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    letterSpacing: 3,
+    color: SemanticColors.success,
+    textAlign: "center",
+  },
+  formTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 24,
+    lineHeight: 30,
+    color: SemanticColors.textPrimary,
+    textAlign: "center",
+  },
+  formSubtitle: {
+    fontFamily: Fonts.montserrat,
+    fontSize: 13,
+    lineHeight: 18,
+    color: "rgba(255,255,255,0.55)",
+    textAlign: "center",
+    marginTop: Spacing.half,
   },
   inputSpacing: {
     marginBottom: Spacing.three,
@@ -268,12 +290,7 @@ const styles = StyleSheet.create({
   },
   buttonSpacing: {
     marginTop: Spacing.two,
-  },
-  formTitle: {
-    fontFamily: Fonts.montserratSemiBold,
-    color: SemanticColors.textPrimary,
-    textAlign: "center" as const,
-    marginBottom: Spacing.three,
+    width: "100%",
   },
   registerContainer: {
     alignItems: "center",
@@ -287,6 +304,7 @@ const styles = StyleSheet.create({
   linkText: {
     color: SemanticColors.accent,
     textAlign: "center" as const,
+    marginTop: Spacing.half,
   },
   spacer: {
     flexGrow: 1,

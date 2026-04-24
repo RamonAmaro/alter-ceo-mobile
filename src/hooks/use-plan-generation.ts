@@ -122,8 +122,15 @@ export function usePlanGeneration(): PlanGenerationState {
     const currentAnswers = answersRef.current;
     const currentAudioRecords = audioRecordsRef.current;
 
-    if (!currentUser?.userId || !currentPlanType) {
+    if (!currentUser?.userId) {
       setError("Sesión no válida. Por favor, vuelve a iniciar sesión.");
+      return;
+    }
+
+    if (!currentPlanType) {
+      setError(
+        "No se pudo recuperar tu plan de onboarding. Por favor, vuelve a la pantalla anterior e inténtalo de nuevo.",
+      );
       return;
     }
 

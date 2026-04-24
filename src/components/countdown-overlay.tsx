@@ -1,7 +1,10 @@
+import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { SemanticColors, Fonts } from "@/constants/theme";
 import { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
+
+const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 
 interface CountdownOverlayProps {
   onComplete: () => void;
@@ -54,7 +57,7 @@ export function CountdownOverlay({ onComplete, seconds = 3 }: CountdownOverlayPr
 
   return (
     <View style={styles.overlay}>
-      <Animated.Text
+      <AnimatedThemedText
         style={[
           styles.number,
           {
@@ -64,7 +67,7 @@ export function CountdownOverlay({ onComplete, seconds = 3 }: CountdownOverlayPr
         ]}
       >
         {count}
-      </Animated.Text>
+      </AnimatedThemedText>
     </View>
   );
 }

@@ -1,4 +1,5 @@
 import { MessageBubble } from "@/components/chat/message-bubble";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Spacing } from "@/constants/theme";
 import { useRef } from "react";
 import { FlatList, StyleSheet } from "react-native";
@@ -55,7 +56,7 @@ export function StrategyChatView({ messages }: StrategyChatViewProps) {
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       contentContainerStyle={styles.listContent}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
       keyboardDismissMode="interactive"
       onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
     />

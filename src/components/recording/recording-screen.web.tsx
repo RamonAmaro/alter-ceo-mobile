@@ -1,16 +1,10 @@
-import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import { useCallback, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-  type LayoutChangeEvent,
-} from "react-native";
+import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
 
 import { AppBackground } from "@/components/app-background";
 import { ScreenHeader } from "@/components/screen-header";
-import { ThemedText } from "@/components/themed-text";
+import { SegmentedTabs, type SegmentedTabConfig } from "@/components/ui/segmented-tabs";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
@@ -18,10 +12,14 @@ import { useMeetingStore } from "@/stores/meeting-store";
 import { MeetingsPage } from "./meetings-page";
 import { RecordingPage } from "./recording-page";
 
-const TABS = [
-  { key: "recording", label: "Grabar" },
-  { key: "meetings", label: "Grabaciones" },
-] as const;
+const TABS: readonly SegmentedTabConfig[] = [
+  { key: "recording", label: "Grabar", icon: "mic" },
+  { key: "meetings", label: "Historial", icon: "albums" },
+];
+
+function buildHeaderAccent(index: number): string {
+  return index === 0 ? "Grabar" : "Historial";
+}
 
 export function RecordingScreen() {
   const { isMobile } = useResponsiveLayout();
@@ -30,7 +28,6 @@ export function RecordingScreen() {
   const width = containerWidth || windowWidth;
   const [activeIndex, setActiveIndex] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
 
   const userId = useAuthStore((s) => s.user?.userId);
   const fetchMeetings = useMeetingStore((s) => s.fetchMeetings);
@@ -54,41 +51,12 @@ export function RecordingScreen() {
         <ScreenHeader
           topInset={0}
           icon="mic"
-          titlePrefix="Grabar"
-          titleAccent="Reunión"
+          titlePrefix="Reuniones"
+          titleAccent={buildHeaderAccent(activeIndex)}
           showBack={isMobile}
         />
 
-        <View style={styles.tabBar}>
-          {TABS.map((tab, i) => {
-            const isActive = i === activeIndex;
-            const isHovered = tab.key === hoveredTab;
-            const indexLabel = String(i + 1).padStart(2, "0");
-            return (
-              <Pressable
-                key={tab.key}
-                style={styles.tab}
-                onPress={() => setActiveIndex(i)}
-                onHoverIn={() => setHoveredTab(tab.key)}
-                onHoverOut={() => setHoveredTab(null)}
-              >
-                <ThemedText style={[styles.tabIndex, isActive && styles.tabIndexActive]}>
-                  {indexLabel}
-                </ThemedText>
-                <ThemedText
-                  style={[
-                    styles.tabText,
-                    isHovered && !isActive && styles.tabTextHover,
-                    isActive && styles.tabTextActive,
-                  ]}
-                >
-                  {tab.label}
-                </ThemedText>
-                {isActive && <View style={styles.tabIndicator} />}
-              </Pressable>
-            );
-          })}
-        </View>
+        <SegmentedTabs tabs={TABS} activeIndex={activeIndex} onChange={setActiveIndex} />
 
         <View style={styles.content} onLayout={onContentLayout}>
           {activeIndex === 0 ? (
@@ -96,6 +64,7 @@ export function RecordingScreen() {
               width={width}
               height={contentHeight}
               onUploadComplete={handleUploadComplete}
+              onGoToHistory={() => setActiveIndex(1)}
             />
           ) : (
             <MeetingsPage width={width} height={contentHeight} />
@@ -110,61 +79,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  tabBar: {
-    flexDirection: "row",
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.06)",
-  },
-  tab: {
-    position: "relative",
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.three,
-    alignItems: "flex-start",
-    gap: 2,
-    minWidth: 100,
-    cursor: "pointer" as never,
-  },
-  tabIndex: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontStyle: "italic",
-    fontSize: 9,
-    lineHeight: 11,
-    color: "rgba(255,255,255,0.25)",
-    letterSpacing: 1.4,
-    transitionProperty: "color" as never,
-    transitionDuration: "150ms" as never,
-  },
-  tabIndexActive: {
-    color: SemanticColors.success,
-  },
-  tabText: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 13,
-    lineHeight: 16,
-    color: "rgba(255,255,255,0.45)",
-    transitionProperty: "color" as never,
-    transitionDuration: "150ms" as never,
-  },
-  tabTextHover: {
-    color: "rgba(255,255,255,0.7)",
-  },
-  tabTextActive: {
-    fontFamily: Fonts.montserratBold,
-    color: SemanticColors.textPrimary,
-  },
-  tabIndicator: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-    borderRadius: 99,
-    backgroundColor: SemanticColors.success,
-  },
   content: {
     flex: 1,
+    marginTop: Spacing.one,
   },
 });

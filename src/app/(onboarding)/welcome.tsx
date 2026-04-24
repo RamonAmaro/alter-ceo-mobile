@@ -9,6 +9,7 @@ import { Button } from "@/components/button";
 import { FooterActionBar } from "@/components/footer-action-bar";
 import { ScreenLayout } from "@/components/screen-layout";
 import { ThemedText } from "@/components/themed-text";
+import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useDebugStore } from "@/stores/debug-store";
 
@@ -53,7 +54,7 @@ export default function WelcomeScreen() {
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         >
           <Pressable onPress={() => void handleSecretTap()} style={styles.secretTapTarget}>
             <ThemedText type="headingMd" style={styles.whiteText}>

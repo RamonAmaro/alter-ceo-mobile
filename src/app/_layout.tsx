@@ -19,6 +19,9 @@ import { checkAndApplyUpdate } from "@/services/updates-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useDebugStore } from "@/stores/debug-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { injectWebStyles } from "@/utils/inject-web-styles";
+
+injectWebStyles();
 
 SplashScreen.preventAutoHideAsync();
 

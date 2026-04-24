@@ -60,7 +60,7 @@ export function useBusinessMemoryDashboard(): UseBusinessMemoryDashboardResult {
           setSteps([]);
           setProgress(null);
           setVersion(null);
-          setError("Sesion no valida.");
+          setError("Sesión no válida.");
           setIsLoading(false);
         }
         return;
@@ -100,7 +100,7 @@ export function useBusinessMemoryDashboard(): UseBusinessMemoryDashboardResult {
 
   function refresh(): void {
     if (!userId) {
-      setError("Sesion no valida.");
+      setError("Sesión no válida.");
       setIsLoading(false);
       return;
     }

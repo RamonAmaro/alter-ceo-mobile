@@ -32,8 +32,8 @@ export default function MyPlanScreen() {
           <ScreenHeader
             topInset={insets.top}
             icon="trophy"
-            titlePrefix="Mi"
-            titleAccent="Plan"
+            titlePrefix="Planes de"
+            titleAccent="negocio"
             showBack={isMobile}
           />
           <View style={styles.centered}>
@@ -51,8 +51,8 @@ export default function MyPlanScreen() {
           <ScreenHeader
             topInset={insets.top}
             icon="trophy"
-            titlePrefix="Mi"
-            titleAccent="Plan"
+            titlePrefix="Planes de"
+            titleAccent="negocio"
             showBack={isMobile}
           />
           <View style={styles.centered}>

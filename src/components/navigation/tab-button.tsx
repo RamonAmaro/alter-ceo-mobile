@@ -10,10 +10,23 @@ const INACTIVE_COLOR = "rgba(255,255,255,0.45)";
 const INACTIVE_LABEL_COLOR = "rgba(255,255,255,0.6)";
 const ACTIVE_LABEL_COLOR = "rgba(0,255,132,0.95)";
 
+const ICON_SLOT_HEIGHT = 28;
+const LABEL_LINE_HEIGHT = 11;
+const LABEL_LINES = 2;
+const LABEL_SLOT_HEIGHT = LABEL_LINE_HEIGHT * LABEL_LINES;
+
 interface TabButtonProps {
   item: NavItemConfig;
   focused: boolean;
   onPress: () => void;
+}
+
+function formatTabLabel(label: string): string {
+  const words = label.trim().split(/\s+/);
+  if (words.length < 2) return label;
+  const lastWord = words[words.length - 1];
+  const rest = words.slice(0, -1).join(" ");
+  return `${rest}\n${lastWord}`;
 }
 
 export function TabButton({ item, focused, onPress }: TabButtonProps) {
@@ -37,24 +50,6 @@ export function TabButton({ item, focused, onPress }: TabButtonProps) {
     }).start();
   }
 
-  if (item.isCenter) {
-    return (
-      <Pressable
-        style={styles.centerWrapper}
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        accessibilityRole="button"
-        accessibilityLabel="Alter"
-      >
-        <Animated.View style={[styles.centerButton, { transform: [{ scale: scaleAnim }] }]}>
-          <View style={[styles.centerGlow, focused && styles.centerGlowActive]} />
-          <View style={styles.centerInner}>{item.icon(ACTIVE_COLOR, focused)}</View>
-        </Animated.View>
-      </Pressable>
-    );
-  }
-
   const color = focused ? ACTIVE_COLOR : INACTIVE_COLOR;
 
   return (
@@ -73,13 +68,15 @@ export function TabButton({ item, focused, onPress }: TabButtonProps) {
           {focused && <View style={styles.iconGlow} />}
           {item.icon(color, focused)}
         </View>
-        <ThemedText
-          type="caption"
-          style={[styles.tabLabel, { color: focused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR }]}
-          numberOfLines={1}
-        >
-          {item.label}
-        </ThemedText>
+        <View style={styles.labelSlot}>
+          <ThemedText
+            type="caption"
+            style={[styles.tabLabel, { color: focused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR }]}
+            numberOfLines={LABEL_LINES}
+          >
+            {formatTabLabel(item.label)}
+          </ThemedText>
+        </View>
       </Animated.View>
     </Pressable>
   );
@@ -89,12 +86,14 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: "center",
-    paddingTop: 6,
-    paddingBottom: 14,
+    paddingTop: 8,
+    paddingBottom: 10,
+    paddingHorizontal: 2,
   },
   tabButtonInner: {
     alignItems: "center",
-    gap: 6,
+    justifyContent: "flex-start",
+    gap: 4,
   },
   activeDot: {
     position: "absolute",
@@ -105,51 +104,27 @@ const styles = StyleSheet.create({
     backgroundColor: ACTIVE_COLOR,
   },
   iconWrapper: {
+    width: ICON_SLOT_HEIGHT,
+    height: ICON_SLOT_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
   },
   iconGlow: {
     position: "absolute",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: "rgba(0,255,132,0.14)",
   },
+  labelSlot: {
+    height: LABEL_SLOT_HEIGHT,
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
   tabLabel: {
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 9,
+    lineHeight: LABEL_LINE_HEIGHT,
     textAlign: "center",
-    letterSpacing: 0.3,
-  },
-  centerWrapper: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "flex-end",
-    paddingBottom: 10,
-  },
-  centerButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -22,
-  },
-  centerGlow: {
-    position: "absolute",
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(0,255,132,0.08)",
-  },
-  centerGlowActive: {
-    backgroundColor: "rgba(0,255,132,0.22)",
-  },
-  centerInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "rgba(0,255,132,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.3)",
-    alignItems: "center",
-    justifyContent: "center",
+    letterSpacing: 0.2,
   },
 });

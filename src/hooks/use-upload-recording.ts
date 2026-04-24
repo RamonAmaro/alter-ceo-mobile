@@ -7,13 +7,34 @@ import { useMeetingStore } from "@/stores/meeting-store";
 import { useRecordingsStore } from "@/stores/recordings-store";
 import { toErrorMessage } from "@/utils/to-error-message";
 
-function getContentType(uri: string): string {
+function getContentTypeFromExt(uri: string): string {
   const ext = uri.split(".").pop()?.toLowerCase();
   if (ext === "m4a" || ext === "mp4") return "audio/mp4";
   if (ext === "3gp") return "audio/3gpp";
   if (ext === "webm") return "audio/webm";
-  if (uri.startsWith("blob:")) return "audio/webm";
+  if (ext === "ogg") return "audio/ogg";
   return "audio/mp4";
+}
+
+async function resolveContentType(uri: string): Promise<string> {
+  // On web, the blob's own `.type` is authoritative — it reflects what the
+  // browser actually recorded, which varies by device (desktop → webm/opus,
+  // iOS → mp4, some Android webviews → ogg). Assuming webm breaks S3 uploads
+  // on those clients because the Content-Type header mismatches the bytes.
+  if (Platform.OS === "web" && uri.startsWith("blob:")) {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      if (blob.type) {
+        // Normalize: strip codecs parameter ("audio/webm;codecs=opus" → "audio/webm"),
+        // S3 signed URLs expect the exact Content-Type used at signing time.
+        return blob.type.split(";")[0].trim();
+      }
+    } catch {
+      // fall through
+    }
+  }
+  return getContentTypeFromExt(uri);
 }
 
 async function getFileSize(uri: string): Promise<number> {
@@ -31,6 +52,25 @@ async function getFileSize(uri: string): Promise<number> {
   if (!info.exists) return 0;
   return info.size ?? 0;
 }
+
+async function isSourceAvailable(uri: string): Promise<boolean> {
+  if (Platform.OS === "web") {
+    try {
+      const response = await fetch(uri);
+      if (!response.ok) return false;
+      const blob = await response.blob();
+      return blob.size > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  const info = await getInfoAsync(uri);
+  return info.exists && (info.size ?? 0) > 0;
+}
+
+const LOST_SOURCE_ERROR_ES =
+  "La grabación se perdió al recargar la página. Por favor, graba de nuevo.";
 
 interface UploadParams {
   recordingId: string;
@@ -53,14 +93,34 @@ export function useUploadRecording(): {
       const userId = useAuthStore.getState().user?.userId;
       if (!userId) return;
 
-      const contentType = getContentType(uri);
+      const recordingsStore = useRecordingsStore.getState();
+
+      // On web, a blob URL from a previous session is revoked after reload and
+      // any retry would fail with ERR_FILE_NOT_FOUND. Detect that up front so
+      // we don't create an orphan meeting on the backend for a file we can no
+      // longer upload.
+      const available = await isSourceAvailable(uri);
+      if (!available) {
+        await recordingsStore.updateRecordingStatus(recordingId, {
+          uploadStatus: "failed",
+          errorMessage: LOST_SOURCE_ERROR_ES,
+        });
+        return;
+      }
+
+      const contentType = await resolveContentType(uri);
       const ext =
-        contentType === "audio/3gpp" ? "3gp" : contentType === "audio/webm" ? "webm" : "m4a";
+        contentType === "audio/3gpp"
+          ? "3gp"
+          : contentType === "audio/webm"
+            ? "webm"
+            : contentType === "audio/ogg"
+              ? "ogg"
+              : "m4a";
       const fileName = `${title.replace(/\s+/g, "-").toLowerCase()}.${ext}`;
       const sizeBytes = await getFileSize(uri);
       const durationSeconds = durationMs / 1000;
 
-      const recordingsStore = useRecordingsStore.getState();
       await recordingsStore.updateRecordingStatus(recordingId, { uploadStatus: "uploading" });
 
       try {
