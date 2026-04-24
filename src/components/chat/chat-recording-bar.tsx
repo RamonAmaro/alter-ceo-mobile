@@ -4,6 +4,7 @@ import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { PressableScale } from "@/components/pressable-scale";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { formatTimer } from "@/utils/format-timer";
@@ -56,16 +57,15 @@ export function ChatRecordingBar({ elapsedMs, onCancel, onSend }: ChatRecordingB
         </ThemedText>
       </LinearGradient>
 
-      <TouchableOpacity
+      <PressableScale
         style={styles.sendBtn}
-        activeOpacity={0.8}
         onPress={onSend}
         accessibilityLabel="Enviar audio"
       >
         <LinearGradient colors={["#00FF84", "#00CC6A"]} style={styles.sendGradient}>
           <Ionicons name="send" size={18} color={SemanticColors.onSuccess} />
         </LinearGradient>
-      </TouchableOpacity>
+      </PressableScale>
     </View>
   );
 }

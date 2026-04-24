@@ -2,6 +2,7 @@ import { Platform } from "react-native";
 
 import { get, post, postFormData } from "@/lib/api-client";
 import { connectSSE, type SSEConnection } from "@/lib/sse-client";
+import { resolveRecordingBlob } from "@/services/resolve-recording-uri";
 import type { SSETypedEvent } from "@/types/sse";
 import type {
   ChatAudioTurnCreateRequest,
@@ -80,18 +81,25 @@ interface RNFilePart {
 }
 
 function appendRNFile(formData: FormData, field: string, file: RNFilePart): void {
-  // React Native FormData accepts `{ uri, name, type }` at runtime but the web
-  // FormData.append typing only accepts `Blob | string`. Cast is isolated here.
   formData.append(field, file as unknown as Blob);
 }
 
 async function appendAudioFile(formData: FormData, uri: string, turnId: string): Promise<void> {
   const inferredType = inferContentType(uri);
   const fileName = `voice-note-${turnId}.${inferExtension(inferredType)}`;
+  const needsBlobPath =
+    Platform.OS === "web" || uri.startsWith("blob:") || uri.startsWith("idb-audio://");
 
-  if (Platform.OS === "web" || uri.startsWith("blob:")) {
-    const response = await fetch(uri);
-    const blob = await response.blob();
+  if (needsBlobPath) {
+    const blob =
+      (await resolveRecordingBlob(uri)) ??
+      (await fetch(uri)
+        .then((response) => response.blob())
+        .catch(() => {
+          throw new Error(
+            "No se pudo leer el audio. Puede que el navegador lo haya eliminado. Inténtalo de nuevo.",
+          );
+        }));
     const contentType = blob.type || inferredType;
     formData.append("file", blob, `voice-note-${turnId}.${inferExtension(contentType)}`);
     return;

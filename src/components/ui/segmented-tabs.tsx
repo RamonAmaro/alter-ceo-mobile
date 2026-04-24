@@ -1,5 +1,4 @@
 import { ThemedText } from "@/components/themed-text";
-import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
@@ -35,20 +34,23 @@ export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProp
 
   useEffect(() => {
     if (widths.length !== tabs.length) return;
-    Animated.parallel([
-      Animated.spring(translateX, {
-        toValue: activeOffset,
-        useNativeDriver: USE_NATIVE_DRIVER,
-        speed: 20,
-        bounciness: 6,
-      }),
-      Animated.spring(indicatorWidth, {
-        toValue: activeWidth,
-        useNativeDriver: false,
-        speed: 20,
-        bounciness: 6,
-      }),
-    ]).start();
+    // `Animated.parallel` com drivers mistos (um com `useNativeDriver: true` e
+    // outro com `false`) dispara "Attempting to run JS driven animation on
+    // animated node that has been moved to 'native' earlier". `width` não é
+    // suportado pelo native driver, então ambas as animações rodam no driver
+    // JS aqui — visualmente idêntico, sem o bug nativo.
+    Animated.spring(translateX, {
+      toValue: activeOffset,
+      useNativeDriver: false,
+      speed: 20,
+      bounciness: 6,
+    }).start();
+    Animated.spring(indicatorWidth, {
+      toValue: activeWidth,
+      useNativeDriver: false,
+      speed: 20,
+      bounciness: 6,
+    }).start();
   }, [activeIndex, activeOffset, activeWidth, widths.length, tabs.length, translateX, indicatorWidth]);
 
   function handleLayout(index: number, e: LayoutChangeEvent): void {

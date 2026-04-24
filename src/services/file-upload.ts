@@ -1,4 +1,9 @@
-import { EncodingType, getInfoAsync, readAsStringAsync } from "expo-file-system/legacy";
+import type { FileSystemUploadResult } from "expo-file-system/legacy";
+import {
+  FileSystemUploadType,
+  getInfoAsync,
+  uploadAsync,
+} from "expo-file-system/legacy";
 
 import { ApiError } from "@/types/api";
 import type { MeetingDirectUploadPayload } from "@/types/meeting";
@@ -13,40 +18,28 @@ export async function uploadFileToS3(
     throw new Error(`File not found: ${fileUri}`);
   }
 
-  // React Native's fetch() cannot read `file://` URIs directly on Android in
-  // a portable way, so we read as base64 and decode to bytes ourselves.
-  const base64 = await readAsStringAsync(fileUri, {
-    encoding: EncodingType.Base64,
-  });
-
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-
   const headers: Record<string, string> = {
     "Content-Type": contentType,
     ...upload.headers,
   };
 
-  // Use fetch() for the S3 PUT (not axios) to match the web upload path.
-  // Keeps upload behavior identical across native and web: same method, same
-  // headers, no credentials, same error surface.
-  let response: Response;
+  // Streaming upload: `FileSystem.uploadAsync` lê o arquivo do disco em chunks
+  // no lado nativo e envia direto para o S3. Evita carregar o arquivo inteiro
+  // em memória (o que base64 + `fetch(body: bytes)` fazia antes — inviável
+  // para áudios longos de 2h+ em celulares com pouca RAM).
+  let result: FileSystemUploadResult;
   try {
-    response = await fetch(upload.upload_url, {
-      method: "PUT",
-      body: bytes,
+    result = await uploadAsync(upload.upload_url, fileUri, {
+      httpMethod: "PUT",
+      uploadType: FileSystemUploadType.BINARY_CONTENT,
       headers,
-      credentials: "omit",
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Network error";
     throw new Error(`S3 upload network error: ${message}`);
   }
 
-  if (!response.ok) {
-    throw new ApiError(response.status, `Upload failed with status ${response.status}`);
+  if (result.status < 200 || result.status >= 300) {
+    throw new ApiError(result.status, `Upload failed with status ${result.status}`);
   }
 }

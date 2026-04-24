@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
+import { ChatAudioDraftBanner } from "@/components/chat/chat-audio-draft-banner";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { KeyboardView } from "@/components/keyboard-view";
@@ -12,7 +13,10 @@ import { SemanticColors, Spacing } from "@/constants/theme";
 import { useChatAudioRecorder } from "@/hooks/use-chat-audio-recorder";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
+import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
 import { NEW_THREAD_DRAFT_KEY, useChatStore } from "@/stores/chat-store";
+import { goBackOrHome } from "@/utils/navigation";
+import { useNavigation } from "expo-router";
 
 function extractInitial(displayName: string | null, email: string | null): string {
   const source = displayName ?? email;
@@ -23,8 +27,10 @@ function extractInitial(displayName: string | null, email: string | null): strin
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
+  const navigation = useNavigation();
   const [inputValue, setInputValue] = useState("");
   const [draftsHydrated, setDraftsHydrated] = useState(false);
+  const isPersistingNavigationRef = useRef(false);
 
   const user = useAuthStore((s) => s.user);
   const userInitial = useMemo(
@@ -51,9 +57,15 @@ export default function ChatScreen() {
   const setDraft = useChatStore((s) => s.setDraft);
   const clearDraft = useChatStore((s) => s.clearDraft);
 
-  const draftKey = activeThreadId ?? NEW_THREAD_DRAFT_KEY;
+  const audioDraftsHydrated = useChatAudioDraftStore((s) => s.hydrated);
+  const loadAudioDrafts = useChatAudioDraftStore((s) => s.loadDrafts);
+  const saveAudioDraft = useChatAudioDraftStore((s) => s.saveDraft);
+  const clearAudioDraft = useChatAudioDraftStore((s) => s.clearDraft);
+  const audioDraftsByUser = useChatAudioDraftStore((s) => s.drafts);
 
+  const draftKey = activeThreadId ?? NEW_THREAD_DRAFT_KEY;
   const chatBusy = isStreaming || isSubmittingAudio;
+  const audioDraft = user ? (audioDraftsByUser[user.userId]?.[draftKey] ?? null) : null;
 
   const handleSubmitAudio = useCallback(
     async (uri: string): Promise<void> => {
@@ -64,31 +76,89 @@ export default function ChatScreen() {
     [activeThreadId, createThread, sendAudioMessage, user],
   );
 
+  const handleRecordingInterrupted = useCallback(
+    async (draft: { uri: string; durationMs: number }) => {
+      if (!user) return;
+
+      await saveAudioDraft(user.userId, draftKey, {
+        uri: draft.uri,
+        durationMs: draft.durationMs,
+        createdAt: new Date().toISOString(),
+      });
+    },
+    [draftKey, saveAudioDraft, user],
+  );
+
   const {
     audioState,
     elapsedMs,
-    handleStartRecording,
+    handleStartRecording: handleStartRecordingRaw,
     handleStopRecording,
     handleCancelRecording,
+    persistRecordingDraft,
   } = useChatAudioRecorder({
     disabled: chatBusy,
     onSubmitAudio: handleSubmitAudio,
+    onRecordingInterrupted: handleRecordingInterrupted,
   });
+
+  const startFreshRecording = useCallback(async (): Promise<void> => {
+    if (user && audioDraft) {
+      await clearAudioDraft(user.userId, draftKey);
+    }
+
+    handleStartRecordingRaw();
+  }, [audioDraft, clearAudioDraft, draftKey, handleStartRecordingRaw, user]);
+
+  const handleStartRecording = useCallback((): void => {
+    void startFreshRecording();
+  }, [startFreshRecording]);
+
+  const handleBack = useCallback((): void => {
+    void (async () => {
+      await persistRecordingDraft();
+      goBackOrHome();
+    })();
+  }, [persistRecordingDraft]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (event) => {
+      if (audioState !== "recording" || isPersistingNavigationRef.current) {
+        return;
+      }
+
+      event.preventDefault();
+      isPersistingNavigationRef.current = true;
+
+      void persistRecordingDraft().finally(() => {
+        isPersistingNavigationRef.current = false;
+        navigation.dispatch(event.data.action);
+      });
+    });
+
+    return unsubscribe;
+  }, [audioState, navigation, persistRecordingDraft]);
 
   useEffect(() => {
     if (!user) return;
     fetchThreads(user.userId);
-  }, [user, fetchThreads]);
+  }, [fetchThreads, user]);
 
   useEffect(() => {
     void loadDrafts().finally(() => setDraftsHydrated(true));
   }, [loadDrafts]);
 
   useEffect(() => {
+    if (!audioDraftsHydrated) {
+      void loadAudioDrafts();
+    }
+  }, [audioDraftsHydrated, loadAudioDrafts]);
+
+  useEffect(() => {
     if (threads.length > 0 && !activeThreadId) {
       selectThread(threads[0].thread_id);
     }
-  }, [threads, activeThreadId, selectThread]);
+  }, [activeThreadId, selectThread, threads]);
 
   useEffect(() => {
     return () => cancelStream();
@@ -98,25 +168,25 @@ export default function ChatScreen() {
     if (!draftsHydrated || !user) return;
     const stored = useChatStore.getState().getDraft(user.userId, draftKey);
     setInputValue(stored);
-  }, [draftsHydrated, user, draftKey]);
+  }, [draftKey, draftsHydrated, user]);
 
   const handleChangeText = useCallback(
     (text: string) => {
       setInputValue(text);
       if (user) setDraft(user.userId, draftKey, text);
     },
-    [user, draftKey, setDraft],
+    [draftKey, setDraft, user],
   );
 
   async function handleSend(): Promise<void> {
     const text = inputValue.trim();
     if (!text || !user) return;
+
     setInputValue("");
     clearDraft(user.userId, draftKey);
 
     try {
       const threadId = activeThreadId ?? (await createThread(user.userId));
-      // Move draft from "__new__" bucket to the real threadId once the thread exists.
       if (threadId !== draftKey) clearDraft(user.userId, draftKey);
       await sendMessage(threadId, text);
     } catch {
@@ -124,6 +194,22 @@ export default function ChatScreen() {
       if (user) setDraft(user.userId, draftKey, text);
     }
   }
+
+  const handleSendAudioDraft = useCallback(async (): Promise<void> => {
+    if (!user || !audioDraft || audioDraft.lost) return;
+    if (useChatStore.getState().isSubmittingAudio) return;
+
+    await handleSubmitAudio(audioDraft.uri);
+
+    if (!useChatStore.getState().error) {
+      await clearAudioDraft(user.userId, draftKey);
+    }
+  }, [audioDraft, clearAudioDraft, draftKey, handleSubmitAudio, user]);
+
+  const handleDiscardAudioDraft = useCallback((): void => {
+    if (!user) return;
+    void clearAudioDraft(user.userId, draftKey);
+  }, [clearAudioDraft, draftKey, user]);
 
   return (
     <AppBackground style={{ paddingBottom: insets.bottom }}>
@@ -135,6 +221,7 @@ export default function ChatScreen() {
             titlePrefix="El Cerebro"
             titleAccent="ALTER CEO"
             showBack={isMobile}
+            onBack={handleBack}
           />
 
           {isLoadingMessages ? (
@@ -156,6 +243,17 @@ export default function ChatScreen() {
               {error}
             </ThemedText>
           )}
+
+          {audioDraft && audioState === "idle" && !isStreaming ? (
+            <ChatAudioDraftBanner
+              uri={audioDraft.lost ? null : audioDraft.uri}
+              durationMs={audioDraft.durationMs}
+              onSend={handleSendAudioDraft}
+              onDiscard={handleDiscardAudioDraft}
+              isSubmitting={isSubmittingAudio}
+              lost={audioDraft.lost ?? false}
+            />
+          ) : null}
 
           <ChatInput
             value={inputValue}

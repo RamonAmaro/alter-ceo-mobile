@@ -13,6 +13,7 @@ export interface MeetingItem {
   duration: string;
   meetingId?: string;
   uploadStatus?: UploadStatus;
+  errorMessage?: string;
 }
 
 interface MeetingListItemProps {
@@ -20,6 +21,7 @@ interface MeetingListItemProps {
   index: number;
   onPress: (id: string) => void;
   onDelete: (id: string) => void;
+  onRetry?: (id: string) => void;
 }
 
 function statusConfig(status: UploadStatus | undefined): {
@@ -57,6 +59,13 @@ function statusConfig(status: UploadStatus | undefined): {
         bg: "rgba(255,149,0,0.12)",
         border: "rgba(255,149,0,0.28)",
       };
+    case "local_only":
+      return {
+        label: "SIN SUBIR",
+        color: SemanticColors.textMuted,
+        bg: "rgba(255,255,255,0.06)",
+        border: "rgba(255,255,255,0.14)",
+      };
     default:
       return {
         label: "",
@@ -67,9 +76,10 @@ function statusConfig(status: UploadStatus | undefined): {
   }
 }
 
-export function MeetingListItem({ item, index, onPress }: MeetingListItemProps) {
+export function MeetingListItem({ item, index, onPress, onRetry }: MeetingListItemProps) {
   const cfg = statusConfig(item.uploadStatus);
   const isLoading = item.uploadStatus === "uploading" || item.uploadStatus === "processing";
+  const isFailed = item.uploadStatus === "failed";
   const indexLabel = String(index + 1).padStart(2, "0");
 
   return (
@@ -85,44 +95,69 @@ export function MeetingListItem({ item, index, onPress }: MeetingListItemProps) 
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={styles.indexWrap}>
-        <ThemedText style={styles.indexLabel}>{indexLabel}</ThemedText>
+      <View style={styles.mainRow}>
+        <View style={styles.indexWrap}>
+          <ThemedText style={styles.indexLabel}>{indexLabel}</ThemedText>
+        </View>
+
+        <View style={styles.body}>
+          <View style={styles.titleRow}>
+            <ThemedText style={styles.title} numberOfLines={1}>
+              {item.title}
+            </ThemedText>
+          </View>
+
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons name="calendar-outline" size={11} color={SemanticColors.textMuted} />
+              <ThemedText style={styles.meta}>{item.date}</ThemedText>
+            </View>
+            <View style={styles.dot} />
+            <View style={styles.metaItem}>
+              <Ionicons name="time-outline" size={11} color={SemanticColors.textMuted} />
+              <ThemedText style={styles.meta}>{item.duration}</ThemedText>
+            </View>
+          </View>
+        </View>
+
+        {cfg.label ? (
+          <View style={[styles.statusPill, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+            {isLoading ? (
+              <ActivityIndicator size={10} color={cfg.color} />
+            ) : (
+              <View style={[styles.statusDot, { backgroundColor: cfg.color }]} />
+            )}
+            <ThemedText style={[styles.statusText, { color: cfg.color }]}>{cfg.label}</ThemedText>
+          </View>
+        ) : null}
+
+        <View style={styles.chevron}>
+          <Ionicons name="chevron-forward" size={14} color={SemanticColors.success} />
+        </View>
       </View>
 
-      <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <ThemedText style={styles.title} numberOfLines={1}>
-            {item.title}
+      {isFailed && item.errorMessage ? (
+        <View style={styles.errorStrip}>
+          <Ionicons name="alert-circle" size={14} color={SemanticColors.error} />
+          <ThemedText style={styles.errorMessage} numberOfLines={2}>
+            {item.errorMessage}
           </ThemedText>
-        </View>
-
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Ionicons name="calendar-outline" size={11} color={SemanticColors.textMuted} />
-            <ThemedText style={styles.meta}>{item.date}</ThemedText>
-          </View>
-          <View style={styles.dot} />
-          <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={11} color={SemanticColors.textMuted} />
-            <ThemedText style={styles.meta}>{item.duration}</ThemedText>
-          </View>
-        </View>
-      </View>
-
-      {cfg.label ? (
-        <View style={[styles.statusPill, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
-          {isLoading ? (
-            <ActivityIndicator size={10} color={cfg.color} />
-          ) : (
-            <View style={[styles.statusDot, { backgroundColor: cfg.color }]} />
-          )}
-          <ThemedText style={[styles.statusText, { color: cfg.color }]}>{cfg.label}</ThemedText>
+          {onRetry ? (
+            <TouchableOpacity
+              style={styles.retryBtn}
+              activeOpacity={0.7}
+              onPress={(e) => {
+                e.stopPropagation();
+                onRetry(item.id);
+              }}
+              accessibilityLabel="Reintentar subida"
+            >
+              <Ionicons name="refresh" size={13} color={SemanticColors.error} />
+              <ThemedText style={styles.retryLabel}>Reintentar</ThemedText>
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : null}
-
-      <View style={styles.chevron}>
-        <Ionicons name="chevron-forward" size={14} color={SemanticColors.success} />
-      </View>
     </TouchableOpacity>
   );
 }
@@ -140,9 +175,7 @@ const cardShadow = Platform.select({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
+    flexDirection: "column",
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 18,
     borderWidth: 1,
@@ -150,6 +183,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     overflow: "hidden",
+  },
+  mainRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+  },
+  errorStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.two,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,68,68,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,68,68,0.22)",
+  },
+  errorMessage: {
+    flex: 1,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.error,
+  },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,68,68,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,68,68,0.28)",
+  },
+  retryLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 12,
+    color: SemanticColors.error,
+    letterSpacing: 1.2,
   },
   indexWrap: {
     width: 36,

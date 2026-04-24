@@ -165,7 +165,12 @@ export function RecordingPage({
       const userId = useAuthStore.getState().user?.userId;
       if (!userId) return;
 
-      const persistedUri = await persistRecordingFile(pending.uri);
+      // Se `persistRecordingFile` falhar (quota do IndexedDB cheia no web,
+      // erro de I/O no native), preferimos guardar o URI temporário original
+      // a perder o áudio. O URI `blob:` sobrevive a sessão corrente (web) ou
+      // fica no cache do SO (nativo) — pior que documentDirectory, melhor que
+      // nada. O upload posterior pode funcionar ainda dentro da sessão.
+      const persistedUri = await persistRecordingFile(pending.uri).catch(() => pending.uri);
       const recordingId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const now = new Date();
 

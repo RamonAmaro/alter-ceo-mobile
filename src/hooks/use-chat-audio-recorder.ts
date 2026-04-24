@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "react-native";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import { Alert, AppState, type AppStateStatus, Platform } from "react-native";
+
+import { useFocusEffect } from "expo-router";
 
 import { AUDIO_MAX_DURATION_MS } from "@/constants/audio";
 import {
@@ -8,6 +17,7 @@ import {
   stopRecorderAndGetUri,
   useAudioRecorder,
 } from "@/services/audio-service";
+import { persistRecordingFile } from "@/services/recording-storage";
 import { ensureMicrophonePermission } from "@/utils/ensure-microphone-permission";
 
 export type ChatAudioState = "idle" | "recording" | "submitting";
@@ -17,9 +27,15 @@ type RecorderState =
   | { readonly kind: "recording"; readonly startedAt: number }
   | { readonly kind: "submitting" };
 
+export interface ChatAudioDraftPayload {
+  readonly uri: string;
+  readonly durationMs: number;
+}
+
 interface UseChatAudioRecorderOptions {
   readonly disabled?: boolean;
   readonly onSubmitAudio: (uri: string) => Promise<void>;
+  readonly onRecordingInterrupted?: (draft: ChatAudioDraftPayload) => Promise<void> | void;
 }
 
 interface UseChatAudioRecorderResult {
@@ -28,6 +44,7 @@ interface UseChatAudioRecorderResult {
   readonly handleStartRecording: () => void;
   readonly handleStopRecording: () => void;
   readonly handleCancelRecording: () => void;
+  readonly persistRecordingDraft: () => Promise<void>;
 }
 
 const RECORDING_OPTIONS = {
@@ -35,18 +52,41 @@ const RECORDING_OPTIONS = {
   isMeteringEnabled: true,
 };
 
+function getElapsedMs(startedAt: number): number {
+  return Math.min(Date.now() - startedAt, AUDIO_MAX_DURATION_MS);
+}
+
+function resetRecorderUi(
+  setState: Dispatch<SetStateAction<RecorderState>>,
+  setElapsedMs: Dispatch<SetStateAction<number>>,
+): void {
+  setState({ kind: "idle" });
+  setElapsedMs(0);
+}
+
 export function useChatAudioRecorder({
   disabled = false,
   onSubmitAudio,
+  onRecordingInterrupted,
 }: UseChatAudioRecorderOptions): UseChatAudioRecorderResult {
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
-
   const [state, setState] = useState<RecorderState>({ kind: "idle" });
   const [elapsedMs, setElapsedMs] = useState(0);
 
   const mountedRef = useRef(true);
+  const stateRef = useRef<RecorderState>({ kind: "idle" });
+  const interruptedCallbackRef = useRef(onRecordingInterrupted);
+  const capturedRef = useRef(false);
+  const recorderRef = useRef(recorder);
+  const appStateRef = useRef(AppState.currentState);
+
+  stateRef.current = state;
+  interruptedCallbackRef.current = onRecordingInterrupted;
+  recorderRef.current = recorder;
+
   useEffect(() => {
     mountedRef.current = true;
+
     return () => {
       mountedRef.current = false;
     };
@@ -54,16 +94,16 @@ export function useChatAudioRecorder({
 
   const stopAndSubmit = useCallback(
     async (startedAt: number): Promise<void> => {
+      capturedRef.current = true;
       setState({ kind: "submitting" });
-      setElapsedMs(Math.min(Date.now() - startedAt, AUDIO_MAX_DURATION_MS));
+      setElapsedMs(getElapsedMs(startedAt));
 
       const uri = await stopRecorderAndGetUri(recorder).catch(() => null);
 
       if (!mountedRef.current) return;
 
       if (!uri) {
-        setState({ kind: "idle" });
-        setElapsedMs(0);
+        resetRecorderUi(setState, setElapsedMs);
         Alert.alert("Error al grabar", "No se ha podido procesar el audio. Inténtalo de nuevo.");
         return;
       }
@@ -72,41 +112,94 @@ export function useChatAudioRecorder({
         await onSubmitAudio(uri);
       } finally {
         if (mountedRef.current) {
-          setState({ kind: "idle" });
-          setElapsedMs(0);
+          resetRecorderUi(setState, setElapsedMs);
         }
       }
     },
-    [recorder, onSubmitAudio],
+    [onSubmitAudio, recorder],
   );
 
   const cancelRecording = useCallback(async (): Promise<void> => {
-    setState({ kind: "idle" });
-    setElapsedMs(0);
+    capturedRef.current = true;
+    resetRecorderUi(setState, setElapsedMs);
     await stopRecorderAndGetUri(recorder).catch(() => null);
   }, [recorder]);
 
   useEffect(() => {
     if (state.kind !== "recording") return;
 
-    const tick = () => {
-      const next = Math.min(Date.now() - state.startedAt, AUDIO_MAX_DURATION_MS);
-      setElapsedMs(next);
-      if (next >= AUDIO_MAX_DURATION_MS) {
+    const interval = setInterval(() => {
+      const nextElapsedMs = getElapsedMs(state.startedAt);
+      setElapsedMs(nextElapsedMs);
+
+      if (nextElapsedMs >= AUDIO_MAX_DURATION_MS) {
         void stopAndSubmit(state.startedAt);
       }
-    };
+    }, 200);
 
-    const interval = setInterval(tick, 200);
     return () => clearInterval(interval);
   }, [state, stopAndSubmit]);
 
+  const captureInFlightRecording = useCallback(async (): Promise<void> => {
+    if (capturedRef.current) return;
+
+    const finalState = stateRef.current;
+    const interruptedCallback = interruptedCallbackRef.current;
+
+    if (finalState.kind !== "recording" || !interruptedCallback) return;
+
+    capturedRef.current = true;
+    stateRef.current = { kind: "idle" };
+    resetRecorderUi(setState, setElapsedMs);
+
+    const tempUri = await stopRecorderAndGetUri(recorderRef.current).catch(() => null);
+    if (!tempUri) return;
+
+    const persistedUri = await persistRecordingFile(tempUri).catch(() => tempUri);
+
+    await interruptedCallback({
+      uri: persistedUri,
+      durationMs: getElapsedMs(finalState.startedAt),
+    });
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        void captureInFlightRecording();
+      };
+    }, [captureInFlightRecording]),
+  );
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+
+    const subscription = AppState.addEventListener("change", (nextState: AppStateStatus) => {
+      const wasActive = appStateRef.current === "active";
+      appStateRef.current = nextState;
+
+      if (wasActive && nextState !== "active") {
+        void captureInFlightRecording();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [captureInFlightRecording]);
+
   useEffect(() => {
     return () => {
-      void recorder.stop();
+      if (stateRef.current.kind === "recording") {
+        void captureInFlightRecording();
+        return;
+      }
+
+      if (!capturedRef.current) {
+        void recorderRef.current.stop().catch(() => null);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [captureInFlightRecording]);
 
   const startRecording = useCallback(async (): Promise<void> => {
     if (disabled) return;
@@ -114,18 +207,23 @@ export function useChatAudioRecorder({
     const granted = await ensureMicrophonePermission({
       deniedMessage: "Necesitamos acceso al micrófono para grabar.",
     });
+
     if (!granted) return;
 
     try {
       await enableRecordingMode();
       await recorder.prepareToRecordAsync();
       recorder.record();
+
       if (!mountedRef.current) return;
+
+      capturedRef.current = false;
       setElapsedMs(0);
       setState({ kind: "recording", startedAt: Date.now() });
     } catch {
       if (!mountedRef.current) return;
-      setState({ kind: "idle" });
+
+      resetRecorderUi(setState, setElapsedMs);
       Alert.alert("Error al grabar", "No se pudo iniciar la grabación. Inténtalo de nuevo.");
     }
   }, [disabled, recorder]);
@@ -133,7 +231,7 @@ export function useChatAudioRecorder({
   const handleStartRecording = useCallback(() => {
     if (state.kind !== "idle") return;
     void startRecording();
-  }, [state.kind, startRecording]);
+  }, [startRecording, state.kind]);
 
   const handleStopRecording = useCallback(() => {
     if (state.kind !== "recording") return;
@@ -143,7 +241,7 @@ export function useChatAudioRecorder({
   const handleCancelRecording = useCallback(() => {
     if (state.kind !== "recording") return;
     void cancelRecording();
-  }, [state.kind, cancelRecording]);
+  }, [cancelRecording, state.kind]);
 
   return {
     audioState: state.kind,
@@ -151,5 +249,6 @@ export function useChatAudioRecorder({
     handleStartRecording,
     handleStopRecording,
     handleCancelRecording,
+    persistRecordingDraft: captureInFlightRecording,
   };
 }

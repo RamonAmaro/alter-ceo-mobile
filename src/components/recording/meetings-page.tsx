@@ -7,8 +7,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { useUploadRecording } from "@/hooks/use-upload-recording";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMeetingStore } from "@/stores/meeting-store";
+import { type LocalRecording, useRecordingsStore } from "@/stores/recordings-store";
 import type { MeetingSummaryResponse } from "@/types/meeting";
 import { formatDurationSeconds } from "@/utils/format-date";
 
@@ -28,10 +30,14 @@ function toUploadStatus(status: string): "processing" | "completed" | "failed" |
   return undefined;
 }
 
-function toMeetingItem(m: MeetingSummaryResponse): MeetingItem {
+function toMeetingItem(
+  m: MeetingSummaryResponse,
+  localByMeetingId: Map<string, LocalRecording>,
+): MeetingItem {
   const duration = formatDurationSeconds(m.duration_seconds ?? 0);
   const d = new Date(m.updated_at);
   const dateStr = d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  const local = localByMeetingId.get(m.meeting_id);
 
   return {
     id: m.meeting_id,
@@ -40,6 +46,19 @@ function toMeetingItem(m: MeetingSummaryResponse): MeetingItem {
     duration,
     meetingId: m.meeting_id,
     uploadStatus: toUploadStatus(m.status),
+    errorMessage: m.error_message ?? local?.errorMessage,
+  };
+}
+
+function toLocalOnlyItem(rec: LocalRecording): MeetingItem {
+  return {
+    id: rec.id,
+    title: rec.title,
+    date: rec.date,
+    duration: formatDurationSeconds(rec.durationMs / 1000),
+    meetingId: rec.meetingId,
+    uploadStatus: rec.uploadStatus,
+    errorMessage: rec.errorMessage,
   };
 }
 
@@ -50,15 +69,22 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
   const meetings = useMeetingStore((s) => s.meetings);
   const isLoading = useMeetingStore((s) => s.isLoading);
   const fetchMeetings = useMeetingStore((s) => s.fetchMeetings);
+  const localRecordings = useRecordingsStore((s) => s.recordings);
+  const loadRecordings = useRecordingsStore((s) => s.loadRecordings);
+  const { uploadRecording } = useUploadRecording();
 
   useEffect(() => {
     if (userId) {
       fetchMeetings(userId);
+      loadRecordings(userId);
     }
-  }, [userId, fetchMeetings]);
+  }, [userId, fetchMeetings, loadRecordings]);
 
   const handlePress = useCallback(
     (id: string) => {
+      const backendMeetings = useMeetingStore.getState().meetings;
+      const isBackendMeeting = backendMeetings.some((m) => m.meeting_id === id);
+      if (!isBackendMeeting) return;
       router.push({
         pathname: "/(app)/meeting-detail",
         params: { meetingId: id },
@@ -69,7 +95,39 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
 
   const handleDelete = useCallback((_id: string) => {}, []);
 
-  const meetingItems: MeetingItem[] = meetings.map(toMeetingItem);
+  const handleRetry = useCallback(
+    async (id: string) => {
+      const rec = useRecordingsStore.getState().recordings.find((r) => r.id === id);
+      if (!rec) return;
+      await uploadRecording({
+        recordingId: rec.id,
+        uri: rec.uri,
+        title: rec.title,
+        durationMs: rec.durationMs,
+      });
+    },
+    [uploadRecording],
+  );
+
+  // A local recording with uploadStatus="uploading" but no meetingId yet is a
+  // transient state — the backend meeting already exists (createMeeting returns
+  // synchronously inside startMeetingUpload), but the hook only patches the
+  // meetingId back after S3 + completeUpload finish. Treat these as already
+  // represented by the backend list to avoid a visual duplicate in that window.
+  const localByMeetingId = new Map<string, LocalRecording>();
+  const localOnly: LocalRecording[] = [];
+  for (const rec of localRecordings) {
+    if (rec.meetingId) {
+      localByMeetingId.set(rec.meetingId, rec);
+    } else if (rec.uploadStatus !== "uploading" && rec.uploadStatus !== "processing") {
+      localOnly.push(rec);
+    }
+  }
+
+  const meetingItems: MeetingItem[] = [
+    ...localOnly.map(toLocalOnlyItem),
+    ...meetings.map((m) => toMeetingItem(m, localByMeetingId)),
+  ];
 
   return (
     <View style={[styles.page, { width, height }]}>
@@ -80,15 +138,15 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
             <ThemedText style={styles.sectionLabel}>TUS REUNIONES</ThemedText>
           </View>
           <View style={styles.countPill}>
-            <ThemedText style={styles.countLabel}>{meetings.length}</ThemedText>
+            <ThemedText style={styles.countLabel}>{meetingItems.length}</ThemedText>
           </View>
         </View>
 
-        {isLoading && meetings.length === 0 ? (
+        {isLoading && meetingItems.length === 0 ? (
           <View style={styles.emptyContainer}>
             <ActivityIndicator size="small" color={SemanticColors.tealLight} />
           </View>
-        ) : meetings.length === 0 ? (
+        ) : meetingItems.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIcon}>
               <Ionicons name="mic-off-outline" size={28} color="rgba(255,255,255,0.2)" />
@@ -108,6 +166,7 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
                 index={index}
                 onPress={handlePress}
                 onDelete={handleDelete}
+                onRetry={handleRetry}
               />
             )}
             showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
