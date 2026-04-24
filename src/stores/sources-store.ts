@@ -75,7 +75,7 @@ interface SourcesState {
   refreshPdfs: (userId: string, companyName?: string) => Promise<void>;
   uploadPdf: (params: {
     userId: string;
-    companyName: string;
+    companyName?: string;
     file: PdfUploadSource;
     title?: string;
   }) => Promise<void>;

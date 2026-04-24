@@ -4,7 +4,7 @@ export type { PdfUploadSource } from "./pdf-upload-types";
 
 export interface PdfUploadFields {
   user_id: string;
-  company_name: string;
+  company_name?: string;
   title?: string;
 }
 
@@ -17,7 +17,7 @@ export async function buildPdfFormData(
 ): Promise<FormData> {
   const formData = new FormData();
   formData.append("user_id", fields.user_id);
-  formData.append("company_name", fields.company_name);
+  if (fields.company_name) formData.append("company_name", fields.company_name);
   if (fields.title) formData.append("title", fields.title);
 
   const blob = file.webFile ?? (await fetchBlob(file.uri, file.contentType));

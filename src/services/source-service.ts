@@ -30,7 +30,11 @@ export async function listSources(params: ListSourcesParams): Promise<SourceList
 
 export interface UploadPdfParams {
   userId: string;
-  companyName: string;
+  // Transitional: on the pre-merge API `company_name` is required; on the
+  // post-merge API it's ignored. Keep it optional so the caller can omit it
+  // when the user has no company set up yet — the post-merge backend no
+  // longer rejects that case.
+  companyName?: string;
   title?: string;
   file: PdfUploadSource;
 }

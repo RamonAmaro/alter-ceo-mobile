@@ -21,11 +21,18 @@ import { useSourcesStore } from "@/stores/sources-store";
 
 const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024; // 50MB — matches backend cap.
 
-function resolveCompanyName(steps: ReturnType<typeof useBusinessMemoryDashboard>["steps"]): string {
+// Resolves the company name set by the user in business-memory. Returns
+// undefined when the user hasn't filled it out — the upload service sends
+// the field only when present, so the post-merge backend (where
+// `company_name` is no longer required) accepts the upload cleanly, and the
+// pre-merge backend rejects with 422 (which is the correct signal).
+function resolveCompanyName(
+  steps: ReturnType<typeof useBusinessMemoryDashboard>["steps"],
+): string | undefined {
   const companyStep = steps.find((s) => s.id === "company_profile");
   const raw = companyStep?.data.business_name;
   if (typeof raw === "string" && raw.trim()) return raw.trim();
-  return "Mi empresa";
+  return undefined;
 }
 
 function notifyError(message: string): void {
