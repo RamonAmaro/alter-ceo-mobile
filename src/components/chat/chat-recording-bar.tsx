@@ -57,11 +57,7 @@ export function ChatRecordingBar({ elapsedMs, onCancel, onSend }: ChatRecordingB
         </ThemedText>
       </LinearGradient>
 
-      <PressableScale
-        style={styles.sendBtn}
-        onPress={onSend}
-        accessibilityLabel="Enviar audio"
-      >
+      <PressableScale style={styles.sendBtn} onPress={onSend} accessibilityLabel="Enviar audio">
         <LinearGradient colors={["#00FF84", "#00CC6A"]} style={styles.sendGradient}>
           <Ionicons name="send" size={18} color={SemanticColors.onSuccess} />
         </LinearGradient>

@@ -27,12 +27,6 @@ interface ExecutionBlockFormProps {
   saveLabel?: string;
 }
 
-const MICRO_GOAL_STATUS_OPTIONS = [
-  { value: "pending", label: "Pendiente" },
-  { value: "in_progress", label: "En progreso" },
-  { value: "done", label: "Hecho" },
-  { value: "archived", label: "Archivado" },
-] as const;
 function hasAnyValue(
   bottlenecks: string[],
   focusAreas: string[],

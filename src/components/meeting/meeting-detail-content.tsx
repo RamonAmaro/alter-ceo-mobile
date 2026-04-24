@@ -26,7 +26,6 @@ import { goBackOrHome } from "@/utils/navigation";
 import { MeetingAlertsSection } from "./meeting-alerts-section";
 import { MeetingEntitiesSection } from "./meeting-entities-section";
 import { MeetingSummarySection } from "./meeting-summary-section";
-import { MeetingTechnicalDetails } from "./meeting-technical-details";
 import { MeetingTranscriptSection } from "./meeting-transcript-section";
 
 const STATUS_POLL_INTERVAL_MS = 5000;
@@ -94,21 +93,6 @@ function processingStageLabel(stage: string | null | undefined): string | null {
   }
 }
 
-function sourceStatusLabel(status: string | null | undefined): string {
-  if (status === "ready") return "Análisis profundo listo";
-  if (status === "processing") return "Analizando…";
-  if (status === "pending") return "En cola de análisis";
-  if (status === "failed") return "Análisis fallido";
-  return "Sin análisis";
-}
-
-function sourceStatusColor(status: string | null | undefined): string {
-  if (status === "ready") return SemanticColors.success;
-  if (status === "failed") return SemanticColors.error;
-  if (status === "processing" || status === "pending") return SemanticColors.warning;
-  return SemanticColors.textMuted;
-}
-
 function confirmDelete(onConfirm: () => void): void {
   if (Platform.OS === "web") {
     const ok =
@@ -142,7 +126,6 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const meeting = useMeetingStore((s) => s.activeMeeting);
   const activeSource = useMeetingStore((s) => s.activeSource);
   const isLoading = useMeetingStore((s) => s.isLoading);
-  const isSourceLoading = useMeetingStore((s) => s.isSourceLoading);
   const getMeetingDetails = useMeetingStore((s) => s.getMeetingDetails);
   const fetchSourceDetail = useMeetingStore((s) => s.fetchSourceDetail);
   const renameMeeting = useMeetingStore((s) => s.renameMeeting);
@@ -209,25 +192,17 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const decisions = summary?.decisions ?? [];
   const blockers = summary?.blockers ?? [];
   const nextSteps = summary?.next_steps ?? [];
-  const kernelSignals = summary?.business_kernel_signals ?? [];
+  const topics = summary?.topics_discussed ?? [];
 
   const insightSections: InsightSection[] = summary
     ? [
         {
-          key: "decisions",
-          icon: "checkmark-circle-outline",
-          iconColor: SemanticColors.success,
-          title: "Decisiones",
-          items: decisions,
-          emptyMessage: "Sin decisiones extraídas",
-        },
-        {
-          key: "next_steps",
-          icon: "arrow-forward-circle-outline",
-          iconColor: SemanticColors.info,
-          title: "Puntos de acción",
-          items: nextSteps,
-          emptyMessage: "Sin puntos de acción definidos",
+          key: "topics",
+          icon: "list-outline",
+          iconColor: SemanticColors.tealLight,
+          title: "Temas tratados",
+          items: topics,
+          emptyMessage: "Sin especificar",
         },
         {
           key: "blockers",
@@ -235,25 +210,28 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           iconColor: SemanticColors.warning,
           title: "Bloqueos",
           items: blockers,
-          emptyMessage: "Sin bloqueos detectados",
+          emptyMessage: "Sin especificar",
         },
-        ...(kernelSignals.length > 0
-          ? ([
-              {
-                key: "kernel",
-                icon: "pulse-outline",
-                iconColor: SemanticColors.tealLight,
-                title: "Señales de negocio",
-                items: kernelSignals,
-                emptyMessage: "",
-              },
-            ] as InsightSection[])
-          : []),
+        {
+          key: "decisions",
+          icon: "checkmark-circle-outline",
+          iconColor: SemanticColors.success,
+          title: "Decisiones",
+          items: decisions,
+          emptyMessage: "Sin especificar",
+        },
+        {
+          key: "next_steps",
+          icon: "arrow-forward-circle-outline",
+          iconColor: SemanticColors.info,
+          title: "Puntos de acción",
+          items: nextSteps,
+          emptyMessage: "Sin definir",
+        },
       ]
     : [];
 
-  const totalInsights =
-    decisions.length + blockers.length + nextSteps.length + kernelSignals.length;
+  const totalInsights = decisions.length + blockers.length + nextSteps.length + topics.length;
 
   const entities = activeSource?.entities ?? [];
   const alerts = activeSource?.insights ?? [];
@@ -335,19 +313,19 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           {/*  HERO                                 */}
           {/* ———————————————————————————————————— */}
           <View style={styles.hero}>
-            <View style={styles.heroTopRow}>
-              <ThemedText style={styles.heroFolio}>ACTA · 01</ThemedText>
+            <View style={styles.heroStatusRow}>
               <View style={styles.statusPill}>
                 <View style={[styles.statusDot, { backgroundColor: sColor }]} />
                 <ThemedText style={[styles.statusText, { color: sColor }]}>
                   {statusLabel(meeting.status)}
                 </ThemedText>
               </View>
+              {stageLabel ? (
+                <ThemedText style={styles.heroStage} numberOfLines={1}>
+                  {stageLabel}
+                </ThemedText>
+              ) : null}
             </View>
-
-            <ThemedText style={styles.heroDate}>
-              {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
-            </ThemedText>
 
             {isEditingTitle ? (
               <View style={styles.titleEditColumn}>
@@ -411,53 +389,11 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
               </View>
             )}
 
-            <View style={styles.heroAxis}>
-              <View style={styles.heroAxisRule} />
-              <View style={styles.heroAxisDot} />
-            </View>
+            <ThemedText style={styles.heroDuration}>{dur}</ThemedText>
 
-            <View style={styles.heroStats}>
-              <View style={styles.statBlock}>
-                <ThemedText style={styles.statLabel}>DURACIÓN</ThemedText>
-                <ThemedText style={styles.statValue}>{dur}</ThemedText>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBlock}>
-                <ThemedText style={styles.statLabel}>INSIGHTS</ThemedText>
-                <ThemedText style={styles.statValue}>
-                  {String(totalInsights).padStart(2, "0")}
-                </ThemedText>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBlock}>
-                <ThemedText style={styles.statLabel}>ETAPA</ThemedText>
-                <ThemedText style={styles.statValueText} numberOfLines={1}>
-                  {stageLabel ?? "Finalizada"}
-                </ThemedText>
-              </View>
-            </View>
-
-            {meeting.source ? (
-              <View style={styles.sourceIndicator}>
-                {isSourceLoading && sourceStatus === "ready" ? (
-                  <ActivityIndicator size="small" color={SemanticColors.tealLight} />
-                ) : (
-                  <View
-                    style={[styles.sourceDot, { backgroundColor: sourceStatusColor(sourceStatus) }]}
-                  />
-                )}
-                <ThemedText style={styles.sourceText}>
-                  {isSourceLoading && sourceStatus === "ready"
-                    ? "Cargando análisis…"
-                    : sourceStatusLabel(sourceStatus)}
-                </ThemedText>
-                {alerts.length > 0 ? (
-                  <ThemedText style={styles.sourceBadge}>
-                    {String(alerts.length).padStart(2, "0")} ALERTAS
-                  </ThemedText>
-                ) : null}
-              </View>
-            ) : null}
+            <ThemedText style={styles.heroDate}>
+              {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
+            </ThemedText>
           </View>
 
           {/* ——— ERROR ——— */}
@@ -526,19 +462,6 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           {/* ——— TRANSCRIPCIÓN ——— */}
           {meeting.transcript ? <MeetingTranscriptSection transcript={meeting.transcript} /> : null}
 
-          {/* ——— METADATOS TÉCNICOS ——— */}
-          <MeetingTechnicalDetails
-            fileName={meeting.file_name}
-            contentType={meeting.content_type}
-            sizeBytes={meeting.size_bytes}
-            recordedStartedAt={meeting.recorded_started_at}
-            recordedFinishedAt={meeting.recorded_finished_at}
-            processingStartedAt={meeting.processing_started_at}
-            processingFinishedAt={meeting.processing_finished_at}
-            processingRunId={meeting.processing_run_id}
-            updatedAt={meeting.updated_at}
-          />
-
           {/* ——— ZONA DE ARCHIVO ——— */}
           <View style={styles.archiveZone}>
             <View style={styles.archiveHeader}>
@@ -591,19 +514,22 @@ const styles = StyleSheet.create({
   /*  HERO                                        */
   /* ═══════════════════════════════════════════ */
   hero: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
-  heroTopRow: {
+  heroStatusRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: Spacing.two,
   },
-  heroFolio: {
-    fontFamily: Fonts.octosquaresBlack,
+  heroStage: {
+    flexShrink: 1,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
+    letterSpacing: 0.3,
+    textAlign: "right",
   },
   statusPill: {
     flexDirection: "row",
@@ -621,12 +547,21 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     letterSpacing: 2,
   },
-  heroDate: {
+  heroDuration: {
     fontFamily: Fonts.montserratSemiBold,
-    fontSize: 11,
-    lineHeight: 14,
-    color: "rgba(255,255,255,0.4)",
-    letterSpacing: 1.8,
+    fontSize: 13,
+    lineHeight: 18,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.2,
+    marginTop: Spacing.one,
+  },
+  heroDate: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: SemanticColors.textPrimary,
+    letterSpacing: 0.2,
+    marginTop: 2,
   },
   titleRow: {
     flexDirection: "row",
@@ -699,87 +634,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.04)",
     borderColor: "rgba(255,255,255,0.08)",
   },
-  heroAxis: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-    paddingTop: Spacing.one,
-  },
-  heroAxisRule: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  heroAxisDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: SemanticColors.success,
-  },
-  heroStats: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: Spacing.three,
-    paddingTop: Spacing.one,
-  },
-  statBlock: {
-    flex: 1,
-    gap: 4,
-  },
-  statLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 9,
-    lineHeight: 12,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2,
-  },
-  statValue: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 28,
-    lineHeight: 30,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.5,
-    fontVariant: ["tabular-nums"],
-  },
-  statValueText: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.2,
-    marginTop: 4,
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  sourceIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-    paddingTop: Spacing.one,
-  },
-  sourceDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-  },
-  sourceText: {
-    flex: 1,
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 11,
-    lineHeight: 14,
-    color: SemanticColors.textSecondaryLight,
-    letterSpacing: 0.3,
-  },
-  sourceBadge: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 10,
-    lineHeight: 12,
-    color: SemanticColors.error,
-    letterSpacing: 1.6,
-  },
-
   /* ═══════════════════════════════════════════ */
   /*  ERROR                                       */
   /* ═══════════════════════════════════════════ */

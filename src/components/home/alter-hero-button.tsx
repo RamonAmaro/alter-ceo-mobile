@@ -188,7 +188,7 @@ export function AlterHeroButton() {
       </View>
 
       <View style={styles.textWrap}>
-        <ThemedText style={styles.cta}>Habla con</ThemedText>
+        <ThemedText style={styles.cta}>Pulsa para hablar con</ThemedText>
         <AlterWordmark size={28} />
       </View>
 

@@ -18,7 +18,7 @@ export interface PlanTab {
 }
 
 interface PlanNavTabsProps {
-  tabs: PlanTab[];
+  tabs: readonly PlanTab[];
   activeKey: string;
   onPress: (key: string) => void;
 }

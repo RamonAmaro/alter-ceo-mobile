@@ -3,14 +3,8 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
-import {
-  clearAllAudioBlobs,
-  closeDatabase,
-} from "@/services/indexed-db-audio-store";
-import {
-  deletePersistedRecording,
-  recordingFileExists,
-} from "@/services/recording-storage";
+import { clearAllAudioBlobs, closeDatabase } from "@/services/indexed-db-audio-store";
+import { deletePersistedRecording, recordingFileExists } from "@/services/recording-storage";
 
 // Rascunho de audio: grabación que el usuario empezó en el chat pero no envió
 // (ej. navegó fuera de la pantalla mientras grababa). El archivo persistido

@@ -52,6 +52,7 @@ export interface MeetingProcessingAccepted {
 export interface MeetingSummaryPayload {
   headline: string;
   executive_summary: string;
+  topics_discussed?: string[];
   decisions?: string[];
   blockers?: string[];
   next_steps?: string[];

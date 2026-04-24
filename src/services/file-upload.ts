@@ -1,9 +1,5 @@
 import type { FileSystemUploadResult } from "expo-file-system/legacy";
-import {
-  FileSystemUploadType,
-  getInfoAsync,
-  uploadAsync,
-} from "expo-file-system/legacy";
+import { FileSystemUploadType, getInfoAsync, uploadAsync } from "expo-file-system/legacy";
 
 import { ApiError } from "@/types/api";
 import type { MeetingDirectUploadPayload } from "@/types/meeting";

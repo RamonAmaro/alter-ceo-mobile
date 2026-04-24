@@ -11,7 +11,7 @@ interface UseSectionScrollReturn {
   handleScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
-export function useSectionScroll(tabs: PlanTab[]): UseSectionScrollReturn {
+export function useSectionScroll(tabs: readonly PlanTab[]): UseSectionScrollReturn {
   const scrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState("intro");

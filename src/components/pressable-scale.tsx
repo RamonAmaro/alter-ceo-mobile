@@ -35,26 +35,23 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
-  const animateTo = useCallback(
-    (pressed: boolean) => {
-      Animated.parallel([
-        Animated.spring(scale, {
-          toValue: pressed ? PRESSED_SCALE : 1,
-          friction: SPRING_FRICTION,
-          tension: SPRING_TENSION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: pressed ? PRESSED_OPACITY : 1,
-          duration: pressed ? OPACITY_IN_MS : OPACITY_OUT_MS,
-          useNativeDriver: true,
-        }),
-      ]).start();
-      // Refs são estáveis — não entram em deps (rule).
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [],
-  );
+  const animateTo = useCallback((pressed: boolean) => {
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: pressed ? PRESSED_SCALE : 1,
+        friction: SPRING_FRICTION,
+        tension: SPRING_TENSION,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: pressed ? PRESSED_OPACITY : 1,
+        duration: pressed ? OPACITY_IN_MS : OPACITY_OUT_MS,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    // Refs são estáveis — não entram em deps (rule).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePressIn = useCallback(() => animateTo(true), [animateTo]);
   const handlePressOut = useCallback(() => animateTo(false), [animateTo]);
@@ -77,9 +74,7 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
       accessibilityLabel={accessibilityLabel}
       hitSlop={hitSlop}
     >
-      <Animated.View style={[style, { transform: [{ scale }], opacity }]}>
-        {children}
-      </Animated.View>
+      <Animated.View style={[style, { transform: [{ scale }], opacity }]}>{children}</Animated.View>
     </Pressable>
   );
 });
