@@ -43,11 +43,9 @@ export default function LoginScreen() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberEmail, setRememberEmail] = useState(false);
-  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
 
   useEffect(() => {
     if (shouldAutoBiometrics) {
-      setSessionExpiredNotice(true);
       consumeAutoBiometrics();
     }
   }, [shouldAutoBiometrics, consumeAutoBiometrics]);
@@ -155,14 +153,6 @@ export default function LoginScreen() {
                   Accede a tu copiloto estratégico
                 </ThemedText>
               </View>
-
-              {sessionExpiredNotice && (
-                <View style={styles.expiredNotice}>
-                  <ThemedText style={styles.expiredNoticeText}>
-                    Tu sesión ha caducado. Vuelve a entrar con tu biometría o tu contraseña.
-                  </ThemedText>
-                </View>
-              )}
 
               <Input
                 placeholder="Usuario"
@@ -326,22 +316,5 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flexGrow: 1,
-  },
-  expiredNotice: {
-    width: "100%",
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    borderRadius: 12,
-    backgroundColor: "rgba(0, 207, 255, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 207, 255, 0.25)",
-    marginBottom: Spacing.three,
-  },
-  expiredNoticeText: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 13,
-    lineHeight: 18,
-    color: SemanticColors.textSubtle,
-    textAlign: "center",
   },
 });
