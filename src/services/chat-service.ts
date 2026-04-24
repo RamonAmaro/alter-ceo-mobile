@@ -81,29 +81,20 @@ interface RNFilePart {
 }
 
 function appendRNFile(formData: FormData, field: string, file: RNFilePart): void {
-  // React Native FormData accepts `{ uri, name, type }` at runtime but the web
-  // FormData.append typing only accepts `Blob | string`. Cast is isolated here.
   formData.append(field, file as unknown as Blob);
 }
 
 async function appendAudioFile(formData: FormData, uri: string, turnId: string): Promise<void> {
   const inferredType = inferContentType(uri);
   const fileName = `voice-note-${turnId}.${inferExtension(inferredType)}`;
-
-  // Caminho de Blob: usado no web (qualquer URI) e também quando o URI é
-  // `blob:` ou `idb-audio://` em qualquer plataforma. Esses schemes não são
-  // reconhecidos pelo `fetch` do RN nativo, então precisamos do Blob real.
   const needsBlobPath =
     Platform.OS === "web" || uri.startsWith("blob:") || uri.startsWith("idb-audio://");
 
   if (needsBlobPath) {
-    // Drafts web usam URIs `idb-audio://` (blob persistido em IndexedDB).
-    // `resolveRecordingBlob` retorna o Blob direto, sem passar por `fetch`.
-    const direct = await resolveRecordingBlob(uri);
     const blob =
-      direct ??
+      (await resolveRecordingBlob(uri)) ??
       (await fetch(uri)
-        .then((r) => r.blob())
+        .then((response) => response.blob())
         .catch(() => {
           throw new Error(
             "No se pudo leer el audio. Puede que el navegador lo haya eliminado. Inténtalo de nuevo.",

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,6 +15,8 @@ import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
 import { NEW_THREAD_DRAFT_KEY, useChatStore } from "@/stores/chat-store";
+import { goBackOrHome } from "@/utils/navigation";
+import { useNavigation } from "expo-router";
 
 function extractInitial(displayName: string | null, email: string | null): string {
   const source = displayName ?? email;
@@ -25,8 +27,10 @@ function extractInitial(displayName: string | null, email: string | null): strin
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
+  const navigation = useNavigation();
   const [inputValue, setInputValue] = useState("");
   const [draftsHydrated, setDraftsHydrated] = useState(false);
+  const isPersistingNavigationRef = useRef(false);
 
   const user = useAuthStore((s) => s.user);
   const userInitial = useMemo(
@@ -60,11 +64,7 @@ export default function ChatScreen() {
   const audioDraftsByUser = useChatAudioDraftStore((s) => s.drafts);
 
   const draftKey = activeThreadId ?? NEW_THREAD_DRAFT_KEY;
-
   const chatBusy = isStreaming || isSubmittingAudio;
-
-  // TODO(native): rascunho de áudio ao sair e voltar ainda instável; sinalizador
-  // `CHAT_AUDIO_DRAFT_ON_LEAVE_UNSTABLE_ON_NATIVE` em `@/constants/audio`.
   const audioDraft = user ? (audioDraftsByUser[user.userId]?.[draftKey] ?? null) : null;
 
   const handleSubmitAudio = useCallback(
@@ -77,18 +77,16 @@ export default function ChatScreen() {
   );
 
   const handleRecordingInterrupted = useCallback(
-    (draft: { uri: string; durationMs: number }) => {
+    async (draft: { uri: string; durationMs: number }) => {
       if (!user) return;
-      // Snapshot do draftKey no momento da interrupção. Usar closure do React é
-      // seguro aqui porque o componente é desmontado em seguida e o valor
-      // capturado era o corrente.
-      void saveAudioDraft(user.userId, draftKey, {
+
+      await saveAudioDraft(user.userId, draftKey, {
         uri: draft.uri,
         durationMs: draft.durationMs,
         createdAt: new Date().toISOString(),
       });
     },
-    [user, draftKey, saveAudioDraft],
+    [draftKey, saveAudioDraft, user],
   );
 
   const {
@@ -97,26 +95,54 @@ export default function ChatScreen() {
     handleStartRecording: handleStartRecordingRaw,
     handleStopRecording,
     handleCancelRecording,
+    persistRecordingDraft,
   } = useChatAudioRecorder({
     disabled: chatBusy,
     onSubmitAudio: handleSubmitAudio,
     onRecordingInterrupted: handleRecordingInterrupted,
   });
 
-  const handleStartRecording = useCallback((): void => {
-    // Se há draft antigo e o usuário decide gravar algo novo, ele está
-    // efetivamente abandonando o draft. Limpar antes evita que, ao terminar,
-    // o banner reapareça oferecendo o audio antigo.
+  const startFreshRecording = useCallback(async (): Promise<void> => {
     if (user && audioDraft) {
-      void clearAudioDraft(user.userId, draftKey);
+      await clearAudioDraft(user.userId, draftKey);
     }
+
     handleStartRecordingRaw();
-  }, [user, audioDraft, draftKey, clearAudioDraft, handleStartRecordingRaw]);
+  }, [audioDraft, clearAudioDraft, draftKey, handleStartRecordingRaw, user]);
+
+  const handleStartRecording = useCallback((): void => {
+    void startFreshRecording();
+  }, [startFreshRecording]);
+
+  const handleBack = useCallback((): void => {
+    void (async () => {
+      await persistRecordingDraft();
+      goBackOrHome();
+    })();
+  }, [persistRecordingDraft]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (event) => {
+      if (audioState !== "recording" || isPersistingNavigationRef.current) {
+        return;
+      }
+
+      event.preventDefault();
+      isPersistingNavigationRef.current = true;
+
+      void persistRecordingDraft().finally(() => {
+        isPersistingNavigationRef.current = false;
+        navigation.dispatch(event.data.action);
+      });
+    });
+
+    return unsubscribe;
+  }, [audioState, navigation, persistRecordingDraft]);
 
   useEffect(() => {
     if (!user) return;
     fetchThreads(user.userId);
-  }, [user, fetchThreads]);
+  }, [fetchThreads, user]);
 
   useEffect(() => {
     void loadDrafts().finally(() => setDraftsHydrated(true));
@@ -132,7 +158,7 @@ export default function ChatScreen() {
     if (threads.length > 0 && !activeThreadId) {
       selectThread(threads[0].thread_id);
     }
-  }, [threads, activeThreadId, selectThread]);
+  }, [activeThreadId, selectThread, threads]);
 
   useEffect(() => {
     return () => cancelStream();
@@ -142,25 +168,25 @@ export default function ChatScreen() {
     if (!draftsHydrated || !user) return;
     const stored = useChatStore.getState().getDraft(user.userId, draftKey);
     setInputValue(stored);
-  }, [draftsHydrated, user, draftKey]);
+  }, [draftKey, draftsHydrated, user]);
 
   const handleChangeText = useCallback(
     (text: string) => {
       setInputValue(text);
       if (user) setDraft(user.userId, draftKey, text);
     },
-    [user, draftKey, setDraft],
+    [draftKey, setDraft, user],
   );
 
   async function handleSend(): Promise<void> {
     const text = inputValue.trim();
     if (!text || !user) return;
+
     setInputValue("");
     clearDraft(user.userId, draftKey);
 
     try {
       const threadId = activeThreadId ?? (await createThread(user.userId));
-      // Move draft from "__new__" bucket to the real threadId once the thread exists.
       if (threadId !== draftKey) clearDraft(user.userId, draftKey);
       await sendMessage(threadId, text);
     } catch {
@@ -170,36 +196,20 @@ export default function ChatScreen() {
   }
 
   const handleSendAudioDraft = useCallback(async (): Promise<void> => {
-    if (!user || !audioDraft) return;
-    // Draft marcado como perdido não tem bytes no IndexedDB (ou é blob legado).
-    // Tentar enviar falharia com mensagem de erro; melhor bloquear de vez.
-    if (audioDraft.lost) return;
-    // Guard contra double-tap: `disabled` em TouchableOpacity não bloqueia
-    // cliques rápidos de forma confiável, então checamos explicitamente se já
-    // há um envio em andamento para evitar disparar `createAudioTurn` duas
-    // vezes com o mesmo arquivo (criaria mensagens duplicadas no backend).
+    if (!user || !audioDraft || audioDraft.lost) return;
     if (useChatStore.getState().isSubmittingAudio) return;
-    const uri = audioDraft.uri;
-    await handleSubmitAudio(uri);
-    // `sendAudioMessage` não re-throw: trata o erro internamente e grava em
-    // `chat-store.error`. Checamos aqui se o envio deu certo antes de apagar
-    // o draft. Se falhou, o banner continua visível e o usuário pode tentar
-    // novamente ou descartar manualmente — áudio nunca se perde sem intenção.
-    //
-    // Edge case: o stream SSE pode ter setado `error` entre o await retornar e
-    // esta leitura. Nesse caso tratamos como falha (conservador: mantemos o
-    // draft), mesmo que o backend já tenha o áudio. Preferir não perder
-    // audio > preferir não mostrar banner redundante.
-    const submitError = useChatStore.getState().error;
-    if (!submitError) {
+
+    await handleSubmitAudio(audioDraft.uri);
+
+    if (!useChatStore.getState().error) {
       await clearAudioDraft(user.userId, draftKey);
     }
-  }, [user, audioDraft, draftKey, clearAudioDraft, handleSubmitAudio]);
+  }, [audioDraft, clearAudioDraft, draftKey, handleSubmitAudio, user]);
 
   const handleDiscardAudioDraft = useCallback((): void => {
     if (!user) return;
     void clearAudioDraft(user.userId, draftKey);
-  }, [user, draftKey, clearAudioDraft]);
+  }, [clearAudioDraft, draftKey, user]);
 
   return (
     <AppBackground style={{ paddingBottom: insets.bottom }}>
@@ -211,6 +221,7 @@ export default function ChatScreen() {
             titlePrefix="El Cerebro"
             titleAccent="ALTER CEO"
             showBack={isMobile}
+            onBack={handleBack}
           />
 
           {isLoadingMessages ? (
