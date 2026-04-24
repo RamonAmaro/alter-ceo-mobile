@@ -1,4 +1,5 @@
 import { KeyboardProvider } from "@/components/keyboard-provider";
+import { NetworkStatusOverlay } from "@/components/network-status-overlay";
 import {
   Montserrat_300Light,
   Montserrat_400Regular,
@@ -14,7 +15,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
-import { initAuthCookie } from "@/services/auth-service";
+import { hasStoredSessionCookie, initAuthCookie } from "@/services/auth-service";
 import { checkAndApplyUpdate } from "@/services/updates-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useDebugStore } from "@/stores/debug-store";
@@ -50,7 +51,13 @@ export default function RootLayout() {
       try {
         await Promise.all([loadDebugState(), loadOnboarding()]);
         await initAuthCookie();
-        await Promise.race([checkSession(), new Promise((resolve) => setTimeout(resolve, 5000))]);
+        // Bootstrap optimistically from the stored cookie (no network call) so
+        // the first paint after the splash already routes correctly. The
+        // /auth/session validation then runs in the background — no artificial
+        // timeout, network errors don't kick the user out.
+        const hasCookie = await hasStoredSessionCookie();
+        useAuthStore.getState().applyOptimisticBootstrap(hasCookie);
+        void checkSession();
         void checkBiometricsStatus();
       } finally {
         await SplashScreen.hideAsync();
@@ -69,6 +76,7 @@ export default function RootLayout() {
     <KeyboardProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }} />
+        <NetworkStatusOverlay />
       </ThemeProvider>
     </KeyboardProvider>
   );
