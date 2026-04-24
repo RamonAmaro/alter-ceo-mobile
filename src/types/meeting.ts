@@ -102,6 +102,7 @@ export interface MeetingSummaryResponse {
   processing_stage: MeetingProcessingStage;
   processing_run_id?: string | null;
   duration_seconds?: number | null;
+  created_at?: string;
   updated_at: string;
   error_message?: string | null;
 }

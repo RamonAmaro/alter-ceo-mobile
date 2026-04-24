@@ -35,7 +35,7 @@ function toMeetingItem(
   localByMeetingId: Map<string, LocalRecording>,
 ): MeetingItem {
   const duration = formatDurationSeconds(m.duration_seconds ?? 0);
-  const d = new Date(m.updated_at);
+  const d = new Date(m.created_at ?? m.updated_at);
   const dateStr = d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
   const local = localByMeetingId.get(m.meeting_id);
 
