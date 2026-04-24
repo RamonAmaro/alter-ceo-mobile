@@ -35,10 +35,19 @@ const SEVERITY_ORDER: Record<InsightSeverity, number> = {
   low: 2,
 };
 
+// User-facing labels framed as "what should I do with this?" rather than
+// abstract severity levels. Product CEO direction: non-technical users read
+// "ALTA/MEDIA/BAJA" as ambiguous, so we spell the meaning out.
 const SEVERITY_LABEL: Record<InsightSeverity, string> = {
-  high: "ALTA",
-  medium: "MEDIA",
-  low: "BAJA",
+  high: "URGENTE",
+  medium: "IMPORTANTE",
+  low: "INFORMATIVO",
+};
+
+const SEVERITY_HELP: Record<InsightSeverity, string> = {
+  high: "Actúa pronto — riesgo u oportunidad crítica.",
+  medium: "Revisa esta semana — impacto relevante en el negocio.",
+  low: "Lectura de contexto — no requiere acción inmediata.",
 };
 
 function categoryLabel(category: string): string {
@@ -62,6 +71,11 @@ function severityLabel(severity: string): string {
   return severity.toUpperCase();
 }
 
+function severityHelp(severity: string): string | null {
+  if (severity in SEVERITY_HELP) return SEVERITY_HELP[severity as InsightSeverity];
+  return null;
+}
+
 function severityRank(severity: string): number {
   if (severity in SEVERITY_ORDER) return SEVERITY_ORDER[severity as InsightSeverity];
   return 99;
@@ -75,9 +89,24 @@ function sortInsights(insights: readonly SourceInsight[]): SourceInsight[] {
   });
 }
 
-function formatConfidence(conf: number): string {
-  const pct = Math.round(conf * 100);
-  return `${pct}%`;
+function formatConfidencePct(conf: number): number {
+  return Math.max(0, Math.min(100, Math.round(conf * 100)));
+}
+
+// Graduated colour for the fiability bar so the user reads it as a quality
+// signal, not just a neutral progress bar.
+function confidenceColor(conf: number): string {
+  const pct = conf * 100;
+  if (pct >= 75) return SemanticColors.success;
+  if (pct >= 50) return SemanticColors.warning;
+  return SemanticColors.error;
+}
+
+function confidenceLabel(conf: number): string {
+  const pct = conf * 100;
+  if (pct >= 75) return "alta";
+  if (pct >= 50) return "media";
+  return "revisar manualmente";
 }
 
 export function MeetingAlertsSection({ insights }: MeetingAlertsSectionProps) {
@@ -92,60 +121,101 @@ export function MeetingAlertsSection({ insights }: MeetingAlertsSectionProps) {
         <ThemedText style={styles.count}>{String(insights.length).padStart(2, "0")}</ThemedText>
       </View>
 
-      <View style={styles.rule} />
+      <ThemedText style={styles.intro}>
+        El agente ha analizado el documento y ha marcado estos puntos. Se ordenan por urgencia y
+        cada uno incluye una cita literal del PDF.
+      </ThemedText>
+
+      <View style={styles.legendRow}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: SemanticColors.error }]} />
+          <ThemedText style={styles.legendText}>Urgente</ThemedText>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: SemanticColors.warning }]} />
+          <ThemedText style={styles.legendText}>Importante</ThemedText>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: SemanticColors.textMuted }]} />
+          <ThemedText style={styles.legendText}>Informativo</ThemedText>
+        </View>
+      </View>
 
       <View style={styles.list}>
-        {sorted.map((insight, idx) => {
-          const color = severityColor(insight.severity);
-          const isFirst = idx === 0;
+        {sorted.map((insight) => {
+          const sevColor = severityColor(insight.severity);
+          const confPct = formatConfidencePct(insight.confidence);
+          const confColor = confidenceColor(insight.confidence);
+          const help = severityHelp(insight.severity);
           return (
-            <View key={insight.insight_id} style={[styles.item, !isFirst && styles.itemDivider]}>
-              <View style={styles.itemTopRow}>
-                <Ionicons
-                  name={categoryIcon(insight.category)}
-                  size={14}
-                  color={SemanticColors.textSecondaryLight}
-                />
-                <ThemedText style={styles.categoryLabel}>
-                  {categoryLabel(insight.category)}
-                </ThemedText>
-                <View style={styles.severityBadge}>
-                  <View style={[styles.severityDot, { backgroundColor: color }]} />
-                  <ThemedText style={[styles.severityText, { color }]}>
-                    {severityLabel(insight.severity)}
+            <View key={insight.insight_id} style={styles.card}>
+              {/* Coloured rail on the left signals urgency at a glance. */}
+              <View style={[styles.cardRail, { backgroundColor: sevColor }]} />
+              <View style={styles.cardBody}>
+                <View style={styles.cardHeaderRow}>
+                  <View style={[styles.severityChip, { borderColor: sevColor }]}>
+                    <View style={[styles.severityDot, { backgroundColor: sevColor }]} />
+                    <ThemedText style={[styles.severityText, { color: sevColor }]}>
+                      {severityLabel(insight.severity)}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.categoryWrap}>
+                    <Ionicons
+                      name={categoryIcon(insight.category)}
+                      size={13}
+                      color={SemanticColors.textMuted}
+                    />
+                    <ThemedText style={styles.categoryLabel}>
+                      {categoryLabel(insight.category)}
+                    </ThemedText>
+                  </View>
+                </View>
+
+                {help ? <ThemedText style={styles.severityHelp}>{help}</ThemedText> : null}
+
+                <ThemedText style={styles.insightText}>{insight.insight_text}</ThemedText>
+
+                {insight.supporting_evidence ? (
+                  <View style={styles.evidenceBox}>
+                    <ThemedText style={styles.evidenceLabel}>EXTRACTO DEL DOCUMENTO</ThemedText>
+                    <View style={styles.evidenceWrap}>
+                      <View style={styles.evidenceRail} />
+                      <ThemedText style={styles.evidenceText} numberOfLines={4}>
+                        “{insight.supporting_evidence}”
+                      </ThemedText>
+                    </View>
+                  </View>
+                ) : null}
+
+                <View style={styles.metaRow}>
+                  <View style={styles.metaLabelBlock}>
+                    <ThemedText style={styles.metaLabel}>FIABILIDAD</ThemedText>
+                    <ThemedText style={[styles.metaHint, { color: confColor }]}>
+                      {confidenceLabel(insight.confidence)}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.confidenceTrack}>
+                    <View
+                      style={[
+                        styles.confidenceFill,
+                        { width: `${confPct}%`, backgroundColor: confColor },
+                      ]}
+                    />
+                  </View>
+                  <ThemedText style={[styles.confidenceValue, { color: confColor }]}>
+                    {confPct}%
                   </ThemedText>
                 </View>
-              </View>
-
-              <ThemedText style={styles.insightText}>{insight.insight_text}</ThemedText>
-
-              {insight.supporting_evidence ? (
-                <View style={styles.evidenceWrap}>
-                  <View style={styles.evidenceRail} />
-                  <ThemedText style={styles.evidenceText} numberOfLines={3}>
-                    {insight.supporting_evidence}
-                  </ThemedText>
-                </View>
-              ) : null}
-
-              <View style={styles.metaRow}>
-                <ThemedText style={styles.metaLabel}>CONFIANZA</ThemedText>
-                <View style={styles.confidenceTrack}>
-                  <View
-                    style={[
-                      styles.confidenceFill,
-                      { width: `${Math.max(0, Math.min(100, insight.confidence * 100))}%` },
-                    ]}
-                  />
-                </View>
-                <ThemedText style={styles.confidenceValue}>
-                  {formatConfidence(insight.confidence)}
-                </ThemedText>
               </View>
             </View>
           );
         })}
       </View>
+
+      <ThemedText style={styles.footerNote}>
+        La fiabilidad indica cuán seguro está el agente de haber interpretado correctamente el
+        documento. Si es baja, revisa la cita original antes de decidir.
+      </ThemedText>
     </View>
   );
 }
@@ -175,50 +245,102 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     fontVariant: ["tabular-nums"],
   },
-  rule: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
+  intro: {
+    fontFamily: Fonts.montserrat,
+    fontSize: 13,
+    lineHeight: 20,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.1,
   },
-  list: {
-    paddingTop: Spacing.two,
+  legendRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.three,
+    paddingVertical: Spacing.one,
   },
-  item: {
-    paddingVertical: Spacing.three,
-    gap: Spacing.two,
-  },
-  itemDivider: {
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.05)",
-  },
-  itemTopRow: {
+  legendItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.two,
+    gap: 6,
   },
-  categoryLabel: {
-    flex: 1,
+  legendDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  legendText: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.textMuted,
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+    letterSpacing: 0.2,
   },
-  severityBadge: {
+  list: {
+    paddingTop: Spacing.one,
+    gap: Spacing.three,
+  },
+  card: {
+    flexDirection: "row",
+    overflow: "hidden",
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  cardRail: {
+    width: 3,
+  },
+  cardBody: {
+    flex: 1,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  cardHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    justifyContent: "space-between",
+    gap: Spacing.two,
+  },
+  severityChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   severityDot: {
-    width: 5,
-    height: 5,
+    width: 6,
+    height: 6,
     borderRadius: 3,
   },
   severityText: {
     fontFamily: Fonts.montserratBold,
     fontSize: 10,
     lineHeight: 12,
-    letterSpacing: 1.6,
+    letterSpacing: 1.4,
+  },
+  severityHelp: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 12,
+    lineHeight: 17,
+    color: SemanticColors.textMuted,
+    letterSpacing: 0.1,
+    fontStyle: "italic",
+  },
+  categoryWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  categoryLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.textMuted,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   insightText: {
     fontFamily: Fonts.montserratMedium,
@@ -227,10 +349,20 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
     letterSpacing: -0.1,
   },
+  evidenceBox: {
+    gap: 6,
+    paddingTop: 2,
+  },
+  evidenceLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 9,
+    lineHeight: 12,
+    color: SemanticColors.textMuted,
+    letterSpacing: 1.8,
+  },
   evidenceWrap: {
     flexDirection: "row",
     gap: Spacing.two,
-    paddingTop: 2,
   },
   evidenceRail: {
     width: 1,
@@ -249,7 +381,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-    paddingTop: 4,
+    paddingTop: Spacing.one,
+  },
+  metaLabelBlock: {
+    gap: 1,
   },
   metaLabel: {
     fontFamily: Fonts.montserratSemiBold,
@@ -258,25 +393,39 @@ const styles = StyleSheet.create({
     color: SemanticColors.textMuted,
     letterSpacing: 1.8,
   },
+  metaHint: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 9,
+    lineHeight: 12,
+    letterSpacing: 0.8,
+    textTransform: "lowercase",
+  },
   confidenceTrack: {
     flex: 1,
-    height: 2,
+    height: 3,
     backgroundColor: "rgba(255,255,255,0.06)",
-    borderRadius: 1,
+    borderRadius: 2,
     overflow: "hidden",
   },
   confidenceFill: {
-    height: 2,
-    backgroundColor: SemanticColors.success,
+    height: 3,
   },
   confidenceValue: {
     fontFamily: Fonts.octosquaresBlack,
     fontSize: 11,
     lineHeight: 14,
-    color: SemanticColors.textSecondaryLight,
     letterSpacing: 0.3,
     fontVariant: ["tabular-nums"],
     minWidth: 32,
     textAlign: "right",
+  },
+  footerNote: {
+    fontFamily: Fonts.montserrat,
+    fontSize: 11,
+    lineHeight: 17,
+    color: SemanticColors.textMuted,
+    letterSpacing: 0.1,
+    fontStyle: "italic",
+    paddingTop: Spacing.two,
   },
 });

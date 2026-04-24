@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MeetingAlertsSection } from "@/components/meeting/meeting-alerts-section";
 import { MeetingEntitiesSection } from "@/components/meeting/meeting-entities-section";
 import { ScreenHeader } from "@/components/screen-header";
+import { SourceTablesSection } from "@/components/sources/source-tables-section";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
@@ -61,15 +62,20 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const showLoader = (isLoading && !isCurrent) || (!source && !detailError);
 
   const title = source?.title?.trim() || source?.filename?.trim() || "Documento";
-  // Backend summary_type values aren't strictly defined; prefer anything
-  // named "executive*". The remaining summaries are shown after.
-  const executiveIndex =
-    source?.summaries.findIndex((s) => s.summary_type.toLowerCase().includes("executive")) ?? -1;
-  const executiveSummary =
-    executiveIndex >= 0 ? source?.summaries[executiveIndex]?.summary_text : undefined;
-  const otherSummaries = source?.summaries.filter((_, index) => index !== executiveIndex) ?? [];
+  // Backend emits `summary_type: "document"` for the whole-PDF summary and
+  // `"section"` for per-section summaries. Fall back to first available if
+  // neither is present (future summary types).
+  const documentSummaryIndex =
+    source?.summaries.findIndex((s) => s.summary_type === "document") ?? -1;
+  const primarySummaryIndex =
+    documentSummaryIndex >= 0 ? documentSummaryIndex : source?.summaries.length ? 0 : -1;
+  const primarySummary =
+    primarySummaryIndex >= 0 ? source?.summaries[primarySummaryIndex]?.summary_text : undefined;
+  const sectionSummaries =
+    source?.summaries.filter((_, index) => index !== primarySummaryIndex) ?? [];
   const entities = source?.entities ?? [];
   const insights = source?.insights ?? [];
+  const tables = source?.tables ?? [];
 
   return (
     <View style={styles.root}>
@@ -147,9 +153,9 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statBlock}>
-                <ThemedText style={styles.statLabel}>SECCIONES</ThemedText>
+                <ThemedText style={styles.statLabel}>TABLAS</ThemedText>
                 <ThemedText style={styles.statValue}>
-                  {String(source.chunks.length).padStart(2, "0")}
+                  {String(tables.length).padStart(2, "0")}
                 </ThemedText>
               </View>
             </View>
@@ -180,32 +186,46 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
             </View>
           ) : null}
 
-          {/* ——— RESUMEN EJECUTIVO ——— */}
-          {executiveSummary ? (
+          {/* ——— RESUMEN PRINCIPAL ——— */}
+          {primarySummary ? (
             <View style={styles.editorialBlock}>
               <View style={styles.editorialRail} />
               <View style={styles.editorialContent}>
-                <ThemedText style={styles.editorialEyebrow}>RESUMEN · EJECUTIVO</ThemedText>
-                <ThemedText style={styles.editorialBody}>{executiveSummary}</ThemedText>
+                <ThemedText style={styles.editorialEyebrow}>RESUMEN · DEL DOCUMENTO</ThemedText>
+                <ThemedText style={styles.editorialBody}>{primarySummary}</ThemedText>
               </View>
             </View>
           ) : null}
 
-          {/* ——— OTROS RESÚMENES ——— */}
-          {otherSummaries.map((summary) => (
-            <View key={summary.summary_id} style={styles.sectionBlock}>
-              <ThemedText style={styles.sectionEyebrow}>
-                {summary.summary_type.toUpperCase()}
-              </ThemedText>
-              <ThemedText style={styles.sectionBody}>{summary.summary_text}</ThemedText>
+          {/* ——— RESÚMENES POR SECCIÓN ——— */}
+          {sectionSummaries.length > 0 ? (
+            <View style={styles.sectionsGroup}>
+              <ThemedText style={styles.sectionsGroupEyebrow}>RESÚMENES · POR SECCIÓN</ThemedText>
+              {sectionSummaries.map((summary) => {
+                const sectionTitle =
+                  summary.section_path && summary.section_path.length > 0
+                    ? summary.section_path.join(" › ")
+                    : `Sección ${summary.summary_id}`;
+                return (
+                  <View key={summary.summary_id} style={styles.sectionBlock}>
+                    <ThemedText style={styles.sectionEyebrow} numberOfLines={2}>
+                      {sectionTitle.toUpperCase()}
+                    </ThemedText>
+                    <ThemedText style={styles.sectionBody}>{summary.summary_text}</ThemedText>
+                  </View>
+                );
+              })}
             </View>
-          ))}
+          ) : null}
 
           {/* ——— ALERTAS / INSIGHTS ——— */}
           {insights.length > 0 ? <MeetingAlertsSection insights={insights} /> : null}
 
           {/* ——— ENTIDADES ——— */}
           {entities.length > 0 ? <MeetingEntitiesSection entities={entities} /> : null}
+
+          {/* ——— TABLAS ——— */}
+          {tables.length > 0 ? <SourceTablesSection tables={tables} /> : null}
         </ScrollView>
       )}
     </View>
@@ -417,15 +437,29 @@ const styles = StyleSheet.create({
     color: SemanticColors.textSecondaryLight,
     letterSpacing: 0.1,
   },
-  sectionBlock: {
-    gap: Spacing.two,
+  sectionsGroup: {
+    gap: Spacing.three,
   },
-  sectionEyebrow: {
+  sectionsGroupEyebrow: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 10,
     lineHeight: 14,
     color: SemanticColors.textMuted,
     letterSpacing: 2.4,
+    paddingBottom: Spacing.one,
+  },
+  sectionBlock: {
+    gap: Spacing.one,
+    paddingLeft: Spacing.two,
+    borderLeftWidth: 1,
+    borderLeftColor: "rgba(255,255,255,0.08)",
+  },
+  sectionEyebrow: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 10,
+    lineHeight: 14,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 1.8,
   },
   sectionBody: {
     fontFamily: Fonts.montserrat,
