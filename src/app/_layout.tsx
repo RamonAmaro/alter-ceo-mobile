@@ -20,6 +20,7 @@ import { checkAndApplyUpdate } from "@/services/updates-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useDebugStore } from "@/stores/debug-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { getLastAuthenticatedUserId } from "@/utils/clear-user-data";
 import { injectWebStyles } from "@/utils/inject-web-styles";
 
 injectWebStyles();
@@ -54,9 +55,14 @@ export default function RootLayout() {
         // Bootstrap optimistically from the stored cookie (no network call) so
         // the first paint after the splash already routes correctly. The
         // /auth/session validation then runs in the background — no artificial
-        // timeout, network errors don't kick the user out.
-        const hasCookie = await hasStoredSessionCookie();
-        useAuthStore.getState().applyOptimisticBootstrap(hasCookie);
+        // timeout, network errors don't kick the user out. We also restore the
+        // last known userId so screens that read user?.userId during the
+        // bootstrap window do not race against an undefined id.
+        const [hasCookie, lastUserId] = await Promise.all([
+          hasStoredSessionCookie(),
+          getLastAuthenticatedUserId(),
+        ]);
+        useAuthStore.getState().applyOptimisticBootstrap(hasCookie, lastUserId);
         void checkSession();
         void checkBiometricsStatus();
       } finally {

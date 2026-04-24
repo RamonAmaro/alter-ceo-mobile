@@ -46,9 +46,15 @@ interface AuthState {
   checkSession: () => Promise<void>;
   retrySession: () => Promise<void>;
   consumeAutoBiometrics: () => void;
-  applyOptimisticBootstrap: (hasCookie: boolean) => void;
+  applyOptimisticBootstrap: (hasCookie: boolean, lastUserId: string | null) => void;
   resetLocalState: () => void;
 }
+
+// Module-scoped Promise to dedupe concurrent retrySession() calls. When the
+// network is down and the overlay polls every 4s, /auth/session can take up to
+// 30s to time out — without dedupe we'd accumulate parallel in-flight requests.
+// Callers await the same Promise and let the runtime collapse them to one.
+let inFlightRetry: Promise<void> | null = null;
 
 async function enrichFromProfile(session: AuthSession): Promise<AuthSession> {
   // Guard against bootstrap races where the session was set optimistically
@@ -216,29 +222,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   retrySession: async () => {
-    const result = await getSession();
-    if (result.kind === "ok") {
-      await ensureCleanForUser(result.session.userId);
-      set({
-        isAuthenticated: true,
-        user: result.session,
-        hasNetworkError: false,
-      });
-      const enriched = await enrichFromProfile(result.session);
-      set({ user: enriched });
-      return;
-    }
-    if (result.kind === "unauthorized") {
-      await ensureCleanOnSignOut();
-      set({
-        isAuthenticated: false,
-        user: null,
-        hasNetworkError: false,
-        shouldAutoBiometrics: true,
-      });
-      return;
-    }
-    set({ hasNetworkError: true });
+    if (inFlightRetry) return inFlightRetry;
+    const run = (async () => {
+      const result = await getSession();
+      if (result.kind === "ok") {
+        await ensureCleanForUser(result.session.userId);
+        set({
+          isAuthenticated: true,
+          user: result.session,
+          hasNetworkError: false,
+        });
+        const enriched = await enrichFromProfile(result.session);
+        set({ user: enriched });
+        return;
+      }
+      if (result.kind === "unauthorized") {
+        await ensureCleanOnSignOut();
+        set({
+          isAuthenticated: false,
+          user: null,
+          hasNetworkError: false,
+          shouldAutoBiometrics: true,
+        });
+        return;
+      }
+      set({ hasNetworkError: true });
+    })();
+    inFlightRetry = run.finally(() => {
+      inFlightRetry = null;
+    });
+    return inFlightRetry;
   },
 
   consumeAutoBiometrics: () => {
@@ -247,9 +260,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  applyOptimisticBootstrap: (hasCookie: boolean) => {
+  applyOptimisticBootstrap: (hasCookie: boolean, lastUserId: string | null) => {
+    // If we have both a session cookie AND a remembered userId, restore a
+    // placeholder user so screens that read user?.userId during the bootstrap
+    // window do not fire requests with `undefined`. checkSession() will replace
+    // this with the real session payload once /auth/session resolves.
+    const placeholder: AuthSession | null =
+      hasCookie && lastUserId
+        ? { userId: lastUserId, email: null, displayName: null, roles: [] }
+        : null;
     set({
       isAuthenticated: hasCookie,
+      user: placeholder,
       isLoading: false,
     });
   },
