@@ -14,6 +14,7 @@ interface RecordButtonProps {
   onResume: () => void;
   onFinish: () => void;
   onRestart: () => void;
+  finishDisabled?: boolean;
 }
 
 const CONTAINER_HEIGHT = 120;
@@ -26,6 +27,7 @@ export function RecordButton({
   onResume,
   onFinish,
   onRestart,
+  finishDisabled = false,
 }: RecordButtonProps) {
   const anim = useRef(new Animated.Value(state !== "idle" ? 1 : 0)).current;
   const prevStateRef = useRef(state);
@@ -136,6 +138,7 @@ export function RecordButton({
             icon={StopIcon}
             label="Parar"
             onPress={onFinish}
+            disabled={finishDisabled}
           />
         </View>
       </Animated.View>

@@ -41,7 +41,6 @@ export default function QuestionsScreen() {
   const user = useAuthStore((s) => s.user);
   const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const finalSubmitRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -50,6 +49,10 @@ export default function QuestionsScreen() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    setIsFinalSubmitting(false);
+  }, [currentQuestionIndex]);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -96,7 +99,7 @@ export default function QuestionsScreen() {
         : [...current, label];
       setAnswer(currentQuestionIndex, updated);
     } else if (
-      question.type === "text" &&
+      (question.type === "text" || question.type === "integer") &&
       question.unavailableOptionValue !== undefined &&
       label === question.unavailableOptionValue
     ) {
@@ -178,8 +181,6 @@ export default function QuestionsScreen() {
     if (nextIndex < questions.length) {
       animateTransition(() => nextQuestion());
     } else {
-      if (finalSubmitRef.current) return;
-      finalSubmitRef.current = true;
       setIsFinalSubmitting(true);
       navigateAfterQuestions();
     }
@@ -198,8 +199,6 @@ export default function QuestionsScreen() {
     if (nextIndex < questions.length) {
       nextQuestion();
     } else {
-      if (finalSubmitRef.current) return;
-      finalSubmitRef.current = true;
       setIsFinalSubmitting(true);
       navigateAfterQuestions();
     }

@@ -89,7 +89,7 @@ export function QuestionBody({
               }
               editable={!unavailableSelected}
             />
-            {question.type === "text" &&
+            {(question.type === "text" || question.type === "integer") &&
             question.unavailableOptionLabel &&
             unavailableOptionValue ? (
               <QuestionOption

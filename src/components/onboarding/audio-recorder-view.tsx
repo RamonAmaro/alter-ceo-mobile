@@ -10,6 +10,7 @@ import { AudioRecorderHeader } from "@/components/onboarding/audio-recorder-head
 import { AudioRecorderStatus } from "@/components/onboarding/audio-recorder-status";
 import { RecordButton } from "@/components/record-button";
 import { ThemedText } from "@/components/themed-text";
+import { AUDIO_MIN_DURATION_MS } from "@/constants/audio";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
 import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
@@ -69,7 +70,6 @@ export function AudioRecorderView({
 
     const uri = result?.uri ?? "";
     const transcript = result?.transcript ?? null;
-    const isLastQuestion = currentQuestionIndex + 1 >= questions.length;
 
     setAnswer(currentQuestionIndex, `[audio_recorded]:${uri}`);
     if (planType) {
@@ -82,9 +82,9 @@ export function AudioRecorderView({
       });
     }
 
-    onConfirm(uri, transcript);
-
-    if (!isLastQuestion) {
+    try {
+      onConfirm(uri, transcript);
+    } finally {
       confirmingRef.current = false;
       setIsConfirming(false);
     }
@@ -95,6 +95,7 @@ export function AudioRecorderView({
   const planLabel = planType === "professional" ? "PROFESIONAL" : "EXPRESS";
   const showControls =
     recordState !== "preparing" && recordState !== "done" && recordState !== "finishing";
+  const canFinish = elapsedMs >= AUDIO_MIN_DURATION_MS;
 
   return (
     <View
@@ -155,6 +156,7 @@ export function AudioRecorderView({
               onResume={handleResume}
               onFinish={handleFinish}
               onRestart={handleRestart}
+              finishDisabled={isRecordingOrPaused && !canFinish}
             />
           )}
         </LinearGradient>

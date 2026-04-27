@@ -1,5 +1,6 @@
 export const NO_WEBSITE_ANSWER = "__no_website__";
 export const NO_INSTAGRAM_ANSWER = "__no_instagram__";
+export const NO_BUSINESS_ANSWER = "__no_business__";
 
 export function isWebsiteUnavailableAnswer(value: unknown): boolean {
   return value === NO_WEBSITE_ANSWER;
@@ -7,4 +8,8 @@ export function isWebsiteUnavailableAnswer(value: unknown): boolean {
 
 export function isInstagramUnavailableAnswer(value: unknown): boolean {
   return value === NO_INSTAGRAM_ANSWER;
+}
+
+export function isNoBusinessAnswer(value: unknown): boolean {
+  return value === NO_BUSINESS_ANSWER;
 }

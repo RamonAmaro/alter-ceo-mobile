@@ -11,10 +11,13 @@ import { ScreenLayout } from "@/components/screen-layout";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { useAuthStore } from "@/stores/auth-store";
 import { useDebugStore } from "@/stores/debug-store";
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
+  const displayName = useAuthStore((s) => s.user?.displayName);
+  const greetingName = displayName?.trim() || "emprendedor";
   const unlockDebug = useDebugStore((s) => s.unlock);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,7 +61,7 @@ export default function WelcomeScreen() {
         >
           <Pressable onPress={() => void handleSecretTap()} style={styles.secretTapTarget}>
             <ThemedText type="headingMd" style={styles.whiteText}>
-              ¡HOLA!
+              ¡HOLA {greetingName}!
             </ThemedText>
           </Pressable>
           <ThemedText type="bodyLg" style={styles.whiteText}>

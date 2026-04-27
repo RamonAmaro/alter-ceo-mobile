@@ -25,6 +25,7 @@ import type { PlanRunCreateRequest } from "@/types/plan";
 import { normalizeWebsiteUrl } from "@/utils/normalize-website-url";
 import {
   isInstagramUnavailableAnswer,
+  isNoBusinessAnswer,
   isWebsiteUnavailableAnswer,
 } from "@/utils/onboarding-contact-presence";
 
@@ -36,23 +37,14 @@ const DAILY_HOURS_MAP: Record<string, DailyHoursDedicated> = {
 };
 
 const TEAM_SIZE_MAP: Record<string, TeamSizeRange> = {
+  "Aún no tengo negocio.": "no_business",
   Autónomo: "solo",
   "De 1 a 3": "1_3",
   "De 4 a 10": "4_10",
   "De 11 a 30": "11_30",
   "De 30 a 60": "30_60",
-  "Más de 60": "60_100",
-};
-
-const REVENUE_MAP: Record<string, number | "no_business"> = {
-  "Menos de 40.000 €": 20000,
-  "De 40.000 € a 100.000 €": 70000,
-  "De 100.000 € a 300.000 €": 200000,
-  "De 300.000 € a 600.000 €": 450000,
-  "De 600.000 € a 1 Millón €": 800000,
-  "De 1 a 3 Millones €": 2000000,
-  "De 3 a 10 Millones €": 6500000,
-  "Más de 10 Millones €": 10000000,
+  "De 60 a 100": "60_100",
+  "Más de 100": "100_plus",
 };
 
 const BUSINESS_STATUS_MAP: Record<string, BusinessStatus> = {
@@ -60,7 +52,7 @@ const BUSINESS_STATUS_MAP: Record<string, BusinessStatus> = {
   "Estancado y poco rentable": "stagnant_low_profit",
   "Creciendo con rentabilidad": "growing_profitable",
   "Creciendo pero sin rentabilidad": "growing_no_profit",
-  "Decreciendo y poco rentable": "early_stage",
+  "No tengo o está en sus inicios": "early_stage",
   "En riesgo de quiebra/cierre": "risk_of_closure",
 };
 
@@ -166,8 +158,11 @@ function mapMulti<T>(map: Record<string, T>, answer: Answer | undefined): T[] {
 }
 
 function mapRevenue(answer: Answer | undefined): number | "no_business" {
-  if (!answer || typeof answer !== "string") return "no_business";
-  return REVENUE_MAP[answer] ?? "no_business";
+  if (typeof answer !== "string" || isNoBusinessAnswer(answer)) return "no_business";
+  const trimmed = answer.trim();
+  if (!/^\d+$/.test(trimmed)) return "no_business";
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : "no_business";
 }
 
 function buildWebsiteFields(answer: Answer | undefined): {
@@ -217,9 +212,9 @@ export function buildExpressPayload(params: BuildExpressPayloadParams): PlanRunC
   const instagramFields = buildInstagramFields(a(10));
 
   const expressAnswers: ExpressOnboardingAnswers = {
-    daily_hours_dedicated: mapSingle(DAILY_HOURS_MAP, a(2)),
+    daily_hours_dedicated: mapSingle(DAILY_HOURS_MAP, a(0)),
     team_size_range: mapSingle(TEAM_SIZE_MAP, a(1)),
-    monthly_revenue_eur: mapRevenue(a(0)),
+    monthly_revenue_eur: mapRevenue(a(2)),
     business_status: mapSingle(BUSINESS_STATUS_MAP, a(3)),
     founder_emotion_state: mapSingle(EMOTION_MAP, a(4)),
     main_pain_points: mapMulti(PAIN_POINT_MAP, a(5)),
@@ -250,9 +245,9 @@ export function buildProfessionalPayload(
   const instagramFields = buildInstagramFields(a(17));
 
   const professionalAnswers: ProfessionalOnboardingAnswers = {
-    daily_hours_dedicated: mapSingle(DAILY_HOURS_MAP, a(2)),
+    daily_hours_dedicated: mapSingle(DAILY_HOURS_MAP, a(0)),
     team_size_range: mapSingle(TEAM_SIZE_MAP, a(1)),
-    monthly_revenue_eur: mapRevenue(a(0)),
+    monthly_revenue_eur: mapRevenue(a(2)),
     business_status: mapSingle(BUSINESS_STATUS_MAP, a(3)),
     founder_emotion_state: mapSingle(EMOTION_MAP, a(4)),
     main_pain_points: mapMulti(PAIN_POINT_MAP, a(5)),

@@ -1,6 +1,10 @@
 import { API_ABSOLUTE_URL, API_VERSION } from "@/constants/env";
 
-const STOP_FINALIZATION_TIMEOUT_MS = 4000;
+// Backend espera no máximo 1.2s por um transcript_final extra após receber `stop`
+// (ver _STOP_FINAL_TIMEOUT_S no backend). Damos uma margem confortável aqui para
+// cobrir latência de rede e o close do servidor — mesmo que o backend feche antes,
+// o onclose abaixo resolve a Promise imediatamente com o que foi acumulado.
+const STOP_FINALIZATION_TIMEOUT_MS = 5000;
 const WS_CONNECT_TIMEOUT_MS = 5000;
 
 export interface TranscriptionSession {
@@ -73,29 +77,18 @@ function safeClose(ws: WebSocket): void {
   }
 }
 
-function awaitFinalTranscript(
-  ws: WebSocket,
-  accumulatedBeforeStop: string,
-  timeoutMs: number,
-): Promise<string> {
-  return new Promise((resolve) => {
-    const finish = (text: string) => {
-      clearTimeout(timer);
-      safeClose(ws);
-      resolve(text);
-    };
+interface TranscriptAccumulator {
+  final: string;
+  delta: string;
+}
 
-    const timer = setTimeout(() => finish(accumulatedBeforeStop), timeoutMs);
-
-    ws.onmessage = (event) => {
-      const msg = parseWsMessage(event.data);
-      if (!msg) return;
-      if (msg.type === "transcript_final" && msg.text) {
-        const full = accumulatedBeforeStop ? `${accumulatedBeforeStop} ${msg.text}` : msg.text;
-        finish(full);
-      }
-    };
-  });
+function pickBestTranscript(acc: TranscriptAccumulator): string {
+  // Final segments are authoritative; delta is the in-flight tail. Combine both
+  // so we never lose the last unfinalized words when the server closes early.
+  const final = acc.final.trim();
+  const delta = acc.delta.trim();
+  if (final && delta) return `${final} ${delta}`;
+  return final || delta;
 }
 
 export async function createTranscriptionSession(): Promise<TranscriptionSession> {
@@ -106,8 +99,16 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
   // eslint-disable-next-line no-console
   console.log("[transcription-service] WS OPEN");
 
-  const accumulated = { final: "", delta: "" };
+  const accumulated: TranscriptAccumulator = { final: "", delta: "" };
   let errorCallback: ((message: string) => void) | null = null;
+  let stopResolver: ((text: string) => void) | null = null;
+
+  function resolveStop(): void {
+    const resolver = stopResolver;
+    if (!resolver) return;
+    stopResolver = null;
+    resolver(pickBestTranscript(accumulated));
+  }
 
   ws.onmessage = (event) => {
     const msg = parseWsMessage(event.data);
@@ -128,6 +129,10 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
   ws.onclose = (e) => {
     // eslint-disable-next-line no-console
     console.log("[transcription-service] WS closed", { code: e.code, reason: e.reason });
+    // Always resolve a pending stop() with whatever we accumulated when the
+    // server closes the connection — backend closes after _STOP_FINAL_TIMEOUT_S
+    // (~1.2s), which is normal and must not be treated as failure.
+    resolveStop();
     if (e.code !== 1000 && e.code !== 1005) {
       const reason = e.reason || `Conexión cerrada inesperadamente (código ${e.code})`;
       errorCallback?.(reason);
@@ -138,6 +143,7 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
     // eslint-disable-next-line no-console
     console.log("[transcription-service] WS error", e);
     errorCallback?.("Error de conexión con el servidor de transcripción");
+    resolveStop();
   };
 
   return {
@@ -147,11 +153,21 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
 
     stop: (): Promise<string> => {
       if (ws.readyState !== WebSocket.OPEN) {
-        return Promise.resolve(accumulated.final || accumulated.delta);
+        return Promise.resolve(pickBestTranscript(accumulated));
       }
-      const snapshotBeforeStop = accumulated.final || accumulated.delta;
       sendJson(ws, { type: "stop" });
-      return awaitFinalTranscript(ws, snapshotBeforeStop, STOP_FINALIZATION_TIMEOUT_MS);
+      return new Promise<string>((resolve) => {
+        stopResolver = resolve;
+        // Safety net: if the server neither sends a closing frame nor more
+        // transcripts within the timeout, resolve with what we have.
+        setTimeout(() => {
+          if (stopResolver === resolve) {
+            stopResolver = null;
+            safeClose(ws);
+            resolve(pickBestTranscript(accumulated));
+          }
+        }, STOP_FINALIZATION_TIMEOUT_MS);
+      });
     },
 
     close: () => safeClose(ws),
