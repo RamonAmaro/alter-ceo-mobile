@@ -3,20 +3,31 @@ import { useEffect } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { MeetingAlertsSection } from "@/components/meeting/meeting-alerts-section";
 import { MeetingEntitiesSection } from "@/components/meeting/meeting-entities-section";
+import { MeetingSummarySection } from "@/components/meeting/meeting-summary-section";
 import { ScreenHeader } from "@/components/screen-header";
+import { SourceInsightsBucket } from "@/components/sources/source-insights-bucket";
 import { SourceTablesSection } from "@/components/sources/source-tables-section";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useSourcesStore } from "@/stores/sources-store";
+import type { SourceInsight, SourceSummaryOut, SourceTable } from "@/types/source";
 import { goBackOrHome } from "@/utils/navigation";
 
 interface SourceDetailContentProps {
   sourceId: string;
 }
+
+const STRATEGIC_CATEGORIES: ReadonlySet<string> = new Set([
+  "strategy_signal",
+  "opportunity",
+  "risk",
+  "kpi_signal",
+]);
+
+const ACTION_CATEGORIES: ReadonlySet<string> = new Set(["milestone", "pain_point", "resource"]);
 
 function statusLabel(status: string): string {
   if (status === "ready") return "LISTO";
@@ -41,6 +52,57 @@ function formatDate(iso: string | null | undefined): string {
     .toUpperCase();
 }
 
+function topicLabelFromSummary(summary: SourceSummaryOut, fallbackIndex: number): string {
+  if (summary.section_path && summary.section_path.length > 0) {
+    return summary.section_path.join(" › ");
+  }
+  return `Sección ${fallbackIndex + 1}`;
+}
+
+function sortInsightsByRelevance(insights: readonly SourceInsight[]): SourceInsight[] {
+  const severityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  return [...insights].sort((a, b) => {
+    const aRank = severityRank[a.severity] ?? 99;
+    const bRank = severityRank[b.severity] ?? 99;
+    if (aRank !== bRank) return aRank - bRank;
+    return (b.confidence ?? 0) - (a.confidence ?? 0);
+  });
+}
+
+// Derive "Temas tratados" with progressive fallback so the user always sees
+// content (the section_summaries path is only populated for documents the
+// extractor detected with structured chapters):
+//   1. Section summaries' titles  ←  best signal
+//   2. Distinct section_path values across insights/entities/tables
+//   3. Table captions (often summarise the section they live in)
+function deriveTopics(
+  sectionSummaries: readonly SourceSummaryOut[],
+  insights: readonly SourceInsight[],
+  tables: readonly SourceTable[],
+): string[] {
+  if (sectionSummaries.length > 0) {
+    return sectionSummaries.map((s, i) => topicLabelFromSummary(s, i));
+  }
+
+  const fromPaths = new Set<string>();
+  for (const i of insights) {
+    if (i.section_path && i.section_path.length > 0) {
+      fromPaths.add(i.section_path.join(" › "));
+    }
+  }
+  for (const t of tables) {
+    if (t.section_path && t.section_path.length > 0) {
+      fromPaths.add(t.section_path.join(" › "));
+    }
+  }
+  if (fromPaths.size > 0) return Array.from(fromPaths);
+
+  const captions = tables
+    .map((t) => t.caption?.trim())
+    .filter((c): c is string => !!c && c.length > 0);
+  return captions;
+}
+
 export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
@@ -61,21 +123,51 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const isCurrent = source?.source_id === sourceId;
   const showLoader = (isLoading && !isCurrent) || (!source && !detailError);
 
-  const title = source?.title?.trim() || source?.filename?.trim() || "Documento";
-  // Backend emits `summary_type: "document"` for the whole-PDF summary and
-  // `"section"` for per-section summaries. Fall back to first available if
-  // neither is present (future summary types).
+  // Backend stores title and filename separately, but when the user uploads
+  // without naming the doc, title falls back to the filename — so we'd render
+  // the same string twice. Strip the extension from the title for a cleaner
+  // look, and only surface the filename underneath when it adds new info.
+  const rawTitle = source?.title?.trim() || source?.filename?.trim() || "Documento";
+  const title = rawTitle.replace(/\.[^./\\]+$/, "").trim() || rawTitle;
+  const showFilename =
+    !!source?.filename && source.filename.trim() !== rawTitle && source.filename.trim() !== title;
+
   const documentSummaryIndex =
     source?.summaries.findIndex((s) => s.summary_type === "document") ?? -1;
   const primarySummaryIndex =
     documentSummaryIndex >= 0 ? documentSummaryIndex : source?.summaries.length ? 0 : -1;
   const primarySummary =
     primarySummaryIndex >= 0 ? source?.summaries[primarySummaryIndex]?.summary_text : undefined;
+
   const sectionSummaries =
     source?.summaries.filter((_, index) => index !== primarySummaryIndex) ?? [];
-  const entities = source?.entities ?? [];
+
   const insights = source?.insights ?? [];
+  const entities = source?.entities ?? [];
   const tables = source?.tables ?? [];
+
+  const topicsTreated = deriveTopics(sectionSummaries, insights, tables);
+
+  const strategicImplications = sortInsightsByRelevance(
+    insights.filter((i) => STRATEGIC_CATEGORIES.has(i.category)),
+  );
+  const actionPoints = sortInsightsByRelevance(
+    insights.filter((i) => ACTION_CATEGORIES.has(i.category)),
+  );
+
+  // Insights whose category falls outside the three buckets — extract them
+  // into a defensive fallback bucket so we never lose backend data.
+  const otherInsights = sortInsightsByRelevance(
+    insights.filter(
+      (i) => !STRATEGIC_CATEGORIES.has(i.category) && !ACTION_CATEGORIES.has(i.category),
+    ),
+  );
+
+  const totalInsights =
+    topicsTreated.length +
+    strategicImplications.length +
+    actionPoints.length +
+    otherInsights.length;
 
   return (
     <View style={styles.root}>
@@ -108,57 +200,32 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
         >
           {/* ——— HERO ——— */}
           <View style={styles.hero}>
-            <View style={styles.heroTopRow}>
-              <ThemedText style={styles.heroFolio}>DOCUMENTO · PDF</ThemedText>
+            <ThemedText style={styles.heroTitle} numberOfLines={4}>
+              {title}
+            </ThemedText>
+
+            <View style={styles.heroMetaRow}>
               <View style={styles.statusPill}>
                 <View style={[styles.statusDot, { backgroundColor: statusColor(source.status) }]} />
                 <ThemedText style={[styles.statusText, { color: statusColor(source.status) }]}>
                   {statusLabel(source.status)}
                 </ThemedText>
               </View>
+              {source.created_at ? (
+                <>
+                  <View style={styles.heroMetaDivider} />
+                  <ThemedText style={styles.heroMetaText}>
+                    {formatDate(source.created_at)}
+                  </ThemedText>
+                </>
+              ) : null}
             </View>
 
-            {source.created_at ? (
-              <ThemedText style={styles.heroDate}>{formatDate(source.created_at)}</ThemedText>
-            ) : null}
-
-            <ThemedText style={styles.heroTitle} numberOfLines={5}>
-              {title}
-            </ThemedText>
-
-            {source.filename ? (
+            {showFilename ? (
               <ThemedText style={styles.heroFilename} numberOfLines={1}>
                 {source.filename}
               </ThemedText>
             ) : null}
-
-            <View style={styles.heroAxis}>
-              <View style={styles.heroAxisRule} />
-              <View style={styles.heroAxisDot} />
-            </View>
-
-            <View style={styles.heroStats}>
-              <View style={styles.statBlock}>
-                <ThemedText style={styles.statLabel}>ENTIDADES</ThemedText>
-                <ThemedText style={styles.statValue}>
-                  {String(entities.length).padStart(2, "0")}
-                </ThemedText>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBlock}>
-                <ThemedText style={styles.statLabel}>INSIGHTS</ThemedText>
-                <ThemedText style={styles.statValue}>
-                  {String(insights.length).padStart(2, "0")}
-                </ThemedText>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBlock}>
-                <ThemedText style={styles.statLabel}>TABLAS</ThemedText>
-                <ThemedText style={styles.statValue}>
-                  {String(tables.length).padStart(2, "0")}
-                </ThemedText>
-              </View>
-            </View>
           </View>
 
           {/* ——— PROCESANDO ——— */}
@@ -186,21 +253,84 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
             </View>
           ) : null}
 
-          {/* ——— RESUMEN PRINCIPAL ——— */}
+          {/* ——— RESUMEN EJECUTIVO ——— */}
           {primarySummary ? (
             <View style={styles.editorialBlock}>
-              <View style={styles.editorialRail} />
-              <View style={styles.editorialContent}>
-                <ThemedText style={styles.editorialEyebrow}>RESUMEN · DEL DOCUMENTO</ThemedText>
-                <ThemedText style={styles.editorialBody}>{primarySummary}</ThemedText>
+              <ThemedText style={styles.sectionTitle}>Resumen ejecutivo</ThemedText>
+              <View style={styles.sectionTitleRule} />
+              <ThemedText style={styles.editorialBody}>{primarySummary}</ThemedText>
+            </View>
+          ) : null}
+
+          {/* ——— INSIGHTS ——— */}
+          {source.status === "ready" ? (
+            <View style={styles.insightsWrap}>
+              <View style={styles.insightsHeader}>
+                <ThemedText style={styles.sectionTitle}>Insights</ThemedText>
+                <ThemedText style={styles.insightsCountBig}>
+                  {String(totalInsights).padStart(2, "0")}
+                </ThemedText>
+              </View>
+
+              <View style={styles.sectionTitleRule} />
+
+              <ThemedText style={styles.insightsLegend}>
+                Cada insight incluye su nivel de urgencia, la cita literal del documento y la
+                fiabilidad con la que el agente lo interpretó.
+              </ThemedText>
+
+              <View style={styles.insightsList}>
+                {/* 1. Temas tratados — lista limpia, sin metadatos */}
+                <MeetingSummarySection
+                  index={1}
+                  icon="list-outline"
+                  iconColor={SemanticColors.tealLight}
+                  title="Temas tratados"
+                  items={topicsTreated}
+                  emptyMessage="Sin especificar"
+                />
+
+                {/* 2. Implicaciones estratégicas — cards ricos */}
+                <SourceInsightsBucket
+                  index={2}
+                  icon="compass-outline"
+                  iconColor={SemanticColors.success}
+                  title="Implicaciones estratégicas"
+                  insights={strategicImplications}
+                  emptyMessage="Sin especificar"
+                />
+
+                {/* 3. Puntos de acción — cards ricos + Responsables/Fecha */}
+                <SourceInsightsBucket
+                  index={3}
+                  icon="arrow-forward-circle-outline"
+                  iconColor={SemanticColors.info}
+                  title="Puntos de acción"
+                  insights={actionPoints}
+                  emptyMessage="Sin definir"
+                  showActionMeta
+                />
+
+                {/* 4. Otros señales (defensive: insights fuera de las 3 categorías) */}
+                {otherInsights.length > 0 ? (
+                  <SourceInsightsBucket
+                    index={4}
+                    icon="sparkles-outline"
+                    iconColor={SemanticColors.warning}
+                    title="Otras señales detectadas"
+                    insights={otherInsights}
+                    emptyMessage="Sin especificar"
+                  />
+                ) : null}
               </View>
             </View>
           ) : null}
 
-          {/* ——— RESÚMENES POR SECCIÓN ——— */}
+          {/* ——— RESÚMENES POR SECCIÓN (detalle ampliado) ——— */}
           {sectionSummaries.length > 0 ? (
             <View style={styles.sectionsGroup}>
-              <ThemedText style={styles.sectionsGroupEyebrow}>RESÚMENES · POR SECCIÓN</ThemedText>
+              <ThemedText style={styles.sectionTitle}>Resúmenes por sección</ThemedText>
+              <View style={styles.sectionTitleRule} />
               {sectionSummaries.map((summary) => {
                 const sectionTitle =
                   summary.section_path && summary.section_path.length > 0
@@ -218,10 +348,7 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
             </View>
           ) : null}
 
-          {/* ——— ALERTAS / INSIGHTS ——— */}
-          {insights.length > 0 ? <MeetingAlertsSection insights={insights} /> : null}
-
-          {/* ——— ENTIDADES ——— */}
+          {/* ——— ENTIDADES DETECTADAS ——— */}
           {entities.length > 0 ? <MeetingEntitiesSection entities={entities} /> : null}
 
           {/* ——— TABLAS ——— */}
@@ -258,20 +385,38 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: Spacing.four,
   },
+
+  /* ═══════════════════════════════════════════ */
+  /*  HERO — Título grande, meta sutil debajo     */
+  /* ═══════════════════════════════════════════ */
   hero: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
-  heroTopRow: {
+  heroTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 30,
+    lineHeight: 36,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.8,
+  },
+  heroMetaRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: Spacing.two,
+    marginTop: 2,
   },
-  heroFolio: {
-    fontFamily: Fonts.octosquaresBlack,
+  heroMetaDivider: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
+  heroMetaText: {
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
+    letterSpacing: 1.2,
   },
   statusPill: {
     flexDirection: "row",
@@ -287,75 +432,20 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratBold,
     fontSize: 10,
     lineHeight: 14,
-    letterSpacing: 2,
-  },
-  heroDate: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 11,
-    lineHeight: 14,
-    color: "rgba(255,255,255,0.4)",
-    letterSpacing: 1.8,
-  },
-  heroTitle: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 30,
-    lineHeight: 36,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.8,
+    letterSpacing: 1.6,
   },
   heroFilename: {
     fontFamily: Fonts.montserratMedium,
-    fontSize: 12,
-    lineHeight: 16,
-    color: SemanticColors.textMuted,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.textDisabled,
     letterSpacing: 0.2,
+    marginTop: 4,
   },
-  heroAxis: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-    paddingTop: Spacing.one,
-  },
-  heroAxisRule: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  heroAxisDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: SemanticColors.success,
-  },
-  heroStats: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    gap: Spacing.three,
-    paddingTop: Spacing.one,
-  },
-  statBlock: {
-    flex: 1,
-    gap: 4,
-  },
-  statLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 9,
-    lineHeight: 12,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2,
-  },
-  statValue: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 28,
-    lineHeight: 30,
-    color: SemanticColors.textPrimary,
-    letterSpacing: -0.5,
-    fontVariant: ["tabular-nums"],
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
+
+  /* ═══════════════════════════════════════════ */
+  /*  PROCESANDO                                 */
+  /* ═══════════════════════════════════════════ */
   processingBox: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -384,6 +474,10 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: SemanticColors.textSecondaryLight,
   },
+
+  /* ═══════════════════════════════════════════ */
+  /*  ERROR                                       */
+  /* ═══════════════════════════════════════════ */
   errorBox: {
     flexDirection: "row",
     gap: Spacing.three,
@@ -410,43 +504,77 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: SemanticColors.textSecondaryLight,
   },
+
+  /* ═══════════════════════════════════════════ */
+  /*  TÍTULOS DE SECCIÓN (compartido)             */
+  /* ═══════════════════════════════════════════ */
+  sectionTitle: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 26,
+    lineHeight: 30,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.4,
+  },
+  sectionTitleRule: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    marginTop: Spacing.one,
+    marginBottom: Spacing.two,
+  },
+
+  /* ═══════════════════════════════════════════ */
+  /*  RESUMEN EJECUTIVO                           */
+  /* ═══════════════════════════════════════════ */
   editorialBlock: {
-    flexDirection: "row",
-    gap: Spacing.three,
-  },
-  editorialRail: {
-    width: 2,
-    backgroundColor: SemanticColors.success,
-    borderRadius: 1,
-  },
-  editorialContent: {
-    flex: 1,
-    gap: Spacing.two,
-  },
-  editorialEyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: SemanticColors.success,
-    letterSpacing: 2.4,
+    gap: 0,
   },
   editorialBody: {
     fontFamily: Fonts.montserrat,
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 22,
     color: SemanticColors.textSecondaryLight,
     letterSpacing: 0.1,
   },
-  sectionsGroup: {
+
+  /* ═══════════════════════════════════════════ */
+  /*  INSIGHTS                                    */
+  /* ═══════════════════════════════════════════ */
+  insightsWrap: {
+    gap: Spacing.two,
+  },
+  insightsHeader: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
     gap: Spacing.three,
   },
-  sectionsGroupEyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
+  insightsCountBig: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 48,
+    lineHeight: 50,
+    color: SemanticColors.success,
+    letterSpacing: -1.5,
+    fontVariant: ["tabular-nums"],
+  },
+  insightsLegend: {
+    fontFamily: Fonts.montserrat,
+    fontSize: 12,
+    lineHeight: 18,
     color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
+    letterSpacing: 0.1,
+    fontStyle: "italic",
+    paddingTop: 2,
     paddingBottom: Spacing.one,
+  },
+  insightsList: {
+    paddingTop: Spacing.two,
+  },
+
+  /* ═══════════════════════════════════════════ */
+  /*  RESÚMENES POR SECCIÓN                       */
+  /* ═══════════════════════════════════════════ */
+  sectionsGroup: {
+    gap: Spacing.three,
   },
   sectionBlock: {
     gap: Spacing.one,

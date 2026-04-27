@@ -1,28 +1,32 @@
-import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 
+import { SourceInsightCard } from "@/components/sources/source-insight-card";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import type { SourceInsight } from "@/types/source";
 
-interface MeetingSummarySectionProps {
+interface SourceInsightsBucketProps {
+  index: number;
   icon: React.ComponentProps<typeof Ionicons>["name"];
   iconColor: string;
   title: string;
-  items: readonly string[];
+  insights: readonly SourceInsight[];
   emptyMessage: string;
-  index: number;
+  showActionMeta?: boolean;
 }
 
-export function MeetingSummarySection({
+export function SourceInsightsBucket({
+  index,
   icon,
   iconColor,
   title,
-  items,
+  insights,
   emptyMessage,
-  index,
-}: MeetingSummarySectionProps) {
-  const isEmpty = items.length === 0;
+  showActionMeta = false,
+}: SourceInsightsBucketProps) {
   const folio = String(index).padStart(2, "0");
+  const isEmpty = insights.length === 0;
 
   return (
     <View style={styles.block}>
@@ -37,6 +41,9 @@ export function MeetingSummarySection({
             <Ionicons name={icon} size={16} color={iconColor} />
           </View>
           <ThemedText style={styles.title}>{title}</ThemedText>
+          {!isEmpty ? (
+            <ThemedText style={styles.count}>{String(insights.length).padStart(2, "0")}</ThemedText>
+          ) : null}
         </View>
 
         <View style={styles.rule} />
@@ -45,11 +52,12 @@ export function MeetingSummarySection({
           <ThemedText style={styles.empty}>{emptyMessage}</ThemedText>
         ) : (
           <View style={styles.list}>
-            {items.map((item, itemIndex) => (
-              <View key={`${title}-${itemIndex}`} style={styles.itemRow}>
-                <ThemedText style={styles.itemDash}>—</ThemedText>
-                <ThemedText style={styles.itemText}>{item}</ThemedText>
-              </View>
+            {insights.map((insight) => (
+              <SourceInsightCard
+                key={insight.insight_id}
+                insight={insight}
+                showActionMeta={showActionMeta}
+              />
             ))}
           </View>
         )}
@@ -84,7 +92,7 @@ const styles = StyleSheet.create({
   contentColumn: {
     flex: 1,
     gap: Spacing.two,
-    paddingBottom: Spacing.three,
+    paddingBottom: Spacing.four,
   },
   headerRow: {
     flexDirection: "row",
@@ -108,6 +116,14 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
     letterSpacing: -0.2,
   },
+  count: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.3)",
+    letterSpacing: 0.5,
+    fontVariant: ["tabular-nums"],
+  },
   rule: {
     height: 1,
     backgroundColor: "rgba(255,255,255,0.06)",
@@ -121,26 +137,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   list: {
-    gap: Spacing.two,
-    paddingTop: 2,
-  },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: Spacing.two,
-  },
-  itemDash: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 21,
-    color: "rgba(255,255,255,0.35)",
-    width: 16,
-  },
-  itemText: {
-    flex: 1,
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 21,
-    color: SemanticColors.textSecondaryLight,
+    gap: Spacing.three,
+    paddingTop: Spacing.one,
   },
 });

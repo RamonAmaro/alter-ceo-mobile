@@ -201,9 +201,11 @@ export function SourceTablesSection({ tables }: SourceTablesSectionProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.eyebrow}>TABLAS · EXTRAÍDAS DEL PDF</ThemedText>
+        <ThemedText style={styles.title}>Tablas extraídas</ThemedText>
         <ThemedText style={styles.count}>{String(tables.length).padStart(2, "0")}</ThemedText>
       </View>
+
+      <View style={styles.rule} />
 
       <ThemedText style={styles.intro}>
         Alter CEO ha detectado estas tablas estructuradas en el documento. Desliza en horizontal
@@ -225,24 +227,31 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "flex-end",
     justifyContent: "space-between",
-    paddingBottom: 2,
+    gap: Spacing.three,
   },
-  eyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
+  title: {
+    flex: 1,
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 26,
+    lineHeight: 30,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.4,
   },
   count: {
     fontFamily: Fonts.octosquaresBlack,
-    fontSize: 12,
-    lineHeight: 14,
-    color: "rgba(255,255,255,0.3)",
+    fontSize: 16,
+    lineHeight: 18,
+    color: "rgba(255,255,255,0.35)",
     letterSpacing: 0.5,
     fontVariant: ["tabular-nums"],
+  },
+  rule: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    marginTop: Spacing.one,
+    marginBottom: Spacing.two,
   },
   intro: {
     fontFamily: Fonts.montserrat,
