@@ -120,7 +120,6 @@ export const useBusinessEntityProposalsStore = create<ProposalsState>((set, get)
       try {
         const response = await service.listBusinessEntities({
           status: "proposed",
-          entityType: "kpi",
           limit: 50,
         });
 

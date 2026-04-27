@@ -5,7 +5,6 @@ import type {
   BusinessEntity,
   EntityDecisionRequest,
   EntityStatus,
-  EntityType,
 } from "@/types/business-entity";
 import type { UserSSETypedEvent } from "@/types/sse";
 import { USER_SSE_EVENT_TYPES } from "@/types/sse";
@@ -14,7 +13,6 @@ const USER_EVENT_NAMES: ReadonlySet<string> = new Set<string>(USER_SSE_EVENT_TYP
 
 interface ListProposalsParams {
   readonly status?: EntityStatus;
-  readonly entityType?: EntityType;
   readonly limit?: number;
 }
 
@@ -23,7 +21,6 @@ export async function listBusinessEntities(
 ): Promise<BusinessEntitiesListResponse> {
   const query: Record<string, string> = {};
   if (params.status) query.status = params.status;
-  if (params.entityType) query.entity_type = params.entityType;
   if (params.limit != null) query.limit = String(params.limit);
   return get<BusinessEntitiesListResponse>("/business-entities", query);
 }
