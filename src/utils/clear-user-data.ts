@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useActiveRecordingStore } from "@/stores/active-recording-store";
+import { useBusinessEntityProposalsStore } from "@/stores/business-entity-proposals-store";
 import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
 import { useChatStore } from "@/stores/chat-store";
 import { useMeetingStore } from "@/stores/meeting-store";
@@ -18,6 +19,7 @@ export async function clearUserScopedStores(): Promise<void> {
   usePlanStore.getState().reset();
   useSourcesStore.getState().reset();
   useStrategyReportStore.getState().reset();
+  useBusinessEntityProposalsStore.getState().reset();
   useActiveRecordingStore.getState().setActiveId(null);
   await useOnboardingStore.getState().reset();
   await useRecordingsStore.getState().reset();
@@ -33,6 +35,7 @@ export async function clearUserScopedStoresKeepingPending(): Promise<void> {
   usePlanStore.getState().reset();
   useSourcesStore.getState().reset();
   useStrategyReportStore.getState().resetKeepingDraft();
+  useBusinessEntityProposalsStore.getState().reset();
   useActiveRecordingStore.getState().setActiveId(null);
   useOnboardingStore.getState().resetKeepingDraft();
   await useRecordingsStore.getState().resetKeepingPending();

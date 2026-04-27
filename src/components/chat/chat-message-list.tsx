@@ -14,6 +14,9 @@ interface ChatMessageListProps {
   userInitial?: string;
   failedMessageId?: string | null;
   onRetry?: () => void;
+  /** Espaço extra reservado no fim da lista (entrada visual). Usado para
+   * o stack de propostas absoluto não cobrir a última mensagem. */
+  extraBottomReserve?: number;
 }
 
 interface DisplayMessage {
@@ -34,6 +37,7 @@ export function ChatMessageList({
   userInitial,
   failedMessageId,
   onRetry,
+  extraBottomReserve = 0,
 }: ChatMessageListProps) {
   const listRef = useRef<FlatList<DisplayMessage>>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -94,7 +98,10 @@ export function ChatMessageList({
         keyExtractor={keyExtractor}
         renderItem={renderMessage}
         ListHeaderComponent={listHeader}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingTop: Spacing.two + extraBottomReserve },
+        ]}
         showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         keyboardDismissMode="interactive"
         style={styles.container}

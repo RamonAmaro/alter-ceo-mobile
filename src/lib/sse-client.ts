@@ -5,7 +5,7 @@ import type { SSEEventType, SSETypedEvent } from "@/types/sse";
 import { SSE_EVENT_TYPES } from "@/types/sse";
 import { createSSEParser } from "@/utils/sse-parser";
 
-const KNOWN_EVENTS: ReadonlySet<string> = new Set<string>(SSE_EVENT_TYPES);
+const TURN_KNOWN_EVENTS: ReadonlySet<string> = new Set<string>(SSE_EVENT_TYPES);
 
 interface SSEConnectOptions {
   readonly onEvent: (event: SSETypedEvent) => void;
@@ -14,6 +14,7 @@ interface SSEConnectOptions {
   readonly afterEventId?: string;
   readonly method?: "GET" | "POST";
   readonly body?: unknown;
+  readonly allowedEvents?: ReadonlySet<string>;
 }
 
 export interface SSEConnection {
@@ -26,8 +27,11 @@ function buildSSEUrl(path: string, params?: Record<string, string>): string {
   return `${base}?${new URLSearchParams(params).toString()}`;
 }
 
-function isKnownEvent(name: string | undefined): name is SSEEventType {
-  return name != null && KNOWN_EVENTS.has(name);
+function isKnownEvent(
+  name: string | undefined,
+  allowed: ReadonlySet<string>,
+): name is SSEEventType {
+  return name != null && allowed.has(name);
 }
 
 export function connectSSE(path: string, options: SSEConnectOptions): SSEConnection {
@@ -58,9 +62,10 @@ export function connectSSE(path: string, options: SSEConnectOptions): SSEConnect
   let lastProcessedIndex = 0;
   let aborted = false;
 
+  const allowedEvents = options.allowedEvents ?? TURN_KNOWN_EVENTS;
   const parser = createSSEParser((raw) => {
     if (aborted) return;
-    if (!isKnownEvent(raw.event)) return;
+    if (!isKnownEvent(raw.event, allowedEvents)) return;
     options.onEvent({ id: raw.id, event: raw.event, data: raw.data });
   });
 

@@ -19,6 +19,20 @@ export const SSE_EVENT_TYPES = [
 
 export type SSEEventType = (typeof SSE_EVENT_TYPES)[number];
 
+/** SSE event types emitted on the user-wide channel `/users/me/events`. */
+export const USER_SSE_EVENT_TYPES = [
+  "entity_proposal_created",
+  "entity_proposal_resolved",
+] as const;
+
+export type UserSSEEventType = (typeof USER_SSE_EVENT_TYPES)[number];
+
+export interface UserSSETypedEvent {
+  readonly id?: string;
+  readonly event: UserSSEEventType;
+  readonly data: string;
+}
+
 /** Parsed SSE payload — data is always the raw JSON string from the `data:` field. */
 export interface SSETypedEvent {
   readonly id?: string;
