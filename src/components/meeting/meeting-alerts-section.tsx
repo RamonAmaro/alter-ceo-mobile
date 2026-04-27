@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2.4,
   },
   count: {
-    fontFamily: Fonts.octosquaresBlack,
+    fontFamily: Fonts.montserratBold,
     fontSize: 12,
     lineHeight: 14,
     color: "rgba(255,255,255,0.3)",
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     height: 3,
   },
   confidenceValue: {
-    fontFamily: Fonts.octosquaresBlack,
+    fontFamily: Fonts.montserratBold,
     fontSize: 11,
     lineHeight: 14,
     letterSpacing: 0.3,

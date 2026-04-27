@@ -25,7 +25,7 @@ export function MeetingTranscriptSection({ transcript }: MeetingTranscriptSectio
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.eyebrow}>TRANSCRIPCIÓN · LITERAL</ThemedText>
+        <ThemedText style={styles.title}>Transcripción</ThemedText>
         <ThemedText style={styles.wordCount}>{String(wordCount).padStart(4, "0")}</ThemedText>
       </View>
 
@@ -62,28 +62,30 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "flex-end",
     justifyContent: "space-between",
-    paddingBottom: 2,
+    gap: Spacing.three,
   },
-  eyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
+  title: {
+    flex: 1,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.4,
   },
   wordCount: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 12,
-    lineHeight: 14,
-    color: "rgba(255,255,255,0.3)",
+    fontFamily: Fonts.montserratBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: "rgba(255,255,255,0.35)",
     letterSpacing: 0.5,
     fontVariant: ["tabular-nums"],
   },
   rule: {
     height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    marginTop: Spacing.one,
   },
   quoteWrap: {
     flexDirection: "row",
@@ -93,13 +95,13 @@ const styles = StyleSheet.create({
   },
   quoteRail: {
     width: 1,
-    backgroundColor: "rgba(0,255,132,0.35)",
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
   text: {
     flex: 1,
     fontFamily: Fonts.montserrat,
-    fontSize: 15,
-    lineHeight: 25,
+    fontSize: 14,
+    lineHeight: 22,
     color: SemanticColors.textSecondaryLight,
     letterSpacing: 0.1,
   },
