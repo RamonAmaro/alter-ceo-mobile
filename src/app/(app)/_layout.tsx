@@ -1,9 +1,12 @@
+import { useUserEventsStream } from "@/hooks/use-user-events-stream";
 import { useAuthStore } from "@/stores/auth-store";
 import { Redirect, Stack } from "expo-router";
 
 export default function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
+
+  useUserEventsStream(isAuthenticated);
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href="/(auth)/login" />;

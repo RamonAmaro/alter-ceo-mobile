@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
 import { ChatAudioDraftBanner } from "@/components/chat/chat-audio-draft-banner";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
+import { EntityProposalStack } from "@/components/chat/entity-proposal/entity-proposal-stack";
 import { KeyboardView } from "@/components/keyboard-view";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
@@ -32,6 +33,12 @@ export default function ChatScreen() {
   const [draftsHydrated, setDraftsHydrated] = useState(false);
   const [isSendingText, setIsSendingText] = useState(false);
   const [isSubmittingAudioDraft, setIsSubmittingAudioDraft] = useState(false);
+  const [inputHeight, setInputHeight] = useState(0);
+  const [proposalStackHeight, setProposalStackHeight] = useState(0);
+
+  const handleInputLayout = useCallback((event: LayoutChangeEvent) => {
+    setInputHeight(event.nativeEvent.layout.height);
+  }, []);
   const isSendingTextRef = useRef(false);
   const isSubmittingAudioDraftRef = useRef(false);
   const isPersistingNavigationRef = useRef(false);
@@ -256,6 +263,7 @@ export default function ChatScreen() {
               userInitial={userInitial}
               failedMessageId={failedMessageId}
               onRetry={retryMessage}
+              extraBottomReserve={proposalStackHeight}
             />
           )}
 
@@ -276,18 +284,22 @@ export default function ChatScreen() {
             />
           ) : null}
 
-          <ChatInput
-            value={inputValue}
-            onChangeText={handleChangeText}
-            onSend={handleSend}
-            onStartRecording={handleStartRecording}
-            onStopRecording={handleStopRecording}
-            onCancelRecording={handleCancelRecording}
-            audioState={audioState}
-            audioElapsedMs={elapsedMs}
-            disabled={chatBusy}
-            isSendingText={isSendingText}
-          />
+          <EntityProposalStack bottomOffset={inputHeight} onHeightChange={setProposalStackHeight} />
+
+          <View onLayout={handleInputLayout}>
+            <ChatInput
+              value={inputValue}
+              onChangeText={handleChangeText}
+              onSend={handleSend}
+              onStartRecording={handleStartRecording}
+              onStopRecording={handleStopRecording}
+              onCancelRecording={handleCancelRecording}
+              audioState={audioState}
+              audioElapsedMs={elapsedMs}
+              disabled={chatBusy}
+              isSendingText={isSendingText}
+            />
+          </View>
         </View>
       </KeyboardView>
     </AppBackground>
