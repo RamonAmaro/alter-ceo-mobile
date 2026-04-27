@@ -5,8 +5,15 @@ import { useBusinessEntityProposalsStore } from "@/stores/business-entity-propos
 import type {
   EntityProposalCreatedEvent,
   EntityProposalResolvedEvent,
+  EntityType,
 } from "@/types/business-entity";
 import type { UserSSETypedEvent } from "@/types/sse";
+
+const SUPPORTED_ENTITY_TYPES: ReadonlySet<EntityType> = new Set<EntityType>([
+  "kpi",
+  "product_service",
+  "supplier",
+]);
 
 const RECONNECT_INITIAL_MS = 3000;
 const RECONNECT_MAX_MS = 60000;
@@ -23,7 +30,7 @@ function handleEvent(event: UserSSETypedEvent): void {
   const store = useBusinessEntityProposalsStore.getState();
   if (event.event === "entity_proposal_created") {
     const payload = safeParse<EntityProposalCreatedEvent>(event.data);
-    if (payload && payload.entity_type === "kpi") {
+    if (payload && SUPPORTED_ENTITY_TYPES.has(payload.entity_type)) {
       store.applyCreatedEvent(payload);
     }
     return;

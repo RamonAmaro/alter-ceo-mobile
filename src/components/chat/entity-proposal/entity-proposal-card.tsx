@@ -6,19 +6,12 @@ import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useBusinessEntityProposalsStore } from "@/stores/business-entity-proposals-store";
-import type { KPIPayload } from "@/types/business-entity";
+
+import { presentProposal } from "./entity-proposal-presenter";
 
 interface EntityProposalCardProps {
   readonly entityId: string;
   readonly interactive: boolean;
-}
-
-function buildMetaLine(payload: KPIPayload): string {
-  const parts = [
-    payload.numeric_value ? `Valor: ${payload.numeric_value}` : null,
-    payload.temporality ? `Temporalidad: ${payload.temporality}` : null,
-  ].filter((part): part is string => Boolean(part));
-  return parts.join(" · ");
 }
 
 export function EntityProposalCard({ entityId, interactive }: EntityProposalCardProps) {
@@ -37,10 +30,10 @@ export function EntityProposalCard({ entityId, interactive }: EntityProposalCard
 
   if (!entry) return null;
 
-  const payload = entry.payload;
   const isSubmitting = entry.submission === "submitting";
   const disabled = !interactive || isSubmitting;
-  const metaLine = buildMetaLine(payload);
+  const presentation = presentProposal(entry.payload);
+  const visibleFields = presentation.fields;
 
   return (
     <View
@@ -49,21 +42,31 @@ export function EntityProposalCard({ entityId, interactive }: EntityProposalCard
     >
       <View style={styles.body}>
         <View style={styles.iconBadge}>
-          <Ionicons name="analytics" size={20} color={SemanticColors.onSuccess} />
+          <Ionicons name={presentation.icon} size={16} color={SemanticColors.onSuccess} />
         </View>
 
         <View style={styles.content}>
-          <ThemedText type="bodySm" style={styles.helper}>
-            Para darle seguimiento a este objetivo, puedo crear un KPI:
-          </ThemedText>
-          <ThemedText type="labelSm" style={styles.title}>
-            {payload.title}
-          </ThemedText>
-          {metaLine.length > 0 && (
-            <ThemedText type="caption" style={styles.meta}>
-              {metaLine}
+          <View style={styles.header}>
+            <ThemedText type="labelSm" style={styles.title} numberOfLines={1}>
+              {presentation.title}
             </ThemedText>
-          )}
+            <ThemedText type="caption" style={styles.typeChip}>
+              {presentation.typeLabel}
+            </ThemedText>
+          </View>
+
+          {visibleFields.map((field) => (
+            <ThemedText key={field.label} type="caption" style={styles.fieldLine} numberOfLines={2}>
+              <ThemedText type="caption" style={styles.fieldLabel}>
+                {field.label}
+              </ThemedText>
+              <ThemedText type="caption" style={styles.fieldValue}>
+                {"  "}
+                {field.value}
+              </ThemedText>
+            </ThemedText>
+          ))}
+
           {entry.errorMessage && (
             <ThemedText type="caption" style={styles.error}>
               {entry.errorMessage}
@@ -87,7 +90,7 @@ export function EntityProposalCard({ entityId, interactive }: EntityProposalCard
           accessibilityLabel="No, gracias"
         >
           <ThemedText type="caption" style={styles.rejectLabel}>
-            No, gracias
+            No
           </ThemedText>
         </TouchableOpacity>
         <TouchableOpacity
@@ -107,7 +110,7 @@ export function EntityProposalCard({ entityId, interactive }: EntityProposalCard
             <ActivityIndicator color={SemanticColors.onSuccess} size="small" />
           ) : (
             <ThemedText type="caption" style={styles.confirmLabel}>
-              Sí, guardarlo
+              Guardar
             </ThemedText>
           )}
         </TouchableOpacity>
@@ -121,7 +124,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.two,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(0,255,132,0.35)",
     backgroundColor: "rgba(7,30,18,0.92)",
@@ -141,34 +144,58 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   iconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
     backgroundColor: SemanticColors.success,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+    marginTop: 1,
   },
   content: {
     flex: 1,
     minWidth: 0,
+    gap: 2,
   },
-  helper: {
-    color: SemanticColors.textSecondaryLight,
-    fontFamily: Fonts.montserrat,
-    fontSize: 11,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.one,
+    flexWrap: "wrap",
+  },
+  typeChip: {
+    color: SemanticColors.success,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 9,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+    backgroundColor: "rgba(0,255,132,0.12)",
   },
   title: {
+    flexShrink: 1,
     color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 13,
-    marginTop: 2,
   },
-  meta: {
-    color: SemanticColors.textMuted,
-    fontFamily: Fonts.montserratMedium,
+  fieldLine: {
     fontSize: 11,
-    marginTop: 2,
+    lineHeight: 15,
+  },
+  fieldLabel: {
+    color: "rgba(255,255,255,0.85)",
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  fieldValue: {
+    color: SemanticColors.textSecondaryLight,
+    fontFamily: Fonts.montserrat,
+    fontSize: 11,
   },
   error: {
     color: SemanticColors.error,
@@ -188,13 +215,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   button: {
-    minHeight: 36,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 6,
-    borderRadius: 18,
+    minHeight: 30,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 4,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 84,
+    minWidth: 64,
   },
   buttonFlex: {
     flex: 1,
@@ -213,9 +240,11 @@ const styles = StyleSheet.create({
   rejectLabel: {
     color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
   },
   confirmLabel: {
     color: SemanticColors.onSuccess,
     fontFamily: Fonts.montserratBold,
+    fontSize: 11,
   },
 });
