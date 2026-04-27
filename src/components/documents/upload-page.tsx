@@ -86,68 +86,45 @@ export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
     if (isBusy || isPickingRef.current) return;
     isPickingRef.current = true;
     setIsPicking(true);
-
-    if (!userId) {
-      isPickingRef.current = false;
-      setIsPicking(false);
-      notifyError("Debes iniciar sesión para subir documentos.");
-      return;
-    }
-
-    let result: DocumentPicker.DocumentPickerResult | null = null;
     try {
-      result = await DocumentPicker.getDocumentAsync({
-        type: "application/pdf",
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
-    } catch {
-      notifyError("No se pudo abrir el selector de archivos.");
-      return;
-    } finally {
-      if (!result) {
-        isPickingRef.current = false;
-        setIsPicking(false);
+      if (!userId) {
+        notifyError("Debes iniciar sesión para subir documentos.");
+        return;
       }
-    }
 
-    if (!result) return;
+      let result: DocumentPicker.DocumentPickerResult;
+      try {
+        result = await DocumentPicker.getDocumentAsync({
+          type: "application/pdf",
+          copyToCacheDirectory: true,
+          multiple: false,
+        });
+      } catch {
+        notifyError("No se pudo abrir el selector de archivos.");
+        return;
+      }
 
-    if (result.canceled) {
-      isPickingRef.current = false;
-      setIsPicking(false);
-      return;
-    }
-    const asset = result.assets[0];
-    if (!asset) {
-      isPickingRef.current = false;
-      setIsPicking(false);
-      return;
-    }
+      if (result.canceled) return;
 
-    const sizeBytes = asset.size ?? asset.file?.size ?? 0;
-    if (sizeBytes === 0) {
-      isPickingRef.current = false;
-      setIsPicking(false);
-      notifyError("El archivo está vacío.");
-      return;
-    }
-    if (sizeBytes > MAX_PDF_SIZE_BYTES) {
-      isPickingRef.current = false;
-      setIsPicking(false);
-      notifyError("El archivo supera el límite de 50 MB.");
-      return;
-    }
+      const asset = result.assets[0];
+      if (!asset) return;
 
-    const mimeType = asset.mimeType ?? asset.file?.type ?? "application/pdf";
-    if (!mimeType.toLowerCase().includes("pdf")) {
-      isPickingRef.current = false;
-      setIsPicking(false);
-      notifyError("Solo se admiten archivos PDF.");
-      return;
-    }
+      const sizeBytes = asset.size ?? asset.file?.size ?? 0;
+      if (sizeBytes === 0) {
+        notifyError("El archivo está vacío.");
+        return;
+      }
+      if (sizeBytes > MAX_PDF_SIZE_BYTES) {
+        notifyError("El archivo supera el límite de 50 MB.");
+        return;
+      }
 
-    try {
+      const mimeType = asset.mimeType ?? asset.file?.type ?? "application/pdf";
+      if (!mimeType.toLowerCase().includes("pdf")) {
+        notifyError("Solo se admiten archivos PDF.");
+        return;
+      }
+
       const companyName = resolveCompanyName(steps);
       await uploadPdf({
         userId,
