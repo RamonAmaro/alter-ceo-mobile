@@ -3,14 +3,24 @@ import { ThemedText } from "@/components/themed-text";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MonumentalIndex } from "@/components/ui/monumental-index";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import type { PrimerPasoEscenario } from "@/types/plan";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
 interface FirstStepSectionProps {
   message: string;
+  escenario?: PrimerPasoEscenario;
 }
 
-export function FirstStepSection({ message }: FirstStepSectionProps) {
+const ESCENARIO_LABEL: Record<PrimerPasoEscenario, string> = {
+  no_prioritario_por_fase_inicial: "FASE INICIAL",
+  crecer_antes_de_liberar: "CRECER ANTES",
+  delegar_estrategicamente: "DELEGAR ESTRATÉGICAMENTE",
+};
+
+export function FirstStepSection({ message, escenario }: FirstStepSectionProps) {
+  const pillLabel = escenario ? ESCENARIO_LABEL[escenario] : "ACCIÓN INMEDIATA";
+
   return (
     <View style={styles.container}>
       <SectionHeader eyebrow="ACCIÓN INMEDIATA" title="Primer paso para" accent="arrancar" />
@@ -24,7 +34,7 @@ export function FirstStepSection({ message }: FirstStepSectionProps) {
           </View>
           <View style={styles.pill}>
             <View style={styles.pillDot} />
-            <ThemedText style={styles.pillText}>ACCIÓN INMEDIATA</ThemedText>
+            <ThemedText style={styles.pillText}>{pillLabel}</ThemedText>
           </View>
         </View>
 

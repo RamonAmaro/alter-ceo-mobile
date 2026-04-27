@@ -1,4 +1,5 @@
 import { PlanConclusion } from "@/components/my-plan/plan-conclusion";
+import { PlanFinalActions } from "@/components/my-plan/plan-final-actions";
 import { PlanNavTabs } from "@/components/my-plan/plan-nav-tabs";
 import { PlanSectionsList } from "@/components/my-plan/plan-sections-list";
 import { ScreenHeader } from "@/components/screen-header";
@@ -15,9 +16,18 @@ import { getPlanFlags, getPlanTabs } from "./plan-sections-config";
 interface PlanContentProps {
   plan: PlanData;
   insets: { top: number; bottom: number };
+  onAcceptPlan?: () => void;
+  onModifyPlan?: () => void;
+  acceptLoading?: boolean;
 }
 
-export function PlanContent({ plan, insets }: PlanContentProps) {
+export function PlanContent({
+  plan,
+  insets,
+  onAcceptPlan,
+  onModifyPlan,
+  acceptLoading,
+}: PlanContentProps) {
   const flags = useMemo(() => getPlanFlags(plan), [plan]);
   const tabs = useMemo(() => getPlanTabs(flags), [flags]);
   const { scrollRef, activeTab, handleSectionLayout, handleTabPress, handleScroll } =
@@ -51,7 +61,15 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
 
         <PlanSectionsList plan={plan} flags={flags} onSectionLayout={handleSectionLayout} />
 
-        <PlanConclusion />
+        <PlanConclusion text={plan.conclusion_express} />
+
+        {onAcceptPlan && onModifyPlan ? (
+          <PlanFinalActions
+            onAccept={onAcceptPlan}
+            onModify={onModifyPlan}
+            acceptLoading={acceptLoading}
+          />
+        ) : null}
       </ScrollView>
     </View>
   );

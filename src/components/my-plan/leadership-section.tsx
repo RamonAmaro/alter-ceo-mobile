@@ -1,9 +1,9 @@
 import { PhaseItem } from "@/components/my-plan/phase-item";
-import { RoleBarRow } from "@/components/my-plan/role-bar-row";
+import { RoleEvolutionCharts } from "@/components/my-plan/role-evolution-charts";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import type { PlanLeadership, RoleSnapshot } from "@/types/plan";
+import type { PlanLeadership } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface LeadershipSectionProps {
@@ -13,36 +13,11 @@ interface LeadershipSectionProps {
   roleEvolution?: PlanLeadership["evolucion_rol"];
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  desarrollo_estrategia_comercial: "Estrategia comercial",
-  control_gestion_kpis: "Control y KPIs",
-  liderazgo_efectivo: "Liderazgo",
-  mejora_experiencia_cliente: "Exp. cliente",
-  vision_planificacion_largo_plazo: "Visión y planificación",
-  apagar_fuegos_incidencias: "Apagar fuegos",
-  microgestion_equipo: "Microgestión",
-  atencion_gestion_clientes: "Atención clientes",
-  presupuestos_ventas_operativas: "Ventas operativas",
-  entrega_producto_servicio: "Entrega servicio",
-};
-
 const PHASES = [
   { key: "phase1" as const, label: "Fase 1", sublabel: "Profesionalizar" },
   { key: "phase2" as const, label: "Fase 2", sublabel: "Delegación" },
   { key: "phase3" as const, label: "Fase 3", sublabel: "CEO Estratégico" },
 ];
-
-function getTopDiffCategories(
-  current?: RoleSnapshot,
-  target?: RoleSnapshot,
-  count = 6,
-): { key: string; current: number; target: number }[] {
-  if (!current || !target) return [];
-  return Object.keys(current)
-    .map((key) => ({ key, current: current[key] ?? 0, target: target[key] ?? 0 }))
-    .sort((a, b) => Math.abs(b.target - b.current) - Math.abs(a.target - a.current))
-    .slice(0, count);
-}
 
 export function LeadershipSection({
   phase1,
@@ -56,12 +31,13 @@ export function LeadershipSection({
     phase3,
   };
   const activePhases = PHASES.filter((p) => phaseTexts[p.key]);
-
-  const topCategories = getTopDiffCategories(
-    roleEvolution?.situacion_actual,
-    roleEvolution?.mes_12,
+  const hasEvolution = Boolean(
+    roleEvolution &&
+    (roleEvolution.situacion_actual ||
+      roleEvolution.mes_4 ||
+      roleEvolution.mes_8 ||
+      roleEvolution.mes_12),
   );
-  const maxValue = Math.max(...topCategories.flatMap((c) => [c.current, c.target]), 1);
 
   return (
     <View style={styles.container}>
@@ -82,21 +58,15 @@ export function LeadershipSection({
         </View>
       )}
 
-      {topCategories.length > 0 && (
+      {hasEvolution && roleEvolution && (
         <View style={styles.evolutionBlock}>
           <View style={styles.captionRow}>
             <View style={styles.captionBar} />
-            <ThemedText style={styles.evolutionCaption}>ROL · HOY vs MES 12</ThemedText>
+            <ThemedText style={styles.evolutionCaption}>
+              OBJETIVO · REDEFINE TU ROL EN 12 MESES
+            </ThemedText>
           </View>
-          {topCategories.map((c) => (
-            <RoleBarRow
-              key={c.key}
-              label={CATEGORY_LABELS[c.key] ?? c.key}
-              current={c.current}
-              target={c.target}
-              maxValue={maxValue}
-            />
-          ))}
+          <RoleEvolutionCharts evolution={roleEvolution} />
         </View>
       )}
     </View>

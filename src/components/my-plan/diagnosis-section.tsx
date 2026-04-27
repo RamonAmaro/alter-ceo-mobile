@@ -9,7 +9,7 @@ import { ThemedText } from "@/components/themed-text";
 import { MonumentalIndex } from "@/components/ui/monumental-index";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
-import type { PlanFinancialState } from "@/types/plan";
+import type { ExternalPerception, PlanFinancialState } from "@/types/plan";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 
@@ -18,13 +18,24 @@ interface DiagnosisSectionProps {
   financialState?: PlanFinancialState;
   founderDependency?: string;
   acquisitionSystem?: string;
+  consumptionType?: string;
+  externalPerception?: ExternalPerception;
 }
+
+const PERCEPTION_LABEL: Record<ExternalPerception, string> = {
+  Profesional: "Profesional",
+  "Correcta pero mejorable": "Correcta pero mejorable",
+  Debil: "Débil",
+  "[No disponible con el contexto actual]": "No disponible con el contexto actual",
+};
 
 export function DiagnosisSection({
   introduction,
   financialState,
   founderDependency,
   acquisitionSystem,
+  consumptionType,
+  externalPerception,
 }: DiagnosisSectionProps) {
   const { isMobile } = useResponsiveLayout();
 
@@ -41,7 +52,10 @@ export function DiagnosisSection({
     },
     founderDependency && { label: founderDependency, caption: "Dependencia" },
     acquisitionSystem && { label: acquisitionSystem, caption: "Captación" },
+    consumptionType && { label: consumptionType, caption: "Consumo" },
   ].filter(Boolean) as { label: string; caption: string }[];
+
+  const perceptionLabel = externalPerception ? PERCEPTION_LABEL[externalPerception] : null;
 
   const ringSize = isMobile ? 70 : 82;
 
@@ -82,6 +96,13 @@ export function DiagnosisSection({
               </View>
             ))}
           </View>
+
+          {perceptionLabel ? (
+            <View style={styles.perceptionRow}>
+              <ThemedText style={styles.perceptionCaption}>Percepción externa</ThemedText>
+              <ThemedText style={styles.perceptionValue}>{perceptionLabel}</ThemedText>
+            </View>
+          ) : null}
         </View>
       )}
     </View>
@@ -142,5 +163,30 @@ const styles = StyleSheet.create({
   },
   ringCellDesktop: {
     flexBasis: "16.66%",
+  },
+  perceptionRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    paddingTop: Spacing.three,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.06)",
+    gap: Spacing.two,
+  },
+  perceptionCaption: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.textMuted,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  perceptionValue: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+    flexShrink: 1,
+    textAlign: "right",
   },
 });

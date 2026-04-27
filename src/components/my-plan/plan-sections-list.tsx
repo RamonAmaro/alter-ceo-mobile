@@ -63,6 +63,10 @@ function buildSectionDescriptors(
             introduction={plan.introduccion_general}
             sector={diagnosis?.resumen_negocio?.sector}
             annualRevenue={diagnosis?.resumen_negocio?.facturacion_anual_aproximada}
+            monthlyRevenue={diagnosis?.resumen_negocio?.facturacion_mensual_aproximada}
+            teamSizeRange={diagnosis?.resumen_negocio?.team_size_range}
+            numeroPersonasEquipo={diagnosis?.resumen_negocio?.numero_personas_equipo}
+            productosServicios={diagnosis?.resumen_negocio?.productos_servicios_principales}
           />
         ) : null,
     },
@@ -76,6 +80,8 @@ function buildSectionDescriptors(
             financialState={diagnosis.estado_financiero}
             founderDependency={diagnosis.situacion_actual?.nivel_dependencia_fundador}
             acquisitionSystem={diagnosis.situacion_actual?.sistema_captacion}
+            consumptionType={diagnosis.situacion_actual?.tipo_consumo}
+            externalPerception={diagnosis.percepcion_externa_scrapping}
           />
         ) : null,
     },
@@ -130,6 +136,7 @@ function buildSectionDescriptors(
             projectionIntroduction={sales.introduccion_evolucion_ventas}
             monthlyProjection={sales.proyeccion_mensual_euros ?? []}
             immediatePriorities={sales.prioridad_inmediata_30_dias ?? []}
+            seasonalityDetected={sales.estacionalidad_detectada}
           />
         ) : null,
     },
@@ -137,8 +144,11 @@ function buildSectionDescriptors(
       key: "firststep",
       visible: flags.firststep,
       render: () => {
-        const message = leadership?.primer_paso_trabajar_la_mitad?.mensaje;
-        return message ? <FirstStepSection message={message} /> : null;
+        const firstStep = leadership?.primer_paso_trabajar_la_mitad;
+        const message = firstStep?.mensaje;
+        return message ? (
+          <FirstStepSection message={message} escenario={firstStep?.escenario} />
+        ) : null;
       },
     },
     {

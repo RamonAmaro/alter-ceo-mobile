@@ -1,4 +1,4 @@
-import type { RunStatus } from "./api";
+import type { RunStatus, TeamSizeRange } from "./api";
 import type { ExpressOnboardingAnswers, ProfessionalOnboardingAnswers } from "./onboarding";
 
 export type OnboardingMode = "express" | "professional";
@@ -80,6 +80,7 @@ export interface PlanCurrentSituation {
 export interface PlanBusinessSummary {
   facturacion_mensual_aproximada?: number;
   facturacion_anual_aproximada?: number;
+  team_size_range?: TeamSizeRange;
   numero_personas_equipo?: number;
   sector?: string;
   productos_servicios_principales?: string;
@@ -153,7 +154,36 @@ export interface PlanSales {
 
 // ── Leadership Plan ──
 
-export type RoleSnapshot = Record<string, number>;
+export interface RoleSnapshot {
+  atencion_gestion_clientes: number;
+  presupuestos_ventas_operativas: number;
+  apagar_fuegos_incidencias: number;
+  entrega_producto_servicio: number;
+  microgestion_equipo: number;
+  mejora_experiencia_cliente: number;
+  desarrollo_estrategia_comercial: number;
+  liderazgo_efectivo: number;
+  control_gestion_kpis: number;
+  vision_planificacion_largo_plazo: number;
+}
+
+export const ROLE_SNAPSHOT_LOW_KEYS = [
+  "atencion_gestion_clientes",
+  "presupuestos_ventas_operativas",
+  "apagar_fuegos_incidencias",
+  "entrega_producto_servicio",
+  "microgestion_equipo",
+] as const satisfies readonly (keyof RoleSnapshot)[];
+
+export const ROLE_SNAPSHOT_HIGH_KEYS = [
+  "mejora_experiencia_cliente",
+  "desarrollo_estrategia_comercial",
+  "liderazgo_efectivo",
+  "control_gestion_kpis",
+  "vision_planificacion_largo_plazo",
+] as const satisfies readonly (keyof RoleSnapshot)[];
+
+export type RoleSnapshotKey = keyof RoleSnapshot;
 
 export interface PlanRoleEvolution {
   situacion_actual?: RoleSnapshot;
@@ -218,4 +248,5 @@ export interface PlanData {
   diagnostico?: PlanDiagnosis;
   plan_ventas?: PlanSales;
   plan_liderazgo?: PlanLeadership;
+  conclusion_express?: string;
 }

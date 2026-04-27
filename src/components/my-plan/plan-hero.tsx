@@ -2,6 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MonumentalIndex } from "@/components/ui/monumental-index";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import type { TeamSizeRange } from "@/types/api";
 import { formatEur } from "@/utils/format-currency";
 import { StyleSheet, View } from "react-native";
 import { PlanPill } from "./plan-pill";
@@ -10,11 +11,44 @@ interface PlanHeroProps {
   introduction: string;
   sector?: string;
   annualRevenue?: number;
+  monthlyRevenue?: number;
+  teamSizeRange?: TeamSizeRange;
+  numeroPersonasEquipo?: number;
+  productosServicios?: string;
 }
 
-export function PlanHero({ introduction, sector, annualRevenue }: PlanHeroProps) {
-  const revenueLabel = annualRevenue ? `${formatEur(annualRevenue)}/año` : null;
-  const hasPills = Boolean(sector || revenueLabel);
+const TEAM_SIZE_LABEL: Record<TeamSizeRange, string> = {
+  no_business: "Aún sin negocio",
+  solo: "Autónomo",
+  "1_3": "1–3 personas",
+  "4_10": "4–10 personas",
+  "11_30": "11–30 personas",
+  "30_60": "30–60 personas",
+  "60_100": "60–100 personas",
+  "100_plus": "Más de 100",
+};
+
+function formatTeamSize(range?: TeamSizeRange, exact?: number): string | null {
+  if (range) return TEAM_SIZE_LABEL[range];
+  if (typeof exact === "number" && exact >= 0) {
+    return exact === 1 ? "1 persona" : `${exact} personas`;
+  }
+  return null;
+}
+
+export function PlanHero({
+  introduction,
+  sector,
+  annualRevenue,
+  monthlyRevenue,
+  teamSizeRange,
+  numeroPersonasEquipo,
+  productosServicios,
+}: PlanHeroProps) {
+  const annualLabel = annualRevenue ? `${formatEur(annualRevenue)}/año` : null;
+  const monthlyLabel = monthlyRevenue ? `${formatEur(monthlyRevenue)}/mes` : null;
+  const teamLabel = formatTeamSize(teamSizeRange, numeroPersonasEquipo);
+  const hasPills = Boolean(sector || annualLabel || monthlyLabel || teamLabel);
 
   return (
     <View style={styles.container}>
@@ -33,8 +67,14 @@ export function PlanHero({ introduction, sector, annualRevenue }: PlanHeroProps)
         {hasPills ? (
           <View style={styles.pills}>
             {sector ? <PlanPill label={sector} withDot /> : null}
-            {revenueLabel ? <PlanPill label={revenueLabel} accent withDot /> : null}
+            {monthlyLabel ? <PlanPill label={monthlyLabel} accent withDot /> : null}
+            {annualLabel ? <PlanPill label={annualLabel} accent withDot /> : null}
+            {teamLabel ? <PlanPill label={teamLabel} withDot /> : null}
           </View>
+        ) : null}
+
+        {productosServicios ? (
+          <ThemedText style={styles.products}>{productosServicios}</ThemedText>
         ) : null}
 
         <View style={styles.divider} />
@@ -98,5 +138,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: SemanticColors.textSecondaryLight,
+  },
+  products: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    lineHeight: 20,
+    color: SemanticColors.textPrimary,
+    marginTop: Spacing.three,
   },
 });

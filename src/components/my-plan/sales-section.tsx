@@ -22,13 +22,18 @@ interface SalesSectionProps {
   projectionIntroduction?: string;
   monthlyProjection: number[];
   immediatePriorities: string[];
+  seasonalityDetected?: boolean;
 }
+
+const SEASONALITY_NOTE =
+  "Tu negocio presenta estacionalidad. La gráfica muestra una proyección estructural de crecimiento. En fases posteriores trabajaremos la duplicación mes a mes según el comportamiento real de cada periodo.";
 
 export function SalesSection({
   target,
   projectionIntroduction,
   monthlyProjection,
   immediatePriorities,
+  seasonalityDetected,
 }: SalesSectionProps) {
   const targetLabel = formatEur(target);
 
@@ -69,6 +74,9 @@ export function SalesSection({
             <View style={styles.chartWrapper}>
               <RevenueChart values={monthlyProjection} />
             </View>
+            {seasonalityDetected && (
+              <ThemedText style={styles.seasonalityNote}>{SEASONALITY_NOTE}</ThemedText>
+            )}
           </View>
 
           <View style={styles.chartBlock}>
@@ -176,5 +184,14 @@ const styles = StyleSheet.create({
   },
   prioritiesBlock: {
     gap: Spacing.three,
+  },
+  seasonalityNote: {
+    fontFamily: Fonts.montserratMedium,
+    fontStyle: "italic",
+    fontSize: 12,
+    lineHeight: 18,
+    color: SemanticColors.textMuted,
+    paddingHorizontal: Spacing.two,
+    marginTop: Spacing.one,
   },
 });
