@@ -53,8 +53,7 @@ export function ProgressCircle({ progress, size = 200, strokeWidth = 6 }: Progre
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          rotation="-90"
-          origin={`${size / 2}, ${size / 2}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
 

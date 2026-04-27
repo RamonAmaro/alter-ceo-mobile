@@ -4,7 +4,6 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { LiveTranscriptBox } from "@/components/onboarding/live-transcript-box";
 import { AudioWave } from "@/components/recording/audio-wave";
 import { ThemedText } from "@/components/themed-text";
-import { AUDIO_MAX_DURATION_MS } from "@/constants/audio";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import type { RecordingResult, RecordingState } from "@/hooks/use-onboarding-recorder";
 import { formatTimer } from "@/utils/format-timer";
@@ -53,9 +52,6 @@ export function AudioRecorderStatus({
             >
               {formatTimer(elapsedMs)}
             </ThemedText>
-            <ThemedText type="bodyMd" style={styles.timerLimit}>
-              / {formatTimer(AUDIO_MAX_DURATION_MS)}
-            </ThemedText>
           </View>
         </>
       )}
@@ -84,9 +80,14 @@ export function AudioRecorderStatus({
           <ThemedText type="bodySm" style={styles.transcriptionErrorText}>
             {transcriptionError}
           </ThemedText>
+        ) : result?.uri ? (
+          <ThemedText type="bodySm" style={styles.transcriptionWarningText}>
+            No pudimos transcribir el audio, pero se grabó correctamente. Puedes confirmar o
+            reintentar.
+          </ThemedText>
         ) : (
-          <ThemedText type="bodySm" style={styles.noTranscriptText}>
-            Audio grabado correctamente
+          <ThemedText type="bodySm" style={styles.transcriptionErrorText}>
+            No detectamos audio suficiente. Pulsa Reintentar y habla durante unos segundos.
           </ThemedText>
         ))}
     </View>
@@ -127,10 +128,6 @@ const styles = StyleSheet.create({
   timerPaused: {
     color: SemanticColors.warning,
   },
-  timerLimit: {
-    color: SemanticColors.textDisabled,
-    fontVariant: ["tabular-nums"],
-  },
   finishingBlock: {
     alignItems: "center",
     gap: Spacing.two,
@@ -148,12 +145,13 @@ const styles = StyleSheet.create({
   transcriptLabel: {
     color: SemanticColors.textMuted,
   },
-  noTranscriptText: {
-    color: SemanticColors.textDisabled,
-    fontStyle: "italic",
-  },
   transcriptionErrorText: {
     color: SemanticColors.warning,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  transcriptionWarningText: {
+    color: SemanticColors.textMuted,
     textAlign: "center",
     fontStyle: "italic",
   },

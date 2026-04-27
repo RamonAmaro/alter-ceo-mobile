@@ -1,4 +1,4 @@
-export type QuestionType = "single" | "multi" | "text" | "audio";
+export type QuestionType = "single" | "multi" | "text" | "integer" | "audio";
 export type QuestionValidationKind = "website" | "instagram";
 
 export interface QuestionOption {
@@ -23,16 +23,12 @@ export function getExpressQuestions(): Question[] {
     {
       type: "single",
       progress: 0,
-      question: "¿Cuál es tu facturación anual aproximada?",
+      question: "¿Cuántas horas dedicas a tu negocio al día de media?",
       options: [
-        { label: "Menos de 40.000 €" },
-        { label: "De 40.000 € a 100.000 €" },
-        { label: "De 100.000 € a 300.000 €" },
-        { label: "De 300.000 € a 600.000 €" },
-        { label: "De 600.000 € a 1 Millón €" },
-        { label: "De 1 a 3 Millones €" },
-        { label: "De 3 a 10 Millones €" },
-        { label: "Más de 10 Millones €" },
+        { label: "Menos de 6" },
+        { label: "Entre 6 y 8" },
+        { label: "Entre 8 y 10" },
+        { label: "Más de 10" },
       ],
     },
     {
@@ -40,24 +36,24 @@ export function getExpressQuestions(): Question[] {
       progress: 5,
       question: "¿Cuántos empleados tienes en plantilla?",
       options: [
+        { label: "Aún no tengo negocio." },
         { label: "Autónomo" },
         { label: "De 1 a 3" },
         { label: "De 4 a 10" },
         { label: "De 11 a 30" },
         { label: "De 30 a 60" },
-        { label: "Más de 60" },
+        { label: "De 60 a 100" },
+        { label: "Más de 100" },
       ],
     },
     {
-      type: "single",
+      type: "integer",
       progress: 10,
-      question: "¿Cuántas horas trabajas al día de media?",
-      options: [
-        { label: "Menos de 6" },
-        { label: "Entre 6 y 8" },
-        { label: "Entre 8 y 10" },
-        { label: "Más de 10" },
-      ],
+      question:
+        "Introduce tu facturación MENSUAL aproximada sin puntos ni decimales (ejemplo: 7000, 25000, 400000, etc)",
+      placeholder: "7000",
+      unavailableOptionLabel: "Aún no tengo negocio.",
+      unavailableOptionValue: "__no_business__",
     },
     {
       type: "single",
@@ -68,7 +64,7 @@ export function getExpressQuestions(): Question[] {
         { label: "Estancado y poco rentable" },
         { label: "Creciendo con rentabilidad" },
         { label: "Creciendo pero sin rentabilidad" },
-        { label: "Decreciendo y poco rentable" },
+        { label: "No tengo o está en sus inicios" },
         { label: "En riesgo de quiebra/cierre" },
       ],
     },
@@ -205,16 +201,12 @@ export function getProfessionalQuestions(): Question[] {
     {
       type: "single",
       progress: 0,
-      question: "¿Cuál es tu facturación anual aproximada?",
+      question: "¿Cuántas horas dedicas a tu negocio al día de media?",
       options: [
-        { label: "Menos de 40.000 €" },
-        { label: "De 40.000 € a 100.000 €" },
-        { label: "De 100.000 € a 300.000 €" },
-        { label: "De 300.000 € a 600.000 €" },
-        { label: "De 600.000 € a 1 Millón €" },
-        { label: "De 1 a 3 Millones €" },
-        { label: "De 3 a 10 Millones €" },
-        { label: "Más de 10 Millones €" },
+        { label: "Menos de 6" },
+        { label: "Entre 6 y 8" },
+        { label: "Entre 8 y 10" },
+        { label: "Más de 10" },
       ],
     },
     {
@@ -222,24 +214,24 @@ export function getProfessionalQuestions(): Question[] {
       progress: 5,
       question: "¿Cuántos empleados tienes en plantilla?",
       options: [
+        { label: "Aún no tengo negocio." },
         { label: "Autónomo" },
         { label: "De 1 a 3" },
         { label: "De 4 a 10" },
         { label: "De 11 a 30" },
         { label: "De 30 a 60" },
-        { label: "Más de 60" },
+        { label: "De 60 a 100" },
+        { label: "Más de 100" },
       ],
     },
     {
-      type: "single",
+      type: "integer",
       progress: 10,
-      question: "¿Cuántas horas trabajas al día de media?",
-      options: [
-        { label: "Menos de 6" },
-        { label: "Entre 6 y 8" },
-        { label: "Entre 8 y 10" },
-        { label: "Más de 10" },
-      ],
+      question:
+        "Introduce tu facturación MENSUAL aproximada sin puntos ni decimales (ejemplo: 7000, 25000, 400000, etc)",
+      placeholder: "7000",
+      unavailableOptionLabel: "Aún no tengo negocio.",
+      unavailableOptionValue: "__no_business__",
     },
     {
       type: "single",
@@ -250,7 +242,7 @@ export function getProfessionalQuestions(): Question[] {
         { label: "Estancado y poco rentable" },
         { label: "Creciendo con rentabilidad" },
         { label: "Creciendo pero sin rentabilidad" },
-        { label: "Decreciendo y poco rentable" },
+        { label: "No tengo o está en sus inicios" },
         { label: "En riesgo de quiebra/cierre" },
       ],
     },

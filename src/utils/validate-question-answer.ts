@@ -1,4 +1,5 @@
 import type { QuestionValidationKind } from "@/constants/onboarding-questions";
+import { isNoBusinessAnswer } from "@/utils/onboarding-contact-presence";
 import { validateContactInput } from "@/utils/validate-contact-input";
 
 export function validateQuestionAnswer(
@@ -16,6 +17,7 @@ export function validateQuestionAnswer(
   }
 
   if (questionType === "integer") {
+    if (isNoBusinessAnswer(answer)) return true;
     return typeof answer === "string" && /^\d+$/.test(answer.trim());
   }
 
