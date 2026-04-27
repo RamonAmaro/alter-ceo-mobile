@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -72,6 +72,8 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
   const localRecordings = useRecordingsStore((s) => s.recordings);
   const loadRecordings = useRecordingsStore((s) => s.loadRecordings);
   const { uploadRecording } = useUploadRecording();
+  const [retryingRecordingId, setRetryingRecordingId] = useState<string | null>(null);
+  const retryingRecordingIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (userId) {
@@ -97,14 +99,24 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
 
   const handleRetry = useCallback(
     async (id: string) => {
+      if (retryingRecordingIdRef.current) return;
+
       const rec = useRecordingsStore.getState().recordings.find((r) => r.id === id);
       if (!rec) return;
-      await uploadRecording({
-        recordingId: rec.id,
-        uri: rec.uri,
-        title: rec.title,
-        durationMs: rec.durationMs,
-      });
+
+      retryingRecordingIdRef.current = id;
+      setRetryingRecordingId(id);
+      try {
+        await uploadRecording({
+          recordingId: rec.id,
+          uri: rec.uri,
+          title: rec.title,
+          durationMs: rec.durationMs,
+        });
+      } finally {
+        retryingRecordingIdRef.current = null;
+        setRetryingRecordingId(null);
+      }
     },
     [uploadRecording],
   );
@@ -167,6 +179,7 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
                 onPress={handlePress}
                 onDelete={handleDelete}
                 onRetry={handleRetry}
+                retrying={retryingRecordingId === item.id}
               />
             )}
             showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}

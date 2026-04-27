@@ -79,6 +79,7 @@ export function useChatAudioRecorder({
   const capturedRef = useRef(false);
   const recorderRef = useRef(recorder);
   const appStateRef = useRef(AppState.currentState);
+  const startingRef = useRef(false);
 
   stateRef.current = state;
   interruptedCallbackRef.current = onRecordingInterrupted;
@@ -202,13 +203,17 @@ export function useChatAudioRecorder({
   }, [captureInFlightRecording]);
 
   const startRecording = useCallback(async (): Promise<void> => {
-    if (disabled) return;
+    if (disabled || startingRef.current) return;
+    startingRef.current = true;
 
     const granted = await ensureMicrophonePermission({
       deniedMessage: "Necesitamos acceso al micrófono para grabar.",
-    });
+    }).catch(() => false);
 
-    if (!granted) return;
+    if (!granted) {
+      startingRef.current = false;
+      return;
+    }
 
     try {
       await enableRecordingMode();
@@ -225,6 +230,8 @@ export function useChatAudioRecorder({
 
       resetRecorderUi(setState, setElapsedMs);
       Alert.alert("Error al grabar", "No se pudo iniciar la grabación. Inténtalo de nuevo.");
+    } finally {
+      startingRef.current = false;
     }
   }, [disabled, recorder]);
 

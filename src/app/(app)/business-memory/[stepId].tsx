@@ -27,7 +27,7 @@ import { buildBusinessMemoryFieldPresentation } from "@/utils/business-memory-di
 import { toErrorMessage } from "@/utils/to-error-message";
 import { ulid } from "@/utils/ulid";
 import { Redirect, useLocalSearchParams, type Href } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -347,6 +347,7 @@ export default function BusinessMemoryStepScreen() {
   const { applySectionPatch, error, isLoading, refresh, steps, userId, version } =
     useBusinessMemoryDashboard();
   const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
@@ -433,6 +434,8 @@ export default function BusinessMemoryStepScreen() {
   const initialMicroGoalDrafts = buildInitialMicroGoalDrafts(currentStep.data.active_micro_goals);
 
   async function handleSave(values: Record<string, string>): Promise<void> {
+    if (savingRef.current) return;
+
     if (!userId || !version) {
       setSaveError("No pudimos identificar la versión actual de la memoria.");
       setSaveSuccess(null);
@@ -461,6 +464,7 @@ export default function BusinessMemoryStepScreen() {
       }
     }
 
+    savingRef.current = true;
     setIsSaving(true);
     setSaveError(null);
     setSaveSuccess(null);
@@ -489,6 +493,7 @@ export default function BusinessMemoryStepScreen() {
         setSaveError(toErrorMessage(err));
       }
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
   }
@@ -497,6 +502,8 @@ export default function BusinessMemoryStepScreen() {
     roles: TeamRoleDraft[];
     values: Record<string, string>;
   }): Promise<void> {
+    if (savingRef.current) return;
+
     if (!userId || !version) {
       setSaveError("No pudimos identificar la versión actual de la memoria.");
       setSaveSuccess(null);
@@ -516,6 +523,7 @@ export default function BusinessMemoryStepScreen() {
       return;
     }
 
+    savingRef.current = true;
     setIsSaving(true);
     setSaveError(null);
     setSaveSuccess(null);
@@ -536,6 +544,7 @@ export default function BusinessMemoryStepScreen() {
         setSaveError(toErrorMessage(err));
       }
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
   }
@@ -545,6 +554,8 @@ export default function BusinessMemoryStepScreen() {
     focusAreas: string[];
     microGoals: ExecutionMicroGoalDraft[];
   }): Promise<void> {
+    if (savingRef.current) return;
+
     if (!userId || !version) {
       setSaveError("No pudimos identificar la versión actual de la memoria.");
       setSaveSuccess(null);
@@ -578,6 +589,7 @@ export default function BusinessMemoryStepScreen() {
       return;
     }
 
+    savingRef.current = true;
     setIsSaving(true);
     setSaveError(null);
     setSaveSuccess(null);
@@ -598,6 +610,7 @@ export default function BusinessMemoryStepScreen() {
         setSaveError(toErrorMessage(err));
       }
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
   }
@@ -622,6 +635,7 @@ export default function BusinessMemoryStepScreen() {
             onSave={handleTeamBlockSave}
             saveDisabled={isSaving}
             saveLabel={isSaving ? "Guardando..." : "Guardar equipo"}
+            saveLoading={isSaving}
           />
         ) : null}
 
@@ -634,6 +648,7 @@ export default function BusinessMemoryStepScreen() {
             onSave={handleExecutionBlockSave}
             saveDisabled={isSaving}
             saveLabel={isSaving ? "Guardando..." : "Guardar ejecución"}
+            saveLoading={isSaving}
           />
         ) : null}
 
@@ -646,6 +661,7 @@ export default function BusinessMemoryStepScreen() {
             onSave={handleSave}
             saveLabel={isSaving ? "Guardando..." : "Guardar memoria"}
             saveDisabled={isSaving}
+            saveLoading={isSaving}
           />
         ) : null}
 

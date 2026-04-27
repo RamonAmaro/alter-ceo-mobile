@@ -133,6 +133,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendMessage: async (threadId: string, message: string) => {
+    if (get().isStreaming || get().isSubmittingAudio) return;
+
     const userMsg: ChatMessageResponse = {
       id: ulid(),
       thread_id: threadId,
@@ -178,6 +180,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   sendAudioMessage: async (threadId: string, uri: string) => {
+    if (get().isSubmittingAudio || get().isStreaming) return;
+
     get()._sseConnection?.abort();
 
     set({

@@ -2,8 +2,15 @@ import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef } from "react";
-import { Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Svg from "react-native-svg";
 
 export interface CircleButtonProps {
@@ -13,6 +20,8 @@ export interface CircleButtonProps {
   icon: React.ReactNode;
   label: string;
   onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
   pulse?: boolean;
 }
 
@@ -54,10 +63,17 @@ export function CircleButton({
   icon,
   label,
   onPress,
+  disabled = false,
+  loading = false,
   pulse = false,
 }: CircleButtonProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const isMountedRef = useRef(true);
+  const pressLockedRef = useRef(false);
+  const [isPressPending, setIsPressPending] = useState(false);
   const borderWidth = Math.max(MIN_BORDER, Math.round(size * BORDER_RATIO));
+  const isBusy = loading || isPressPending;
+  const isDisabled = disabled || isBusy;
 
   useEffect(() => {
     if (pulse) {
@@ -81,15 +97,44 @@ export function CircleButton({
     }
   }, [pulse, pulseAnim]);
 
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  function handlePress(): void {
+    if (isDisabled || pressLockedRef.current) return;
+
+    const result = onPress() as unknown;
+    if (!result || typeof (result as Promise<unknown>).then !== "function") return;
+
+    pressLockedRef.current = true;
+    setIsPressPending(true);
+
+    Promise.resolve(result).finally(() => {
+      pressLockedRef.current = false;
+      if (isMountedRef.current) {
+        setIsPressPending(false);
+      }
+    });
+  }
+
   const radius = size / 2;
   const shadow = buildShadow(colors[0]);
 
   return (
     <View style={styles.actionWrapper}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.85}
+        disabled={isDisabled}
+        accessibilityState={{ disabled: isDisabled, busy: isBusy }}
+      >
         <Animated.View
           style={[
             styles.circle,
+            isDisabled && styles.circleDisabled,
             shadow,
             {
               width: size,
@@ -112,15 +157,19 @@ export function CircleButton({
             end={{ x: 0.5, y: 0.6 }}
             style={StyleSheet.absoluteFill}
           />
-          <Svg
-            width={size}
-            height={size}
-            viewBox="0 0 139 140"
-            style={StyleSheet.absoluteFill}
-            fill="none"
-          >
-            {icon}
-          </Svg>
+          {isBusy ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Svg
+              width={size}
+              height={size}
+              viewBox="0 0 139 140"
+              style={StyleSheet.absoluteFill}
+              fill="none"
+            >
+              {icon}
+            </Svg>
+          )}
         </Animated.View>
       </TouchableOpacity>
       <ThemedText type="caption" style={styles.labelText}>
@@ -144,5 +193,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderColor: "rgba(255,255,255,0.15)",
+  },
+  circleDisabled: {
+    opacity: 0.65,
   },
 });

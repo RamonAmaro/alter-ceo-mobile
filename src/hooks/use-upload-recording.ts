@@ -80,6 +80,10 @@ async function inspectSource(uri: string): Promise<SourceMetadata> {
 const LOST_SOURCE_ERROR_ES =
   "La grabación se perdió al recargar la página. Por favor, graba de nuevo.";
 
+function isUploadInProgress(stage: string | null | undefined): boolean {
+  return stage === "uploading" || stage === "processing";
+}
+
 interface UploadParams {
   recordingId: string;
   uri: string;
@@ -100,6 +104,7 @@ export function useUploadRecording(): {
     async ({ recordingId, uri, title, durationMs }: UploadParams) => {
       const userId = useAuthStore.getState().user?.userId;
       if (!userId) return;
+      if (isUploadInProgress(useMeetingStore.getState().uploadProgress?.stage)) return;
 
       const recordingsStore = useRecordingsStore.getState();
 

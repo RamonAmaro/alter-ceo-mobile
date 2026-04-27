@@ -54,6 +54,7 @@ export default function SignUpScreen() {
   }
 
   async function handleSignUp() {
+    if (isLoading) return;
     if (!validate()) return;
     setApiError(null);
     setIsLoading(true);

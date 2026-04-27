@@ -137,6 +137,9 @@ export const useSourcesStore = create<SourcesState>((set, get) => ({
   },
 
   uploadPdf: async ({ userId, companyName, file, title }) => {
+    const currentUpload = get().uploadProgress;
+    if (currentUpload?.stage === "uploading" || currentUpload?.stage === "processing") return;
+
     get()._uploadPoller?.stop();
     set({
       _uploadPoller: null,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, ScrollView, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
@@ -56,6 +56,8 @@ export default function StrategyCaptacionScreen() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
+  const finalSubmitRef = useRef(false);
+  const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
 
   useEffect(() => {
     if (!reportType) {
@@ -145,12 +147,15 @@ export default function StrategyCaptacionScreen() {
       return;
     }
 
+    if (finalSubmitRef.current) return;
+    finalSubmitRef.current = true;
+    setIsFinalSubmitting(true);
     router.push("/(app)/strategy-captacion-loading");
   }
 
-  function handleRetry(): void {
+  async function handleRetry(): Promise<void> {
     if (!reportType) return;
-    void loadTemplate(reportType);
+    await loadTemplate(reportType);
   }
 
   if (isLoading) {
@@ -231,7 +236,8 @@ export default function StrategyCaptacionScreen() {
           <Button
             label={currentQuestionIndex + 1 === questionCount ? "Finalizar" : "Siguiente"}
             onPress={handleNext}
-            disabled={!nextEnabled}
+            disabled={!nextEnabled || isFinalSubmitting}
+            loading={isFinalSubmitting}
             style={!nextEnabled ? styles.buttonDisabled : undefined}
           />
         </View>

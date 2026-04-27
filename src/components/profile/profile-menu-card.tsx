@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import type { ComponentProps } from "react";
 import { useEffect, useRef } from "react";
-import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 type MenuTone = "emerald" | "neutral" | "danger";
@@ -17,6 +17,7 @@ interface ProfileMenuCardProps {
   meta?: string;
   onPress?: () => void;
   disabled?: boolean;
+  loading?: boolean;
   tone?: MenuTone;
   animationDelay?: number;
 }
@@ -69,6 +70,7 @@ export function ProfileMenuCard({
   meta,
   onPress,
   disabled,
+  loading = false,
   tone = "neutral",
   animationDelay = 0,
 }: ProfileMenuCardProps) {
@@ -95,7 +97,7 @@ export function ProfileMenuCard({
   }, []);
 
   function handlePressIn(): void {
-    if (!onPress || disabled) return;
+    if (!onPress || loading || disabled) return;
     Animated.spring(scale, {
       toValue: 0.98,
       speed: 60,
@@ -105,7 +107,7 @@ export function ProfileMenuCard({
   }
 
   function handlePressOut(): void {
-    if (!onPress || disabled) return;
+    if (!onPress || loading || disabled) return;
     Animated.spring(scale, {
       toValue: 1,
       speed: 60,
@@ -114,7 +116,8 @@ export function ProfileMenuCard({
     }).start();
   }
 
-  const interactive = Boolean(onPress) && !disabled;
+  const isDisabled = Boolean(disabled) || loading;
+  const interactive = Boolean(onPress) && !isDisabled;
 
   return (
     <Animated.View style={{ opacity, transform: [{ translateY }, { scale }] }}>
@@ -125,7 +128,8 @@ export function ProfileMenuCard({
         disabled={!interactive}
         accessibilityRole="button"
         accessibilityLabel={label}
-        style={[styles.card, disabled && styles.cardDisabled, cardShadow]}
+        accessibilityState={{ disabled: isDisabled, busy: loading }}
+        style={[styles.card, isDisabled && styles.cardDisabled, cardShadow]}
       >
         <LinearGradient
           colors={TONE_GRADIENT[tone]}
@@ -143,7 +147,11 @@ export function ProfileMenuCard({
             },
           ]}
         >
-          <Ionicons name={icon} size={18} color={TONE_ICON_COLOR[tone]} />
+          {loading ? (
+            <ActivityIndicator size="small" color={TONE_ICON_COLOR[tone]} />
+          ) : (
+            <Ionicons name={icon} size={18} color={TONE_ICON_COLOR[tone]} />
+          )}
         </View>
 
         <View style={styles.body}>
@@ -163,7 +171,7 @@ export function ProfileMenuCard({
           </ThemedText>
         ) : null}
 
-        {interactive ? (
+        {interactive && !loading ? (
           <View style={styles.chevron}>
             <Ionicons
               name="chevron-forward"

@@ -25,6 +25,7 @@ interface ExecutionBlockFormProps {
   }) => void | Promise<void>;
   saveDisabled?: boolean;
   saveLabel?: string;
+  saveLoading?: boolean;
 }
 
 function hasAnyValue(
@@ -268,6 +269,7 @@ export function ExecutionBlockForm({
   onSave,
   saveDisabled = false,
   saveLabel = "Guardar memoria",
+  saveLoading = false,
 }: ExecutionBlockFormProps) {
   const [bottlenecks, setBottlenecks] = useState(initialBottlenecks);
   const [focusAreas, setFocusAreas] = useState(initialFocusAreas);
@@ -372,6 +374,7 @@ export function ExecutionBlockForm({
         label={saveLabel}
         onPress={() => void handleSave()}
         disabled={isEmpty || saveDisabled}
+        loading={saveLoading}
       />
     </View>
   );

@@ -20,6 +20,7 @@ interface TeamBlockFormProps {
   }) => void | Promise<void>;
   saveDisabled?: boolean;
   saveLabel?: string;
+  saveLoading?: boolean;
 }
 
 function buildInitialState(
@@ -43,6 +44,7 @@ export function TeamBlockForm({
   onSave,
   saveDisabled = false,
   saveLabel = "Guardar memoria",
+  saveLoading = false,
 }: TeamBlockFormProps) {
   const otherFields = useMemo(() => fields, [fields]);
   const [values, setValues] = useState<Record<string, string>>(() =>
@@ -125,6 +127,7 @@ export function TeamBlockForm({
         label={saveLabel}
         onPress={() => void handleSave()}
         disabled={isEmpty || saveDisabled}
+        loading={saveLoading}
       />
     </View>
   );

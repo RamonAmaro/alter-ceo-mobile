@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import type { View, ViewStyle, StyleProp, GestureResponderEvent } from "react-native";
 import { Animated, Pressable } from "react-native";
 
@@ -34,6 +34,10 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
 ) {
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
+  const [isPressPending, setIsPressPending] = useState(false);
+  const isMountedRef = useRef(true);
+  const pressLockedRef = useRef(false);
+  const isDisabled = Boolean(disabled) || isPressPending;
 
   const animateTo = useCallback((pressed: boolean) => {
     Animated.parallel([
@@ -53,11 +57,39 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handlePressIn = useCallback(() => animateTo(true), [animateTo]);
-  const handlePressOut = useCallback(() => animateTo(false), [animateTo]);
+  const handlePressIn = useCallback(() => {
+    if (isDisabled) return;
+    animateTo(true);
+  }, [animateTo, isDisabled]);
+  const handlePressOut = useCallback(() => {
+    if (isDisabled) return;
+    animateTo(false);
+  }, [animateTo, isDisabled]);
+
+  const handlePress = useCallback(
+    (event: GestureResponderEvent) => {
+      if (isDisabled || pressLockedRef.current || !onPress) return;
+
+      const result = onPress(event) as unknown;
+      if (!result || typeof (result as Promise<unknown>).then !== "function") return;
+
+      pressLockedRef.current = true;
+      setIsPressPending(true);
+      animateTo(false);
+
+      Promise.resolve(result).finally(() => {
+        pressLockedRef.current = false;
+        if (isMountedRef.current) {
+          setIsPressPending(false);
+        }
+      });
+    },
+    [animateTo, isDisabled, onPress],
+  );
 
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       scale.stopAnimation();
       opacity.stopAnimation();
     };
@@ -67,10 +99,11 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
   return (
     <Pressable
       ref={ref}
-      onPress={onPress}
+      onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={disabled}
+      disabled={isDisabled}
+      accessibilityState={{ disabled: isDisabled, busy: isPressPending }}
       accessibilityLabel={accessibilityLabel}
       hitSlop={hitSlop}
     >

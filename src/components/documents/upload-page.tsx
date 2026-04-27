@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -51,6 +51,8 @@ interface UploadPageProps {
 
 export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
   const pulseScale = useRef(new Animated.Value(1)).current;
+  const isPickingRef = useRef(false);
+  const [isPicking, setIsPicking] = useState(false);
   const userId = useAuthStore((s) => s.user?.userId);
   const { steps } = useBusinessMemoryDashboard();
   const uploadPdf = useSourcesStore((s) => s.uploadPdf);
@@ -58,6 +60,7 @@ export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
 
   const isUploading =
     uploadProgress?.stage === "uploading" || uploadProgress?.stage === "processing";
+  const isBusy = isUploading || isPicking;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -80,13 +83,18 @@ export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
   }, []);
 
   async function handlePick(): Promise<void> {
-    if (isUploading) return;
+    if (isBusy || isPickingRef.current) return;
+    isPickingRef.current = true;
+    setIsPicking(true);
+
     if (!userId) {
+      isPickingRef.current = false;
+      setIsPicking(false);
       notifyError("Debes iniciar sesión para subir documentos.");
       return;
     }
 
-    let result: DocumentPicker.DocumentPickerResult;
+    let result: DocumentPicker.DocumentPickerResult | null = null;
     try {
       result = await DocumentPicker.getDocumentAsync({
         type: "application/pdf",
@@ -96,47 +104,73 @@ export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
     } catch {
       notifyError("No se pudo abrir el selector de archivos.");
       return;
+    } finally {
+      if (!result) {
+        isPickingRef.current = false;
+        setIsPicking(false);
+      }
     }
 
-    if (result.canceled) return;
+    if (!result) return;
+
+    if (result.canceled) {
+      isPickingRef.current = false;
+      setIsPicking(false);
+      return;
+    }
     const asset = result.assets[0];
-    if (!asset) return;
+    if (!asset) {
+      isPickingRef.current = false;
+      setIsPicking(false);
+      return;
+    }
 
     const sizeBytes = asset.size ?? asset.file?.size ?? 0;
     if (sizeBytes === 0) {
+      isPickingRef.current = false;
+      setIsPicking(false);
       notifyError("El archivo está vacío.");
       return;
     }
     if (sizeBytes > MAX_PDF_SIZE_BYTES) {
+      isPickingRef.current = false;
+      setIsPicking(false);
       notifyError("El archivo supera el límite de 50 MB.");
       return;
     }
 
     const mimeType = asset.mimeType ?? asset.file?.type ?? "application/pdf";
     if (!mimeType.toLowerCase().includes("pdf")) {
+      isPickingRef.current = false;
+      setIsPicking(false);
       notifyError("Solo se admiten archivos PDF.");
       return;
     }
 
-    const companyName = resolveCompanyName(steps);
-    await uploadPdf({
-      userId,
-      companyName,
-      title: asset.name,
-      file: {
-        uri: asset.uri,
-        name: asset.name,
-        contentType: "application/pdf",
-        sizeBytes,
-        webFile: asset.file,
-      },
-    });
-    // uploadPdf captures errors internally and sets stage: "failed" without
-    // throwing. Only navigate to Historial when the upload actually succeeded
-    // (stage transitioned to processing/ready).
-    const finalStage = useSourcesStore.getState().uploadProgress?.stage;
-    if (finalStage === "processing" || finalStage === "ready") {
-      onUploaded?.();
+    try {
+      const companyName = resolveCompanyName(steps);
+      await uploadPdf({
+        userId,
+        companyName,
+        title: asset.name,
+        file: {
+          uri: asset.uri,
+          name: asset.name,
+          contentType: "application/pdf",
+          sizeBytes,
+          webFile: asset.file,
+        },
+      });
+      // uploadPdf captures errors internally and sets stage: "failed" without
+      // throwing. Only navigate to Historial when the upload actually succeeded
+      // (stage transitioned to processing/ready).
+      const finalStage = useSourcesStore.getState().uploadProgress?.stage;
+      if (finalStage === "processing" || finalStage === "ready") {
+        onUploaded?.();
+      }
+    } finally {
+      isPickingRef.current = false;
+      setIsPicking(false);
     }
   }
 
@@ -154,7 +188,7 @@ export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
   return (
     <View style={[styles.page, { width, height }]} {...dragProps}>
       <View style={styles.content}>
-        <TouchableOpacity activeOpacity={0.8} onPress={handlePick} disabled={isUploading}>
+        <TouchableOpacity activeOpacity={0.8} onPress={handlePick} disabled={isBusy}>
           <Animated.View style={[styles.heroButton, { transform: [{ scale: pulseScale }] }]}>
             <LinearGradient
               colors={["#00C0EE", "#0060FF"]}
@@ -162,7 +196,7 @@ export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
               end={{ x: 0.8, y: 0.9 }}
               style={StyleSheet.absoluteFill}
             />
-            {isUploading ? (
+            {isBusy ? (
               <ActivityIndicator size="large" color="#FFFFFF" />
             ) : (
               <Ionicons name="cloud-upload" size={64} color="#FFFFFF" />
@@ -172,12 +206,18 @@ export function UploadPage({ width, height, onUploaded }: UploadPageProps) {
 
         <View style={styles.textWrap}>
           <ThemedText style={styles.title}>
-            {isUploading ? "Subiendo documento…" : "Adjuntar documento"}
+            {isUploading
+              ? "Subiendo documento…"
+              : isPicking
+                ? "Preparando archivo…"
+                : "Adjuntar documento"}
           </ThemedText>
           <ThemedText style={styles.subtitle}>
             {isUploading
               ? (uploadProgress?.filename ?? "Procesando el archivo.")
-              : "Sube un PDF y Alter CEO lo procesa para extraer resumen, entidades e insights."}
+              : isPicking
+                ? "Validando el PDF seleccionado."
+                : "Sube un PDF y Alter CEO lo procesa para extraer resumen, entidades e insights."}
           </ThemedText>
           {uploadProgress?.stage === "failed" && uploadProgress.error ? (
             <ThemedText style={styles.errorText}>{uploadProgress.error}</ThemedText>

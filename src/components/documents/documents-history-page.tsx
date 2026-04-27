@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -70,15 +70,26 @@ export function DocumentsHistoryPage({ width, height }: DocumentsHistoryPageProp
   const listError = useSourcesStore((s) => s.listError);
   const ensurePdfsLoaded = useSourcesStore((s) => s.ensurePdfsLoaded);
   const refreshPdfs = useSourcesStore((s) => s.refreshPdfs);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const retryingRef = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
     ensurePdfsLoaded(userId);
   }, [userId, ensurePdfsLoaded]);
 
-  const handleRetry = useCallback(() => {
+  const handleRetry = useCallback(async () => {
     if (!userId) return;
-    refreshPdfs(userId);
+    if (retryingRef.current || useSourcesStore.getState().isLoading) return;
+
+    retryingRef.current = true;
+    setIsRetrying(true);
+    try {
+      await refreshPdfs(userId);
+    } finally {
+      retryingRef.current = false;
+      setIsRetrying(false);
+    }
   }, [userId, refreshPdfs]);
 
   const handleOpen = useCallback(
@@ -150,14 +161,29 @@ export function DocumentsHistoryPage({ width, height }: DocumentsHistoryPageProp
           <View style={styles.emptyContainer}>
             <ActivityIndicator color={SemanticColors.tealLight} />
           </View>
-        ) : listError && pdfs.length === 0 ? (
+        ) : (listError || isRetrying) && pdfs.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="alert-circle-outline" size={28} color={SemanticColors.error} />
-            <ThemedText style={styles.emptyTitle}>No se pudo cargar</ThemedText>
-            <ThemedText style={styles.emptyText}>{listError}</ThemedText>
-            <TouchableOpacity onPress={handleRetry} style={styles.retryButton} activeOpacity={0.7}>
-              <Ionicons name="refresh" size={14} color={SemanticColors.textPrimary} />
-              <ThemedText style={styles.retryText}>Reintentar</ThemedText>
+            <ThemedText style={styles.emptyTitle}>
+              {isRetrying ? "Reintentando" : "No se pudo cargar"}
+            </ThemedText>
+            <ThemedText style={styles.emptyText}>
+              {isRetrying ? "Actualizando tus documentos desde el backend." : listError}
+            </ThemedText>
+            <TouchableOpacity
+              onPress={() => void handleRetry()}
+              style={styles.retryButton}
+              activeOpacity={0.7}
+              disabled={isRetrying}
+            >
+              {isRetrying ? (
+                <ActivityIndicator size="small" color={SemanticColors.textPrimary} />
+              ) : (
+                <Ionicons name="refresh" size={14} color={SemanticColors.textPrimary} />
+              )}
+              <ThemedText style={styles.retryText}>
+                {isRetrying ? "Reintentando" : "Reintentar"}
+              </ThemedText>
             </TouchableOpacity>
           </View>
         ) : pdfs.length === 0 ? (

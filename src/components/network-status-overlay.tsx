@@ -1,6 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
-import { Animated, Easing, Platform, Pressable, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -17,6 +25,8 @@ export function NetworkStatusOverlay(): React.ReactElement | null {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-12)).current;
   const pulse = useRef(new Animated.Value(0)).current;
+  const retryingRef = useRef(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     if (!hasNetworkError) {
@@ -61,40 +71,60 @@ export function NetworkStatusOverlay(): React.ReactElement | null {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasNetworkError]);
 
+  const handleRetry = useCallback(async (): Promise<void> => {
+    if (retryingRef.current) return;
+
+    retryingRef.current = true;
+    setIsRetrying(true);
+    try {
+      await retrySession();
+    } finally {
+      retryingRef.current = false;
+      setIsRetrying(false);
+    }
+  }, [retrySession]);
+
   useEffect(() => {
     if (!hasNetworkError) return;
     const interval = setInterval(() => {
-      void retrySession();
+      void handleRetry();
     }, 4000);
     return () => clearInterval(interval);
-  }, [hasNetworkError, retrySession]);
+  }, [handleRetry, hasNetworkError]);
 
   if (!hasNetworkError) return null;
 
   const dotScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.15] });
   const dotOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
 
-  const handleRetry = () => {
-    void retrySession();
-  };
-
   return (
     <View pointerEvents="box-none" style={[styles.container, { top: insets.top + Spacing.two }]}>
       <Animated.View style={[styles.pillWrapper, { opacity, transform: [{ translateY }] }]}>
-        <Pressable onPress={handleRetry} style={styles.pill}>
+        <Pressable
+          onPress={() => void handleRetry()}
+          disabled={isRetrying}
+          accessibilityState={{ disabled: isRetrying, busy: isRetrying }}
+          style={styles.pill}
+        >
           <Animated.View
             style={[styles.dot, { transform: [{ scale: dotScale }], opacity: dotOpacity }]}
           />
           <View style={styles.textColumn}>
             <ThemedText style={styles.title}>Sin conexión</ThemedText>
-            <ThemedText style={styles.subtitle}>Reintentando…</ThemedText>
+            <ThemedText style={styles.subtitle}>
+              {isRetrying ? "Comprobando conexión..." : "Reintentando…"}
+            </ThemedText>
           </View>
-          <Ionicons
-            name="refresh"
-            size={18}
-            color={SemanticColors.textPrimary}
-            style={styles.refreshIcon}
-          />
+          {isRetrying ? (
+            <ActivityIndicator size="small" color={SemanticColors.textPrimary} />
+          ) : (
+            <Ionicons
+              name="refresh"
+              size={18}
+              color={SemanticColors.textPrimary}
+              style={styles.refreshIcon}
+            />
+          )}
         </Pressable>
       </Animated.View>
     </View>
