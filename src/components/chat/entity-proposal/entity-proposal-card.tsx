@@ -7,6 +7,7 @@ import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useBusinessEntityProposalsStore } from "@/stores/business-entity-proposals-store";
 
+import { EntityProposalFields } from "./entity-proposal-fields";
 import { presentProposal } from "./entity-proposal-presenter";
 
 interface EntityProposalCardProps {
@@ -33,7 +34,6 @@ export function EntityProposalCard({ entityId, interactive }: EntityProposalCard
   const isSubmitting = entry.submission === "submitting";
   const disabled = !interactive || isSubmitting;
   const presentation = presentProposal(entry.payload);
-  const visibleFields = presentation.fields;
 
   return (
     <View
@@ -55,17 +55,7 @@ export function EntityProposalCard({ entityId, interactive }: EntityProposalCard
             </ThemedText>
           </View>
 
-          {visibleFields.map((field) => (
-            <ThemedText key={field.label} type="caption" style={styles.fieldLine} numberOfLines={2}>
-              <ThemedText type="caption" style={styles.fieldLabel}>
-                {field.label}
-              </ThemedText>
-              <ThemedText type="caption" style={styles.fieldValue}>
-                {"  "}
-                {field.value}
-              </ThemedText>
-            </ThemedText>
-          ))}
+          <EntityProposalFields fields={presentation.fields} />
 
           {entry.errorMessage && (
             <ThemedText type="caption" style={styles.error}>
@@ -180,22 +170,6 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
     fontFamily: Fonts.montserratBold,
     fontSize: 13,
-  },
-  fieldLine: {
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  fieldLabel: {
-    color: "rgba(255,255,255,0.85)",
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    textTransform: "uppercase",
-    letterSpacing: 0.3,
-  },
-  fieldValue: {
-    color: SemanticColors.textSecondaryLight,
-    fontFamily: Fonts.montserrat,
-    fontSize: 11,
   },
   error: {
     color: SemanticColors.error,
