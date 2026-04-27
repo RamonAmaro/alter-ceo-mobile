@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
 
@@ -23,6 +23,7 @@ export default function CompletionScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleFinish() {
+    if (loading) return;
     setLoading(true);
     if (user?.userId) {
       try {
@@ -57,11 +58,7 @@ export default function CompletionScreen() {
         </View>
 
         <FooterActionBar>
-          {loading ? (
-            <ActivityIndicator color={SemanticColors.success} size="large" />
-          ) : (
-            <Button label="Ver mi plan" onPress={handleFinish} />
-          )}
+          <Button label="Ver mi plan" onPress={handleFinish} loading={loading} />
         </FooterActionBar>
       </View>
     </ScreenLayout>

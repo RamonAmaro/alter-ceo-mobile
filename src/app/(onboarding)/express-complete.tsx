@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/button";
 import { FooterActionBar } from "@/components/footer-action-bar";
@@ -14,8 +15,13 @@ import { useOnboardingStore } from "@/stores/onboarding-store";
 export default function ExpressCompleteScreen() {
   const insets = useSafeAreaInsets();
   const upgradeToProfessional = useOnboardingStore((s) => s.upgradeToProfessional);
+  const [isSending, setIsSending] = useState(false);
+  const isSendingRef = useRef(false);
 
   function handleSend(): void {
+    if (isSendingRef.current) return;
+    isSendingRef.current = true;
+    setIsSending(true);
     router.replace("/(onboarding)/report-loading");
   }
 
@@ -39,12 +45,13 @@ export default function ExpressCompleteScreen() {
 
         <FooterActionBar>
           <View style={styles.footerContent}>
-            <Button label="Enviar" onPress={handleSend} />
+            <Button label="Enviar" onPress={handleSend} loading={isSending} />
 
             <TouchableOpacity
               style={styles.continueButton}
               onPress={handleContinue}
               activeOpacity={0.7}
+              disabled={isSending}
             >
               <ThemedText type="labelSm" style={styles.continueLabel}>
                 Continuar

@@ -10,14 +10,14 @@ import type {
   BusinessKernelSectionPatchResponse,
 } from "@/types/business-kernel";
 import { toErrorMessage } from "@/utils/to-error-message";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UseBusinessMemoryDashboardResult {
   applySectionPatch: (payload: BusinessKernelSectionPatchResponse) => void;
   error: string | null;
   isLoading: boolean;
   progress: BusinessKernelDashboardProgressResponse | null;
-  refresh: () => void;
+  refresh: () => Promise<void>;
   steps: BusinessMemoryStep[];
   userId: string | null;
   version: string | null;
@@ -30,6 +30,7 @@ export function useBusinessMemoryDashboard(): UseBusinessMemoryDashboardResult {
   const [version, setVersion] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const refreshInFlightRef = useRef(false);
 
   async function loadDashboard(currentUserId: string): Promise<void> {
     setIsLoading(true);
@@ -98,13 +99,20 @@ export function useBusinessMemoryDashboard(): UseBusinessMemoryDashboardResult {
     };
   }, [userId]);
 
-  function refresh(): void {
+  async function refresh(): Promise<void> {
     if (!userId) {
       setError("Sesión no válida.");
       setIsLoading(false);
       return;
     }
-    void loadDashboard(userId);
+    if (refreshInFlightRef.current) return;
+
+    refreshInFlightRef.current = true;
+    try {
+      await loadDashboard(userId);
+    } finally {
+      refreshInFlightRef.current = false;
+    }
   }
 
   function applySectionPatch(payload: BusinessKernelSectionPatchResponse): void {

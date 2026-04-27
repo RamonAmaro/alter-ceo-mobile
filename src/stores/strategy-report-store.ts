@@ -117,6 +117,7 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
 
   loadTemplate: async (reportType: string) => {
     const current = get();
+    if (current.isLoading && current.reportType === reportType) return;
     if (current.template && current.reportType === reportType) {
       if (current.error) set({ error: null });
       return;

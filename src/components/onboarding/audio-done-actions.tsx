@@ -8,11 +8,13 @@ import { Spacing } from "@/constants/theme";
 interface AudioDoneActionsProps {
   onRestart: () => void;
   onConfirm: () => void;
+  confirmLoading?: boolean;
 }
 
 export function AudioDoneActions({
   onRestart,
   onConfirm,
+  confirmLoading = false,
 }: AudioDoneActionsProps): React.ReactElement {
   return (
     <View style={styles.doneActions}>
@@ -31,6 +33,8 @@ export function AudioDoneActions({
         icon={CheckIcon}
         label="Confirmar"
         onPress={onConfirm}
+        disabled={confirmLoading}
+        loading={confirmLoading}
         pulse
       />
     </View>

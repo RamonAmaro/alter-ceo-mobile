@@ -4,18 +4,26 @@ import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef } from "react";
-import { Animated, Platform, Pressable, StyleSheet } from "react-native";
+import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet } from "react-native";
 
 interface MemorySaveButtonProps {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  loading?: boolean;
 }
 
-export function MemorySaveButton({ label, onPress, disabled = false }: MemorySaveButtonProps) {
+export function MemorySaveButton({
+  label,
+  onPress,
+  disabled = false,
+  loading = false,
+}: MemorySaveButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const isDisabled = disabled || loading;
 
   function handlePressIn(): void {
+    if (isDisabled) return;
     Animated.spring(scale, {
       toValue: 0.97,
       speed: 50,
@@ -25,6 +33,7 @@ export function MemorySaveButton({ label, onPress, disabled = false }: MemorySav
   }
 
   function handlePressOut(): void {
+    if (isDisabled) return;
     Animated.spring(scale, {
       toValue: 1,
       speed: 50,
@@ -35,15 +44,16 @@ export function MemorySaveButton({ label, onPress, disabled = false }: MemorySav
 
   return (
     <Animated.View
-      style={[styles.wrapper, { transform: [{ scale }] }, disabled && styles.wrapperDisabled]}
+      style={[styles.wrapper, { transform: [{ scale }] }, isDisabled && styles.wrapperDisabled]}
     >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={label}
+        accessibilityState={{ disabled: isDisabled, busy: loading }}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={disabled}
+        disabled={isDisabled}
         style={styles.pressable}
       >
         <LinearGradient
@@ -52,7 +62,11 @@ export function MemorySaveButton({ label, onPress, disabled = false }: MemorySav
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-        <Ionicons name="bookmark" size={16} color="#061611" />
+        {loading ? (
+          <ActivityIndicator size="small" color="#061611" />
+        ) : (
+          <Ionicons name="bookmark" size={16} color="#061611" />
+        )}
         <ThemedText style={styles.label}>{label}</ThemedText>
       </Pressable>
     </Animated.View>

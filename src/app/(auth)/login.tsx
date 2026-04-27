@@ -81,6 +81,7 @@ export default function LoginScreen() {
   }
 
   async function handleLogin() {
+    if (isLoading) return;
     if (!validate()) return;
     setApiError(null);
     setIsLoading(true);

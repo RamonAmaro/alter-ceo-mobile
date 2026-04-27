@@ -16,6 +16,7 @@ interface ChatInputProps {
   readonly audioState: ChatAudioState;
   readonly audioElapsedMs: number;
   readonly disabled?: boolean;
+  readonly isSendingText?: boolean;
 }
 
 export function ChatInput({
@@ -28,6 +29,7 @@ export function ChatInput({
   audioState,
   audioElapsedMs,
   disabled = false,
+  isSendingText = false,
 }: ChatInputProps) {
   return (
     <View style={styles.container}>
@@ -46,6 +48,7 @@ export function ChatInput({
           onSend={onSend}
           onStartRecording={onStartRecording}
           disabled={disabled}
+          isSending={isSendingText}
         />
       )}
     </View>

@@ -22,6 +22,7 @@ interface MeetingListItemProps {
   onPress: (id: string) => void;
   onDelete: (id: string) => void;
   onRetry?: (id: string) => void;
+  retrying?: boolean;
 }
 
 function statusConfig(status: UploadStatus | undefined): {
@@ -76,9 +77,15 @@ function statusConfig(status: UploadStatus | undefined): {
   }
 }
 
-export function MeetingListItem({ item, index, onPress, onRetry }: MeetingListItemProps) {
+export function MeetingListItem({
+  item,
+  index,
+  onPress,
+  onRetry,
+  retrying = false,
+}: MeetingListItemProps) {
   const cfg = statusConfig(item.uploadStatus);
-  const isLoading = item.uploadStatus === "uploading" || item.uploadStatus === "processing";
+  const isStatusLoading = item.uploadStatus === "uploading" || item.uploadStatus === "processing";
   const isFailed = item.uploadStatus === "failed";
   const indexLabel = String(index + 1).padStart(2, "0");
 
@@ -122,7 +129,7 @@ export function MeetingListItem({ item, index, onPress, onRetry }: MeetingListIt
 
         {cfg.label ? (
           <View style={[styles.statusPill, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
-            {isLoading ? (
+            {isStatusLoading ? (
               <ActivityIndicator size={10} color={cfg.color} />
             ) : (
               <View style={[styles.statusDot, { backgroundColor: cfg.color }]} />
@@ -148,12 +155,21 @@ export function MeetingListItem({ item, index, onPress, onRetry }: MeetingListIt
               activeOpacity={0.7}
               onPress={(e) => {
                 e.stopPropagation();
+                if (retrying) return;
                 onRetry(item.id);
               }}
+              disabled={retrying}
+              accessibilityState={{ disabled: retrying, busy: retrying }}
               accessibilityLabel="Reintentar subida"
             >
-              <Ionicons name="refresh" size={13} color={SemanticColors.error} />
-              <ThemedText style={styles.retryLabel}>Reintentar</ThemedText>
+              {retrying ? (
+                <ActivityIndicator size="small" color={SemanticColors.error} />
+              ) : (
+                <Ionicons name="refresh" size={13} color={SemanticColors.error} />
+              )}
+              <ThemedText style={styles.retryLabel}>
+                {retrying ? "Reintentando" : "Reintentar"}
+              </ThemedText>
             </TouchableOpacity>
           ) : null}
         </View>

@@ -113,6 +113,7 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
   const timerIdRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAtRef = useRef<number>(0);
   const accumulatedMsRef = useRef<number>(0);
+  const startingRef = useRef(false);
 
   const clearMeterLoop = useCallback(() => {
     if (meterIdRef.current !== null) {
@@ -286,10 +287,17 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
   }, []);
 
   const startNewRecording = useCallback(async (): Promise<void> => {
+    if (startingRef.current || finishingRef.current) return;
+    startingRef.current = true;
+
     debugLog("startNewRecording:begin", { questionIndex: currentQuestionIndex });
-    const { granted, canAskAgain } = await requestAudioPermission();
+    const { granted, canAskAgain } = await requestAudioPermission().catch(() => ({
+      granted: false,
+      canAskAgain: true,
+    }));
 
     if (!granted) {
+      startingRef.current = false;
       if (!canAskAgain) {
         Alert.alert(
           "Micrófono desactivado",
@@ -415,8 +423,10 @@ export function useOnboardingRecorder(currentQuestionIndex: number): OnboardingR
         { text: "Reintentar", onPress: () => void startNewRecording() },
         { text: "Cancelar", style: "cancel" },
       ]);
+    } finally {
+      startingRef.current = false;
     }
-  }, [releaseHandles, startMeterLoop, startTimerLoop]);
+  }, [currentQuestionIndex, releaseHandles, startMeterLoop, startTimerLoop]);
 
   const handleRecord = useCallback(() => {
     void startNewRecording();

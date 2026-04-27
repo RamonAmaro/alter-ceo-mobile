@@ -159,6 +159,9 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     sizeBytes: number,
     durationSeconds?: number,
   ) => {
+    const currentUpload = get().uploadProgress;
+    if (currentUpload?.stage === "uploading" || currentUpload?.stage === "processing") return;
+
     get()._activePoller?.stop();
     set({ _activePoller: null, error: null });
 

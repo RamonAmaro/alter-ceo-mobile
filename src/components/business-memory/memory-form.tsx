@@ -12,8 +12,9 @@ interface MemoryFormProps {
   initialValues?: Readonly<Record<string, string>>;
   saveLabel?: string;
   saveDisabled?: boolean;
+  saveLoading?: boolean;
   onChange?: (values: Record<string, string>) => void;
-  onSave?: (values: Record<string, string>) => void;
+  onSave?: (values: Record<string, string>) => void | Promise<void>;
 }
 
 function buildInitialState(
@@ -34,6 +35,7 @@ export function MemoryForm({
   initialValues,
   saveLabel = "Guardar memoria",
   saveDisabled = false,
+  saveLoading = false,
   onChange,
   onSave,
 }: MemoryFormProps) {
@@ -96,7 +98,12 @@ export function MemoryForm({
         })}
       </View>
 
-      <MemorySaveButton label={saveLabel} onPress={handleSave} disabled={isEmpty || saveDisabled} />
+      <MemorySaveButton
+        label={saveLabel}
+        onPress={handleSave}
+        disabled={isEmpty || saveDisabled}
+        loading={saveLoading}
+      />
     </View>
   );
 }

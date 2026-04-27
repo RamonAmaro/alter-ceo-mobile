@@ -30,6 +30,10 @@ export default function ChatScreen() {
   const navigation = useNavigation();
   const [inputValue, setInputValue] = useState("");
   const [draftsHydrated, setDraftsHydrated] = useState(false);
+  const [isSendingText, setIsSendingText] = useState(false);
+  const [isSubmittingAudioDraft, setIsSubmittingAudioDraft] = useState(false);
+  const isSendingTextRef = useRef(false);
+  const isSubmittingAudioDraftRef = useRef(false);
   const isPersistingNavigationRef = useRef(false);
 
   const user = useAuthStore((s) => s.user);
@@ -64,7 +68,7 @@ export default function ChatScreen() {
   const audioDraftsByUser = useChatAudioDraftStore((s) => s.drafts);
 
   const draftKey = activeThreadId ?? NEW_THREAD_DRAFT_KEY;
-  const chatBusy = isStreaming || isSubmittingAudio;
+  const chatBusy = isStreaming || isSubmittingAudio || isSendingText || isSubmittingAudioDraft;
   const audioDraft = user ? (audioDraftsByUser[user.userId]?.[draftKey] ?? null) : null;
 
   const handleSubmitAudio = useCallback(
@@ -181,6 +185,11 @@ export default function ChatScreen() {
   async function handleSend(): Promise<void> {
     const text = inputValue.trim();
     if (!text || !user) return;
+    if (isSendingTextRef.current) return;
+    if (useChatStore.getState().isStreaming || useChatStore.getState().isSubmittingAudio) return;
+
+    isSendingTextRef.current = true;
+    setIsSendingText(true);
 
     setInputValue("");
     clearDraft(user.userId, draftKey);
@@ -192,17 +201,29 @@ export default function ChatScreen() {
     } catch {
       setInputValue(text);
       if (user) setDraft(user.userId, draftKey, text);
+    } finally {
+      isSendingTextRef.current = false;
+      setIsSendingText(false);
     }
   }
 
   const handleSendAudioDraft = useCallback(async (): Promise<void> => {
     if (!user || !audioDraft || audioDraft.lost) return;
+    if (isSubmittingAudioDraftRef.current) return;
     if (useChatStore.getState().isSubmittingAudio) return;
 
-    await handleSubmitAudio(audioDraft.uri);
+    isSubmittingAudioDraftRef.current = true;
+    setIsSubmittingAudioDraft(true);
 
-    if (!useChatStore.getState().error) {
-      await clearAudioDraft(user.userId, draftKey);
+    try {
+      await handleSubmitAudio(audioDraft.uri);
+
+      if (!useChatStore.getState().error) {
+        await clearAudioDraft(user.userId, draftKey);
+      }
+    } finally {
+      isSubmittingAudioDraftRef.current = false;
+      setIsSubmittingAudioDraft(false);
     }
   }, [audioDraft, clearAudioDraft, draftKey, handleSubmitAudio, user]);
 
@@ -250,7 +271,7 @@ export default function ChatScreen() {
               durationMs={audioDraft.durationMs}
               onSend={handleSendAudioDraft}
               onDiscard={handleDiscardAudioDraft}
-              isSubmitting={isSubmittingAudio}
+              isSubmitting={isSubmittingAudio || isSubmittingAudioDraft}
               lost={audioDraft.lost ?? false}
             />
           ) : null}
@@ -265,6 +286,7 @@ export default function ChatScreen() {
             audioState={audioState}
             audioElapsedMs={elapsedMs}
             disabled={chatBusy}
+            isSendingText={isSendingText}
           />
         </View>
       </KeyboardView>

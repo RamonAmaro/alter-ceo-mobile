@@ -1,4 +1,4 @@
-import { StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, StyleSheet, TextInput, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -12,6 +12,7 @@ interface ChatTextInputRowProps {
   readonly onSend: () => void;
   readonly onStartRecording: () => void;
   readonly disabled?: boolean;
+  readonly isSending?: boolean;
 }
 
 export function ChatTextInputRow({
@@ -20,9 +21,10 @@ export function ChatTextInputRow({
   onSend,
   onStartRecording,
   disabled = false,
+  isSending = false,
 }: ChatTextInputRowProps) {
   const hasText = value.trim().length > 0;
-  const canSend = hasText && !disabled;
+  const canSend = hasText && !disabled && !isSending;
   const placeholder = "Escribe tu mensaje...";
 
   return (
@@ -48,18 +50,24 @@ export function ChatTextInputRow({
 
       {hasText ? (
         <PressableScale
-          style={[styles.actionBtn, !canSend && styles.actionBtnDisabled]}
+          style={[styles.actionBtn, !canSend && !isSending && styles.actionBtnDisabled]}
           onPress={onSend}
           disabled={!canSend}
           accessibilityLabel="Enviar mensaje"
         >
           <LinearGradient
             colors={
-              canSend ? ["#00FF84", "#00CC6A"] : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]
+              canSend || isSending
+                ? ["#00FF84", "#00CC6A"]
+                : ["rgba(0,255,132,0.3)", "rgba(0,204,106,0.3)"]
             }
             style={styles.actionGradient}
           >
-            <Ionicons name="send" size={18} color={canSend ? "#000000" : "rgba(0,0,0,0.4)"} />
+            {isSending ? (
+              <ActivityIndicator size="small" color="#000000" />
+            ) : (
+              <Ionicons name="send" size={18} color={canSend ? "#000000" : "rgba(0,0,0,0.4)"} />
+            )}
           </LinearGradient>
         </PressableScale>
       ) : (

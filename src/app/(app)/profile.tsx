@@ -9,6 +9,7 @@ import { Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRouter, type Href } from "expo-router";
+import { useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -66,6 +67,8 @@ export default function ProfileScreen() {
   const { isMobile } = useResponsiveLayout();
   const router = useRouter();
   const signOut = useAuthStore((s) => s.signOut);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const isSigningOutRef = useRef(false);
 
   function handleMenuPress(key: MenuKey): void {
     switch (key) {
@@ -81,8 +84,17 @@ export default function ProfileScreen() {
   }
 
   async function handleSignOut(): Promise<void> {
-    await signOut();
-    router.replace("/");
+    if (isSigningOutRef.current) return;
+    isSigningOutRef.current = true;
+    setIsSigningOut(true);
+
+    try {
+      await signOut();
+      router.replace("/");
+    } finally {
+      isSigningOutRef.current = false;
+      setIsSigningOut(false);
+    }
   }
 
   return (
@@ -130,10 +142,14 @@ export default function ProfileScreen() {
           <View style={styles.dangerWrap}>
             <ProfileMenuCard
               icon="log-out-outline"
-              label="Cerrar sesión"
-              description="Saldrás de tu cuenta ALTER CEO"
+              label={isSigningOut ? "Cerrando sesión" : "Cerrar sesión"}
+              description={
+                isSigningOut ? "Estamos cerrando tu sesión..." : "Saldrás de tu cuenta ALTER CEO"
+              }
               tone="danger"
               onPress={() => void handleSignOut()}
+              disabled={isSigningOut}
+              loading={isSigningOut}
               animationDelay={MENU_ITEMS.length * 60}
             />
           </View>

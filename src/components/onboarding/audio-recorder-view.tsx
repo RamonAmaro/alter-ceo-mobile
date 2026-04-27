@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -30,6 +30,8 @@ export function AudioRecorderView({
   const currentQuestionIndex = useOnboardingStore((s) => s.currentQuestionIndex);
   const setAnswer = useOnboardingStore((s) => s.setAnswer);
   const addAudioRecord = useOnboardingStore((s) => s.addAudioRecord);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const confirmingRef = useRef(false);
 
   const questions = useMemo(
     () => (planType === "professional" ? getProfessionalQuestions() : getExpressQuestions()),
@@ -37,6 +39,11 @@ export function AudioRecorderView({
   );
 
   const question = questions[currentQuestionIndex];
+
+  useEffect(() => {
+    confirmingRef.current = false;
+    setIsConfirming(false);
+  }, [currentQuestionIndex]);
 
   const {
     recordState,
@@ -55,8 +62,14 @@ export function AudioRecorderView({
   if (!question) return null;
 
   function handleConfirm(): void {
+    if (confirmingRef.current) return;
+
+    confirmingRef.current = true;
+    setIsConfirming(true);
+
     const uri = result?.uri ?? "";
     const transcript = result?.transcript ?? null;
+    const isLastQuestion = currentQuestionIndex + 1 >= questions.length;
 
     setAnswer(currentQuestionIndex, `[audio_recorded]:${uri}`);
     if (planType) {
@@ -70,6 +83,11 @@ export function AudioRecorderView({
     }
 
     onConfirm(uri, transcript);
+
+    if (!isLastQuestion) {
+      confirmingRef.current = false;
+      setIsConfirming(false);
+    }
   }
 
   const isRecordingOrPaused = recordState === "recording" || recordState === "paused";
@@ -122,7 +140,11 @@ export function AudioRecorderView({
           />
 
           {recordState === "done" && (
-            <AudioDoneActions onRestart={handleRestart} onConfirm={handleConfirm} />
+            <AudioDoneActions
+              onRestart={handleRestart}
+              onConfirm={handleConfirm}
+              confirmLoading={isConfirming}
+            />
           )}
 
           {showControls && (

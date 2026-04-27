@@ -186,6 +186,8 @@ export default function DebugScreen() {
   }
 
   async function handleLoadDefaultProfile(): Promise<void> {
+    if (isLoadingDefaultProfile || isLoadingProfiles) return;
+
     if (!user?.userId) {
       Alert.alert("Sesión no disponible", "No se ha encontrado el usuario autenticado.");
       return;
@@ -221,6 +223,8 @@ export default function DebugScreen() {
   }
 
   async function handleApplyCeoArchetype(): Promise<void> {
+    if (isApplyingCeoArchetype) return;
+
     if (!user?.userId) {
       Alert.alert("Sesión no disponible", "No se ha encontrado el usuario autenticado.");
       return;
@@ -295,8 +299,9 @@ export default function DebugScreen() {
             >
               <Button
                 label={isResettingOnboarding ? "Reiniciando..." : "Reiniciar onboarding"}
-                onPress={() => void handleResetOnboarding()}
+                onPress={handleResetOnboarding}
                 disabled={isResettingOnboarding}
+                loading={isResettingOnboarding}
                 style={styles.actionButton}
               />
             </SectionCard>
@@ -307,8 +312,9 @@ export default function DebugScreen() {
             >
               <Button
                 label={isClearingLocalData ? "Borrando..." : "Borrar almacenamiento local"}
-                onPress={() => void handleClearLocalData()}
+                onPress={handleClearLocalData}
                 disabled={isClearingLocalData}
+                loading={isClearingLocalData}
                 style={styles.actionButton}
               />
             </SectionCard>
@@ -319,6 +325,7 @@ export default function DebugScreen() {
             >
               <Pressable
                 style={styles.selectTrigger}
+                disabled={isApplyingCeoArchetype}
                 onPress={() => setIsArchetypePickerOpen((current) => !current)}
               >
                 <View style={styles.selectContent}>
@@ -357,8 +364,9 @@ export default function DebugScreen() {
 
               <Button
                 label={isApplyingCeoArchetype ? "Aplicando..." : "Aplicar arquetipo CEO"}
-                onPress={() => void handleApplyCeoArchetype()}
+                onPress={handleApplyCeoArchetype}
                 disabled={isApplyingCeoArchetype}
+                loading={isApplyingCeoArchetype}
                 style={styles.actionButton}
               />
               <ThemedText type="bodySm" style={styles.footnote}>
@@ -372,6 +380,7 @@ export default function DebugScreen() {
             >
               <Pressable
                 style={styles.selectTrigger}
+                disabled={isLoadingDefaultProfile || isLoadingProfiles}
                 onPress={() => setIsProfilePickerOpen((current) => !current)}
               >
                 <View style={styles.selectContent}>
@@ -433,10 +442,11 @@ export default function DebugScreen() {
 
               <Button
                 label={isLoadingDefaultProfile ? "Cargando..." : "Cargar perfil por defecto"}
-                onPress={() => void handleLoadDefaultProfile()}
+                onPress={handleLoadDefaultProfile}
                 disabled={
                   isLoadingDefaultProfile || isLoadingProfiles || availableProfiles.length === 0
                 }
+                loading={isLoadingDefaultProfile}
                 style={styles.actionButton}
               />
               <ThemedText type="bodySm" style={styles.footnote}>

@@ -22,7 +22,6 @@ import {
 import { validateContactInput } from "@/utils/validate-contact-input";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 
-import { PrefetchBanner } from "@/components/onboarding/prefetch-banner";
 import { QuestionBody } from "@/components/onboarding/question-body";
 import { QuestionHeader } from "@/components/onboarding/question-header";
 
@@ -40,8 +39,9 @@ export default function QuestionsScreen() {
   const nextQuestion = useOnboardingStore((s) => s.nextQuestion);
   const previousQuestion = useOnboardingStore((s) => s.previousQuestion);
   const user = useAuthStore((s) => s.user);
-  const [prefetchStatus, setPrefetchStatus] = useState<"ok" | "error" | null>(null);
+  const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finalSubmitRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -160,15 +160,7 @@ export default function QuestionsScreen() {
       business_instagram:
         hasInstagram && typeof instagramAnswer === "string" ? instagramAnswer.trim() : null,
       has_instagram: hasInstagram,
-    })
-      .then(() => {
-        setPrefetchStatus("ok");
-        prefetchTimerRef.current = setTimeout(() => setPrefetchStatus(null), 3000);
-      })
-      .catch(() => {
-        setPrefetchStatus("error");
-        prefetchTimerRef.current = setTimeout(() => setPrefetchStatus(null), 3000);
-      });
+    });
   }
 
   function handleNext(): void {
@@ -186,6 +178,9 @@ export default function QuestionsScreen() {
     if (nextIndex < questions.length) {
       animateTransition(() => nextQuestion());
     } else {
+      if (finalSubmitRef.current) return;
+      finalSubmitRef.current = true;
+      setIsFinalSubmitting(true);
       navigateAfterQuestions();
     }
   }
@@ -203,6 +198,9 @@ export default function QuestionsScreen() {
     if (nextIndex < questions.length) {
       nextQuestion();
     } else {
+      if (finalSubmitRef.current) return;
+      finalSubmitRef.current = true;
+      setIsFinalSubmitting(true);
       navigateAfterQuestions();
     }
   }
@@ -234,8 +232,6 @@ export default function QuestionsScreen() {
         >
           <QuestionHeader planLabel={planLabel} onBack={handleBack} />
 
-          {prefetchStatus !== null && <PrefetchBanner status={prefetchStatus} />}
-
           <QuestionBody
             question={question}
             currentAnswer={currentAnswer}
@@ -251,7 +247,8 @@ export default function QuestionsScreen() {
           <Button
             label="Siguiente"
             onPress={handleNext}
-            disabled={!nextEnabled}
+            disabled={!nextEnabled || isFinalSubmitting}
+            loading={isFinalSubmitting}
             style={!nextEnabled ? styles.buttonDisabled : undefined}
           />
         </View>
