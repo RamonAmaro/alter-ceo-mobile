@@ -2,18 +2,22 @@ import { useEffect, useRef } from "react";
 import { Animated, StyleSheet } from "react-native";
 
 import { EntityProposalCard } from "@/components/chat/entity-proposal/entity-proposal-card";
+import type { ProposalEntry } from "@/hooks/use-chat-proposals";
 
 const STACK_OFFSET_Y = 10;
 const STACK_SCALE_STEP = 0.04;
 const STACK_OPACITY_STEP = 0.25;
+const ENTER_DURATION_MS = 320;
 const EXIT_DURATION_MS = 240;
 const REPOSITION_DURATION_MS = 260;
 
 interface EntityProposalStackItemProps {
-  readonly entityId: string;
+  readonly entry: ProposalEntry;
   readonly depth: number;
   readonly isExiting: boolean;
   readonly isLayoutAnchor: boolean;
+  readonly onConfirm: (entityId: string) => void;
+  readonly onReject: (entityId: string) => void;
   readonly onExitComplete: (entityId: string) => void;
 }
 
@@ -31,33 +35,43 @@ function targetOpacity(depth: number): number {
 }
 
 export function EntityProposalStackItem({
-  entityId,
+  entry,
   depth,
   isExiting,
   isLayoutAnchor,
+  onConfirm,
+  onReject,
   onExitComplete,
 }: EntityProposalStackItemProps) {
-  const opacity = useRef(new Animated.Value(targetOpacity(depth))).current;
-  const translateY = useRef(new Animated.Value(targetTranslateY(depth))).current;
+  // Inicia invisível e levemente abaixo/menor para a animação de entrada
+  // ser perceptível (fade + slide-up + scale-up).
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(targetTranslateY(depth) + 16)).current;
   const translateX = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(targetScale(depth))).current;
+  const scale = useRef(new Animated.Value(targetScale(depth) * 0.92)).current;
+  const hasEnteredRef = useRef(false);
 
   useEffect(() => {
     if (isExiting) return;
+
+    const isFirstAppearance = !hasEnteredRef.current;
+    hasEnteredRef.current = true;
+    const duration = isFirstAppearance ? ENTER_DURATION_MS : REPOSITION_DURATION_MS;
+
     Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: targetOpacity(depth),
+        duration,
+        useNativeDriver: true,
+      }),
       Animated.timing(translateY, {
         toValue: targetTranslateY(depth),
-        duration: REPOSITION_DURATION_MS,
+        duration,
         useNativeDriver: true,
       }),
       Animated.timing(scale, {
         toValue: targetScale(depth),
-        duration: REPOSITION_DURATION_MS,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: targetOpacity(depth),
-        duration: REPOSITION_DURATION_MS,
+        duration,
         useNativeDriver: true,
       }),
     ]).start();
@@ -78,7 +92,7 @@ export function EntityProposalStackItem({
         useNativeDriver: true,
       }),
     ]).start(({ finished }) => {
-      if (finished) onExitComplete(entityId);
+      if (finished) onExitComplete(entry.entityId);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExiting]);
@@ -96,7 +110,12 @@ export function EntityProposalStackItem({
     <Animated.View
       style={[isLayoutAnchor ? styles.anchorItem : styles.floatingItem, animatedStyle]}
     >
-      <EntityProposalCard entityId={entityId} interactive={interactive} />
+      <EntityProposalCard
+        entry={entry}
+        interactive={interactive}
+        onConfirm={onConfirm}
+        onReject={onReject}
+      />
     </Animated.View>
   );
 }
