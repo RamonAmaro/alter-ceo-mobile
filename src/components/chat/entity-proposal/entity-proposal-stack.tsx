@@ -1,24 +1,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, View, type LayoutChangeEvent } from "react-native";
 
-import { useShallow } from "zustand/react/shallow";
-
 import { EntityProposalCounter } from "@/components/chat/entity-proposal/entity-proposal-counter";
 import { EntityProposalStackItem } from "@/components/chat/entity-proposal/entity-proposal-stack-item";
 import { Spacing } from "@/constants/theme";
-import { useBusinessEntityProposalsStore } from "@/stores/business-entity-proposals-store";
+import type { ProposalEntry } from "@/hooks/use-chat-proposals";
 
 const MAX_VISIBLE_DEPTH = 3;
 const APPEAR_DURATION_MS = 280;
 const DISAPPEAR_DURATION_MS = 220;
 
 interface DerivedItem {
-  readonly entityId: string;
+  readonly entry: ProposalEntry;
   readonly depth: number;
   readonly isExiting: boolean;
 }
 
 interface EntityProposalStackProps {
+  /** Mapa id → entry. Vem do state local do chat. */
+  readonly proposals: Record<string, ProposalEntry>;
+  /** Ordem de exibição. */
+  readonly order: readonly string[];
+  /** Aceitar/rejeitar — fluxo via callback do chat. */
+  readonly onConfirm: (entityId: string) => void;
+  readonly onReject: (entityId: string) => void;
+  /** Remove a proposta resolvida do state após terminar a animação de saída. */
+  readonly onRemove: (entityId: string) => void;
   /** Offset em pixels para subir o stack (ex.: altura do ChatInput). */
   readonly bottomOffset?: number;
   /** Callback chamado quando a altura do stack muda. */
@@ -26,27 +33,25 @@ interface EntityProposalStackProps {
 }
 
 export function EntityProposalStack({
+  proposals,
+  order,
+  onConfirm,
+  onReject,
+  onRemove,
   bottomOffset = 0,
   onHeightChange,
 }: EntityProposalStackProps) {
-  const { proposals, order } = useBusinessEntityProposalsStore(
-    useShallow((s) => ({ proposals: s.proposals, order: s.order })),
-  );
-  const removeProposal = useBusinessEntityProposalsStore((s) => s.removeProposal);
-
   const [exiting, setExiting] = useState<readonly string[]>([]);
   // Conjunto de ids já processados pela animação de saída — evita reentrar
-  // em loop caso o store demore para remover ou volte a emitir o id.
+  // em loop caso o state demore para remover ou volte a emitir o id.
   const processedExitsRef = useRef<Set<string>>(new Set());
 
   const handleExitComplete = useCallback(
     (entityId: string) => {
       setExiting((current) => current.filter((id) => id !== entityId));
-      removeProposal(entityId);
+      onRemove(entityId);
     },
-    // `removeProposal` é uma função estável do Zustand — não precisa nas deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [onRemove],
   );
 
   // Detecta novas resoluções (status passou para active/archived) e adiciona
@@ -75,24 +80,23 @@ export function EntityProposalStack({
   );
 
   const items = useMemo<DerivedItem[]>(() => {
-    const visiblePending = pendingIds.slice(0, MAX_VISIBLE_DEPTH).map((entityId, index) => ({
-      entityId,
-      depth: index,
-      isExiting: false,
-    }));
+    const visiblePending = pendingIds.slice(0, MAX_VISIBLE_DEPTH).map((entityId, index) => {
+      const entry = proposals[entityId];
+      if (!entry) return null;
+      return { entry, depth: index, isExiting: false };
+    });
 
-    const exitingItems = exiting
-      .filter((id) => proposals[id] != null)
-      .map((entityId) => ({
-        entityId,
-        depth: 0,
-        isExiting: true,
-      }));
+    const exitingItems = exiting.map((entityId) => {
+      const entry = proposals[entityId];
+      if (!entry) return null;
+      return { entry, depth: 0, isExiting: true };
+    });
 
-    return [...exitingItems, ...visiblePending];
+    const all = [...exitingItems, ...visiblePending];
+    return all.filter((item): item is DerivedItem => item !== null);
   }, [proposals, exiting, pendingIds]);
 
-  // Visibilidade animada do stack inteiro: o componente fica montado durante
+  // Visibilidade animada do wrapper inteiro: o componente fica montado durante
   // a animação de saída e só desmonta depois para evitar "pop" abrupto.
   const shouldShow = items.length > 0;
   const [mounted, setMounted] = useState(shouldShow);
@@ -178,11 +182,13 @@ export function EntityProposalStack({
         <EntityProposalCounter current={1} total={pendingIds.length} />
         {items.map((item, index) => (
           <EntityProposalStackItem
-            key={item.entityId}
-            entityId={item.entityId}
+            key={item.entry.entityId}
+            entry={item.entry}
             depth={item.depth}
             isExiting={item.isExiting}
             isLayoutAnchor={index === 0}
+            onConfirm={onConfirm}
+            onReject={onReject}
             onExitComplete={handleExitComplete}
           />
         ))}

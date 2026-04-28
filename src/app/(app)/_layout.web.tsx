@@ -1,6 +1,5 @@
 import { DesktopSidebar } from "@/components/desktop-sidebar";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
-import { useUserEventsStream } from "@/hooks/use-user-events-stream";
 import { useAuthStore } from "@/stores/auth-store";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Redirect, Stack } from "expo-router";
@@ -17,8 +16,6 @@ export default function AppLayout() {
   const { isMobile } = useResponsiveLayout();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
-
-  useUserEventsStream(isAuthenticated);
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href="/(auth)/login" />;

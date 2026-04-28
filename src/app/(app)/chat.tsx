@@ -12,6 +12,7 @@ import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useChatAudioRecorder } from "@/hooks/use-chat-audio-recorder";
+import { useChatProposals } from "@/hooks/use-chat-proposals";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
@@ -67,6 +68,14 @@ export default function ChatScreen() {
   const loadDrafts = useChatStore((s) => s.loadDrafts);
   const setDraft = useChatStore((s) => s.setDraft);
   const clearDraft = useChatStore((s) => s.clearDraft);
+
+  const {
+    proposals,
+    order: proposalsOrder,
+    confirm: confirmProposal,
+    reject: rejectProposal,
+    removeProposal,
+  } = useChatProposals(user != null);
 
   const audioDraftsHydrated = useChatAudioDraftStore((s) => s.hydrated);
   const loadAudioDrafts = useChatAudioDraftStore((s) => s.loadDrafts);
@@ -284,7 +293,15 @@ export default function ChatScreen() {
             />
           ) : null}
 
-          <EntityProposalStack bottomOffset={inputHeight} onHeightChange={setProposalStackHeight} />
+          <EntityProposalStack
+            proposals={proposals}
+            order={proposalsOrder}
+            onConfirm={confirmProposal}
+            onReject={rejectProposal}
+            onRemove={removeProposal}
+            bottomOffset={inputHeight}
+            onHeightChange={setProposalStackHeight}
+          />
 
           <View onLayout={handleInputLayout}>
             <ChatInput

@@ -4,32 +4,34 @@ import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-nat
 
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import type { ProposalEntry } from "@/hooks/use-chat-proposals";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
-import { useBusinessEntityProposalsStore } from "@/stores/business-entity-proposals-store";
 
 import { EntityProposalFields } from "./entity-proposal-fields";
 import { presentProposal } from "./entity-proposal-presenter";
 
 interface EntityProposalCardProps {
-  readonly entityId: string;
+  readonly entry: ProposalEntry;
   readonly interactive: boolean;
+  readonly onConfirm: (entityId: string) => void;
+  readonly onReject: (entityId: string) => void;
 }
 
-export function EntityProposalCard({ entityId, interactive }: EntityProposalCardProps) {
-  const entry = useBusinessEntityProposalsStore((s) => s.proposals[entityId]);
-  const confirm = useBusinessEntityProposalsStore((s) => s.confirm);
-  const reject = useBusinessEntityProposalsStore((s) => s.reject);
+export function EntityProposalCard({
+  entry,
+  interactive,
+  onConfirm,
+  onReject,
+}: EntityProposalCardProps) {
   const { isMobile } = useResponsiveLayout();
 
   const handleConfirm = useCallback(() => {
-    void confirm(entityId);
-  }, [confirm, entityId]);
+    onConfirm(entry.entityId);
+  }, [onConfirm, entry.entityId]);
 
   const handleReject = useCallback(() => {
-    void reject(entityId);
-  }, [reject, entityId]);
-
-  if (!entry) return null;
+    onReject(entry.entityId);
+  }, [onReject, entry.entityId]);
 
   const isSubmitting = entry.submission === "submitting";
   const disabled = !interactive || isSubmitting;
