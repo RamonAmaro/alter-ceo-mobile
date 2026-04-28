@@ -69,7 +69,7 @@ export default function QuestionsScreen() {
 
   if (question.type === "audio") {
     return (
-      <ScreenLayout paddingHorizontal={0}>
+      <ScreenLayout paddingHorizontal={0} withKeyboard>
         <AudioRecorderView onConfirm={handleConfirmAudio} onBack={handleBack} />
       </ScreenLayout>
     );
