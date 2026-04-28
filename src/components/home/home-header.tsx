@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: Spacing.two,
+    minHeight: 36,
   },
   userInfo: {
     flexDirection: "row",
@@ -78,9 +79,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 33,
-    height: 33,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "rgba(255,255,255,0.08)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
@@ -104,9 +105,9 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
   },
   settingsBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.04)",

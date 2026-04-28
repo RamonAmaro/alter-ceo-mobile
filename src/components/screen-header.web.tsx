@@ -10,6 +10,7 @@ interface ScreenHeaderProps {
   topInset: number;
   icon?: React.ComponentProps<typeof Ionicons>["name"];
   useLogoIcon?: boolean;
+  renderIcon?: () => React.ReactNode;
   titlePrefix: string;
   titleAccent: string;
   onBack?: () => void;
@@ -17,10 +18,21 @@ interface ScreenHeaderProps {
   showBack?: boolean;
 }
 
+function HeaderGlyph({
+  useLogoIcon,
+  renderIcon,
+  icon,
+}: Pick<ScreenHeaderProps, "useLogoIcon" | "renderIcon" | "icon">): React.ReactNode {
+  if (renderIcon) return renderIcon();
+  if (useLogoIcon) return <AlterLogo size={20} />;
+  return <Ionicons name={icon} size={18} color={SemanticColors.success} />;
+}
+
 export function ScreenHeader({
   topInset,
   icon,
   useLogoIcon = false,
+  renderIcon,
   titlePrefix,
   titleAccent,
   onBack,
@@ -46,23 +58,16 @@ export function ScreenHeader({
         </Pressable>
       )}
 
-      {useLogoIcon ? (
+      <View style={styles.glyphFrame}>
+        <View style={styles.glyphGlow} />
         <Pressable
           onPress={onIconPress}
           disabled={!onIconPress}
-          style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
+          style={({ pressed }) => [styles.glyphPress, pressed && styles.glyphPressPressed]}
         >
-          <AlterLogo size={20} />
+          <HeaderGlyph useLogoIcon={useLogoIcon} renderIcon={renderIcon} icon={icon} />
         </Pressable>
-      ) : (
-        <Pressable
-          onPress={onIconPress}
-          disabled={!onIconPress}
-          style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
-        >
-          <Ionicons name={icon} size={18} color={SemanticColors.success} />
-        </Pressable>
-      )}
+      </View>
 
       <View style={styles.titleRow}>
         <ThemedText style={styles.prefix}>{titlePrefix} </ThemedText>
@@ -71,6 +76,8 @@ export function ScreenHeader({
     </View>
   );
 }
+
+const GLYPH_SIZE = 40;
 
 const styles = StyleSheet.create({
   container: {
@@ -85,14 +92,35 @@ const styles = StyleSheet.create({
     cursor: "pointer" as never,
     marginRight: Spacing.one,
   },
-  iconBtn: {
-    minWidth: 32,
-    minHeight: 32,
+  glyphFrame: {
+    width: GLYPH_SIZE,
+    height: GLYPH_SIZE,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.22)",
+    overflow: "hidden",
+  },
+  glyphGlow: {
+    position: "absolute",
+    top: -GLYPH_SIZE / 2,
+    left: -GLYPH_SIZE / 2,
+    width: GLYPH_SIZE * 2,
+    height: GLYPH_SIZE * 2,
+    borderRadius: GLYPH_SIZE,
+    backgroundColor: "rgba(0,255,132,0.10)",
+    opacity: 0.55,
+  },
+  glyphPress: {
+    width: "100%",
+    height: "100%",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer" as never,
   },
-  iconBtnPressed: {
+  glyphPressPressed: {
     opacity: 0.8,
   },
   titleRow: {

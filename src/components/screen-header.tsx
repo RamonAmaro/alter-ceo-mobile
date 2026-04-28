@@ -17,7 +17,7 @@ interface ScreenHeaderProps {
   showBack?: boolean;
 }
 
-function HeaderIcon({
+function HeaderGlyph({
   useLogoIcon,
   renderIcon,
   icon,
@@ -54,9 +54,17 @@ export function ScreenHeader({
         </TouchableOpacity>
       )}
 
-      <Pressable onPress={onIconPress} disabled={!onIconPress} style={styles.iconBtn} hitSlop={12}>
-        <HeaderIcon useLogoIcon={useLogoIcon} renderIcon={renderIcon} icon={icon} />
-      </Pressable>
+      <View style={styles.glyphFrame}>
+        <View style={styles.glyphGlow} />
+        <Pressable
+          onPress={onIconPress}
+          disabled={!onIconPress}
+          style={styles.glyphPress}
+          hitSlop={8}
+        >
+          <HeaderGlyph useLogoIcon={useLogoIcon} renderIcon={renderIcon} icon={icon} />
+        </Pressable>
+      </View>
 
       <View style={styles.titleRow}>
         <ThemedText style={styles.prefix}>{titlePrefix} </ThemedText>
@@ -66,12 +74,13 @@ export function ScreenHeader({
   );
 }
 
+const GLYPH_SIZE = 36;
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-    backgroundColor: SemanticColors.surfaceCard,
     paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.three,
     marginBottom: Spacing.three,
@@ -79,14 +88,35 @@ const styles = StyleSheet.create({
   backBtn: {
     marginRight: Spacing.one,
   },
-  titleRow: {
-    flexDirection: "row",
-  },
-  iconBtn: {
-    minWidth: 32,
-    minHeight: 32,
+  glyphFrame: {
+    width: GLYPH_SIZE,
+    height: GLYPH_SIZE,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.22)",
+    overflow: "hidden",
+  },
+  glyphGlow: {
+    position: "absolute",
+    top: -GLYPH_SIZE / 2,
+    left: -GLYPH_SIZE / 2,
+    width: GLYPH_SIZE * 2,
+    height: GLYPH_SIZE * 2,
+    borderRadius: GLYPH_SIZE,
+    backgroundColor: "rgba(0,255,132,0.10)",
+    opacity: 0.55,
+  },
+  glyphPress: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titleRow: {
+    flexDirection: "row",
   },
   prefix: {
     fontFamily: Fonts.montserratBold,
