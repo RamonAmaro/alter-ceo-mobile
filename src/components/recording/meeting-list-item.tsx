@@ -1,4 +1,12 @@
-import { ActivityIndicator, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -22,6 +30,7 @@ interface MeetingListItemProps {
   onPress: (id: string) => void;
   onDelete: (id: string) => void;
   onRetry?: (id: string) => void;
+  onRename?: (id: string, newTitle: string) => Promise<void>;
   retrying?: boolean;
 }
 
@@ -82,6 +91,7 @@ export function MeetingListItem({
   index,
   onPress,
   onRetry,
+  onRename,
   retrying = false,
 }: MeetingListItemProps) {
   const cfg = statusConfig(item.uploadStatus);
@@ -89,11 +99,51 @@ export function MeetingListItem({
   const isFailed = item.uploadStatus === "failed";
   const indexLabel = String(index + 1).padStart(2, "0");
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(item.title);
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+  const canRename = !!onRename && !!item.meetingId;
+
+  function startEdit(): void {
+    setDraft(item.title);
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+
+  function cancelEdit(): void {
+    setIsEditing(false);
+    setDraft(item.title);
+  }
+
+  async function confirmEdit(): Promise<void> {
+    if (!onRename || !item.meetingId || isSaving) return;
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === item.title) {
+      cancelEdit();
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onRename(item.meetingId, trimmed);
+      setIsEditing(false);
+    } catch {
+      // store surfaces the error elsewhere; keep the editor open so the user
+      // can retry without losing what they typed
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <TouchableOpacity
       style={[styles.card, cardShadow]}
       activeOpacity={0.7}
-      onPress={() => onPress(item.id)}
+      onPress={() => {
+        if (isEditing) return;
+        onPress(item.id);
+      }}
+      disabled={isEditing}
     >
       <LinearGradient
         colors={["rgba(0,255,132,0.04)", "rgba(255,255,255,0.01)"]}
@@ -109,9 +159,63 @@ export function MeetingListItem({
 
         <View style={styles.body}>
           <View style={styles.titleRow}>
-            <ThemedText style={styles.title} numberOfLines={1}>
-              {item.title}
-            </ThemedText>
+            {isEditing ? (
+              <View style={styles.titleEditWrap}>
+                <TextInput
+                  ref={inputRef}
+                  value={draft}
+                  onChangeText={setDraft}
+                  style={styles.titleInput}
+                  onSubmitEditing={confirmEdit}
+                  placeholderTextColor={SemanticColors.textPlaceholder}
+                  returnKeyType="done"
+                  autoCorrect={false}
+                  editable={!isSaving}
+                  maxLength={300}
+                />
+                <TouchableOpacity
+                  onPress={cancelEdit}
+                  style={styles.titleEditBtn}
+                  hitSlop={8}
+                  disabled={isSaving}
+                  accessibilityLabel="Cancelar renombrar"
+                >
+                  <Ionicons name="close" size={14} color={SemanticColors.textMuted} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={confirmEdit}
+                  style={styles.titleEditBtn}
+                  hitSlop={8}
+                  disabled={isSaving}
+                  accessibilityLabel="Guardar nombre"
+                >
+                  {isSaving ? (
+                    <ActivityIndicator size="small" color={SemanticColors.success} />
+                  ) : (
+                    <Ionicons name="checkmark" size={14} color={SemanticColors.success} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <ThemedText style={styles.title} numberOfLines={1}>
+                  {item.title}
+                </ThemedText>
+                {canRename ? (
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      startEdit();
+                    }}
+                    style={styles.titleEditTrigger}
+                    hitSlop={10}
+                    accessibilityLabel="Renombrar reunión"
+                  >
+                    <Ionicons name="create-outline" size={13} color={SemanticColors.textMuted} />
+                  </TouchableOpacity>
+                ) : null}
+              </>
+            )}
           </View>
 
           <View style={styles.metaRow}>
@@ -267,6 +371,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
   title: {
     flex: 1,
@@ -274,6 +379,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     color: SemanticColors.textPrimary,
+  },
+  titleEditTrigger: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  titleEditWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  titleInput: {
+    flex: 1,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+    borderBottomWidth: 1,
+    borderBottomColor: SemanticColors.success,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 2,
+    ...(Platform.OS === "web" ? { outlineStyle: "none" as never } : {}),
+  },
+  titleEditBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
   },
   metaRow: {
     flexDirection: "row",

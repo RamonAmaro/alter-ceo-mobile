@@ -23,7 +23,6 @@ import { formatDurationSeconds } from "@/utils/format-date";
 import { goBackOrHome } from "@/utils/navigation";
 
 import { MeetingActionPointsSection } from "./meeting-action-points-section";
-import { MeetingAlertsSection } from "./meeting-alerts-section";
 import { MeetingEntitiesSection } from "./meeting-entities-section";
 import { MeetingSummarySection } from "./meeting-summary-section";
 import { MeetingTranscriptSection } from "./meeting-transcript-section";
@@ -70,6 +69,30 @@ function statusLabel(status: string): string {
   if (status === "UPLOADED") return "SUBIDO";
   if (status === "PENDING_UPLOAD") return "PENDIENTE";
   return status.toUpperCase();
+}
+
+// The backend's meeting summary occasionally repeats the headline as the
+// first line (or first sentence) of summary_text. When that happens we hide
+// the headline to avoid showing the same phrase twice. Comparison is
+// accent/case/punctuation-insensitive so cosmetic differences don't fool us.
+function normaliseForCompare(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function isHeadlineRedundant(headline: string, summaryText: string): boolean {
+  const h = normaliseForCompare(headline);
+  if (!h) return true;
+  const s = normaliseForCompare(summaryText);
+  if (!s) return false;
+  if (s.startsWith(h)) return true;
+  const firstSentence = s.split(/[.!?]/, 1)[0]?.trim() ?? "";
+  return firstSentence === h;
 }
 
 function processingStageLabel(stage: string | null | undefined): string | null {
@@ -191,7 +214,17 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const decisions = summary?.decisions ?? [];
   const blockers = summary?.blockers ?? [];
   const nextSteps = summary?.next_steps ?? [];
-  const topics = summary?.topics_discussed ?? [];
+
+  // Resumen ejecutivo and Temas tratados now live in the linked source —
+  // both meetings and PDFs are sourced through v1/source/{id}, so this
+  // matches what the document detail screen renders.
+  const summaries = activeSource?.summaries ?? [];
+  const sourceSummary = summaries.find((s) => s.summary_type === "meeting") ?? summaries[0];
+  const executiveSummaryText = sourceSummary?.summary_text ?? "";
+  const topics = sourceSummary?.topics ?? [];
+
+  const headline = summary?.headline ?? "";
+  const showHeadline = !!headline && !isHeadlineRedundant(headline, executiveSummaryText);
 
   // PDF order: Temas tratados → Bloqueos → Decisiones → Puntos de acción.
   // The first three are simple lists; "Puntos de acción" gets the richer
@@ -228,8 +261,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const totalInsights = decisions.length + blockers.length + nextSteps.length + topics.length;
 
   const entities = activeSource?.entities ?? [];
-  const alerts = activeSource?.insights ?? [];
-  const hasSourceData = sourceStatus === "ready" && (entities.length > 0 || alerts.length > 0);
+  const hasSourceData = sourceStatus === "ready" && entities.length > 0;
 
   function handleStartEditTitle(): void {
     if (!meeting) return;
@@ -369,11 +401,10 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
               </View>
             )}
 
-            {/* Meta-row: status · duración · fecha — compact, single line, same
-                pattern as source-detail. The PDF asks for "Título grande →
-                Duración menor → Fecha un poco más grande", which we honour
-                by keeping these three pieces together but visually quiet
-                under the title. */}
+            {/* Hero hierarchy (CEO spec): Título grande → Duración menor →
+                Fecha un poco más grande. Status and duration share a discreet
+                top line; the date sits below at a larger size as a deliberate
+                anchor for the user. */}
             <View style={styles.heroMetaRow}>
               <View style={styles.statusPill}>
                 <View style={[styles.statusDot, { backgroundColor: sColor }]} />
@@ -382,12 +413,12 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
                 </ThemedText>
               </View>
               <View style={styles.heroMetaDivider} />
-              <ThemedText style={styles.heroMetaText}>{dur}</ThemedText>
-              <View style={styles.heroMetaDivider} />
-              <ThemedText style={styles.heroMetaText} numberOfLines={1}>
-                {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
-              </ThemedText>
+              <ThemedText style={styles.heroMetaSmall}>{dur}</ThemedText>
             </View>
+
+            <ThemedText style={styles.heroDate} numberOfLines={1}>
+              {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
+            </ThemedText>
 
             {stageLabel ? (
               <ThemedText style={styles.heroStage} numberOfLines={1}>
@@ -408,14 +439,16 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           ) : null}
 
           {/* ——— RESUMEN EJECUTIVO ——— */}
-          {summary ? (
+          {summary || executiveSummaryText ? (
             <View style={styles.editorialBlock}>
               <ThemedText style={styles.sectionTitle}>Resumen ejecutivo</ThemedText>
               <View style={styles.sectionTitleRule} />
-              {summary.headline ? (
-                <ThemedText style={styles.editorialHeadline}>{summary.headline}</ThemedText>
+              {showHeadline ? (
+                <ThemedText style={styles.editorialHeadline}>{headline}</ThemedText>
               ) : null}
-              <ThemedText style={styles.editorialBody}>{summary.executive_summary}</ThemedText>
+              {executiveSummaryText ? (
+                <ThemedText style={styles.editorialBody}>{executiveSummaryText}</ThemedText>
+              ) : null}
             </View>
           ) : null}
 
@@ -449,9 +482,6 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
               </View>
             </View>
           ) : null}
-
-          {/* ——— ALERTAS DEL AGENTE (source insights) ——— */}
-          {hasSourceData && alerts.length > 0 ? <MeetingAlertsSection insights={alerts} /> : null}
 
           {/* ——— ENTIDADES DETECTADAS ——— */}
           {hasSourceData && entities.length > 0 ? (
@@ -552,12 +582,20 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     letterSpacing: 2,
   },
-  heroMetaText: {
+  heroMetaSmall: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.textMuted,
     letterSpacing: 1.2,
+  },
+  heroDate: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.6,
+    marginTop: Spacing.one,
   },
   titleRow: {
     flexDirection: "row",

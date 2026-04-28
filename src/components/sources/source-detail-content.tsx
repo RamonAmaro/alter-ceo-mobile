@@ -11,7 +11,7 @@ import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useSourcesStore } from "@/stores/sources-store";
-import type { SourceInsight, SourceSummaryOut, SourceTable } from "@/types/source";
+import type { SourceInsight } from "@/types/source";
 import { goBackOrHome } from "@/utils/navigation";
 
 interface SourceDetailContentProps {
@@ -48,13 +48,6 @@ function formatDate(iso: string | null | undefined): string {
     .toUpperCase();
 }
 
-function topicLabelFromSummary(summary: SourceSummaryOut, fallbackIndex: number): string {
-  if (summary.section_path && summary.section_path.length > 0) {
-    return summary.section_path.join(" › ");
-  }
-  return `Sección ${fallbackIndex + 1}`;
-}
-
 function sortInsightsByRelevance(insights: readonly SourceInsight[]): SourceInsight[] {
   const severityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
   return [...insights].sort((a, b) => {
@@ -63,33 +56,6 @@ function sortInsightsByRelevance(insights: readonly SourceInsight[]): SourceInsi
     if (aRank !== bRank) return aRank - bRank;
     return (b.confidence ?? 0) - (a.confidence ?? 0);
   });
-}
-
-// Derive "Temas tratados" only from real structural signals. The extractor
-// populates section_summaries / section_path when it detects chapters; if it
-// doesn't, we have no reliable topic source — table captions are NOT topics
-// (they're labels of a single table), so we don't fall back to them.
-function deriveTopics(
-  sectionSummaries: readonly SourceSummaryOut[],
-  insights: readonly SourceInsight[],
-  tables: readonly SourceTable[],
-): string[] {
-  if (sectionSummaries.length > 0) {
-    return sectionSummaries.map((s, i) => topicLabelFromSummary(s, i));
-  }
-
-  const fromPaths = new Set<string>();
-  for (const i of insights) {
-    if (i.section_path && i.section_path.length > 0) {
-      fromPaths.add(i.section_path.join(" › "));
-    }
-  }
-  for (const t of tables) {
-    if (t.section_path && t.section_path.length > 0) {
-      fromPaths.add(t.section_path.join(" › "));
-    }
-  }
-  return Array.from(fromPaths);
 }
 
 export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
@@ -125,7 +91,8 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const primarySummaryIndex =
     documentSummaryIndex >= 0 ? documentSummaryIndex : source?.summaries.length ? 0 : -1;
   const primarySummary =
-    primarySummaryIndex >= 0 ? source?.summaries[primarySummaryIndex]?.summary_text : undefined;
+    primarySummaryIndex >= 0 ? source?.summaries[primarySummaryIndex] : undefined;
+  const primarySummaryText = primarySummary?.summary_text;
 
   const sectionSummaries =
     source?.summaries.filter((_, index) => index !== primarySummaryIndex) ?? [];
@@ -134,7 +101,7 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const entities = source?.entities ?? [];
   const tables = source?.tables ?? [];
 
-  const topicsTreated = deriveTopics(sectionSummaries, insights, tables);
+  const topicsTreated = primarySummary?.topics ?? [];
 
   // CEO direction: documents only show Temas tratados + Implicaciones
   // estratégicas as plain bullet lists. No severity, no fiabilidad, no
@@ -234,11 +201,11 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
           ) : null}
 
           {/* ——— RESUMEN EJECUTIVO ——— */}
-          {primarySummary ? (
+          {primarySummaryText ? (
             <View style={styles.editorialBlock}>
               <ThemedText style={styles.sectionTitle}>Resumen ejecutivo</ThemedText>
               <View style={styles.sectionTitleRule} />
-              <ThemedText style={styles.editorialBody}>{primarySummary}</ThemedText>
+              <ThemedText style={styles.editorialBody}>{primarySummaryText}</ThemedText>
             </View>
           ) : null}
 

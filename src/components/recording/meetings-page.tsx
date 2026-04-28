@@ -69,6 +69,7 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
   const meetings = useMeetingStore((s) => s.meetings);
   const isLoading = useMeetingStore((s) => s.isLoading);
   const fetchMeetings = useMeetingStore((s) => s.fetchMeetings);
+  const renameMeeting = useMeetingStore((s) => s.renameMeeting);
   const localRecordings = useRecordingsStore((s) => s.recordings);
   const loadRecordings = useRecordingsStore((s) => s.loadRecordings);
   const { uploadRecording } = useUploadRecording();
@@ -96,6 +97,13 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
   );
 
   const handleDelete = useCallback((_id: string) => {}, []);
+
+  const handleRename = useCallback(
+    async (id: string, newTitle: string) => {
+      await renameMeeting(id, newTitle);
+    },
+    [renameMeeting],
+  );
 
   const handleRetry = useCallback(
     async (id: string) => {
@@ -179,6 +187,7 @@ export function MeetingsPage({ width, height }: MeetingsPageProps) {
                 onPress={handlePress}
                 onDelete={handleDelete}
                 onRetry={handleRetry}
+                onRename={handleRename}
                 retrying={retryingRecordingId === item.id}
               />
             )}
