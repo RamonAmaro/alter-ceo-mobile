@@ -402,20 +402,19 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
               </View>
             )}
 
-            {/* Hero hierarchy (CEO spec): Título grande → Duración menor →
-                Fecha un poco más grande. Status and duration share a discreet
-                top line; the date sits below at a larger size as a deliberate
-                anchor for the user. */}
-            <View style={styles.heroMetaRow}>
+            {/* Hero hierarchy (CEO spec): Título grande → Duración pequeña →
+                Fecha un poco más grande. Status pill sits as a discreet badge
+                above so the title remains the protagonist. */}
+            <View style={styles.heroStatusRow}>
               <View style={styles.statusPill}>
                 <View style={[styles.statusDot, { backgroundColor: sColor }]} />
                 <ThemedText style={[styles.statusText, { color: sColor }]}>
                   {statusLabel(meeting.status)}
                 </ThemedText>
               </View>
-              <View style={styles.heroMetaDivider} />
-              <ThemedText style={styles.heroMetaSmall}>{dur}</ThemedText>
             </View>
+
+            <ThemedText style={styles.heroDuration}>{dur}</ThemedText>
 
             <ThemedText style={styles.heroDate} numberOfLines={1}>
               {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
@@ -546,17 +545,10 @@ const styles = StyleSheet.create({
   hero: {
     gap: Spacing.two,
   },
-  heroMetaRow: {
+  heroStatusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.two,
-    marginTop: Spacing.one,
-  },
-  heroMetaDivider: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    marginBottom: Spacing.one,
   },
   heroStage: {
     fontFamily: Fonts.montserratMedium,
@@ -583,12 +575,13 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     letterSpacing: 2,
   },
-  heroMetaSmall: {
+  heroDuration: {
     fontFamily: Fonts.montserratSemiBold,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 16,
     color: SemanticColors.textMuted,
     letterSpacing: 1.2,
+    marginTop: Spacing.one,
   },
   heroDate: {
     fontFamily: Fonts.montserratSemiBold,
@@ -596,7 +589,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: SemanticColors.textSecondaryLight,
     letterSpacing: 0.6,
-    marginTop: Spacing.one,
+    marginTop: 2,
   },
   titleRow: {
     flexDirection: "row",
