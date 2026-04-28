@@ -15,6 +15,16 @@ const ACTIVE_COLOR = SemanticColors.success;
 const INACTIVE_COLOR = "rgba(255,255,255,0.35)";
 const SIDEBAR_ICON_SIZE = 20;
 
+const ROUTE_TO_NAV_KEY: Record<string, string> = {
+  "meeting-detail": "recording",
+  "source-detail": "documents",
+  "strategy-captacion": "strategy",
+  "strategy-captacion-loading": "strategy",
+  "strategy-captacion-ready": "strategy",
+  "strategy-captacion-result": "strategy",
+  chat: "alter",
+};
+
 interface SidebarItemProps {
   label: string;
   icon: React.ReactNode;
@@ -58,6 +68,9 @@ export function DesktopSidebar() {
 
   function getActiveKey(): string {
     const clean = pathname.replace(/^\//, "");
+    const firstSegment = clean.split("/")[0] ?? "";
+    const mapped = ROUTE_TO_NAV_KEY[firstSegment];
+    if (mapped) return mapped;
     const match = NAV_ITEMS.find((item) => clean === item.key || clean.startsWith(`${item.key}/`));
     return match?.key ?? "alter";
   }

@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   folio: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 18,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 16,
     lineHeight: 20,
     color: "rgba(255,255,255,0.18)",
     letterSpacing: -0.5,
@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 17,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 16,
     lineHeight: 22,
     color: SemanticColors.textPrimary,
     letterSpacing: -0.2,

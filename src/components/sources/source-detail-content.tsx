@@ -6,14 +6,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MeetingEntitiesSection } from "@/components/meeting/meeting-entities-section";
 import { MeetingSummarySection } from "@/components/meeting/meeting-summary-section";
 import { ScreenHeader } from "@/components/screen-header";
-import { SourceInsightsBucket } from "@/components/sources/source-insights-bucket";
 import { SourceTablesSection } from "@/components/sources/source-tables-section";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useSourcesStore } from "@/stores/sources-store";
-import type { SourceInsight, SourceSummaryOut, SourceTable } from "@/types/source";
+import type { SourceInsight } from "@/types/source";
 import { goBackOrHome } from "@/utils/navigation";
 
 interface SourceDetailContentProps {
@@ -26,8 +24,6 @@ const STRATEGIC_CATEGORIES: ReadonlySet<string> = new Set([
   "risk",
   "kpi_signal",
 ]);
-
-const ACTION_CATEGORIES: ReadonlySet<string> = new Set(["milestone", "pain_point", "resource"]);
 
 function statusLabel(status: string): string {
   if (status === "ready") return "LISTO";
@@ -52,13 +48,6 @@ function formatDate(iso: string | null | undefined): string {
     .toUpperCase();
 }
 
-function topicLabelFromSummary(summary: SourceSummaryOut, fallbackIndex: number): string {
-  if (summary.section_path && summary.section_path.length > 0) {
-    return summary.section_path.join(" › ");
-  }
-  return `Sección ${fallbackIndex + 1}`;
-}
-
 function sortInsightsByRelevance(insights: readonly SourceInsight[]): SourceInsight[] {
   const severityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
   return [...insights].sort((a, b) => {
@@ -69,43 +58,8 @@ function sortInsightsByRelevance(insights: readonly SourceInsight[]): SourceInsi
   });
 }
 
-// Derive "Temas tratados" with progressive fallback so the user always sees
-// content (the section_summaries path is only populated for documents the
-// extractor detected with structured chapters):
-//   1. Section summaries' titles  ←  best signal
-//   2. Distinct section_path values across insights/entities/tables
-//   3. Table captions (often summarise the section they live in)
-function deriveTopics(
-  sectionSummaries: readonly SourceSummaryOut[],
-  insights: readonly SourceInsight[],
-  tables: readonly SourceTable[],
-): string[] {
-  if (sectionSummaries.length > 0) {
-    return sectionSummaries.map((s, i) => topicLabelFromSummary(s, i));
-  }
-
-  const fromPaths = new Set<string>();
-  for (const i of insights) {
-    if (i.section_path && i.section_path.length > 0) {
-      fromPaths.add(i.section_path.join(" › "));
-    }
-  }
-  for (const t of tables) {
-    if (t.section_path && t.section_path.length > 0) {
-      fromPaths.add(t.section_path.join(" › "));
-    }
-  }
-  if (fromPaths.size > 0) return Array.from(fromPaths);
-
-  const captions = tables
-    .map((t) => t.caption?.trim())
-    .filter((c): c is string => !!c && c.length > 0);
-  return captions;
-}
-
 export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const insets = useSafeAreaInsets();
-  const { isMobile } = useResponsiveLayout();
   const source = useSourcesStore((s) => s.activeSource);
   const isLoading = useSourcesStore((s) => s.isDetailLoading);
   const detailError = useSourcesStore((s) => s.detailError);
@@ -137,7 +91,8 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const primarySummaryIndex =
     documentSummaryIndex >= 0 ? documentSummaryIndex : source?.summaries.length ? 0 : -1;
   const primarySummary =
-    primarySummaryIndex >= 0 ? source?.summaries[primarySummaryIndex]?.summary_text : undefined;
+    primarySummaryIndex >= 0 ? source?.summaries[primarySummaryIndex] : undefined;
+  const primarySummaryText = primarySummary?.summary_text;
 
   const sectionSummaries =
     source?.summaries.filter((_, index) => index !== primarySummaryIndex) ?? [];
@@ -146,28 +101,20 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
   const entities = source?.entities ?? [];
   const tables = source?.tables ?? [];
 
-  const topicsTreated = deriveTopics(sectionSummaries, insights, tables);
+  const topicsTreated = primarySummary?.topics ?? [];
 
+  // CEO direction: documents only show Temas tratados + Implicaciones
+  // estratégicas as plain bullet lists. No severity, no fiabilidad, no
+  // evidence cards — the user does not yet trust the agent's confidence
+  // signal, so we only surface the insight_text.
+  // We still pull from the same insight categories that represent strategy
+  // signals (strategy_signal, opportunity, risk, kpi_signal) but render them
+  // as a flat list.
   const strategicImplications = sortInsightsByRelevance(
     insights.filter((i) => STRATEGIC_CATEGORIES.has(i.category)),
-  );
-  const actionPoints = sortInsightsByRelevance(
-    insights.filter((i) => ACTION_CATEGORIES.has(i.category)),
-  );
+  ).map((i) => i.insight_text);
 
-  // Insights whose category falls outside the three buckets — extract them
-  // into a defensive fallback bucket so we never lose backend data.
-  const otherInsights = sortInsightsByRelevance(
-    insights.filter(
-      (i) => !STRATEGIC_CATEGORIES.has(i.category) && !ACTION_CATEGORIES.has(i.category),
-    ),
-  );
-
-  const totalInsights =
-    topicsTreated.length +
-    strategicImplications.length +
-    actionPoints.length +
-    otherInsights.length;
+  const totalInsights = topicsTreated.length + strategicImplications.length;
 
   return (
     <View style={styles.root}>
@@ -176,7 +123,7 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
         icon="document-text"
         titlePrefix="Detalle"
         titleAccent="Documento"
-        showBack={isMobile}
+        showBack
         onBack={() => goBackOrHome()}
       />
 
@@ -254,11 +201,11 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
           ) : null}
 
           {/* ——— RESUMEN EJECUTIVO ——— */}
-          {primarySummary ? (
+          {primarySummaryText ? (
             <View style={styles.editorialBlock}>
               <ThemedText style={styles.sectionTitle}>Resumen ejecutivo</ThemedText>
               <View style={styles.sectionTitleRule} />
-              <ThemedText style={styles.editorialBody}>{primarySummary}</ThemedText>
+              <ThemedText style={styles.editorialBody}>{primarySummaryText}</ThemedText>
             </View>
           ) : null}
 
@@ -274,13 +221,8 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
 
               <View style={styles.sectionTitleRule} />
 
-              <ThemedText style={styles.insightsLegend}>
-                Cada insight incluye su nivel de urgencia, la cita literal del documento y la
-                fiabilidad con la que el agente lo interpretó.
-              </ThemedText>
-
               <View style={styles.insightsList}>
-                {/* 1. Temas tratados — lista limpia, sin metadatos */}
+                {/* 1. Temas tratados */}
                 <MeetingSummarySection
                   index={1}
                   icon="list-outline"
@@ -290,38 +232,18 @@ export function SourceDetailContent({ sourceId }: SourceDetailContentProps) {
                   emptyMessage="Sin especificar"
                 />
 
-                {/* 2. Implicaciones estratégicas — cards ricos */}
-                <SourceInsightsBucket
+                {/* 2. Implicaciones estratégicas — bullets simples, sin
+                    severidad/fiabilidad/extracto. Decisión del CEO: el
+                    usuario aún no confía en cómo el agente puntúa, así que
+                    sólo mostramos el insight_text como lista plana. */}
+                <MeetingSummarySection
                   index={2}
                   icon="compass-outline"
                   iconColor={SemanticColors.success}
                   title="Implicaciones estratégicas"
-                  insights={strategicImplications}
+                  items={strategicImplications}
                   emptyMessage="Sin especificar"
                 />
-
-                {/* 3. Puntos de acción — cards ricos + Responsables/Fecha */}
-                <SourceInsightsBucket
-                  index={3}
-                  icon="arrow-forward-circle-outline"
-                  iconColor={SemanticColors.info}
-                  title="Puntos de acción"
-                  insights={actionPoints}
-                  emptyMessage="Sin definir"
-                  showActionMeta
-                />
-
-                {/* 4. Otros señales (defensive: insights fuera de las 3 categorías) */}
-                {otherInsights.length > 0 ? (
-                  <SourceInsightsBucket
-                    index={4}
-                    icon="sparkles-outline"
-                    iconColor={SemanticColors.warning}
-                    title="Otras señales detectadas"
-                    insights={otherInsights}
-                    emptyMessage="Sin especificar"
-                  />
-                ) : null}
               </View>
             </View>
           ) : null}
@@ -509,9 +431,9 @@ const styles = StyleSheet.create({
   /*  TÍTULOS DE SECCIÓN (compartido)             */
   /* ═══════════════════════════════════════════ */
   sectionTitle: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 26,
-    lineHeight: 30,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 22,
+    lineHeight: 28,
     color: SemanticColors.textPrimary,
     letterSpacing: -0.4,
   },
@@ -549,22 +471,12 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   insightsCountBig: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 48,
-    lineHeight: 50,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 28,
+    lineHeight: 32,
     color: SemanticColors.success,
-    letterSpacing: -1.5,
+    letterSpacing: -0.8,
     fontVariant: ["tabular-nums"],
-  },
-  insightsLegend: {
-    fontFamily: Fonts.montserrat,
-    fontSize: 12,
-    lineHeight: 18,
-    color: SemanticColors.textMuted,
-    letterSpacing: 0.1,
-    fontStyle: "italic",
-    paddingTop: 2,
-    paddingBottom: Spacing.one,
   },
   insightsList: {
     paddingTop: Spacing.two,

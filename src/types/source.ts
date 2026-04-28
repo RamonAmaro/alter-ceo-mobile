@@ -56,16 +56,7 @@ export interface SourceSummaryOut {
   page_start?: number | null;
   page_end?: number | null;
   summary_text: string;
-  metadata?: Record<string, unknown>;
-  created_at?: string | null;
-}
-
-export interface SourceChunk {
-  chunk_id: number;
-  chunk_index: number;
-  chunk_text: string;
-  token_count?: number | null;
-  extraction_method?: string | null;
+  topics?: string[];
   metadata?: Record<string, unknown>;
   created_at?: string | null;
 }
@@ -127,12 +118,9 @@ export interface SourceDetailResponse {
   storage_bucket?: string | null;
   storage_key?: string | null;
   error_message?: string | null;
-  strategy_plan?: Record<string, unknown> | null;
-  extraction_metadata?: Record<string, unknown> | null;
   created_at?: string | null;
   updated_at?: string | null;
 
-  chunks: SourceChunk[];
   summaries: SourceSummaryOut[];
   entities: SourceEntity[];
   tables: SourceTable[];

@@ -16,14 +16,13 @@ import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import * as meetingService from "@/services/meeting-service";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { createPoller } from "@/utils/create-poller";
 import { formatDurationSeconds } from "@/utils/format-date";
 import { goBackOrHome } from "@/utils/navigation";
 
-import { MeetingAlertsSection } from "./meeting-alerts-section";
+import { MeetingActionPointsSection } from "./meeting-action-points-section";
 import { MeetingEntitiesSection } from "./meeting-entities-section";
 import { MeetingSummarySection } from "./meeting-summary-section";
 import { MeetingTranscriptSection } from "./meeting-transcript-section";
@@ -70,6 +69,30 @@ function statusLabel(status: string): string {
   if (status === "UPLOADED") return "SUBIDO";
   if (status === "PENDING_UPLOAD") return "PENDIENTE";
   return status.toUpperCase();
+}
+
+// The backend's meeting summary occasionally repeats the headline as the
+// first line (or first sentence) of summary_text. When that happens we hide
+// the headline to avoid showing the same phrase twice. Comparison is
+// accent/case/punctuation-insensitive so cosmetic differences don't fool us.
+function normaliseForCompare(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function isHeadlineRedundant(headline: string, summaryText: string): boolean {
+  const h = normaliseForCompare(headline);
+  if (!h) return true;
+  const s = normaliseForCompare(summaryText);
+  if (!s) return false;
+  if (s.startsWith(h)) return true;
+  const firstSentence = s.split(/[.!?]/, 1)[0]?.trim() ?? "";
+  return firstSentence === h;
 }
 
 function processingStageLabel(stage: string | null | undefined): string | null {
@@ -122,7 +145,6 @@ interface InsightSection {
 
 export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const insets = useSafeAreaInsets();
-  const { isMobile } = useResponsiveLayout();
   const meeting = useMeetingStore((s) => s.activeMeeting);
   const activeSource = useMeetingStore((s) => s.activeSource);
   const isLoading = useMeetingStore((s) => s.isLoading);
@@ -192,9 +214,22 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
   const decisions = summary?.decisions ?? [];
   const blockers = summary?.blockers ?? [];
   const nextSteps = summary?.next_steps ?? [];
-  const topics = summary?.topics_discussed ?? [];
 
-  const insightSections: InsightSection[] = summary
+  // Resumen ejecutivo and Temas tratados now live in the linked source —
+  // both meetings and PDFs are sourced through v1/source/{id}, so this
+  // matches what the document detail screen renders.
+  const summaries = activeSource?.summaries ?? [];
+  const sourceSummary = summaries.find((s) => s.summary_type === "meeting") ?? summaries[0];
+  const executiveSummaryText = sourceSummary?.summary_text ?? "";
+  const topics = sourceSummary?.topics ?? [];
+
+  const headline = summary?.headline ?? "";
+  const showHeadline = !!headline && !isHeadlineRedundant(headline, executiveSummaryText);
+
+  // PDF order: Temas tratados → Bloqueos → Decisiones → Puntos de acción.
+  // The first three are simple lists; "Puntos de acción" gets the richer
+  // Responsables / Fecha límite layout (same as source-detail).
+  const flatInsightSections: InsightSection[] = summary
     ? [
         {
           key: "topics",
@@ -220,22 +255,13 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           items: decisions,
           emptyMessage: "Sin especificar",
         },
-        {
-          key: "next_steps",
-          icon: "arrow-forward-circle-outline",
-          iconColor: SemanticColors.info,
-          title: "Puntos de acción",
-          items: nextSteps,
-          emptyMessage: "Sin definir",
-        },
       ]
     : [];
 
   const totalInsights = decisions.length + blockers.length + nextSteps.length + topics.length;
 
   const entities = activeSource?.entities ?? [];
-  const alerts = activeSource?.insights ?? [];
-  const hasSourceData = sourceStatus === "ready" && (entities.length > 0 || alerts.length > 0);
+  const hasSourceData = sourceStatus === "ready" && entities.length > 0;
 
   function handleStartEditTitle(): void {
     if (!meeting) return;
@@ -292,7 +318,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
         icon="document-text"
         titlePrefix="Detalle"
         titleAccent="Reunión"
-        showBack={isMobile}
+        showBack
         onBack={() => goBackOrHome()}
       />
 
@@ -313,20 +339,6 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           {/*  HERO                                 */}
           {/* ———————————————————————————————————— */}
           <View style={styles.hero}>
-            <View style={styles.heroStatusRow}>
-              <View style={styles.statusPill}>
-                <View style={[styles.statusDot, { backgroundColor: sColor }]} />
-                <ThemedText style={[styles.statusText, { color: sColor }]}>
-                  {statusLabel(meeting.status)}
-                </ThemedText>
-              </View>
-              {stageLabel ? (
-                <ThemedText style={styles.heroStage} numberOfLines={1}>
-                  {stageLabel}
-                </ThemedText>
-              ) : null}
-            </View>
-
             {isEditingTitle ? (
               <View style={styles.titleEditColumn}>
                 <View style={styles.titleEditWrap}>
@@ -342,6 +354,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
                     multiline
                     editable={!isSavingTitle}
                     maxLength={300}
+                    underlineColorAndroid="transparent"
                   />
                   <View style={styles.titleEditActions}>
                     <TouchableOpacity
@@ -389,11 +402,30 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
               </View>
             )}
 
-            <ThemedText style={styles.heroDuration}>{dur}</ThemedText>
+            {/* Hero hierarchy (CEO spec): Título grande → Duración menor →
+                Fecha un poco más grande. Status and duration share a discreet
+                top line; the date sits below at a larger size as a deliberate
+                anchor for the user. */}
+            <View style={styles.heroMetaRow}>
+              <View style={styles.statusPill}>
+                <View style={[styles.statusDot, { backgroundColor: sColor }]} />
+                <ThemedText style={[styles.statusText, { color: sColor }]}>
+                  {statusLabel(meeting.status)}
+                </ThemedText>
+              </View>
+              <View style={styles.heroMetaDivider} />
+              <ThemedText style={styles.heroMetaSmall}>{dur}</ThemedText>
+            </View>
 
-            <ThemedText style={styles.heroDate}>
+            <ThemedText style={styles.heroDate} numberOfLines={1}>
               {formatDate(meeting.created_at)} · {formatTime(meeting.created_at)}
             </ThemedText>
+
+            {stageLabel ? (
+              <ThemedText style={styles.heroStage} numberOfLines={1}>
+                {stageLabel}
+              </ThemedText>
+            ) : null}
           </View>
 
           {/* ——— ERROR ——— */}
@@ -408,35 +440,33 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           ) : null}
 
           {/* ——— RESUMEN EJECUTIVO ——— */}
-          {summary ? (
+          {executiveSummaryText || showHeadline ? (
             <View style={styles.editorialBlock}>
-              <View style={styles.editorialRail} />
-              <View style={styles.editorialContent}>
-                <ThemedText style={styles.editorialEyebrow}>RESUMEN · EJECUTIVO</ThemedText>
-                {summary.headline ? (
-                  <ThemedText style={styles.editorialHeadline}>{summary.headline}</ThemedText>
-                ) : null}
-                <ThemedText style={styles.editorialBody}>{summary.executive_summary}</ThemedText>
-              </View>
+              <ThemedText style={styles.sectionTitle}>Resumen ejecutivo</ThemedText>
+              <View style={styles.sectionTitleRule} />
+              {showHeadline ? (
+                <ThemedText style={styles.editorialHeadline}>{headline}</ThemedText>
+              ) : null}
+              {executiveSummaryText ? (
+                <ThemedText style={styles.editorialBody}>{executiveSummaryText}</ThemedText>
+              ) : null}
             </View>
           ) : null}
 
           {/* ——— INSIGHTS ——— */}
-          {summary && insightSections.length > 0 ? (
+          {summary ? (
             <View style={styles.insightsWrap}>
               <View style={styles.insightsHeader}>
-                <ThemedText style={styles.insightsEyebrow}>
-                  INSIGHTS · CAPTURADOS POR ALTER
-                </ThemedText>
+                <ThemedText style={styles.sectionTitle}>Insights</ThemedText>
                 <ThemedText style={styles.insightsCountBig}>
                   {String(totalInsights).padStart(2, "0")}
                 </ThemedText>
               </View>
 
-              <View style={styles.insightsRule} />
+              <View style={styles.sectionTitleRule} />
 
               <View style={styles.insightsList}>
-                {insightSections.map((section, idx) => (
+                {flatInsightSections.map((section, idx) => (
                   <MeetingSummarySection
                     key={section.key}
                     index={idx + 1}
@@ -447,12 +477,12 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
                     emptyMessage={section.emptyMessage}
                   />
                 ))}
+
+                {/* 04 — Puntos de acción con Responsables / Fecha límite */}
+                <MeetingActionPointsSection index={4} items={nextSteps} />
               </View>
             </View>
           ) : null}
-
-          {/* ——— ALERTAS DEL AGENTE (source insights) ——— */}
-          {hasSourceData && alerts.length > 0 ? <MeetingAlertsSection insights={alerts} /> : null}
 
           {/* ——— ENTIDADES DETECTADAS ——— */}
           {hasSourceData && entities.length > 0 ? (
@@ -516,20 +546,26 @@ const styles = StyleSheet.create({
   hero: {
     gap: Spacing.two,
   },
-  heroStatusRow: {
+  heroMetaRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  heroMetaDivider: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
   heroStage: {
-    flexShrink: 1,
-    fontFamily: Fonts.montserratSemiBold,
+    fontFamily: Fonts.montserratMedium,
+    fontStyle: "italic",
     fontSize: 11,
-    lineHeight: 14,
-    color: SemanticColors.textMuted,
-    letterSpacing: 0.3,
-    textAlign: "right",
+    lineHeight: 16,
+    color: SemanticColors.textDisabled,
+    letterSpacing: 0.2,
+    marginTop: 4,
   },
   statusPill: {
     flexDirection: "row",
@@ -547,21 +583,20 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     letterSpacing: 2,
   },
-  heroDuration: {
+  heroMetaSmall: {
     fontFamily: Fonts.montserratSemiBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: SemanticColors.textSecondaryLight,
-    letterSpacing: 0.2,
-    marginTop: Spacing.one,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.textMuted,
+    letterSpacing: 1.2,
   },
   heroDate: {
-    fontFamily: Fonts.montserratMedium,
+    fontFamily: Fonts.montserratSemiBold,
     fontSize: 14,
-    lineHeight: 20,
-    color: SemanticColors.textPrimary,
-    letterSpacing: 0.2,
-    marginTop: 2,
+    lineHeight: 18,
+    color: SemanticColors.textSecondaryLight,
+    letterSpacing: 0.6,
+    marginTop: Spacing.one,
   },
   titleRow: {
     flexDirection: "row",
@@ -571,11 +606,10 @@ const styles = StyleSheet.create({
   heroTitle: {
     flex: 1,
     fontFamily: Fonts.montserratBold,
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: 30,
+    lineHeight: 36,
     color: SemanticColors.textPrimary,
-    letterSpacing: -0.9,
-    marginTop: 2,
+    letterSpacing: -0.8,
   },
   titleEditTrigger: {
     width: 32,
@@ -665,50 +699,49 @@ const styles = StyleSheet.create({
   },
 
   /* ═══════════════════════════════════════════ */
+  /*  TÍTULOS DE SECCIÓN (compartido)             */
+  /* ═══════════════════════════════════════════ */
+  sectionTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.4,
+  },
+  sectionTitleRule: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    marginTop: Spacing.one,
+    marginBottom: Spacing.two,
+  },
+
+  /* ═══════════════════════════════════════════ */
   /*  RESUMEN EJECUTIVO                           */
   /* ═══════════════════════════════════════════ */
   editorialBlock: {
-    flexDirection: "row",
-    gap: Spacing.three,
-  },
-  editorialRail: {
-    width: 2,
-    backgroundColor: SemanticColors.success,
-    borderRadius: 1,
-  },
-  editorialContent: {
-    flex: 1,
-    gap: Spacing.two,
-  },
-  editorialEyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: SemanticColors.success,
-    letterSpacing: 2.4,
+    gap: 0,
   },
   editorialHeadline: {
     fontFamily: Fonts.montserratBold,
-    fontSize: 22,
-    lineHeight: 30,
+    fontSize: 20,
+    lineHeight: 28,
     color: SemanticColors.textPrimary,
-    letterSpacing: -0.5,
-    marginTop: 2,
+    letterSpacing: -0.4,
+    marginBottom: Spacing.two,
   },
   editorialBody: {
     fontFamily: Fonts.montserrat,
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 22,
     color: SemanticColors.textSecondaryLight,
     letterSpacing: 0.1,
-    marginTop: 2,
   },
 
   /* ═══════════════════════════════════════════ */
   /*  INSIGHTS                                    */
   /* ═══════════════════════════════════════════ */
   insightsWrap: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   insightsHeader: {
     flexDirection: "row",
@@ -716,26 +749,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: Spacing.three,
   },
-  insightsEyebrow: {
-    flex: 1,
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
-    paddingBottom: 4,
-  },
   insightsCountBig: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 48,
-    lineHeight: 50,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 28,
+    lineHeight: 32,
     color: SemanticColors.success,
-    letterSpacing: -1.5,
+    letterSpacing: -0.8,
     fontVariant: ["tabular-nums"],
-  },
-  insightsRule: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.1)",
   },
   insightsList: {
     paddingTop: Spacing.two,
