@@ -53,7 +53,13 @@ export function ScreenHeader({
   return (
     <View style={[styles.container, isMobile && { paddingTop: topInset + Spacing.two }]}>
       {shouldShowBack && (
-        <Pressable onPress={handleBack} style={styles.backButton}>
+        <Pressable
+          onPress={handleBack}
+          style={styles.backButton}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+        >
           <Ionicons name="arrow-back" size={20} color={SemanticColors.textPrimary} />
         </Pressable>
       )}
