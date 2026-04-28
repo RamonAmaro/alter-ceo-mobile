@@ -172,6 +172,7 @@ export function MeetingListItem({
                   autoCorrect={false}
                   editable={!isSaving}
                   maxLength={300}
+                  underlineColorAndroid="transparent"
                 />
                 <TouchableOpacity
                   onPress={cancelEdit}

@@ -354,6 +354,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
                     multiline
                     editable={!isSavingTitle}
                     maxLength={300}
+                    underlineColorAndroid="transparent"
                   />
                   <View style={styles.titleEditActions}>
                     <TouchableOpacity
@@ -439,7 +440,7 @@ export function MeetingDetailContent({ meetingId }: MeetingDetailContentProps) {
           ) : null}
 
           {/* ——— RESUMEN EJECUTIVO ——— */}
-          {summary || executiveSummaryText ? (
+          {executiveSummaryText || showHeadline ? (
             <View style={styles.editorialBlock}>
               <ThemedText style={styles.sectionTitle}>Resumen ejecutivo</ThemedText>
               <View style={styles.sectionTitleRule} />

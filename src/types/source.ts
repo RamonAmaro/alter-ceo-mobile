@@ -56,7 +56,7 @@ export interface SourceSummaryOut {
   page_start?: number | null;
   page_end?: number | null;
   summary_text: string;
-  topics: string[];
+  topics?: string[];
   metadata?: Record<string, unknown>;
   created_at?: string | null;
 }
