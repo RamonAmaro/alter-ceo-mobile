@@ -73,7 +73,7 @@ export default function SignUpScreen() {
       } else if (error instanceof ApiError && error.status === 409) {
         setErrors((prev) => ({
           ...prev,
-          email: "Ya existe una cuenta con este e-mail",
+          email: "Ya existe una cuenta con este correo",
         }));
       } else {
         setApiError(parseAuthError(error));

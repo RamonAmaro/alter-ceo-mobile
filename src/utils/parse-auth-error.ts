@@ -9,10 +9,10 @@ export function parseAuthError(error: unknown): string {
       return error.message;
     }
     if (error.status === 401 || error.status === 403) {
-      return "Email o contraseña incorrectos";
+      return "Correo o contraseña incorrectos";
     }
     if (error.status === 409) {
-      return "Ya existe una cuenta con este e-mail";
+      return "Ya existe una cuenta con este correo";
     }
     if (error.status === 422) {
       return "Por favor, revisa los datos introducidos";
