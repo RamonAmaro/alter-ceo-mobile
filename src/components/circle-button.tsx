@@ -163,14 +163,20 @@ export function CircleButton({
           {isBusy ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Svg
-              width={iconSize}
-              height={iconSize}
-              viewBox="0 0 139 140"
-              fill="none"
+            <View
+              style={{
+                position: "absolute",
+                top: iconInset,
+                left: iconInset,
+                width: iconSize,
+                height: iconSize,
+              }}
+              pointerEvents="none"
             >
-              {icon}
-            </Svg>
+              <Svg width={iconSize} height={iconSize} viewBox="0 0 139 140" fill="none">
+                {icon}
+              </Svg>
+            </View>
           )}
         </Animated.View>
       </TouchableOpacity>
