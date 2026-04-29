@@ -1,20 +1,23 @@
+import { BusinessSummary } from "@/components/my-plan/business-summary";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, Spacing } from "@/constants/theme";
+import type { PlanBusinessSummary } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface DiagnosisSectionProps {
-  introduction: string;
+  introduction?: string;
+  summary?: PlanBusinessSummary | null;
 }
 
-export function DiagnosisSection({ introduction }: DiagnosisSectionProps) {
+export function DiagnosisSection({ introduction, summary }: DiagnosisSectionProps) {
   const trimmedIntro = introduction?.trim();
-  if (!trimmedIntro) return null;
 
   return (
     <View style={styles.container}>
       <SectionHeader eyebrow="ESTADO · ACTUAL" title="Diagnóstico estratégico" />
-      <ThemedText style={styles.intro}>{trimmedIntro}</ThemedText>
+      {trimmedIntro ? <ThemedText style={styles.intro}>{trimmedIntro}</ThemedText> : null}
+      <BusinessSummary summary={summary} />
     </View>
   );
 }

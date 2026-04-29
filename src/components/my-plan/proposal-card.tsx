@@ -32,9 +32,8 @@ export function ProposalCard({ index, item }: ProposalCardProps) {
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <View style={styles.indexBadge}>
-          <ThemedText style={styles.indexLabel}>{indexLabel}</ThemedText>
-        </View>
+        <ThemedText style={styles.indexLabel}>{indexLabel}</ThemedText>
+        <View style={styles.indexDot} />
         {title ? (
           <ThemedText style={styles.title}>{title}</ThemedText>
         ) : (
@@ -67,37 +66,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.two,
   },
-  indexBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "rgba(0,255,132,0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   indexLabel: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 12,
-    lineHeight: 14,
-    color: SemanticColors.success,
-    letterSpacing: -0.2,
-  },
-  title: {
-    flex: 1,
-    fontFamily: Fonts.montserratBold,
-    fontSize: 15,
-    lineHeight: 22,
-    color: SemanticColors.textPrimary,
-  },
-  proposalTag: {
-    flex: 1,
     fontFamily: Fonts.montserratBold,
     fontSize: 11,
     lineHeight: 14,
-    color: SemanticColors.success,
+    color: "rgba(0,255,132,0.75)",
+    letterSpacing: 0.4,
+  },
+  indexDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
+  title: {
+    flex: 1,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.92)",
+  },
+  proposalTag: {
+    flex: 1,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.55)",
     letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
   body: {
     gap: Spacing.two,

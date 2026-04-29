@@ -1,4 +1,3 @@
-import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import type { PlanBusinessSummary } from "@/types/plan";
@@ -8,7 +7,6 @@ import { StyleSheet, View } from "react-native";
 
 interface BusinessSummaryProps {
   summary?: PlanBusinessSummary | null;
-  introduction?: string;
 }
 
 interface MetricProps {
@@ -25,66 +23,42 @@ function Metric({ caption, value }: MetricProps) {
   );
 }
 
-function isMeaningful(value?: string | null): value is string {
-  if (!value) return false;
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  const lowered = trimmed.toLowerCase();
-  if (lowered === "desconocido" || lowered === "sin negocio" || lowered === "n/a") return false;
-  return true;
+function hasText(value?: string | null): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
-export function BusinessSummary({ summary, introduction }: BusinessSummaryProps) {
+export function BusinessSummary({ summary }: BusinessSummaryProps) {
   const sector = summary?.sector;
   const products = summary?.productos_servicios_principales;
   const monthly = summary?.facturacion_mensual_aproximada;
   const annual = summary?.facturacion_anual_aproximada;
   const team = teamSizeLabel(summary?.team_size_range, summary?.numero_personas_equipo);
-  const trimmedIntro = introduction?.trim();
 
   const metrics: MetricProps[] = [];
-  if (isMeaningful(sector)) metrics.push({ caption: "Sector", value: sector.trim() });
-  if (isMeaningful(products)) {
+  if (hasText(sector)) metrics.push({ caption: "Sector", value: sector.trim() });
+  if (hasText(products)) {
     metrics.push({ caption: "Producto o servicio", value: products.trim() });
   }
-  if (typeof monthly === "number" && monthly > 0) {
+  if (typeof monthly === "number") {
     metrics.push({ caption: "Facturación mensual", value: formatEur(monthly) });
   }
-  if (typeof annual === "number" && annual > 0) {
+  if (typeof annual === "number") {
     metrics.push({ caption: "Facturación anual", value: formatEur(annual) });
   }
-  if (isMeaningful(team)) metrics.push({ caption: "Equipo", value: team });
+  if (hasText(team)) metrics.push({ caption: "Equipo", value: team });
 
-  if (!trimmedIntro && metrics.length === 0) return null;
+  if (metrics.length === 0) return null;
 
   return (
-    <View style={styles.container}>
-      <SectionHeader eyebrow="RESUMEN · DEL NEGOCIO" title="Tu negocio hoy" />
-
-      {trimmedIntro ? <ThemedText style={styles.intro}>{trimmedIntro}</ThemedText> : null}
-
-      {metrics.length > 0 ? (
-        <View style={styles.grid}>
-          {metrics.map((m) => (
-            <Metric key={m.caption} caption={m.caption} value={m.value} />
-          ))}
-        </View>
-      ) : null}
+    <View style={styles.grid}>
+      {metrics.map((m) => (
+        <Metric key={m.caption} caption={m.caption} value={m.value} />
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.three,
-  },
-  intro: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 22,
-    color: SemanticColors.textSecondaryLight,
-    paddingHorizontal: Spacing.one,
-  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -102,15 +76,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metricCaption: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 11,
-    lineHeight: 14,
-    color: "rgba(255,255,255,0.45)",
-  },
-  metricValue: {
     fontFamily: Fonts.montserratBold,
     fontSize: 15,
     lineHeight: 22,
     color: SemanticColors.textPrimary,
+  },
+  metricValue: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.65)",
   },
 });

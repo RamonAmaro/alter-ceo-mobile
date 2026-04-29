@@ -22,22 +22,22 @@ export function getPlanFlags(plan: PlanData): PlanFlags {
   const leadership = plan.plan_liderazgo;
   const summary = diagnosis?.resumen_negocio;
 
-  const hasSummary = Boolean(
-    plan.introduccion_general ||
-      summary?.sector ||
-      summary?.productos_servicios_principales ||
-      summary?.facturacion_mensual_aproximada ||
-      summary?.facturacion_anual_aproximada ||
+  const hasDiagnosisData = Boolean(
+    diagnosis?.mensaje_introduccion?.trim() ||
+      summary?.sector?.trim() ||
+      summary?.productos_servicios_principales?.trim() ||
+      typeof summary?.facturacion_mensual_aproximada === "number" ||
+      typeof summary?.facturacion_anual_aproximada === "number" ||
       summary?.team_size_range ||
-      summary?.numero_personas_equipo,
+      typeof summary?.numero_personas_equipo === "number",
   );
 
   const pillars = diagnosis?.seis_pilares ?? [];
   const hasIndicators = pillars.some((p) => p?.nombre?.trim() && p?.nivel);
 
   return {
-    summary: hasSummary,
-    diagnosis: Boolean(diagnosis?.mensaje_introduccion),
+    summary: Boolean(plan.introduccion_general?.trim()),
+    diagnosis: hasDiagnosisData,
     indicators: hasIndicators,
     areas: Boolean(diagnosis?.analisis_por_areas),
     blockers: (diagnosis?.bloqueos_detectados?.length ?? 0) > 0,

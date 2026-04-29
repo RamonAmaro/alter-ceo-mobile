@@ -2,12 +2,12 @@ import type { PlanData } from "@/types/plan";
 
 import { AreaAnalysisSection } from "./area-analysis-section";
 import { BlockersList } from "./blockers-list";
-import { BusinessSummary } from "./business-summary";
 import { DiagnosisSection } from "./diagnosis-section";
 import { FirstStepSection } from "./first-step-section";
 import { IndicatorsSection } from "./indicators-section";
 import { OpportunitiesList } from "./opportunities-list";
 import { PlanConclusion } from "./plan-conclusion";
+import { PlanIntroSection } from "./plan-intro-section";
 import { PlanSection } from "./plan-section";
 import type { PlanFlags, PlanSectionKey } from "./plan-sections-config";
 import { SalesSection } from "./sales-section";
@@ -57,20 +57,17 @@ function buildSectionDescriptors(
     {
       key: "summary",
       visible: flags.summary,
-      render: () => (
-        <BusinessSummary
-          summary={diagnosis?.resumen_negocio}
-          introduction={plan.introduccion_general}
-        />
-      ),
+      render: () => <PlanIntroSection introduction={plan.introduccion_general} />,
     },
     {
       key: "diagnosis",
       visible: flags.diagnosis,
-      render: () =>
-        diagnosis?.mensaje_introduccion ? (
-          <DiagnosisSection introduction={diagnosis.mensaje_introduccion} />
-        ) : null,
+      render: () => (
+        <DiagnosisSection
+          introduction={diagnosis?.mensaje_introduccion}
+          summary={diagnosis?.resumen_negocio}
+        />
+      ),
     },
     {
       key: "indicators",
