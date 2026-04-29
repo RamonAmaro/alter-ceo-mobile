@@ -715,11 +715,11 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   editorialHeadline: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 20,
-    lineHeight: 28,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 16,
+    lineHeight: 22,
     color: SemanticColors.textPrimary,
-    letterSpacing: -0.4,
+    letterSpacing: -0.1,
     marginBottom: Spacing.two,
   },
   editorialBody: {
