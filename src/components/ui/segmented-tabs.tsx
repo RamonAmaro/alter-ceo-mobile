@@ -24,21 +24,27 @@ interface SegmentedTabsProps {
 }
 
 export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProps) {
-  const [widths, setWidths] = useState<number[]>([]);
+  const [widths, setWidths] = useState<number[]>(() => new Array(tabs.length).fill(0));
   const translateX = useRef(new Animated.Value(0)).current;
   const indicatorWidth = useRef(new Animated.Value(0)).current;
+  const hasInitializedRef = useRef(false);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
+  const allMeasured = widths.length === tabs.length && widths.every((w) => w > 0);
   const activeWidth = widths[activeIndex] ?? 0;
-  const activeOffset = widths.slice(0, activeIndex).reduce((acc, w) => acc + w, 0);
+  let activeOffset = 0;
+  for (let i = 0; i < activeIndex; i++) activeOffset += widths[i] ?? 0;
 
   useEffect(() => {
-    if (widths.length !== tabs.length) return;
-    // `Animated.parallel` with mixed drivers (one native, one JS) crashes on
-    // iOS with "Attempting to run JS driven animation on animated node that
-    // has been moved to 'native' earlier". `width` isn't supported by the
-    // native driver, so run BOTH springs on the JS driver — visually
-    // identical, no mixed-driver crash.
+    if (!allMeasured) return;
+    // `width` isn't supported by the native driver, so both animated values
+    // run on the JS driver. Mixing drivers in `Animated.parallel` crashes iOS.
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      translateX.setValue(activeOffset);
+      indicatorWidth.setValue(activeWidth);
+      return;
+    }
     Animated.spring(translateX, {
       toValue: activeOffset,
       useNativeDriver: false,
@@ -51,15 +57,8 @@ export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProp
       speed: 20,
       bounciness: 6,
     }).start();
-  }, [
-    activeIndex,
-    activeOffset,
-    activeWidth,
-    widths.length,
-    tabs.length,
-    translateX,
-    indicatorWidth,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex, activeOffset, activeWidth, allMeasured]);
 
   function handleLayout(index: number, e: LayoutChangeEvent): void {
     const width = e.nativeEvent.layout.width;
@@ -74,7 +73,7 @@ export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProp
   return (
     <View style={styles.outer}>
       <View style={styles.track}>
-        {widths.length === tabs.length ? (
+        {allMeasured ? (
           <Animated.View
             style={[
               styles.indicator,
@@ -175,14 +174,13 @@ const styles = StyleSheet.create({
     cursor: "pointer" as never,
   },
   label: {
-    fontFamily: Fonts.montserratSemiBold,
+    fontFamily: Fonts.montserratBold,
     fontSize: 13,
     lineHeight: 16,
     color: SemanticColors.textMuted,
     letterSpacing: 0.2,
   },
   labelActive: {
-    fontFamily: Fonts.montserratBold,
     color: SemanticColors.onSuccess,
   },
   labelHover: {
