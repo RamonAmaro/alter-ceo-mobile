@@ -17,7 +17,7 @@ interface RecordButtonProps {
   finishDisabled?: boolean;
 }
 
-const CONTAINER_HEIGHT = 120;
+const CONTAINER_HEIGHT = 150;
 const TRANSITION_MS = 200;
 
 export function RecordButton({

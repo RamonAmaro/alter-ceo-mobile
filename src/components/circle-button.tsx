@@ -27,6 +27,7 @@ export interface CircleButtonProps {
 
 const BORDER_RATIO = 0.018;
 const MIN_BORDER = 1;
+const ICON_INSET_RATIO = 0.18;
 
 function buildShadow(color: string): object {
   return (
@@ -122,6 +123,8 @@ export function CircleButton({
 
   const radius = size / 2;
   const shadow = buildShadow(colors[0]);
+  const iconInset = Math.round(size * ICON_INSET_RATIO);
+  const iconSize = size - iconInset * 2;
 
   return (
     <View style={styles.actionWrapper}>
@@ -149,22 +152,21 @@ export function CircleButton({
             colors={colors}
             start={{ x: 0.2, y: 0.15 }}
             end={{ x: 0.85, y: 0.95 }}
-            style={StyleSheet.absoluteFill}
+            style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
           />
           <LinearGradient
             colors={["rgba(255,255,255,0.28)", "rgba(255,255,255,0)"]}
             start={{ x: 0.3, y: 0 }}
             end={{ x: 0.5, y: 0.6 }}
-            style={StyleSheet.absoluteFill}
+            style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
           />
           {isBusy ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Svg
-              width={size}
-              height={size}
+              width={iconSize}
+              height={iconSize}
               viewBox="0 0 139 140"
-              style={StyleSheet.absoluteFill}
               fill="none"
             >
               {icon}

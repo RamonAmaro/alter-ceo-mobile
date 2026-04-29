@@ -228,6 +228,7 @@ export default function QuestionsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           <QuestionHeader planLabel={planLabel} onBack={handleBack} />
 

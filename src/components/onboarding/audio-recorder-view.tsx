@@ -146,6 +146,7 @@ export function AudioRecorderView({
         contentContainerStyle={styles.topContent}
         showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
       >
         <ThemedText type="headingLg" style={styles.whiteText}>
           {mode === "writing"
@@ -176,6 +177,20 @@ export function AudioRecorderView({
               placeholderTextColor={SemanticColors.textPlaceholder}
             />
             <Pressable
+              onPress={handleConfirmWritten}
+              disabled={!writtenIsValid || isConfirming}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                (!writtenIsValid || isConfirming) && styles.confirmButtonDisabled,
+                pressed && writtenIsValid && !isConfirming && styles.confirmButtonPressed,
+              ]}
+            >
+              <Ionicons name="checkmark" size={18} color={SemanticColors.onSuccess} />
+              <ThemedText type="labelMd" style={styles.confirmButtonLabel}>
+                Confirmar respuesta
+              </ThemedText>
+            </Pressable>
+            <Pressable
               onPress={handleSwitchToAudio}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={({ pressed }) => [styles.switchLink, pressed && styles.switchLinkPressed]}
@@ -189,33 +204,18 @@ export function AudioRecorderView({
         ) : null}
       </ScrollView>
 
-      {mode === "writing" ? (
-        <View style={styles.writingFooter}>
-          <Pressable
-            onPress={handleConfirmWritten}
-            disabled={!writtenIsValid || isConfirming}
-            style={({ pressed }) => [
-              styles.confirmButton,
-              (!writtenIsValid || isConfirming) && styles.confirmButtonDisabled,
-              pressed && writtenIsValid && !isConfirming && styles.confirmButtonPressed,
-            ]}
-          >
-            <Ionicons name="checkmark" size={18} color={SemanticColors.onSuccess} />
-            <ThemedText type="labelMd" style={styles.confirmButtonLabel}>
-              Confirmar respuesta
-            </ThemedText>
-          </Pressable>
-        </View>
-      ) : (
+      {mode === "writing" ? null : (
         <View style={styles.stageWrap}>
           <View style={styles.stage}>
-            <LinearGradient
-              colors={["rgba(0,255,132,0.14)", "rgba(0,255,132,0.04)", "transparent"]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={styles.stageGlow}
-              pointerEvents="none"
-            />
+            <View style={styles.stageGlowClip} pointerEvents="none">
+              <LinearGradient
+                colors={["rgba(0,255,132,0.14)", "rgba(0,255,132,0.04)", "transparent"]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.stageGlow}
+                pointerEvents="none"
+              />
+            </View>
             <AudioRecorderStatus
               recordState={recordState}
               elapsedMs={elapsedMs}
@@ -321,7 +321,8 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   writingInput: {
-    minHeight: 160,
+    minHeight: 120,
+    maxHeight: 240,
     backgroundColor: SemanticColors.glassBackground,
     borderRadius: 12,
     borderWidth: 1,
@@ -349,21 +350,18 @@ const styles = StyleSheet.create({
     color: SemanticColors.success,
     letterSpacing: 0.4,
   },
-  writingFooter: {
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.three,
-    alignItems: "center",
-  },
   confirmButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    alignSelf: "center",
     gap: Spacing.two,
     backgroundColor: SemanticColors.success,
     borderRadius: 999,
     paddingVertical: 14,
     paddingHorizontal: Spacing.five,
     minWidth: 220,
+    marginTop: Spacing.two,
   },
   confirmButtonPressed: {
     opacity: 0.85,
@@ -377,6 +375,15 @@ const styles = StyleSheet.create({
   stageWrap: {
     marginTop: Spacing.three,
     marginBottom: Spacing.three,
+  },
+  stageGlowClip: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 24,
+    overflow: "hidden",
   },
   stageGlow: {
     position: "absolute",
@@ -396,7 +403,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     alignItems: "center",
     gap: Spacing.three,
-    overflow: "hidden",
   },
   idleHint: {
     flexDirection: "row",
