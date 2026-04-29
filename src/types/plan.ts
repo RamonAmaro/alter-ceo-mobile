@@ -77,9 +77,20 @@ export interface PlanCurrentSituation {
   sistema_captacion?: "Predecible" | "Irregular" | "Boca a boca";
 }
 
+export type TeamSizeRange =
+  | "no_business"
+  | "solo"
+  | "one_to_three"
+  | "four_to_ten"
+  | "eleven_to_thirty"
+  | "thirty_to_sixty"
+  | "sixty_to_hundred"
+  | "over_hundred";
+
 export interface PlanBusinessSummary {
   facturacion_mensual_aproximada?: number;
   facturacion_anual_aproximada?: number;
+  team_size_range?: TeamSizeRange;
   numero_personas_equipo?: number;
   sector?: string;
   productos_servicios_principales?: string;
@@ -101,6 +112,22 @@ export type ExternalPerception =
   | "Debil"
   | "[No disponible con el contexto actual]";
 
+export type PillarLevel =
+  | "Inexistente"
+  | "Debil"
+  | "Basico"
+  | "Aceptable"
+  | "Bueno"
+  | "Referente"
+  | "No se puede evaluar";
+
+export interface PlanPillar {
+  nombre: string;
+  nivel: PillarLevel;
+  resumen?: string;
+  justificacion?: string;
+}
+
 export interface PlanDiagnosis {
   mensaje_introduccion?: string;
   resumen_negocio?: PlanBusinessSummary | null;
@@ -112,32 +139,47 @@ export interface PlanDiagnosis {
   oportunidades_mejora?: PlanOpportunity[];
   introduccion_bloqueos?: string;
   introduccion_oportunidades?: string;
+  seis_pilares?: PlanPillar[] | null;
 }
 
 // ── Sales Plan ──
 
+export interface PlanProposalItem {
+  titulo?: string;
+  descripcion?: string;
+  origen?: string;
+  potencial?: string;
+  guion?: string;
+  puesta_en_marcha?: string;
+  a_quien_va_dirigida?: string;
+  objetivo?: string;
+}
+
 export interface PlanProductImprovement {
-  texto_explicativo: string;
-  diagnostico_cliente_objetivo: string;
-  brecha_mensaje_mercado: string;
-  diferenciacion_funcional: string;
-  diferenciacion_experiencial: string;
-  diferenciacion_estrategica: string;
+  texto_explicativo?: string;
+  diagnostico_cliente_objetivo?: string;
+  brecha_mensaje_mercado?: string;
+  diferenciacion_funcional?: string;
+  diferenciacion_experiencial?: string;
+  diferenciacion_estrategica?: string;
+  propuestas?: PlanProposalItem[];
 }
 
 export interface PlanCustomerAcquisition {
-  texto_explicativo: string;
-  puertas_entrada: string[];
-  acciones_alcance: string[];
-  sistema_seguimiento: string[];
-  explicacion_enfoque: string;
+  texto_explicativo?: string;
+  puertas_entrada?: string[];
+  acciones_alcance?: string[];
+  sistema_seguimiento?: string[];
+  explicacion_enfoque?: string;
+  propuestas?: PlanProposalItem[];
 }
 
 export interface PlanConversionImprovement {
-  texto_explicativo: string;
-  puntos_debiles_actuales: string[];
-  estructura_optimizada: string[];
-  por_que_aumentara_conversion: string;
+  texto_explicativo?: string;
+  puntos_debiles_actuales?: string[];
+  estructura_optimizada?: string[];
+  por_que_aumentara_conversion?: string;
+  propuestas?: PlanProposalItem[];
 }
 
 export interface PlanSales {
@@ -218,4 +260,5 @@ export interface PlanData {
   diagnostico?: PlanDiagnosis;
   plan_ventas?: PlanSales;
   plan_liderazgo?: PlanLeadership;
+  conclusion_express?: string;
 }

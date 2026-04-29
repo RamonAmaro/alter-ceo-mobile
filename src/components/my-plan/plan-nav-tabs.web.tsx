@@ -62,10 +62,9 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {tabs.map((tab, index) => {
+        {tabs.map((tab) => {
           const isActive = tab.key === activeKey;
           const isHovered = tab.key === hoveredKey;
-          const indexLabel = String(index + 1).padStart(2, "0");
           return (
             <Pressable
               key={tab.key}
@@ -75,12 +74,6 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
               onHoverOut={() => setHoveredKey(null)}
               style={styles.tab}
             >
-              <ThemedText
-                style={[styles.tabIndex, isActive && styles.tabIndexActive]}
-                numberOfLines={1}
-              >
-                {indexLabel}
-              </ThemedText>
               <ThemedText
                 style={[
                   styles.tabText,
@@ -124,22 +117,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     paddingBottom: Spacing.three,
     alignItems: "flex-start",
-    gap: 2,
     cursor: "pointer" as never,
     minWidth: 90,
-  },
-  tabIndex: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontStyle: "italic",
-    fontSize: 9,
-    lineHeight: 11,
-    color: "rgba(255,255,255,0.25)",
-    letterSpacing: 1.4,
-    transitionProperty: "color" as never,
-    transitionDuration: "150ms" as never,
-  },
-  tabIndexActive: {
-    color: SemanticColors.success,
   },
   tabText: {
     color: "rgba(255,255,255,0.45)",

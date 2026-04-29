@@ -1,8 +1,6 @@
-import { PlanConclusion } from "@/components/my-plan/plan-conclusion";
 import { PlanNavTabs } from "@/components/my-plan/plan-nav-tabs";
 import { PlanSectionsList } from "@/components/my-plan/plan-sections-list";
 import { ScreenHeader } from "@/components/screen-header";
-import { EyebrowPill } from "@/components/ui/eyebrow-pill";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useSectionScroll } from "@/hooks/use-section-scroll";
@@ -45,13 +43,7 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        <View style={styles.eyebrowWrap}>
-          <EyebrowPill label="MI PLAN · ESTRATÉGICO" />
-        </View>
-
         <PlanSectionsList plan={plan} flags={flags} onSectionLayout={handleSectionLayout} />
-
-        <PlanConclusion />
       </ScrollView>
     </View>
   );
@@ -67,9 +59,5 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.four,
-  },
-  eyebrowWrap: {
-    alignItems: "center",
-    marginBottom: Spacing.four,
   },
 });

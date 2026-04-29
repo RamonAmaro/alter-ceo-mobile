@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Fonts, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 
@@ -11,11 +11,9 @@ export function CheckItem({ text }: CheckItemProps) {
   return (
     <View style={styles.row}>
       <View style={styles.icon}>
-        <Ionicons name="checkmark" size={10} color={SemanticColors.success} />
+        <Ionicons name="checkmark" size={11} color={SemanticColors.success} />
       </View>
-      <ThemedText type="bodyMd" style={styles.text}>
-        {text}
-      </ThemedText>
+      <ThemedText style={styles.text}>{text}</ThemedText>
     </View>
   );
 }
@@ -30,17 +28,17 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 99,
-    backgroundColor: "rgba(0,255,132,0.1)",
+    backgroundColor: "rgba(0,255,132,0.12)",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    marginTop: 2,
+    marginTop: 3,
   },
   text: {
-    color: "rgba(255,255,255,0.8)",
     flex: 1,
-    lineHeight: 22,
-    fontSize: 13,
     fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.82)",
   },
 });
