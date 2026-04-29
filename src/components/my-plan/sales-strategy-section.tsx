@@ -8,6 +8,7 @@ import type {
   PlanCustomerAcquisition,
   PlanProductImprovement,
 } from "@/types/plan";
+import { Fragment } from "react";
 import { StyleSheet, View } from "react-native";
 
 interface SalesStrategySectionProps {
@@ -21,26 +22,38 @@ export function SalesStrategySection({
   customerAcquisition,
   conversionImprovement,
 }: SalesStrategySectionProps) {
-  const hasContent = productImprovement ?? customerAcquisition ?? conversionImprovement;
-  if (!hasContent) return null;
+  const blocks = [
+    productImprovement ? <SalesProductBlock data={productImprovement} /> : null,
+    customerAcquisition ? <SalesAcquisitionBlock data={customerAcquisition} /> : null,
+    conversionImprovement ? <SalesConversionBlock data={conversionImprovement} /> : null,
+  ].filter(Boolean);
+
+  if (blocks.length === 0) return null;
 
   return (
     <View style={styles.container}>
       <SectionHeader
         eyebrow="ESTRATEGIA · DE CRECIMIENTO"
-        title="Plan para"
-        accent="duplicar ventas"
+        title="Plan para duplicar ventas"
       />
 
-      {productImprovement && <SalesProductBlock data={productImprovement} />}
-      {customerAcquisition && <SalesAcquisitionBlock data={customerAcquisition} />}
-      {conversionImprovement && <SalesConversionBlock data={conversionImprovement} />}
+      {blocks.map((block, i) => (
+        <Fragment key={i}>
+          {i > 0 ? <View style={styles.divider} /> : null}
+          {block}
+        </Fragment>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.three,
+    gap: Spacing.four,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginHorizontal: Spacing.one,
   },
 });

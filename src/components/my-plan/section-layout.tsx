@@ -8,17 +8,14 @@ export function SectionBlock({ children }: { children: ReactNode }) {
   return <View style={styles.block}>{children}</View>;
 }
 
+// Divider removed: section-header now provides its own visual frame.
+// Kept as a no-op to avoid breaking imports during transition.
 export function SectionDivider() {
-  return <View style={styles.divider} />;
+  return null;
 }
 
 const styles = StyleSheet.create({
   block: {
-    marginBottom: SECTION_GAP,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
     marginBottom: SECTION_GAP,
   },
 });

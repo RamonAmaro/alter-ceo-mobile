@@ -1,10 +1,12 @@
 import { ItemCard } from "@/components/my-plan/item-card";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import type { PlanBlocker } from "@/types/plan";
 import { deduplicateByTitle } from "@/utils/deduplicate-by-title";
 import { StyleSheet, View } from "react-native";
+
+const BLOCKER_COLOR = "#FF7A45";
 
 interface BlockersListProps {
   introduction?: string;
@@ -12,43 +14,51 @@ interface BlockersListProps {
 }
 
 export function BlockersList({ introduction, blockers }: BlockersListProps) {
-  const unique = deduplicateByTitle(blockers);
+  const unique = deduplicateByTitle(blockers).filter(
+    (b) => b.titulo?.trim() && b.descripcion_corta?.trim(),
+  );
+  const trimmedIntro = introduction?.trim();
+
+  if (unique.length === 0) return null;
 
   return (
     <View style={styles.container}>
       <SectionHeader
         eyebrow="FRENOS · DETECTADOS"
-        title="Bloqueos"
-        accent="a vencer"
+        title="Puntos de bloqueo"
         badge={unique.length}
-        badgeColor="#FF4444"
       />
 
-      {introduction && (
-        <ThemedText type="bodyMd" style={styles.intro}>
-          {introduction}
-        </ThemedText>
-      )}
+      {trimmedIntro ? <ThemedText style={styles.intro}>{trimmedIntro}</ThemedText> : null}
 
-      {unique.map((b, i) => (
-        <ItemCard
-          key={b.id_bloqueo ?? i}
-          index={i + 1}
-          title={b.titulo}
-          description={b.descripcion_corta}
-          accentColor="#FF4444"
-        />
-      ))}
+      <View style={styles.list}>
+        {unique.map((b, i) => (
+          <ItemCard
+            key={b.id_bloqueo ?? i}
+            index={i + 1}
+            title={b.titulo.trim()}
+            description={b.descripcion_corta.trim()}
+            accentColor={BLOCKER_COLOR}
+          />
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   intro: {
-    color: SemanticColors.iconMuted,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
     lineHeight: 22,
+    color: "rgba(255,255,255,0.72)",
+    paddingHorizontal: Spacing.one,
+  },
+  list: {
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.one,
   },
 });

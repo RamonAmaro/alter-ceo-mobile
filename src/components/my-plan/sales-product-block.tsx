@@ -1,8 +1,7 @@
+import { BlockSubHeader } from "@/components/my-plan/block-sub-header";
+import { ProposalCard } from "@/components/my-plan/proposal-card";
 import { ThemedText } from "@/components/themed-text";
-import { MonumentalIndex } from "@/components/ui/monumental-index";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import type { PlanProductImprovement } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
@@ -10,165 +9,155 @@ interface SalesProductBlockProps {
   data: PlanProductImprovement;
 }
 
-function DiffCard({ label, value }: { label: string; value: string }) {
+interface DiffRowProps {
+  label: string;
+  value?: string;
+}
+
+function nonEmpty(value?: string): value is string {
+  return Boolean(value && value.trim());
+}
+
+function DiffRow({ label, value }: DiffRowProps) {
+  if (!nonEmpty(value)) return null;
   return (
-    <View style={styles.diffCard}>
-      <View style={styles.diffHeader}>
-        <View style={styles.diffBar} />
-        <ThemedText style={styles.diffLabel}>{label.toUpperCase()}</ThemedText>
-      </View>
-      <ThemedText style={styles.diffValue}>{value}</ThemedText>
+    <View style={styles.diffRow}>
+      <ThemedText style={styles.diffLabel}>{label}</ThemedText>
+      <ThemedText style={styles.diffValue}>{value.trim()}</ThemedText>
     </View>
   );
 }
 
 export function SalesProductBlock({ data }: SalesProductBlockProps) {
+  const explanatory = data.texto_explicativo?.trim();
+  const clientDiag = data.diagnostico_cliente_objetivo?.trim();
+  const messageGap = data.brecha_mensaje_mercado?.trim();
+  const hasMarco = Boolean(clientDiag || messageGap);
+  const hasDiff = Boolean(
+    nonEmpty(data.diferenciacion_funcional) ||
+      nonEmpty(data.diferenciacion_experiencial) ||
+      nonEmpty(data.diferenciacion_estrategica),
+  );
+  const proposals = (data.propuestas ?? []).filter(
+    (p) => p && (p.titulo?.trim() || p.descripcion?.trim()),
+  );
+
+  if (!explanatory && !hasMarco && !hasDiff && proposals.length === 0) return null;
+
   return (
     <View style={styles.card}>
-      <LinearGradient
-        colors={["rgba(0,255,132,0.05)", "rgba(255,255,255,0.01)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <MonumentalIndex label="01" size={130} opacity={0.05} right={-10} bottom={-24} />
-
       <View style={styles.header}>
-        <View style={styles.iconBox}>
-          <Ionicons name="cube" size={18} color={SemanticColors.success} />
+        <View style={styles.indexBadge}>
+          <ThemedText style={styles.indexLabel}>01</ThemedText>
         </View>
-        <View style={styles.headerText}>
-          <ThemedText style={styles.meta}>MEJORAR · 01</ThemedText>
-          <ThemedText style={styles.title}>Producto o servicio</ThemedText>
+        <ThemedText style={styles.title}>Mejorar producto o servicio</ThemedText>
+      </View>
+
+      {explanatory ? <ThemedText style={styles.text}>{explanatory}</ThemedText> : null}
+
+      {hasMarco ? (
+        <View style={styles.group}>
+          <BlockSubHeader label="Marco personalizado" />
+          {clientDiag ? <ThemedText style={styles.bullet}>{clientDiag}</ThemedText> : null}
+          {messageGap ? <ThemedText style={styles.bullet}>{messageGap}</ThemedText> : null}
         </View>
-      </View>
+      ) : null}
 
-      <ThemedText style={styles.text}>{data.texto_explicativo}</ThemedText>
+      {hasDiff ? (
+        <View style={styles.group}>
+          <BlockSubHeader label="Diferenciación" />
+          <DiffRow label="Funcional" value={data.diferenciacion_funcional} />
+          <DiffRow label="Experiencial" value={data.diferenciacion_experiencial} />
+          <DiffRow label="Estratégica" value={data.diferenciacion_estrategica} />
+        </View>
+      ) : null}
 
-      <View style={styles.groupRow}>
-        <View style={styles.groupBar} />
-        <ThemedText style={styles.groupLabel}>MARCO PERSONALIZADO</ThemedText>
-      </View>
-      <ThemedText style={styles.bullet}>{data.diagnostico_cliente_objetivo}</ThemedText>
-      <ThemedText style={styles.bullet}>{data.brecha_mensaje_mercado}</ThemedText>
-
-      <View style={styles.groupRow}>
-        <View style={styles.groupBar} />
-        <ThemedText style={styles.groupLabel}>DIFERENCIACIÓN</ThemedText>
-      </View>
-      <DiffCard label="Funcional" value={data.diferenciacion_funcional} />
-      <DiffCard label="Experiencial" value={data.diferenciacion_experiencial} />
-      <DiffCard label="Estratégica" value={data.diferenciacion_estrategica} />
+      {proposals.length > 0 ? (
+        <View style={styles.group}>
+          <BlockSubHeader label="Propuestas de mejora" />
+          <View style={styles.proposals}>
+            {proposals.map((p, i) => (
+              <ProposalCard key={`prop-${i}`} index={i + 1} item={p} />
+            ))}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 20,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.14)",
-    gap: Spacing.two,
-    overflow: "hidden",
+    paddingHorizontal: Spacing.one,
+    gap: Spacing.three,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-    marginBottom: Spacing.one,
   },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(0,255,132,0.14)",
+  indexBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,255,132,0.10)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.25)",
     alignItems: "center",
     justifyContent: "center",
-    flexShrink: 0,
   },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  meta: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 12,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2,
+  indexLabel: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 12,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    letterSpacing: -0.2,
   },
   title: {
+    flex: 1,
     fontFamily: Fonts.montserratBold,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 24,
     color: SemanticColors.textPrimary,
   },
   text: {
     fontFamily: Fonts.montserratMedium,
     fontSize: 14,
     lineHeight: 22,
-    color: SemanticColors.textSecondaryLight,
+    color: "rgba(255,255,255,0.78)",
   },
-  groupRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  group: {
     gap: Spacing.two,
-    marginTop: Spacing.two,
   },
-  groupBar: {
-    width: 14,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: SemanticColors.success,
-  },
-  groupLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2.2,
+  proposals: {
+    gap: Spacing.three,
+    marginTop: Spacing.one,
   },
   bullet: {
     fontFamily: Fonts.montserratMedium,
     fontSize: 14,
     lineHeight: 22,
-    color: "rgba(255,255,255,0.75)",
-    paddingLeft: Spacing.two,
+    color: "rgba(255,255,255,0.78)",
   },
-  diffCard: {
-    backgroundColor: "rgba(0,255,132,0.06)",
-    borderRadius: 14,
-    padding: Spacing.three,
+  diffRow: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 10,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.14)",
-    gap: Spacing.one,
-  },
-  diffHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.one,
-  },
-  diffBar: {
-    width: 10,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: SemanticColors.success,
+    borderColor: "rgba(255,255,255,0.06)",
+    gap: 4,
   },
   diffLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 9,
-    lineHeight: 12,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    lineHeight: 14,
     color: SemanticColors.success,
-    letterSpacing: 2,
   },
   diffValue: {
     fontFamily: Fonts.montserratMedium,
-    fontSize: 13,
-    lineHeight: 20,
-    color: SemanticColors.textSecondaryLight,
+    fontSize: 14,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.82)",
   },
 });

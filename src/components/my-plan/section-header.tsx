@@ -1,48 +1,36 @@
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 
 interface SectionHeaderProps {
   title: string;
   eyebrow?: string;
-  accent?: string;
   badge?: string | number;
-  badgeColor?: string;
 }
 
-export function SectionHeader({
-  title,
-  eyebrow,
-  accent,
-  badge,
-  badgeColor = SemanticColors.success,
-}: SectionHeaderProps) {
-  const isDanger = badgeColor === "#FF4444";
-  const badgeBg = isDanger ? "rgba(255,68,68,0.12)" : "rgba(0,255,132,0.12)";
-  const badgeBorder = isDanger ? "rgba(255,68,68,0.25)" : "rgba(0,255,132,0.25)";
-  const accentColor = badgeColor;
-
+export function SectionHeader({ title, eyebrow, badge }: SectionHeaderProps) {
   return (
     <View style={styles.wrap}>
+      <LinearGradient
+        colors={["rgba(0,255,132,0.10)", "rgba(0,255,132,0.02)", "rgba(0,0,0,0)"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
       {eyebrow ? (
         <View style={styles.eyebrowRow}>
-          <View style={[styles.eyebrowBar, { backgroundColor: accentColor }]} />
+          <View style={styles.dot} />
           <ThemedText style={styles.eyebrow}>{eyebrow}</ThemedText>
         </View>
       ) : null}
 
-      <View style={styles.row}>
-        <View style={styles.titleGroup}>
-          {!eyebrow ? <View style={[styles.leftAccent, { backgroundColor: accentColor }]} /> : null}
-          <ThemedText style={styles.title}>
-            {title}
-            {accent ? <ThemedText style={styles.titleAccent}>{` ${accent}`}</ThemedText> : null}
-          </ThemedText>
-        </View>
-
+      <View style={styles.titleRow}>
+        <ThemedText style={styles.title}>{title}</ThemedText>
         {badge !== undefined ? (
-          <View style={[styles.badge, { backgroundColor: badgeBg, borderColor: badgeBorder }]}>
-            <ThemedText style={[styles.badgeText, { color: badgeColor }]}>{badge}</ThemedText>
+          <View style={styles.badge}>
+            <ThemedText style={styles.badgeText}>{badge}</ThemedText>
           </View>
         ) : null}
       </View>
@@ -52,63 +40,60 @@ export function SectionHeader({
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.15)",
+    backgroundColor: "rgba(255,255,255,0.02)",
+    overflow: "hidden",
+    gap: Spacing.one,
   },
   eyebrowRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
   },
-  eyebrowBar: {
-    width: 18,
-    height: 2,
-    borderRadius: 1,
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: SemanticColors.success,
   },
   eyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
     lineHeight: 14,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2.4,
+    color: SemanticColors.success,
+    letterSpacing: 1.6,
   },
-  row: {
+  titleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  titleGroup: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
     gap: Spacing.two,
-  },
-  leftAccent: {
-    width: 3,
-    height: 20,
-    borderRadius: 99,
   },
   title: {
     flex: 1,
     fontFamily: Fonts.montserratBold,
-    fontSize: 22,
+    fontSize: 20,
     lineHeight: 26,
     color: SemanticColors.textPrimary,
   },
-  titleAccent: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 22,
-    lineHeight: 26,
-    color: SemanticColors.success,
-    fontStyle: "italic",
-  },
   badge: {
-    borderRadius: 99,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 3,
+    minWidth: 28,
+    height: 24,
+    paddingHorizontal: Spacing.one,
+    borderRadius: 6,
+    backgroundColor: "rgba(0,255,132,0.10)",
     borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.25)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   badgeText: {
     fontFamily: Fonts.montserratBold,
     fontSize: 12,
+    color: SemanticColors.success,
   },
 });

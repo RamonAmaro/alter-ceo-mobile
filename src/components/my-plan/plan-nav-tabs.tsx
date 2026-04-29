@@ -93,9 +93,8 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {tabs.map((tab, index) => {
+        {tabs.map((tab) => {
           const isActive = tab.key === activeKey;
-          const indexLabel = String(index + 1).padStart(2, "0");
           return (
             <Pressable
               key={tab.key}
@@ -103,12 +102,6 @@ export function PlanNavTabs({ tabs, activeKey, onPress }: PlanNavTabsProps) {
               onLayout={(e) => handleTabLayout(tab.key, e)}
               style={styles.tab}
             >
-              <ThemedText
-                style={[styles.tabIndex, isActive && styles.tabIndexActive]}
-                numberOfLines={1}
-              >
-                {indexLabel}
-              </ThemedText>
               <ThemedText
                 style={[styles.tabText, isActive && styles.tabTextActive]}
                 numberOfLines={1}
@@ -138,28 +131,17 @@ const styles = StyleSheet.create({
     backgroundColor: Platform.OS === "web" ? "transparent" : SemanticColors.surfaceCard,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.06)",
+    marginTop: Platform.OS === "web" ? 0 : -Spacing.three,
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,
   },
   tab: {
     paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.three,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.two,
     alignItems: "flex-start",
-    gap: 2,
     minWidth: 80,
-  },
-  tabIndex: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontStyle: "italic",
-    fontSize: 9,
-    lineHeight: 11,
-    color: "rgba(255,255,255,0.25)",
-    letterSpacing: 1.4,
-  },
-  tabIndexActive: {
-    color: SemanticColors.success,
   },
   tabText: {
     color: "rgba(255,255,255,0.45)",

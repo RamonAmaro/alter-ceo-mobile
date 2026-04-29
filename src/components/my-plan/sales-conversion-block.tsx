@@ -1,11 +1,10 @@
+import { BlockSubHeader } from "@/components/my-plan/block-sub-header";
 import { BulletItem } from "@/components/my-plan/bullet-item";
 import { CheckItem } from "@/components/my-plan/check-item";
 import { NoteBlock } from "@/components/my-plan/note-block";
+import { ProposalCard } from "@/components/my-plan/proposal-card";
 import { ThemedText } from "@/components/themed-text";
-import { MonumentalIndex } from "@/components/ui/monumental-index";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import type { PlanConversionImprovement } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
@@ -13,117 +12,120 @@ interface SalesConversionBlockProps {
   data: PlanConversionImprovement;
 }
 
+function cleanList(list?: string[]): string[] {
+  if (!list) return [];
+  return list.map((s) => s.trim()).filter(Boolean);
+}
+
 export function SalesConversionBlock({ data }: SalesConversionBlockProps) {
+  const explanatory = data.texto_explicativo?.trim();
+  const debiles = cleanList(data.puntos_debiles_actuales);
+  const estructura = cleanList(data.estructura_optimizada);
+  const porQue = data.por_que_aumentara_conversion?.trim();
+  const proposals = (data.propuestas ?? []).filter(
+    (p) => p && (p.titulo?.trim() || p.descripcion?.trim()),
+  );
+
+  if (
+    !explanatory &&
+    debiles.length === 0 &&
+    estructura.length === 0 &&
+    !porQue &&
+    proposals.length === 0
+  ) {
+    return null;
+  }
+
   return (
     <View style={styles.card}>
-      <LinearGradient
-        colors={["rgba(0,255,132,0.05)", "rgba(255,255,255,0.01)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <MonumentalIndex label="03" size={130} opacity={0.05} right={-10} bottom={-24} />
-
       <View style={styles.header}>
-        <View style={styles.iconBox}>
-          <Ionicons name="trending-up" size={18} color={SemanticColors.success} />
+        <View style={styles.indexBadge}>
+          <ThemedText style={styles.indexLabel}>03</ThemedText>
         </View>
-        <View style={styles.headerText}>
-          <ThemedText style={styles.meta}>MEJORAR · 03</ThemedText>
-          <ThemedText style={styles.title}>Conversión</ThemedText>
+        <ThemedText style={styles.title}>Mejorar la conversión</ThemedText>
+      </View>
+
+      {explanatory ? <ThemedText style={styles.text}>{explanatory}</ThemedText> : null}
+
+      {debiles.length > 0 ? (
+        <View style={styles.group}>
+          <BlockSubHeader label="Puntos débiles actuales" tone="danger" />
+          {debiles.map((item, i) => (
+            <BulletItem key={`debil-${i}`} text={item} color="#FF7A45" />
+          ))}
         </View>
-      </View>
+      ) : null}
 
-      <ThemedText style={styles.text}>{data.texto_explicativo}</ThemedText>
+      {estructura.length > 0 ? (
+        <View style={styles.group}>
+          <BlockSubHeader label="Estructura optimizada" />
+          {estructura.map((item, i) => (
+            <CheckItem key={`opt-${i}`} text={item} />
+          ))}
+        </View>
+      ) : null}
 
-      <View style={styles.groupRow}>
-        <View style={[styles.groupBar, { backgroundColor: "#FF4444" }]} />
-        <ThemedText style={styles.groupLabel}>PUNTOS DÉBILES · ACTUALES</ThemedText>
-      </View>
-      {data.puntos_debiles_actuales.map((item, i) => (
-        <BulletItem key={`debil-${i}`} text={item} color="rgba(255,68,68,0.6)" />
-      ))}
+      {porQue ? <NoteBlock text={porQue} /> : null}
 
-      <View style={styles.groupRow}>
-        <View style={styles.groupBar} />
-        <ThemedText style={styles.groupLabel}>ESTRUCTURA · OPTIMIZADA</ThemedText>
-      </View>
-      {data.estructura_optimizada.map((item, i) => (
-        <CheckItem key={`opt-${i}`} text={item} />
-      ))}
-
-      <NoteBlock text={data.por_que_aumentara_conversion} />
+      {proposals.length > 0 ? (
+        <View style={styles.group}>
+          <BlockSubHeader label="Propuestas de conversión" />
+          <View style={styles.proposals}>
+            {proposals.map((p, i) => (
+              <ProposalCard key={`prop-${i}`} index={i + 1} item={p} />
+            ))}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 20,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.14)",
-    gap: Spacing.two,
-    overflow: "hidden",
+    paddingHorizontal: Spacing.one,
+    gap: Spacing.three,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-    marginBottom: Spacing.one,
   },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(0,255,132,0.14)",
+  indexBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,255,132,0.10)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.25)",
     alignItems: "center",
     justifyContent: "center",
-    flexShrink: 0,
   },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  meta: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 12,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2,
+  indexLabel: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 12,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    letterSpacing: -0.2,
   },
   title: {
+    flex: 1,
     fontFamily: Fonts.montserratBold,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 24,
     color: SemanticColors.textPrimary,
   },
   text: {
     fontFamily: Fonts.montserratMedium,
     fontSize: 14,
     lineHeight: 22,
-    color: SemanticColors.textSecondaryLight,
+    color: "rgba(255,255,255,0.78)",
   },
-  groupRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  group: {
     gap: Spacing.two,
-    marginTop: Spacing.two,
   },
-  groupBar: {
-    width: 14,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: SemanticColors.success,
-  },
-  groupLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: SemanticColors.textMuted,
-    letterSpacing: 2.2,
+  proposals: {
+    gap: Spacing.three,
+    marginTop: Spacing.one,
   },
 });

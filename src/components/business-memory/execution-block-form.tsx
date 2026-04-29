@@ -205,7 +205,7 @@ function MicroGoalsEditor({
                 </ThemedText>
               </View>
               <ThemedText style={styles.cardTitle}>
-                {goal.title.trim() || "Objetivo sin titulo"}
+                {goal.title.trim() || "Objetivo sin título"}
               </ThemedText>
               <View style={styles.metaRow}>
                 <View style={[styles.metaBadge, getStatusBadgeStyle(goal.status)]}>

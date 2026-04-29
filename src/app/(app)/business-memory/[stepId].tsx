@@ -336,7 +336,7 @@ function buildSectionPayload(
     case "team_block":
       return buildTeamBlockPayload(originalData, values, roles ?? []);
     default:
-      throw new Error("Esta seccion todavia no tiene serializador de guardado.");
+      throw new Error("Esta sección todavía no tiene serializador de guardado.");
   }
 }
 
@@ -449,7 +449,7 @@ export default function BusinessMemoryStepScreen() {
       currentStep.id !== "team_block"
     ) {
       setSaveError(
-        "Por ahora el guardado solo esta habilitado para Ficha Corporativa, Comercial, Financiera y Equipo.",
+        "Por ahora el guardado solo está habilitado para Ficha Corporativa, Comercial, Financiera y Equipo.",
       );
       setSaveSuccess(null);
       return;
@@ -511,7 +511,7 @@ export default function BusinessMemoryStepScreen() {
     }
 
     if (currentStep.id !== "team_block") {
-      setSaveError("Este bloque no corresponde a la edicion del equipo.");
+      setSaveError("Este bloque no corresponde a la edición del equipo.");
       setSaveSuccess(null);
       return;
     }

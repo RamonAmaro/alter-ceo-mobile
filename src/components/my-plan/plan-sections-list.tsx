@@ -2,14 +2,14 @@ import type { PlanData } from "@/types/plan";
 
 import { AreaAnalysisSection } from "./area-analysis-section";
 import { BlockersList } from "./blockers-list";
+import { BusinessSummary } from "./business-summary";
 import { DiagnosisSection } from "./diagnosis-section";
 import { FirstStepSection } from "./first-step-section";
-import { LeadershipSection } from "./leadership-section";
+import { IndicatorsSection } from "./indicators-section";
 import { OpportunitiesList } from "./opportunities-list";
-import { PlanHero } from "./plan-hero";
+import { PlanConclusion } from "./plan-conclusion";
 import { PlanSection } from "./plan-section";
 import type { PlanFlags, PlanSectionKey } from "./plan-sections-config";
-import { RedefineRoleSection } from "./redefine-role-section";
 import { SalesSection } from "./sales-section";
 import { SalesStrategySection } from "./sales-strategy-section";
 
@@ -55,29 +55,27 @@ function buildSectionDescriptors(
 
   return [
     {
-      key: "intro",
-      visible: flags.intro,
-      render: () =>
-        plan.introduccion_general ? (
-          <PlanHero
-            introduction={plan.introduccion_general}
-            sector={diagnosis?.resumen_negocio?.sector}
-            annualRevenue={diagnosis?.resumen_negocio?.facturacion_anual_aproximada}
-          />
-        ) : null,
+      key: "summary",
+      visible: flags.summary,
+      render: () => (
+        <BusinessSummary
+          summary={diagnosis?.resumen_negocio}
+          introduction={plan.introduccion_general}
+        />
+      ),
     },
     {
       key: "diagnosis",
       visible: flags.diagnosis,
       render: () =>
         diagnosis?.mensaje_introduccion ? (
-          <DiagnosisSection
-            introduction={diagnosis.mensaje_introduccion}
-            financialState={diagnosis.estado_financiero}
-            founderDependency={diagnosis.situacion_actual?.nivel_dependencia_fundador}
-            acquisitionSystem={diagnosis.situacion_actual?.sistema_captacion}
-          />
+          <DiagnosisSection introduction={diagnosis.mensaje_introduccion} />
         ) : null,
+    },
+    {
+      key: "indicators",
+      visible: flags.indicators,
+      render: () => <IndicatorsSection pillars={diagnosis?.seis_pilares} />,
     },
     {
       key: "areas",
@@ -142,25 +140,10 @@ function buildSectionDescriptors(
       },
     },
     {
-      key: "redefine",
-      visible: flags.redefine,
+      key: "conclusion",
+      visible: flags.conclusion,
       render: () =>
-        leadership?.tres_pasos_redefinir_rol ? (
-          <RedefineRoleSection steps={leadership.tres_pasos_redefinir_rol} />
-        ) : null,
-    },
-    {
-      key: "leadership",
-      visible: flags.leadership,
-      render: () =>
-        leadership ? (
-          <LeadershipSection
-            phase1={leadership.fase_1_profesionalizar}
-            phase2={leadership.fase_2_delegacion}
-            phase3={leadership.fase_3_ceo_estrategico}
-            roleEvolution={leadership.evolucion_rol}
-          />
-        ) : null,
+        plan.conclusion_express ? <PlanConclusion text={plan.conclusion_express} /> : null,
     },
   ];
 }

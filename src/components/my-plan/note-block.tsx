@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface NoteBlockProps {
@@ -8,26 +8,29 @@ interface NoteBlockProps {
 
 export function NoteBlock({ text }: NoteBlockProps) {
   return (
-    <View style={styles.card}>
-      <ThemedText type="bodyMd" style={styles.text}>
-        {text}
-      </ThemedText>
+    <View style={styles.row}>
+      <View style={styles.bar} />
+      <ThemedText style={styles.text}>{text}</ThemedText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 12,
-    padding: Spacing.three,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+  row: {
+    flexDirection: "row",
+    gap: Spacing.three,
+    paddingVertical: Spacing.one,
+  },
+  bar: {
+    width: 3,
+    borderRadius: 2,
+    backgroundColor: SemanticColors.success,
   },
   text: {
-    color: SemanticColors.iconMuted,
+    flex: 1,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
     lineHeight: 22,
-    fontSize: 13,
-    fontStyle: "italic",
+    color: "rgba(255,255,255,0.72)",
   },
 });
