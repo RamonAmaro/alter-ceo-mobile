@@ -14,7 +14,7 @@ interface UseSectionScrollReturn {
 export function useSectionScroll(tabs: readonly PlanTab[]): UseSectionScrollReturn {
   const scrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
-  const [activeTab, setActiveTab] = useState("intro");
+  const [activeTab, setActiveTab] = useState(() => tabs[0]?.key ?? "");
 
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
