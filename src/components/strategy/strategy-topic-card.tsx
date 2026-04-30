@@ -7,6 +7,8 @@ import { useEffect, useRef } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 
 interface StrategyTopicCardProps {
+  index: number;
+  total: number;
   label: string;
   iconName: string;
   comingSoon?: boolean;
@@ -15,6 +17,8 @@ interface StrategyTopicCardProps {
 }
 
 export function StrategyTopicCard({
+  index,
+  total,
   label,
   iconName,
   comingSoon = false,
@@ -61,6 +65,9 @@ export function StrategyTopicCard({
     }).start();
   }
 
+  const indexLabel = String(index + 1).padStart(2, "0");
+  const totalLabel = String(total).padStart(2, "0");
+
   return (
     <Animated.View style={[styles.outer, { opacity, transform: [{ translateY }, { scale }] }]}>
       <Pressable
@@ -76,7 +83,7 @@ export function StrategyTopicCard({
             colors={
               comingSoon
                 ? ["rgba(255,255,255,0.02)", "rgba(255,255,255,0.005)"]
-                : ["rgba(0,255,132,0.10)", "rgba(255,255,255,0.02)"]
+                : ["rgba(0,255,132,0.12)", "rgba(255,255,255,0.02)"]
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 0.8, y: 1 }}
@@ -85,9 +92,11 @@ export function StrategyTopicCard({
 
           {comingSoon ? (
             <View style={styles.topRow}>
-              <View style={styles.comingSoonPill}>
-                <View style={styles.comingSoonDot} />
-                <ThemedText style={styles.comingSoonText}>PRÓXIMAMENTE</ThemedText>
+              <View style={[styles.metaPill, styles.metaPillDisabled]}>
+                <View style={[styles.metaDot, styles.metaDotDisabled]} />
+                <ThemedText style={[styles.metaText, styles.metaTextDisabled]}>
+                  PRÓXIMAMENTE
+                </ThemedText>
               </View>
             </View>
           ) : null}
@@ -95,7 +104,7 @@ export function StrategyTopicCard({
           <View style={styles.iconWrap}>
             <Ionicons
               name={iconName as never}
-              size={64}
+              size={88}
               color={comingSoon ? SemanticColors.textMuted : SemanticColors.success}
             />
           </View>
@@ -165,29 +174,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
   },
-  comingSoonPill: {
+  metaPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: "rgba(0,255,132,0.10)",
     borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.28)",
+  },
+  metaPillDisabled: {
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderColor: "rgba(255,255,255,0.1)",
   },
-  comingSoonDot: {
+  metaDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
+    backgroundColor: SemanticColors.success,
+  },
+  metaDotDisabled: {
     backgroundColor: SemanticColors.textMuted,
   },
-  comingSoonText: {
+  metaText: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 9,
     lineHeight: 12,
-    color: SemanticColors.textMuted,
+    color: SemanticColors.success,
     letterSpacing: 2,
+  },
+  metaTextDisabled: {
+    color: SemanticColors.textMuted,
   },
   iconWrap: {
     flex: 1,

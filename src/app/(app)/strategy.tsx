@@ -7,7 +7,7 @@ import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
-import { usePlanStore } from "@/stores/plan-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
@@ -19,23 +19,20 @@ export default function StrategyScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const userId = useAuthStore((s) => s.user?.userId);
-  const latestPlan = usePlanStore((s) => s.latestPlan);
   const beginDraft = useStrategyReportStore((s) => s.beginDraft);
+  const setOpenedFromApp = useOnboardingStore((s) => s.setOpenedFromApp);
 
   function handleSelectTopic(key: StrategyKey): void {
     if (!userId) return;
 
     if (key === "plan_duplicacion") {
-      if (latestPlan) {
-        router.push("/(app)/plan-detail");
-      } else {
-        Alert.alert("Próximamente", "Esta estrategia estará disponible muy pronto.");
-      }
+      setOpenedFromApp(true);
+      router.push("/(onboarding)/welcome");
       return;
     }
 
     const entry = STRATEGY_CATALOG.find((e) => e.key === key);
-    if (!entry?.available || !entry.reportType) {
+    if (!entry?.available || !entry?.reportType) {
       Alert.alert("Próximamente", "Esta estrategia estará disponible muy pronto.");
       return;
     }

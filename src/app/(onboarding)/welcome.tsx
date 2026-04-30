@@ -7,12 +7,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
 import { FooterActionBar } from "@/components/footer-action-bar";
+import { QuestionHeader } from "@/components/onboarding/question-header";
 import { ScreenLayout } from "@/components/screen-layout";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth-store";
 import { useDebugStore } from "@/stores/debug-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -51,9 +53,23 @@ export default function WelcomeScreen() {
     }, 1500);
   }
 
+  const setOpenedFromApp = useOnboardingStore((s) => s.setOpenedFromApp);
+  const canGoBack = router.canGoBack();
+
+  function handleBack(): void {
+    setOpenedFromApp(false);
+    router.back();
+  }
+
   return (
     <ScreenLayout paddingHorizontal={0}>
-      <View style={[styles.inner, { paddingTop: insets.top + Spacing.five }]}>
+      <View style={[styles.inner, { paddingTop: insets.top + Spacing.three }]}>
+        {canGoBack ? (
+          <View style={styles.headerWrap}>
+            <QuestionHeader planLabel="PLAN DE DUPLICACIÓN" onBack={handleBack} />
+          </View>
+        ) : null}
+
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
@@ -101,5 +117,8 @@ const styles = StyleSheet.create({
   },
   whiteText: {
     color: SemanticColors.textPrimary,
+  },
+  headerWrap: {
+    paddingHorizontal: Spacing.five,
   },
 });
