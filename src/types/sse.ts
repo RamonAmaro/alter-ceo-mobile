@@ -23,6 +23,8 @@ export type SSEEventType = (typeof SSE_EVENT_TYPES)[number];
 export const USER_SSE_EVENT_TYPES = [
   "entity_proposal_created",
   "entity_proposal_resolved",
+  "task_proposal_created",
+  "task_proposal_resolved",
 ] as const;
 
 export type UserSSEEventType = (typeof USER_SSE_EVENT_TYPES)[number];

@@ -7,6 +7,7 @@ import { ChatAudioDraftBanner } from "@/components/chat/chat-audio-draft-banner"
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { EntityProposalStack } from "@/components/chat/entity-proposal/entity-proposal-stack";
+import { ChatTaskProposalStack } from "@/components/chat/task-proposal/chat-task-proposal-stack";
 import { KeyboardView } from "@/components/keyboard-view";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
@@ -36,6 +37,7 @@ export default function ChatScreen() {
   const [isSubmittingAudioDraft, setIsSubmittingAudioDraft] = useState(false);
   const [inputHeight, setInputHeight] = useState(0);
   const [proposalStackHeight, setProposalStackHeight] = useState(0);
+  const [taskStackHeight, setTaskStackHeight] = useState(0);
 
   const handleInputLayout = useCallback((event: LayoutChangeEvent) => {
     setInputHeight(event.nativeEvent.layout.height);
@@ -272,7 +274,7 @@ export default function ChatScreen() {
               userInitial={userInitial}
               failedMessageId={failedMessageId}
               onRetry={retryMessage}
-              extraBottomReserve={proposalStackHeight}
+              extraBottomReserve={proposalStackHeight + taskStackHeight}
             />
           )}
 
@@ -301,6 +303,11 @@ export default function ChatScreen() {
             onRemove={removeProposal}
             bottomOffset={inputHeight}
             onHeightChange={setProposalStackHeight}
+          />
+
+          <ChatTaskProposalStack
+            bottomOffset={inputHeight + proposalStackHeight}
+            onHeightChange={setTaskStackHeight}
           />
 
           <View onLayout={handleInputLayout}>

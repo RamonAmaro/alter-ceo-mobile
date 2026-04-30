@@ -10,6 +10,7 @@ import { useRecordingsStore } from "@/stores/recordings-store";
 import { useSourcesStore } from "@/stores/sources-store";
 import { useStrategiesStore } from "@/stores/strategies-store";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
+import { useTaskStore } from "@/stores/task-store";
 
 const LAST_USER_ID_KEY = "alterceo_last_user_id";
 
@@ -20,6 +21,7 @@ export async function clearUserScopedStores(): Promise<void> {
   useSourcesStore.getState().reset();
   useStrategyReportStore.getState().reset();
   useStrategiesStore.getState().reset();
+  useTaskStore.getState().reset();
   useActiveRecordingStore.getState().setActiveId(null);
   await useOnboardingStore.getState().reset();
   await useRecordingsStore.getState().reset();
@@ -36,6 +38,7 @@ export async function clearUserScopedStoresKeepingPending(): Promise<void> {
   useSourcesStore.getState().reset();
   useStrategyReportStore.getState().resetKeepingDraft();
   useStrategiesStore.getState().reset();
+  useTaskStore.getState().reset();
   useActiveRecordingStore.getState().setActiveId(null);
   useOnboardingStore.getState().resetKeepingDraft();
   await useRecordingsStore.getState().resetKeepingPending();

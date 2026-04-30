@@ -1,16 +1,71 @@
+import { router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useShallow } from "zustand/react/shallow";
+
 import { AppBackground } from "@/components/app-background";
 import { ScreenHeader } from "@/components/screen-header";
-import { ThemedText } from "@/components/themed-text";
+import { TaskFab } from "@/components/tasks/task-fab";
+import { TasksErrorState } from "@/components/tasks/tasks-error-state";
+import { TasksSection } from "@/components/tasks/tasks-section";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
-import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
-import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SemanticColors, Spacing } from "@/constants/theme";
+import { useTaskStore } from "@/stores/task-store";
+import type { Task } from "@/types/task";
+
+const FAB_HEIGHT = 48;
 
 export default function TasksScreen() {
   const insets = useSafeAreaInsets();
-  const { isMobile } = useResponsiveLayout();
+  const [completedCollapsed, setCompletedCollapsed] = useState(true);
+  const [archivedCollapsed, setArchivedCollapsed] = useState(true);
+
+  const { byId, order, isLoading, initialLoaded, error, mutation } = useTaskStore(
+    useShallow((s) => ({
+      byId: s.byId,
+      order: s.order,
+      isLoading: s.isLoading,
+      initialLoaded: s.initialLoaded,
+      error: s.error,
+      mutation: s.mutation,
+    })),
+  );
+
+  const fetchAll = useTaskStore((s) => s.fetchAll);
+  const acceptProposal = useTaskStore((s) => s.acceptProposal);
+  const rejectProposal = useTaskStore((s) => s.rejectProposal);
+  const updateStatus = useTaskStore((s) => s.updateStatus);
+  const deleteTask = useTaskStore((s) => s.deleteTask);
+
+  useEffect(() => {
+    if (!initialLoaded && !isLoading) void fetchAll();
+  }, [initialLoaded, isLoading, fetchAll]);
+
+  const { drafts, pending, inProgress, blocked, completed, archived } = useMemo(() => {
+    const allTasks = order.map((id) => byId[id]).filter((t): t is Task => t != null);
+    return {
+      drafts: allTasks.filter((t) => t.status === "draft"),
+      pending: allTasks.filter((t) => t.status === "todo"),
+      inProgress: allTasks.filter((t) => t.status === "in_progress"),
+      blocked: allTasks.filter((t) => t.status === "blocked"),
+      completed: allTasks.filter((t) => t.status === "completed"),
+      archived: allTasks.filter((t) => t.status === "archived" || t.status === "cancelled"),
+    };
+  }, [byId, order]);
+
+  function handleEditTask(taskId: string): void {
+    router.push(`/(app)/task-edit/${taskId}`);
+  }
+
+  function handleNewTask(): void {
+    router.push("/(app)/task-create");
+  }
+
+  const showSpinner = isLoading && !initialLoaded;
+  const showError = !!error && !isLoading && drafts.length === 0 && pending.length === 0;
+  const fabBottom = insets.bottom + Spacing.three;
+  const contentBottom = fabBottom + FAB_HEIGHT + Spacing.four;
 
   return (
     <AppBackground>
@@ -20,31 +75,118 @@ export default function TasksScreen() {
           icon="file-tray-full-outline"
           titlePrefix="Gestor"
           titleAccent="de tareas"
-          showBack={isMobile}
         />
 
-        <ScrollView
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
-          showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
-        >
-          <View style={styles.hero}>
-            <View style={styles.iconWrap}>
-              <Ionicons name="file-tray-full-outline" size={44} color={SemanticColors.success} />
-            </View>
-            <ThemedText style={styles.title}>Tus tareas, en un único lugar</ThemedText>
-            <ThemedText style={styles.subtitle}>
-              Pronto podrás centralizar aquí todos los puntos de acción extraídos de tus reuniones,
-              documentos y planes estratégicos, con responsables y fechas límite.
-            </ThemedText>
+        {showSpinner ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={SemanticColors.success} size="large" />
           </View>
+        ) : showError ? (
+          <View style={styles.center}>
+            <TasksErrorState message={error ?? ""} onRetry={fetchAll} />
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={[styles.content, { paddingBottom: contentBottom }]}
+            showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={fetchAll}
+                tintColor={SemanticColors.success}
+                colors={[SemanticColors.success]}
+              />
+            }
+          >
+            <TasksSection
+              title="Propuestas de AlterCEO"
+              tasks={drafts}
+              emptyMessage="No hay propuestas pendientes. Cuando AlterCEO detecte tareas en tus reuniones, planes o conversaciones, aparecerán aquí."
+              emptyIcon="sparkles-outline"
+              accent
+              variant="proposal"
+              submittingIds={mutation.submitting}
+              errors={mutation.errors}
+              onAccept={acceptProposal}
+              onReject={rejectProposal}
+            />
 
-          <View style={styles.pillRow}>
-            <View style={styles.pill}>
-              <View style={styles.pillDot} />
-              <ThemedText style={styles.pillLabel}>EN CONSTRUCCIÓN</ThemedText>
-            </View>
-          </View>
-        </ScrollView>
+            <TasksSection
+              title="Pendientes"
+              tasks={pending}
+              emptyMessage="No tienes tareas pendientes. ¡Disfruta del momento o crea una nueva!"
+              emptyIcon="checkmark-done-outline"
+              variant="list"
+              submittingIds={mutation.submitting}
+              errors={mutation.errors}
+              onPress={handleEditTask}
+              onChangeStatus={updateStatus}
+              onDelete={deleteTask}
+            />
+
+            {inProgress.length > 0 ? (
+              <TasksSection
+                title="En curso"
+                tasks={inProgress}
+                emptyMessage=""
+                variant="list"
+                submittingIds={mutation.submitting}
+                errors={mutation.errors}
+                onPress={handleEditTask}
+                onChangeStatus={updateStatus}
+                onDelete={deleteTask}
+              />
+            ) : null}
+
+            {blocked.length > 0 ? (
+              <TasksSection
+                title="Bloqueadas"
+                tasks={blocked}
+                emptyMessage=""
+                variant="list"
+                submittingIds={mutation.submitting}
+                errors={mutation.errors}
+                onPress={handleEditTask}
+                onChangeStatus={updateStatus}
+                onDelete={deleteTask}
+              />
+            ) : null}
+
+            <TasksSection
+              title="Completadas"
+              tasks={completed}
+              emptyMessage="Aún no has completado ninguna tarea."
+              emptyIcon="trophy-outline"
+              variant="list"
+              collapsible
+              collapsed={completedCollapsed}
+              onToggleCollapsed={() => setCompletedCollapsed((v) => !v)}
+              submittingIds={mutation.submitting}
+              errors={mutation.errors}
+              onPress={handleEditTask}
+              onChangeStatus={updateStatus}
+              onDelete={deleteTask}
+            />
+
+            <TasksSection
+              title="Archivadas"
+              tasks={archived}
+              emptyMessage="Sin tareas archivadas."
+              emptyIcon="archive-outline"
+              variant="list"
+              collapsible
+              collapsed={archivedCollapsed}
+              onToggleCollapsed={() => setArchivedCollapsed((v) => !v)}
+              submittingIds={mutation.submitting}
+              errors={mutation.errors}
+              onPress={handleEditTask}
+              onChangeStatus={updateStatus}
+              onDelete={deleteTask}
+            />
+          </ScrollView>
+        )}
+
+        <TaskFab onPress={handleNewTask} bottomOffset={fabBottom} />
       </View>
     </AppBackground>
   );
@@ -55,68 +197,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingTop: Spacing.four,
     paddingHorizontal: Spacing.three,
-    gap: Spacing.four,
-    alignItems: "center",
+    paddingTop: Spacing.two,
+    gap: Spacing.three,
   },
-  hero: {
-    alignItems: "center",
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    maxWidth: 420,
-  },
-  iconWrap: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: "rgba(0,255,132,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.22)",
+  center: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.two,
-  },
-  title: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 22,
-    lineHeight: 28,
-    color: SemanticColors.textPrimary,
-    textAlign: "center",
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 21,
-    color: SemanticColors.textSecondaryLight,
-    textAlign: "center",
-  },
-  pillRow: {
-    alignItems: "center",
-  },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,255,132,0.10)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.22)",
-  },
-  pillDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: SemanticColors.success,
-  },
-  pillLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 13,
-    color: SemanticColors.success,
-    letterSpacing: 2.2,
+    paddingHorizontal: Spacing.four,
   },
 });
