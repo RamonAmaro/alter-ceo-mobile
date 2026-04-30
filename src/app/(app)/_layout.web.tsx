@@ -1,5 +1,6 @@
 import { DesktopSidebar } from "@/components/desktop-sidebar";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
+import { useTaskEventStream } from "@/hooks/use-task-event-stream";
 import { useAuthStore } from "@/stores/auth-store";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Redirect, Stack } from "expo-router";
@@ -16,6 +17,8 @@ export default function AppLayout() {
   const { isMobile } = useResponsiveLayout();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
+
+  useTaskEventStream();
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
@@ -44,6 +47,8 @@ export default function AppLayout() {
                 <Stack.Screen name="recording" />
                 <Stack.Screen name="documents" />
                 <Stack.Screen name="tasks" />
+                <Stack.Screen name="task-create" options={{ presentation: "modal" }} />
+                <Stack.Screen name="task-edit/[taskId]" options={{ presentation: "modal" }} />
                 <Stack.Screen name="settings" />
                 <Stack.Screen name="strategies" />
                 <Stack.Screen name="plan-detail" />
