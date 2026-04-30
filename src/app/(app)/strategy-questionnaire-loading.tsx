@@ -13,7 +13,7 @@ import { STRATEGY_REPORT_STEPS } from "@/constants/strategy-report-loading-steps
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useStrategyReportGeneration } from "@/hooks/use-strategy-report-generation";
 
-export default function StrategyCaptacionLoadingScreen() {
+export default function StrategyQuestionnaireLoadingScreen() {
   const insets = useSafeAreaInsets();
   const { stepIndex, error } = useStrategyReportGeneration();
   const step = STRATEGY_REPORT_STEPS[Math.min(stepIndex, STRATEGY_REPORT_STEPS.length - 1)];
@@ -33,7 +33,10 @@ export default function StrategyCaptacionLoadingScreen() {
             </ThemedText>
           </View>
           <FooterActionBar>
-            <Button label="Volver" onPress={() => router.replace("/(app)/strategy-captacion")} />
+            <Button
+              label="Volver"
+              onPress={() => router.replace("/(app)/strategy-questionnaire")}
+            />
           </FooterActionBar>
         </View>
       </ScreenLayout>
@@ -49,7 +52,7 @@ export default function StrategyCaptacionLoadingScreen() {
             {step.label}
           </ThemedText>
           <ThemedText type="bodyMd" style={styles.helperText}>
-            Estamos generando tu informe de captación en 5 fases con el contexto que has dado.
+            Estamos generando tu informe personalizado con el contexto que has dado.
           </ThemedText>
         </View>
       </View>

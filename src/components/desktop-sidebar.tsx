@@ -18,10 +18,11 @@ const SIDEBAR_ICON_SIZE = 20;
 const ROUTE_TO_NAV_KEY: Record<string, string> = {
   "meeting-detail": "recording",
   "source-detail": "documents",
-  "strategy-captacion": "strategy",
-  "strategy-captacion-loading": "strategy",
-  "strategy-captacion-ready": "strategy",
-  "strategy-captacion-result": "strategy",
+  "strategy-questionnaire": "strategy",
+  "strategy-questionnaire-loading": "strategy",
+  "strategy-questionnaire-result": "strategy",
+  "plan-detail": "strategies",
+  "strategy-detail": "strategies",
   chat: "alter",
 };
 

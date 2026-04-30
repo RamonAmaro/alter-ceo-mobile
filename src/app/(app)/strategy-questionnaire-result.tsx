@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,11 +9,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { FooterActionBar } from "@/components/footer-action-bar";
+import { BlockSubHeader } from "@/components/my-plan/block-sub-header";
+import { SectionBlock } from "@/components/my-plan/section-layout";
+import { SectionHeader } from "@/components/my-plan/section-header";
 import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
-import { SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import type {
@@ -25,6 +28,8 @@ import type {
   Fase3SistemaCaptacionContactosSection,
   GranDensidadPrioritariaSection,
   PropuestaDeCaptacionEn5Fases,
+  ValueIdeaProposal,
+  ValueIdeasReport,
 } from "@/types/report";
 
 interface KeyValueItem {
@@ -70,17 +75,10 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <View style={styles.card}>
-      {eyebrow ? (
-        <ThemedText type="caption" style={styles.eyebrow}>
-          {eyebrow}
-        </ThemedText>
-      ) : null}
-      <ThemedText type="headingMd" style={styles.cardTitle}>
-        {title}
-      </ThemedText>
-      {children}
-    </View>
+    <SectionBlock>
+      <SectionHeader title={title} eyebrow={eyebrow} />
+      <View style={styles.sectionBody}>{children}</View>
+    </SectionBlock>
   );
 }
 
@@ -103,25 +101,6 @@ function HeroCard({ report }: { report: Captacion5FasesReport }) {
       <ThemedText type="bodyLg" style={styles.heroBody}>
         {oportunidad.resumen_oportunidad}
       </ThemedText>
-
-      <View style={styles.heroHighlights}>
-        <View style={styles.heroHighlightChip}>
-          <ThemedText type="labelSm" style={styles.heroHighlightLabel}>
-            Oportunidad principal
-          </ThemedText>
-          <ThemedText type="bodyMd" style={styles.heroHighlightValue}>
-            {oportunidad.oportunidad_principal_detectada}
-          </ThemedText>
-        </View>
-        <View style={styles.heroHighlightChip}>
-          <ThemedText type="labelSm" style={styles.heroHighlightLabel}>
-            Puerta de entrada
-          </ThemedText>
-          <ThemedText type="bodyMd" style={styles.heroHighlightValue}>
-            {oportunidad.que_tipo_de_puerta_de_entrada_parece_mas_prometedora}
-          </ThemedText>
-        </View>
-      </View>
     </LinearGradient>
   );
 }
@@ -164,16 +143,6 @@ function InsightGrid({ items }: { items: KeyValueItem[] }) {
           </ThemedText>
         </View>
       ))}
-    </View>
-  );
-}
-
-function PhaseTag({ label }: { label: string }) {
-  return (
-    <View style={styles.phaseTag}>
-      <ThemedText type="labelSm" style={styles.phaseTagText}>
-        {label}
-      </ThemedText>
     </View>
   );
 }
@@ -382,7 +351,7 @@ function DensityCard({
 
       <TextBlock text={density.por_que_tiene_sentido} />
 
-      <InsightGrid
+      <KeyValueList
         items={[
           { label: "Ventaja", value: density.que_ventaja_tiene_ese_canal },
           { label: "Limitación", value: density.que_limitacion_tiene },
@@ -513,7 +482,7 @@ function ProposalCard({
       </LinearGradient>
 
       <View style={styles.phaseSection}>
-        <PhaseTag label="Fase 1 · Oferta irresistible" />
+        <BlockSubHeader label="FASE 1 · OFERTA IRRESISTIBLE" />
         <TextBlock text={proposal.fase_1_oferta_irresistible.explicacion_educativa} />
         <InsightGrid items={phaseOneSnapshot(proposal.fase_1_oferta_irresistible)} />
         <KeyValueList items={phaseOneExecution(proposal.fase_1_oferta_irresistible)} />
@@ -521,7 +490,7 @@ function ProposalCard({
 
       {phaseTwo ? (
         <View style={styles.phaseSection}>
-          <PhaseTag label="Fase 2 · Grandes densidades" />
+          <BlockSubHeader label="FASE 2 · GRANDES DENSIDADES" />
           <TextBlock text={phaseTwo.explicacion_educativa} />
 
           <View style={[styles.densityGrid, !isMobile && styles.densityGridDesktop]}>
@@ -546,12 +515,16 @@ function ProposalCard({
 
       {phaseThree ? (
         <View style={styles.phaseSection}>
-          <PhaseTag label="Fase 3 · Sistema de captación de contactos" />
+          <BlockSubHeader label="FASE 3 · SISTEMA DE CAPTACIÓN DE CONTACTOS" />
           <PhaseThreePanel section={phaseThree} isMobile={isMobile} />
         </View>
       ) : null}
     </View>
   );
+}
+
+export function renderCaptacionReport(report: Captacion5FasesReport, isMobile: boolean) {
+  return renderReport(report, isMobile);
 }
 
 function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
@@ -616,10 +589,139 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
   );
 }
 
-export default function StrategyCaptacionResultScreen() {
+function ValueIdeaCard({ proposal, index }: { proposal: ValueIdeaProposal; index: number }) {
+  const palancaLabel = humanizeKey(proposal.palanca_evaluada);
+  const indexLabel = String(index + 1).padStart(2, "0");
+
+  return (
+    <View style={styles.ideaCard}>
+      <View style={styles.ideaHeader}>
+        <View style={styles.ideaIndexBadge}>
+          <ThemedText style={styles.ideaIndexText}>{indexLabel}</ThemedText>
+        </View>
+        <View style={styles.ideaHeaderCopy}>
+          <ThemedText style={styles.ideaPalancaEyebrow}>{palancaLabel}</ThemedText>
+          <ThemedText style={styles.ideaTitle}>{proposal.idea.nombre_idea}</ThemedText>
+        </View>
+      </View>
+
+      <ThemedText style={styles.ideaPalancaExplanation}>{proposal.explicacion_palanca}</ThemedText>
+
+      <KeyValueList
+        items={[
+          {
+            label: "Qué hacer y cómo aplicarlo",
+            value: proposal.idea.que_hacer_y_como_aplicarlo,
+          },
+        ]}
+      />
+
+      <View style={styles.messagePanel}>
+        <ThemedText style={styles.messagePanelTitle}>Ejemplo de venta</ThemedText>
+        <ThemedText style={styles.messagePanelText}>
+          “{proposal.idea.ejemplo_texto_venta}”
+        </ThemedText>
+      </View>
+
+      <KeyValueList
+        items={[
+          {
+            label: "Por qué funciona",
+            value: proposal.idea.por_que_funciona,
+          },
+        ]}
+      />
+    </View>
+  );
+}
+
+export function renderValueIdeasReport(report: ValueIdeasReport) {
+  return (
+    <>
+      <LinearGradient
+        colors={["rgba(67,188,184,0.22)", "rgba(0,255,132,0.12)", "rgba(255,255,255,0.05)"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroCard}
+      >
+        <ThemedText style={styles.heroEyebrow}>Informe listo</ThemedText>
+        <ThemedText style={styles.heroTitle}>
+          Pequeñas palancas que elevan tu valor percibido.
+        </ThemedText>
+        <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
+      </LinearGradient>
+
+      <SectionCard
+        title="Propuestas de micro-diferenciación"
+        eyebrow="Ideas para aplicar"
+      >
+        <View style={styles.ideasList}>
+          {report.propuestas_micro_diferenciacion.map((proposal, index) => (
+            <ValueIdeaCard key={`${proposal.palanca_evaluada}-${index}`} proposal={proposal} index={index} />
+          ))}
+        </View>
+      </SectionCard>
+
+      <SectionCard title="Puesta en marcha" eyebrow="Próximos pasos">
+        <TextBlock text={report.puesta_en_marcha.texto} />
+      </SectionCard>
+    </>
+  );
+}
+
+function humanizeKey(key: string): string {
+  return key
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function renderGenericValue(value: unknown, depth: number): ReactNode {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    return value.trim() ? <TextBlock text={value} /> : null;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return <TextBlock text={String(value)} />;
+  }
+  if (Array.isArray(value)) {
+    return (
+      <>
+        {value.map((entry, index) => (
+          <Fragment key={index}>{renderGenericValue(entry, depth + 1)}</Fragment>
+        ))}
+      </>
+    );
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+    return (
+      <>
+        {entries.map(([key, child]) => (
+          <SectionCard key={key} title={humanizeKey(key)}>
+            {renderGenericValue(child, depth + 1)}
+          </SectionCard>
+        ))}
+      </>
+    );
+  }
+  return null;
+}
+
+export function renderGenericReport(report: Record<string, unknown>): ReactNode {
+  return Object.entries(report).map(([key, value]) => (
+    <SectionCard key={key} title={humanizeKey(key)}>
+      {renderGenericValue(value, 1)}
+    </SectionCard>
+  ));
+}
+
+export default function StrategyQuestionnaireResultScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
   const generatedReport = useStrategyReportStore((s) => s.generatedReport);
+  const reportType = useStrategyReportStore((s) => s.reportType);
   const discardDraft = useStrategyReportStore((s) => s.discardDraft);
 
   useEffect(() => {
@@ -630,9 +732,9 @@ export default function StrategyCaptacionResultScreen() {
 
   if (!generatedReport) return null;
 
-  function handleStartAgain(): void {
+  function handleGoToHistory(): void {
     discardDraft();
-    router.replace("/(app)/strategy");
+    router.replace("/(app)/strategies");
   }
 
   return (
@@ -654,11 +756,15 @@ export default function StrategyCaptacionResultScreen() {
             ]}
             showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           >
-            {renderReport(generatedReport, isMobile)}
+            {reportType === "captacion_5_fases"
+              ? renderReport(generatedReport as unknown as Captacion5FasesReport, isMobile)
+              : reportType === "value_ideas"
+                ? renderValueIdeasReport(generatedReport as unknown as ValueIdeasReport)
+                : renderGenericReport(generatedReport)}
           </ScrollView>
 
           <FooterActionBar>
-            <Button label="Crear otro informe" onPress={handleStartAgain} />
+            <Button label="Finalizar" onPress={handleGoToHistory} />
           </FooterActionBar>
         </View>
       </ResponsiveContainer>
@@ -675,74 +781,66 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   heroCard: {
-    borderRadius: 28,
+    borderRadius: 24,
     padding: Spacing.four,
     gap: Spacing.three,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
+    borderColor: "rgba(0,255,132,0.18)",
     overflow: "hidden",
   },
   heroEyebrow: {
-    color: SemanticColors.tealLight,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.success,
     textTransform: "uppercase",
-    letterSpacing: 1.2,
+    letterSpacing: 1.6,
   },
   heroTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 22,
+    lineHeight: 28,
     color: SemanticColors.textPrimary,
   },
   heroBody: {
-    color: SemanticColors.textSubtle,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.78)",
   },
-  heroHighlights: {
+  sectionBody: {
     gap: Spacing.two,
-  },
-  heroHighlightChip: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    padding: Spacing.three,
-    gap: Spacing.one,
-  },
-  heroHighlightLabel: {
-    color: SemanticColors.tealLight,
-  },
-  heroHighlightValue: {
-    color: SemanticColors.textPrimary,
-  },
-  card: {
-    backgroundColor: SemanticColors.glassBackground,
-    borderWidth: 1,
-    borderColor: SemanticColors.borderLight,
-    borderRadius: 22,
-    padding: Spacing.three,
-    gap: Spacing.two,
-  },
-  eyebrow: {
-    color: SemanticColors.tealLight,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  cardTitle: {
-    color: SemanticColors.textPrimary,
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
   },
   paragraph: {
-    color: SemanticColors.textSecondaryLight,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.78)",
   },
   list: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   listItem: {
     gap: Spacing.one,
     paddingTop: Spacing.two,
     borderTopWidth: 1,
-    borderTopColor: SemanticColors.border,
+    borderTopColor: "rgba(255,255,255,0.06)",
   },
   listLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
     color: SemanticColors.success,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
   },
   listValue: {
-    color: SemanticColors.textSubtle,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.85)",
   },
   insightGrid: {
     flexDirection: "row",
@@ -753,25 +851,33 @@ const styles = StyleSheet.create({
     minWidth: 220,
     flexGrow: 1,
     flexShrink: 1,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: SemanticColors.border,
+    borderColor: "rgba(0,255,132,0.12)",
     padding: Spacing.three,
     gap: Spacing.one,
   },
   insightLabel: {
-    color: SemanticColors.tealLight,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: SemanticColors.success,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
   },
   insightValue: {
-    color: SemanticColors.textSubtle,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "rgba(255,255,255,0.85)",
   },
   proposalCard: {
     gap: Spacing.three,
   },
   proposalHero: {
-    borderRadius: 24,
-    padding: Spacing.three,
+    borderRadius: 20,
+    padding: Spacing.four,
     gap: Spacing.two,
     borderWidth: 1,
   },
@@ -783,49 +889,51 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   proposalNumberBadge: {
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.32)",
     paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
   },
   proposalNumberText: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 10,
+    lineHeight: 13,
     color: SemanticColors.textPrimary,
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
   },
   anglePill: {
     borderRadius: 999,
     paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
+    paddingVertical: 4,
     borderWidth: 1,
-    backgroundColor: "rgba(0,0,0,0.16)",
+    backgroundColor: "rgba(0,0,0,0.32)",
   },
   anglePillText: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
     color: SemanticColors.textPrimary,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
   },
   proposalTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 20,
+    lineHeight: 26,
     color: SemanticColors.textPrimary,
   },
   proposalHint: {
-    color: SemanticColors.textSecondaryLight,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.72)",
   },
   phaseSection: {
-    backgroundColor: SemanticColors.glassBackground,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: SemanticColors.borderLight,
-    padding: Spacing.three,
-    gap: Spacing.two,
-  },
-  phaseTag: {
-    alignSelf: "flex-start",
-    borderRadius: 999,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-  },
-  phaseTagText: {
-    color: SemanticColors.tealLight,
+    gap: Spacing.three,
+    paddingTop: Spacing.two,
   },
   densityGrid: {
     gap: Spacing.two,
@@ -835,10 +943,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   densityCard: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: SemanticColors.border,
+    borderColor: "rgba(0,255,132,0.12)",
     padding: Spacing.three,
     gap: Spacing.two,
   },
@@ -851,14 +959,19 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   densityRankBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: SemanticColors.successMuted,
+    backgroundColor: "rgba(0,255,132,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.28)",
   },
   densityRankText: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 11,
+    lineHeight: 14,
     color: SemanticColors.success,
   },
   densityHeaderCopy: {
@@ -866,20 +979,29 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   densityTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 15,
+    lineHeight: 20,
     color: SemanticColors.textPrimary,
   },
   densitySubtitle: {
-    color: SemanticColors.textSecondaryLight,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: "rgba(255,255,255,0.65)",
   },
   budgetCard: {
     backgroundColor: "rgba(7,18,16,0.48)",
-    borderRadius: 22,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(0,255,132,0.12)",
     padding: Spacing.three,
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   budgetTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 15,
+    lineHeight: 20,
     color: SemanticColors.textPrimary,
   },
   budgetPanel: {
@@ -893,21 +1015,29 @@ const styles = StyleSheet.create({
   },
   budgetLevelCard: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: SemanticColors.border,
+    borderColor: "rgba(255,255,255,0.08)",
     padding: Spacing.three,
     gap: Spacing.one,
   },
   budgetLevelRecommended: {
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.32)",
     backgroundColor: "rgba(0,255,132,0.08)",
   },
   budgetLevelLabel: {
-    color: SemanticColors.textSecondaryLight,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: SemanticColors.success,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
   },
   budgetLevelValue: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 18,
+    lineHeight: 24,
     color: SemanticColors.textPrimary,
   },
   distributionPanel: {
@@ -922,10 +1052,16 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   distributionLabel: {
-    color: SemanticColors.textSubtle,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 12,
+    lineHeight: 16,
+    color: "rgba(255,255,255,0.78)",
   },
   distributionValue: {
-    color: SemanticColors.textSecondaryLight,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: "rgba(255,255,255,0.65)",
   },
   distributionTrack: {
     height: 10,
@@ -949,39 +1085,111 @@ const styles = StyleSheet.create({
   contactMethodCard: {
     flex: 1,
     minWidth: 220,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
     borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.one,
     overflow: "hidden",
   },
   contactMethodAccent: {
-    width: 42,
-    height: 4,
+    width: 36,
+    height: 3,
     borderRadius: 999,
     marginBottom: Spacing.one,
   },
   contactMethodTitle: {
-    color: SemanticColors.textPrimary,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
   },
   contactMethodText: {
-    color: SemanticColors.textSecondaryLight,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "rgba(255,255,255,0.85)",
   },
   messagePanel: {
     backgroundColor: "rgba(14, 35, 30, 0.58)",
-    borderRadius: 20,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(67,188,184,0.22)",
+    borderColor: "rgba(0,255,132,0.18)",
     padding: Spacing.three,
     gap: Spacing.one,
   },
   messagePanelTitle: {
-    color: SemanticColors.tealLight,
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: SemanticColors.success,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
-    letterSpacing: 0.8,
   },
   messagePanelText: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 15,
+    lineHeight: 22,
     color: SemanticColors.textPrimary,
+    fontStyle: "italic",
+  },
+  ideasList: {
+    gap: Spacing.three,
+  },
+  ideaCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.18)",
+    padding: Spacing.three,
+    gap: Spacing.three,
+  },
+  ideaHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  ideaIndexBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.32)",
+  },
+  ideaIndexText: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 12,
+    lineHeight: 14,
+    color: SemanticColors.success,
+  },
+  ideaHeaderCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  ideaPalancaEyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: SemanticColors.success,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  ideaTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 16,
+    lineHeight: 22,
+    color: SemanticColors.textPrimary,
+  },
+  ideaPalancaExplanation: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.65)",
+    fontStyle: "italic",
   },
 });

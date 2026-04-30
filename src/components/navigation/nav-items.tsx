@@ -29,8 +29,8 @@ export const NAV_ITEMS: NavItemConfig[] = [
     ),
   },
   {
-    key: "my-plan",
-    label: "Planes de negocio",
+    key: "strategies",
+    label: "Estrategias activas",
     icon: (color, focused) => (
       <Ionicons name={focused ? "trophy" : "trophy-outline"} size={TAB_ICON_SIZE} color={color} />
     ),
@@ -48,7 +48,7 @@ export const NAV_ITEMS: NavItemConfig[] = [
   },
   {
     key: "strategy",
-    label: "Nueva estrategia",
+    label: "Crear estrategia",
     icon: (color, focused) => (
       <Ionicons
         name={focused ? "bar-chart" : "bar-chart-outline"}

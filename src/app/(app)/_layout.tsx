@@ -16,13 +16,14 @@ export default function AppLayout() {
       <Stack.Screen name="documents" />
       <Stack.Screen name="tasks" />
       <Stack.Screen name="settings" />
-      <Stack.Screen name="my-plan" />
+      <Stack.Screen name="strategies" />
+      <Stack.Screen name="plan-detail" />
+      <Stack.Screen name="strategy-detail/[reportId]" />
       <Stack.Screen name="strategy" />
 
-      <Stack.Screen name="strategy-captacion" />
-      <Stack.Screen name="strategy-captacion-loading" />
-      <Stack.Screen name="strategy-captacion-result" />
-      <Stack.Screen name="strategy-captacion-ready" />
+      <Stack.Screen name="strategy-questionnaire" />
+      <Stack.Screen name="strategy-questionnaire-loading" />
+      <Stack.Screen name="strategy-questionnaire-result" />
 
       <Stack.Screen name="chat" />
       <Stack.Screen name="profile" />

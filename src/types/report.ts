@@ -18,6 +18,13 @@ export interface ReportQuestion {
   options: ReportQuestionOption[];
 }
 
+export interface PrefilledField {
+  key: string;
+  label: string;
+  value: unknown;
+  kernel_source: string;
+}
+
 export interface ReportTemplate {
   report_type: string;
   name: string;
@@ -26,6 +33,7 @@ export interface ReportTemplate {
   version: string;
   is_active: boolean;
   questions: ReportQuestion[];
+  prefilled?: PrefilledField[];
 }
 
 export interface ReportRunCreateRequest {
@@ -49,7 +57,7 @@ export interface ReportRunStatusResponse {
   error_message?: string | null;
   result?: {
     report_type?: string;
-    report?: Captacion5FasesReport;
+    report_id?: string;
   } | null;
 }
 
@@ -165,4 +173,43 @@ export interface Captacion5FasesReport {
   base_estrategica: BaseEstrategicaSection;
   tu_oportunidad_de_captacion: TuOportunidadDeCaptacionSection;
   estrategia_de_captacion_en_5_fases: EstrategiaDeCaptacionEn5FasesSection;
+}
+
+export interface ValueIdeaProposal {
+  palanca_evaluada: string;
+  explicacion_palanca: string;
+  idea: {
+    nombre_idea: string;
+    que_hacer_y_como_aplicarlo: string;
+    ejemplo_texto_venta: string;
+    por_que_funciona: string;
+  };
+}
+
+export interface ValueIdeasReport {
+  introduccion: { texto: string };
+  propuestas_micro_diferenciacion: ValueIdeaProposal[];
+  puesta_en_marcha: { texto: string };
+}
+
+export interface ReportSummary {
+  report_id: string;
+  user_id: string;
+  report_type: string;
+  version: number;
+  is_pinned: boolean;
+  source_run_id?: string | null;
+  template_version?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportRecord extends ReportSummary {
+  answers: Record<string, unknown>;
+  report: Record<string, unknown>;
+}
+
+export interface ReportListResponse {
+  items: ReportSummary[];
+  next_cursor?: string | null;
 }

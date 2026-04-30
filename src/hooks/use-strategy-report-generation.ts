@@ -5,13 +5,16 @@ import {
 } from "@/constants/strategy-report-loading-steps";
 import {
   createReportRun,
+  getReportById,
   getReportRunStatus,
   streamReportRunEvents,
 } from "@/services/report-service";
 import { useAuthStore } from "@/stores/auth-store";
+import { useStrategiesStore } from "@/stores/strategies-store";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import { ApiError } from "@/types/api";
-import type { Captacion5FasesReport, ReportQuestion, ReportRunCreateRequest } from "@/types/report";
+import type { ReportRunCreateRequest } from "@/types/report";
+import { buildStrategyAnswersPayload } from "@/utils/build-strategy-answers-payload";
 import { toErrorMessage } from "@/utils/to-error-message";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -29,30 +32,10 @@ interface ReportStepStartedPayload {
   readonly step_count?: number;
 }
 
-function buildAnswersPayload(
-  questions: ReportQuestion[],
-  answers: Record<string, string | string[]>,
-): Record<string, unknown> {
-  return questions.reduce<Record<string, unknown>>((acc, question) => {
-    const rawAnswer = answers[question.key];
-    if (rawAnswer === undefined) return acc;
-
-    if (question.input_type === "integer") {
-      acc[question.key] = Number.parseInt(String(rawAnswer), 10);
-      return acc;
-    }
-
-    acc[question.key] = rawAnswer;
-    return acc;
-  }, {});
-}
-
-function extractReport(payload: string): Captacion5FasesReport | null {
+function extractReportId(payload: string): string | null {
   try {
-    const parsed = JSON.parse(payload) as {
-      report?: Captacion5FasesReport;
-    };
-    return parsed.report ?? null;
+    const parsed = JSON.parse(payload) as { report_id?: string };
+    return parsed.report_id ?? null;
   } catch {
     return null;
   }
@@ -112,6 +95,17 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
     setError(message);
   }
 
+  async function loadAndShowReport(reportId: string): Promise<void> {
+    try {
+      const record = await getReportById(reportId);
+      setGeneratedReport(record.report);
+      advanceToStage("complete");
+      router.replace("/(app)/strategy-questionnaire-result");
+    } catch (fetchError) {
+      handleFailure(toErrorMessage(fetchError));
+    }
+  }
+
   function connectToRun(runId: string): void {
     const connection = streamReportRunEvents(
       runId,
@@ -119,16 +113,14 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
         if (event.id) lastEventIdRef.current = event.id;
 
         if (event.event === "complete") {
-          const report = extractReport(event.data);
-          if (!report) {
+          const reportId = extractReportId(event.data);
+          if (!reportId) {
             handleFailure("La ejecución terminó, pero no hemos podido leer el informe.");
             return;
           }
 
-          setGeneratedReport(report);
-          advanceToStage("complete");
           connection.abort();
-          setTimeout(() => router.replace("/(app)/strategy-captacion-result"), 500);
+          void loadAndShowReport(reportId);
           return;
         }
 
@@ -172,10 +164,8 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
 
         try {
           const status = await getReportRunStatus(runId);
-          if (status.status === "COMPLETED" && status.result?.report) {
-            setGeneratedReport(status.result.report);
-            advanceToStage("complete");
-            router.replace("/(app)/strategy-captacion-result");
+          if (status.status === "COMPLETED" && status.result?.report_id) {
+            await loadAndShowReport(status.result.report_id);
             return;
           }
           handleFailure(
@@ -210,11 +200,18 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
       const request: ReportRunCreateRequest = {
         user_id: currentUser.userId,
         report_type: currentReportType,
-        answers: buildAnswersPayload(currentTemplate.questions, currentAnswers),
+        answers: buildStrategyAnswersPayload(
+          currentTemplate.questions,
+          currentTemplate.prefilled ?? [],
+          currentAnswers,
+        ),
       };
 
       const accepted = await createReportRun(request);
       setRunId(accepted.run_id);
+      void useStrategiesStore
+        .getState()
+        .trackPendingRun(currentUser.userId, accepted.run_id, currentReportType);
       advanceToStage("queued");
       connectToRun(accepted.run_id);
     } catch (generationError) {

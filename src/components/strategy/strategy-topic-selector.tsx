@@ -1,66 +1,29 @@
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
-import { ImageSourcePropType, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Spacing } from "@/constants/theme";
+import { STRATEGY_CATALOG, type StrategyKey } from "@/components/strategies/strategy-catalog";
 import { StrategyTopicCard } from "./strategy-topic-card";
-
-interface TopicConfig {
-  key: string;
-  label: string;
-  image: ImageSourcePropType;
-  enabled: boolean;
-}
-
-const TOPICS: TopicConfig[] = [
-  {
-    key: "captacion",
-    label: "CAPTACIÓN",
-    image: require("@/assets/ui/strategy-captacion.png"),
-    enabled: true,
-  },
-  {
-    key: "ventas",
-    label: "GUIÓN DE VENTAS",
-    image: require("@/assets/ui/strategy-ventas.png"),
-    enabled: false,
-  },
-  {
-    key: "equipo",
-    label: "EQUIPO",
-    image: require("@/assets/ui/strategy-equipo.png"),
-    enabled: false,
-  },
-  {
-    key: "delegar",
-    label: "DELEGAR",
-    image: require("@/assets/ui/strategy-delegar.png"),
-    enabled: false,
-  },
-];
 
 const STAGGER_MS = 80;
 
 interface StrategyTopicSelectorProps {
-  onSelect: (key: string) => void;
+  onSelect: (key: StrategyKey) => void;
 }
 
 export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) {
   const { isDesktop } = useResponsiveLayout();
-  const total = TOPICS.length;
 
   return (
     <View style={[styles.grid, isDesktop ? styles.gridDesktop : null]}>
-      {TOPICS.map((topic, index) => (
+      {STRATEGY_CATALOG.map((topic, index) => (
         <View
           key={topic.key}
           style={[styles.cell, isDesktop ? styles.cellDesktop : styles.cellRow]}
         >
           <StrategyTopicCard
-            index={index}
-            total={total}
-            label={topic.label}
-            image={topic.image}
-            disabled={!topic.enabled}
-            actionLabel={topic.enabled ? "Comenzar" : "Próximamente"}
+            label={topic.shortTitle}
+            iconName={topic.iconName}
+            comingSoon={!topic.available}
             onPress={() => onSelect(topic.key)}
             animationDelay={index * STAGGER_MS}
           />
@@ -89,7 +52,7 @@ const styles = StyleSheet.create({
   },
   cellDesktop: {
     flexGrow: 1,
-    flexBasis: "22%",
+    flexBasis: "30%",
     minWidth: 220,
   },
 });

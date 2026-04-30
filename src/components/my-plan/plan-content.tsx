@@ -27,8 +27,8 @@ export function PlanContent({ plan, insets }: PlanContentProps) {
         <ScreenHeader
           topInset={insets.top}
           icon="trophy"
-          titlePrefix="Planes de"
-          titleAccent="negocio"
+          titlePrefix="Estrategias"
+          titleAccent="activas"
         />
         <PlanNavTabs tabs={tabs} activeKey={activeTab} onPress={handleTabPress} />
       </View>
