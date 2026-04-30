@@ -20,9 +20,9 @@ export const TASK_PRIORITY_COLORS: Record<
   { bg: string; border: string; text: string }
 > = {
   low: {
-    bg: "rgba(255,255,255,0.06)",
-    border: "rgba(255,255,255,0.16)",
-    text: SemanticColors.textSecondaryLight,
+    bg: "rgba(67,188,184,0.12)",
+    border: "rgba(67,188,184,0.32)",
+    text: SemanticColors.teal,
   },
   medium: {
     bg: "rgba(0,207,255,0.12)",
