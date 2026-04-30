@@ -15,15 +15,9 @@ import type { TaskPriority, TaskStatus } from "@/types/task";
 import { TASK_PRIORITIES } from "@/types/task";
 import { goBackOrHome } from "@/utils/navigation";
 
+import { TASK_PRIORITY_COLORS, TASK_PRIORITY_LABELS } from "./task-priority-badge";
 import { TaskStatusPickerModal } from "./task-status-picker-modal";
 import { TaskStatusPill } from "./task-status-pill";
-
-const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: "Baja",
-  medium: "Media",
-  high: "Alta",
-  urgent: "Urgente",
-};
 
 const DUE_DATE_PATTERN = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 
@@ -308,18 +302,37 @@ export function TaskFormFields({ controller, showStatus }: TaskFormFieldsProps) 
         <View style={styles.segmentRow}>
           {TASK_PRIORITIES.map((p) => {
             const active = p === priority;
+            const cfg = TASK_PRIORITY_COLORS[p];
             return (
               <TouchableOpacity
                 key={p}
                 onPress={() => setPriority(p)}
                 disabled={isSubmitting}
-                style={[styles.segment, active && styles.segmentActive]}
+                style={[
+                  styles.segment,
+                  active && {
+                    backgroundColor: cfg.bg,
+                    borderColor: cfg.border,
+                  },
+                ]}
                 activeOpacity={0.8}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
-                <ThemedText style={[styles.segmentLabel, active && styles.segmentLabelActive]}>
-                  {PRIORITY_LABELS[p]}
+                <View
+                  style={[
+                    styles.segmentDot,
+                    { backgroundColor: cfg.text },
+                    !active && styles.segmentDotInactive,
+                  ]}
+                />
+                <ThemedText
+                  style={[
+                    styles.segmentLabel,
+                    active && { color: cfg.text, fontFamily: Fonts.montserratBold },
+                  ]}
+                >
+                  {TASK_PRIORITY_LABELS[p]}
                 </ThemedText>
               </TouchableOpacity>
             );
@@ -607,26 +620,29 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
+    flexDirection: "row",
     paddingVertical: Spacing.two,
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
     borderRadius: 999,
     backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
   },
-  segmentActive: {
-    backgroundColor: "rgba(0,255,132,0.16)",
-    borderColor: "rgba(0,255,132,0.40)",
+  segmentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  segmentDotInactive: {
+    opacity: 0.55,
   },
   segmentLabel: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 12,
     color: SemanticColors.textSecondaryLight,
-  },
-  segmentLabelActive: {
-    color: SemanticColors.success,
   },
   errorBox: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -67,6 +67,8 @@ export default function TaskEditScreen() {
           icon="create-outline"
           titlePrefix="Editar"
           titleAccent="tarea"
+          showBack
+          onBack={() => router.replace("/(app)/tasks")}
         />
 
         <KeyboardAwareScroll

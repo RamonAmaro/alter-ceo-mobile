@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -48,6 +49,8 @@ export default function TaskCreateScreen() {
           icon="add-circle-outline"
           titlePrefix="Nueva"
           titleAccent="tarea"
+          showBack
+          onBack={() => router.replace("/(app)/tasks")}
         />
 
         <KeyboardAwareScroll

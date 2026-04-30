@@ -8,14 +8,17 @@ interface TaskPriorityBadgeProps {
   readonly priority: TaskPriority;
 }
 
-const LABELS: Record<TaskPriority, string> = {
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
   low: "Baja",
   medium: "Media",
   high: "Alta",
   urgent: "Urgente",
 };
 
-const COLORS: Record<TaskPriority, { bg: string; border: string; text: string }> = {
+export const TASK_PRIORITY_COLORS: Record<
+  TaskPriority,
+  { bg: string; border: string; text: string }
+> = {
   low: {
     bg: "rgba(255,255,255,0.06)",
     border: "rgba(255,255,255,0.16)",
@@ -39,11 +42,13 @@ const COLORS: Record<TaskPriority, { bg: string; border: string; text: string }>
 };
 
 export function TaskPriorityBadge({ priority }: TaskPriorityBadgeProps) {
-  const cfg = COLORS[priority];
+  const cfg = TASK_PRIORITY_COLORS[priority];
   return (
     <View style={[styles.pill, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
       <View style={[styles.dot, { backgroundColor: cfg.text }]} />
-      <ThemedText style={[styles.label, { color: cfg.text }]}>{LABELS[priority]}</ThemedText>
+      <ThemedText style={[styles.label, { color: cfg.text }]}>
+        {TASK_PRIORITY_LABELS[priority]}
+      </ThemedText>
     </View>
   );
 }
