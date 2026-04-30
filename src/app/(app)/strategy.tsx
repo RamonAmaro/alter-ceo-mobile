@@ -32,7 +32,7 @@ export default function StrategyScreen() {
     }
 
     const entry = STRATEGY_CATALOG.find((e) => e.key === key);
-    if (!entry?.available || !entry.reportType) {
+    if (!entry?.available || !entry?.reportType) {
       Alert.alert("Próximamente", "Esta estrategia estará disponible muy pronto.");
       return;
     }

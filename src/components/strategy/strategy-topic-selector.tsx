@@ -12,6 +12,7 @@ interface StrategyTopicSelectorProps {
 
 export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) {
   const { isDesktop } = useResponsiveLayout();
+  const total = STRATEGY_CATALOG.length;
 
   return (
     <View style={[styles.grid, isDesktop ? styles.gridDesktop : null]}>
@@ -21,7 +22,9 @@ export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) 
           style={[styles.cell, isDesktop ? styles.cellDesktop : styles.cellRow]}
         >
           <StrategyTopicCard
-            label={topic.shortTitle}
+            index={index}
+            total={total}
+            label={topic.title}
             iconName={topic.iconName}
             comingSoon={!topic.available}
             onPress={() => onSelect(topic.key)}
