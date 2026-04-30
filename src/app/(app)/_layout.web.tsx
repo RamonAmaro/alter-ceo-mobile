@@ -45,7 +45,9 @@ export default function AppLayout() {
                 <Stack.Screen name="documents" />
                 <Stack.Screen name="tasks" />
                 <Stack.Screen name="settings" />
-                <Stack.Screen name="my-plan" />
+                <Stack.Screen name="strategies" />
+                <Stack.Screen name="plan-detail" />
+                <Stack.Screen name="strategy-detail/[reportId]" />
                 <Stack.Screen name="strategy" />
                 <Stack.Screen name="chat" />
                 <Stack.Screen name="profile" />

@@ -9,11 +9,18 @@ import { Button } from "@/components/button";
 import { QuestionBody } from "@/components/onboarding/question-body";
 import { QuestionHeader } from "@/components/onboarding/question-header";
 import { ScreenLayout } from "@/components/screen-layout";
+import { PrefilledDisclosure } from "@/components/strategies/prefilled-disclosure";
+import { getStrategyByReportType } from "@/components/strategies/strategy-catalog";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR, USE_NATIVE_DRIVER } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
+import { createReportRun } from "@/services/report-service";
+import { useAuthStore } from "@/stores/auth-store";
+import { useStrategiesStore } from "@/stores/strategies-store";
 import { useStrategyReportStore, type StrategyReportAnswer } from "@/stores/strategy-report-store";
 import type { ReportInputType, ReportQuestion } from "@/types/report";
+import { buildStrategyAnswersPayload } from "@/utils/build-strategy-answers-payload";
+import { toErrorMessage } from "@/utils/to-error-message";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 
 function mapQuestionType(inputType: ReportInputType): "single" | "multi" | "text" | "integer" {
@@ -40,7 +47,7 @@ function getPlaceholder(question: ReportQuestion): string | undefined {
   return undefined;
 }
 
-export default function StrategyCaptacionScreen() {
+export default function StrategyQuestionnaireScreen() {
   const insets = useSafeAreaInsets();
   const reportType = useStrategyReportStore((s) => s.reportType);
   const template = useStrategyReportStore((s) => s.template);
@@ -52,20 +59,30 @@ export default function StrategyCaptacionScreen() {
   const setAnswer = useStrategyReportStore((s) => s.setAnswer);
   const nextQuestion = useStrategyReportStore((s) => s.nextQuestion);
   const previousQuestion = useStrategyReportStore((s) => s.previousQuestion);
+  const discardDraft = useStrategyReportStore((s) => s.discardDraft);
+  const userId = useAuthStore((s) => s.user?.userId);
+  const trackPendingRun = useStrategiesStore((s) => s.trackPendingRun);
+
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
   const finalSubmitRef = useRef(false);
+  const isLeavingRef = useRef(false);
   const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
 
   useEffect(() => {
+    if (isLeavingRef.current) return;
     if (!reportType) {
       router.replace("/(app)/strategy");
       return;
     }
     void loadTemplate(reportType);
   }, [loadTemplate, reportType]);
+
+  const catalogEntry = reportType ? getStrategyByReportType(reportType) : undefined;
+  const planLabel = catalogEntry?.shortTitle ?? template?.name?.toUpperCase() ?? "ESTRATEGIA";
 
   const questionCount = template?.questions.length ?? 0;
   const question = template?.questions[currentQuestionIndex] ?? null;
@@ -150,7 +167,38 @@ export default function StrategyCaptacionScreen() {
     if (finalSubmitRef.current) return;
     finalSubmitRef.current = true;
     setIsFinalSubmitting(true);
-    router.push("/(app)/strategy-captacion-loading");
+    void submitGeneration();
+  }
+
+  async function submitGeneration(): Promise<void> {
+    if (!userId || !reportType || !template) {
+      finalSubmitRef.current = false;
+      setIsFinalSubmitting(false);
+      setSubmitError("No hay suficiente contexto para generar el informe.");
+      return;
+    }
+
+    try {
+      setSubmitError(null);
+      const payload = buildStrategyAnswersPayload(
+        template.questions,
+        template.prefilled ?? [],
+        answers,
+      );
+      const accepted = await createReportRun({
+        user_id: userId,
+        report_type: reportType,
+        answers: payload,
+      });
+      await trackPendingRun(userId, accepted.run_id, reportType);
+      isLeavingRef.current = true;
+      router.replace("/(app)/strategies");
+      discardDraft();
+    } catch (err) {
+      finalSubmitRef.current = false;
+      setIsFinalSubmitting(false);
+      setSubmitError(toErrorMessage(err));
+    }
   }
 
   async function handleRetry(): Promise<void> {
@@ -164,7 +212,7 @@ export default function StrategyCaptacionScreen() {
         <View style={[styles.centered, { paddingTop: insets.top + Spacing.five }]}>
           <ActivityIndicator color={SemanticColors.success} size="large" />
           <ThemedText type="bodyLg" style={styles.helperText}>
-            Cargando el cuestionario de captación...
+            Cargando el cuestionario...
           </ThemedText>
         </View>
       </ScreenLayout>
@@ -214,7 +262,13 @@ export default function StrategyCaptacionScreen() {
           showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           keyboardShouldPersistTaps="handled"
         >
-          <QuestionHeader planLabel="CAPTACIÓN" onBack={handleBack} />
+          <QuestionHeader planLabel={planLabel} onBack={handleBack} />
+
+          {currentQuestionIndex === 0 && template?.prefilled && template.prefilled.length > 0 ? (
+            <View style={styles.prefilledWrap}>
+              <PrefilledDisclosure fields={template.prefilled} />
+            </View>
+          ) : null}
 
           {question.section ? (
             <ThemedText type="labelSm" style={styles.sectionLabel}>
@@ -233,6 +287,11 @@ export default function StrategyCaptacionScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
+          {submitError ? (
+            <ThemedText type="bodySm" style={styles.submitErrorText}>
+              {submitError}
+            </ThemedText>
+          ) : null}
           <Button
             label={currentQuestionIndex + 1 === questionCount ? "Finalizar" : "Siguiente"}
             onPress={handleNext}
@@ -261,6 +320,11 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.4,
   },
+  submitErrorText: {
+    color: SemanticColors.error,
+    textAlign: "center",
+    marginBottom: Spacing.two,
+  },
   centered: {
     flex: 1,
     justifyContent: "center",
@@ -274,6 +338,9 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: SemanticColors.success,
     marginBottom: Spacing.one,
+  },
+  prefilledWrap: {
+    marginBottom: Spacing.three,
   },
   errorWrap: {
     flex: 1,

@@ -24,12 +24,12 @@ export function getPlanFlags(plan: PlanData): PlanFlags {
 
   const hasDiagnosisData = Boolean(
     diagnosis?.mensaje_introduccion?.trim() ||
-      summary?.sector?.trim() ||
-      summary?.productos_servicios_principales?.trim() ||
-      typeof summary?.facturacion_mensual_aproximada === "number" ||
-      typeof summary?.facturacion_anual_aproximada === "number" ||
-      summary?.team_size_range ||
-      typeof summary?.numero_personas_equipo === "number",
+    summary?.sector?.trim() ||
+    summary?.productos_servicios_principales?.trim() ||
+    typeof summary?.facturacion_mensual_aproximada === "number" ||
+    typeof summary?.facturacion_anual_aproximada === "number" ||
+    summary?.team_size_range ||
+    typeof summary?.numero_personas_equipo === "number",
   );
 
   const pillars = diagnosis?.seis_pilares ?? [];
@@ -53,8 +53,8 @@ function hasAnySalesStrategy(sales: PlanData["plan_ventas"]): boolean {
   if (!sales) return false;
   return Boolean(
     sales.mejorar_producto_servicio ??
-      sales.aumentar_captacion_clientes ??
-      sales.mejorar_conversion,
+    sales.aumentar_captacion_clientes ??
+    sales.mejorar_conversion,
   );
 }
 

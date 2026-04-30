@@ -35,8 +35,8 @@ export function SalesProductBlock({ data }: SalesProductBlockProps) {
   const hasMarco = Boolean(clientDiag || messageGap);
   const hasDiff = Boolean(
     nonEmpty(data.diferenciacion_funcional) ||
-      nonEmpty(data.diferenciacion_experiencial) ||
-      nonEmpty(data.diferenciacion_estrategica),
+    nonEmpty(data.diferenciacion_experiencial) ||
+    nonEmpty(data.diferenciacion_estrategica),
   );
   const proposals = (data.propuestas ?? []).filter(
     (p) => p && (p.titulo?.trim() || p.descripcion?.trim()),

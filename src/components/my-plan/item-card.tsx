@@ -26,15 +26,8 @@ export function ItemCard({ index, title, description, accentColor }: ItemCardPro
   return (
     <View style={[styles.wrap, { borderLeftColor: tint55 }]}>
       <View style={styles.header}>
-        <View
-          style={[
-            styles.indexBadge,
-            { backgroundColor: tint15, borderColor: tint35 },
-          ]}
-        >
-          <ThemedText style={[styles.indexLabel, { color: accentColor }]}>
-            {indexLabel}
-          </ThemedText>
+        <View style={[styles.indexBadge, { backgroundColor: tint15, borderColor: tint35 }]}>
+          <ThemedText style={[styles.indexLabel, { color: accentColor }]}>{indexLabel}</ThemedText>
         </View>
         <ThemedText style={styles.title}>{title}</ThemedText>
       </View>

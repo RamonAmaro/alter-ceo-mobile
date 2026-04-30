@@ -11,10 +11,7 @@ const LABELS: Record<TeamSizeRange, string> = {
   over_hundred: "Más de 100 personas",
 };
 
-export function teamSizeLabel(
-  range?: TeamSizeRange,
-  fallback?: number,
-): string | undefined {
+export function teamSizeLabel(range?: TeamSizeRange, fallback?: number): string | undefined {
   if (range && LABELS[range]) return LABELS[range];
   if (typeof fallback === "number" && fallback > 0) {
     return `${fallback} ${fallback === 1 ? "persona" : "personas"}`;

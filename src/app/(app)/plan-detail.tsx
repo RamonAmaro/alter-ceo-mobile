@@ -11,19 +11,19 @@ import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function MyPlanScreen() {
+export default function PlanDetailScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
-  const user = useAuthStore((s) => s.user);
+  const userId = useAuthStore((s) => s.user?.userId);
   const latestPlan = usePlanStore((s) => s.latestPlan);
   const fetchLatestPlan = usePlanStore((s) => s.fetchLatestPlan);
   const error = usePlanStore((s) => s.error);
 
   useEffect(() => {
-    if (user?.userId && !latestPlan) {
-      void fetchLatestPlan(user.userId);
+    if (userId && !latestPlan) {
+      void fetchLatestPlan(userId);
     }
-  }, [user?.userId, latestPlan, fetchLatestPlan]);
+  }, [userId, latestPlan, fetchLatestPlan]);
 
   if (!latestPlan && !error) {
     return (
@@ -31,9 +31,9 @@ export default function MyPlanScreen() {
         <View style={styles.container}>
           <ScreenHeader
             topInset={insets.top}
-            icon="trophy"
-            titlePrefix="Planes de"
-            titleAccent="negocio"
+            icon="rocket"
+            titlePrefix="Plan de"
+            titleAccent="duplicación"
             showBack={isMobile}
           />
           <View style={styles.centered}>
@@ -50,14 +50,14 @@ export default function MyPlanScreen() {
         <View style={styles.container}>
           <ScreenHeader
             topInset={insets.top}
-            icon="trophy"
-            titlePrefix="Planes de"
-            titleAccent="negocio"
+            icon="rocket"
+            titlePrefix="Plan de"
+            titleAccent="duplicación"
             showBack={isMobile}
           />
           <View style={styles.centered}>
             <ThemedText type="bodyMd" style={styles.emptyText}>
-              Aún no tienes un plan generado.{"\n"}Completa el onboarding para crearlo.
+              Aún no tienes un plan generado.{"\n"}Completa el cuestionario para crearlo.
             </ThemedText>
           </View>
         </View>

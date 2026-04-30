@@ -23,8 +23,8 @@ export function AreaAnalysisSection({ areas }: AreaAnalysisSectionProps) {
     const raw = areas[key];
     const value = raw?.trim();
     return value ? { key, label, value } : null;
-  }).filter((item): item is { key: keyof PlanAreaAnalysis; label: string; value: string } =>
-    item !== null,
+  }).filter(
+    (item): item is { key: keyof PlanAreaAnalysis; label: string; value: string } => item !== null,
   );
 
   if (items.length === 0) return null;

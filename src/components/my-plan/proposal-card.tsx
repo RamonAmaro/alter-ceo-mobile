@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, Spacing } from "@/constants/theme";
 import type { PlanProposalItem } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 

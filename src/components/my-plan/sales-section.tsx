@@ -25,12 +25,7 @@ export function SalesSection({
   const cleanPriorities = immediatePriorities.map((p) => p.trim()).filter(Boolean);
   const trimmedIntro = projectionIntroduction?.trim();
 
-  if (
-    !hasTarget &&
-    validProjection.length === 0 &&
-    cleanPriorities.length === 0 &&
-    !trimmedIntro
-  ) {
+  if (!hasTarget && validProjection.length === 0 && cleanPriorities.length === 0 && !trimmedIntro) {
     return null;
   }
 
@@ -55,9 +50,7 @@ export function SalesSection({
 
       {trimmedIntro ? <ThemedText style={styles.intro}>{trimmedIntro}</ThemedText> : null}
 
-      {validProjection.length > 0 ? (
-        <RevenueChart values={monthlyProjection} />
-      ) : null}
+      {validProjection.length > 0 ? <RevenueChart values={monthlyProjection} /> : null}
 
       {cleanPriorities.length > 0 ? (
         <View style={styles.prioritiesBlock}>

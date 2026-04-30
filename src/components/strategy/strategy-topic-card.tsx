@@ -1,38 +1,23 @@
 import { ThemedText } from "@/components/themed-text";
-import { MonumentalIndex } from "@/components/ui/monumental-index";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
-import {
-  Animated,
-  Image,
-  ImageSourcePropType,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 
 interface StrategyTopicCardProps {
-  index: number;
-  total: number;
   label: string;
-  image: ImageSourcePropType;
-  actionLabel?: string;
-  disabled?: boolean;
+  iconName: string;
+  comingSoon?: boolean;
   onPress: () => void;
   animationDelay?: number;
 }
 
 export function StrategyTopicCard({
-  index,
-  total,
   label,
-  image,
-  actionLabel = "Comenzar",
-  disabled = false,
+  iconName,
+  comingSoon = false,
   onPress,
   animationDelay = 0,
 }: StrategyTopicCardProps) {
@@ -59,7 +44,6 @@ export function StrategyTopicCard({
   }, []);
 
   function handlePressIn(): void {
-    if (disabled) return;
     Animated.spring(scale, {
       toValue: 0.97,
       speed: 50,
@@ -69,7 +53,6 @@ export function StrategyTopicCard({
   }
 
   function handlePressOut(): void {
-    if (disabled) return;
     Animated.spring(scale, {
       toValue: 1,
       speed: 50,
@@ -78,24 +61,20 @@ export function StrategyTopicCard({
     }).start();
   }
 
-  const indexLabel = String(index + 1).padStart(2, "0");
-  const totalLabel = String(total).padStart(2, "0");
-
   return (
     <Animated.View style={[styles.outer, { opacity, transform: [{ translateY }, { scale }] }]}>
       <Pressable
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={label.replace("\n", " ")}
         style={styles.pressable}
       >
-        <View style={[styles.card, disabled && styles.cardDisabled]}>
+        <View style={[styles.card, comingSoon && styles.cardDisabled]}>
           <LinearGradient
             colors={
-              disabled
+              comingSoon
                 ? ["rgba(255,255,255,0.02)", "rgba(255,255,255,0.005)"]
                 : ["rgba(0,255,132,0.10)", "rgba(255,255,255,0.02)"]
             }
@@ -104,44 +83,36 @@ export function StrategyTopicCard({
             style={StyleSheet.absoluteFill}
           />
 
-          <MonumentalIndex
-            label={indexLabel}
-            size={120}
-            opacity={disabled ? 0.03 : 0.07}
-            right={-6}
-            bottom={-18}
-          />
-
-          <View style={styles.topRow}>
-            <View style={[styles.metaPill, disabled && styles.metaPillDisabled]}>
-              <View style={[styles.metaDot, disabled && styles.metaDotDisabled]} />
-              <ThemedText style={[styles.metaText, disabled && styles.metaTextDisabled]}>
-                {disabled ? "PRÓXIMAMENTE" : `ESTRATEGIA ${indexLabel} · ${totalLabel}`}
-              </ThemedText>
+          {comingSoon ? (
+            <View style={styles.topRow}>
+              <View style={styles.comingSoonPill}>
+                <View style={styles.comingSoonDot} />
+                <ThemedText style={styles.comingSoonText}>PRÓXIMAMENTE</ThemedText>
+              </View>
             </View>
-          </View>
+          ) : null}
 
-          <View style={styles.imageWrap}>
-            <Image
-              source={image}
-              style={[styles.image, disabled && styles.imageDisabled]}
-              resizeMode="contain"
+          <View style={styles.iconWrap}>
+            <Ionicons
+              name={iconName as never}
+              size={64}
+              color={comingSoon ? SemanticColors.textMuted : SemanticColors.success}
             />
           </View>
 
           <View style={styles.bottom}>
             <View style={styles.labelRow}>
-              <View style={[styles.accentBar, disabled && styles.accentBarDisabled]} />
-              <ThemedText style={[styles.label, disabled && styles.labelDisabled]}>
+              <View style={[styles.accentBar, comingSoon && styles.accentBarDisabled]} />
+              <ThemedText style={[styles.label, comingSoon && styles.labelDisabled]}>
                 {label.replace("\n", " ")}
               </ThemedText>
             </View>
 
             <View style={styles.actionRow}>
-              <ThemedText style={[styles.actionLabel, disabled && styles.actionLabelDisabled]}>
-                {actionLabel}
+              <ThemedText style={[styles.actionLabel, comingSoon && styles.actionLabelDisabled]}>
+                {comingSoon ? "Próximamente" : "Comenzar"}
               </ThemedText>
-              {!disabled ? (
+              {!comingSoon ? (
                 <View style={styles.arrowWrap}>
                   <Ionicons name="arrow-forward" size={14} color={SemanticColors.success} />
                 </View>
@@ -194,52 +165,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
   },
-  metaPill: {
+  comingSoonPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: "rgba(0,255,132,0.10)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.22)",
-  },
-  metaPillDisabled: {
     backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
   },
-  metaDot: {
+  comingSoonDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: SemanticColors.success,
-  },
-  metaDotDisabled: {
     backgroundColor: SemanticColors.textMuted,
   },
-  metaText: {
+  comingSoonText: {
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 9,
     lineHeight: 12,
-    color: SemanticColors.success,
+    color: SemanticColors.textMuted,
     letterSpacing: 2,
   },
-  metaTextDisabled: {
-    color: SemanticColors.textMuted,
-  },
-  imageWrap: {
+  iconWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.two,
-  },
-  image: {
-    width: 88,
-    height: 88,
-  },
-  imageDisabled: {
-    opacity: 0.38,
   },
   bottom: {
     gap: Spacing.two,

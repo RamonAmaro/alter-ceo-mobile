@@ -1,7 +1,7 @@
 import { ItemCard } from "@/components/my-plan/item-card";
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, Spacing } from "@/constants/theme";
 import type { PlanBlocker } from "@/types/plan";
 import { deduplicateByTitle } from "@/utils/deduplicate-by-title";
 import { StyleSheet, View } from "react-native";

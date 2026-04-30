@@ -35,7 +35,7 @@ export default function CompletionScreen() {
     }
     clearAnswers();
     router.replace("/(app)/(tabs)/alter");
-    setTimeout(() => router.push("/my-plan"), 300);
+    setTimeout(() => router.push("/strategies"), 300);
   }
 
   return (

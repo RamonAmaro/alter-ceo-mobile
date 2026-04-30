@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 import { getReportTemplate } from "@/services/report-service";
-import type { Captacion5FasesReport, ReportTemplate } from "@/types/report";
+import type { ReportTemplate } from "@/types/report";
 import { toErrorMessage } from "@/utils/to-error-message";
 
 export type StrategyReportAnswer = string | string[];
@@ -47,7 +47,7 @@ interface StrategyReportState {
   currentQuestionIndex: number;
   answers: Record<string, StrategyReportAnswer>;
   runId: string | null;
-  generatedReport: Captacion5FasesReport | null;
+  generatedReport: Record<string, unknown> | null;
   isLoading: boolean;
   error: string | null;
   draftUserId: string | null;
@@ -56,7 +56,7 @@ interface StrategyReportState {
   loadTemplate: (reportType: string) => Promise<void>;
   setAnswer: (key: string, answer: StrategyReportAnswer) => void;
   setRunId: (runId: string | null) => void;
-  setGeneratedReport: (report: Captacion5FasesReport | null) => void;
+  setGeneratedReport: (report: Record<string, unknown> | null) => void;
   setError: (error: string | null) => void;
   nextQuestion: () => void;
   previousQuestion: () => void;
@@ -138,9 +138,26 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
 
     try {
       const template = await getReportTemplate(reportType);
+      // Backend strips kernel-resolvable questions from `questions` and reports
+      // them as `prefilled` entries. Their `key` still belongs in the answers
+      // payload (the answers model uses `extra="forbid"`), so we hydrate the
+      // answers map with those values upfront — if the user never sees the
+      // question, the prefilled value still travels in the final submission.
+      const hydratedAnswers: Record<string, StrategyReportAnswer> = {
+        ...(shouldPreserveDraft ? current.answers : {}),
+      };
+      for (const field of template.prefilled ?? []) {
+        if (hydratedAnswers[field.key] !== undefined) continue;
+        if (Array.isArray(field.value)) {
+          hydratedAnswers[field.key] = field.value.map(String);
+        } else if (field.value !== null && field.value !== undefined) {
+          hydratedAnswers[field.key] = String(field.value);
+        }
+      }
       set({
         reportType,
         template,
+        answers: hydratedAnswers,
         isLoading: false,
         error: null,
       });
@@ -168,7 +185,7 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
     scheduleStrategyPersist(get);
   },
 
-  setGeneratedReport: (generatedReport: Captacion5FasesReport | null) => {
+  setGeneratedReport: (generatedReport: Record<string, unknown> | null) => {
     set({ generatedReport });
   },
 
