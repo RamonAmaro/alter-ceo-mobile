@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useShallow } from "zustand/react/shallow";
@@ -38,9 +38,16 @@ export default function TasksScreen() {
   const updateStatus = useTaskStore((s) => s.updateStatus);
   const deleteTask = useTaskStore((s) => s.deleteTask);
 
-  useEffect(() => {
-    if (!initialLoaded && !isLoading) void fetchAll();
-  }, [initialLoaded, isLoading, fetchAll]);
+  // Refetch toda vez que a tela ganha foco. No primeiro mount, faz fetch
+  // visível (com spinner). Em foco subsequente, refresca em silêncio para
+  // capturar tareas criadas pelo agente enquanto o usuário estava em outra tela.
+  useFocusEffect(
+    useCallback(() => {
+      const state = useTaskStore.getState();
+      if (state.isLoading) return;
+      void state.fetchAll({ silent: state.initialLoaded });
+    }, []),
+  );
 
   const { drafts, pending, inProgress, blocked, completed, archived } = useMemo(() => {
     const allTasks = order.map((id) => byId[id]).filter((t): t is Task => t != null);

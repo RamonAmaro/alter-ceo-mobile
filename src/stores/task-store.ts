@@ -40,7 +40,7 @@ interface TaskState {
   _streamUserId: string | null;
   _stopRequested: boolean;
 
-  fetchAll: () => Promise<void>;
+  fetchAll: (options?: { silent?: boolean }) => Promise<void>;
   createTask: (input: CreateTaskInput) => Promise<Task>;
   patchTask: (taskId: string, patch: PatchTaskInput) => Promise<Task>;
   acceptProposal: (taskId: string) => Promise<void>;
@@ -118,18 +118,42 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   _streamUserId: null,
   _stopRequested: false,
 
-  fetchAll: async () => {
-    set({ isLoading: true, error: null });
+  fetchAll: async (options) => {
+    const silent = options?.silent === true;
+    if (!silent) set({ isLoading: true, error: null });
     try {
       const items = await taskService.listTasks({ limit: FETCH_LIMIT });
-      const byId: Record<string, Task> = {};
-      const order: string[] = [];
-      for (const task of items) {
-        byId[task.id] = task;
-        order.push(task.id);
-      }
-      set({ byId, order, isLoading: false, initialLoaded: true, error: null });
+      set((state) => {
+        const submitting = state.mutation.submitting;
+        const byId: Record<string, Task> = {};
+        const order: string[] = [];
+        for (const task of items) {
+          if (submitting.has(task.id)) {
+            // Mutation em vôo para esta task — preserva o estado local.
+            // Se foi removida otimisticamente (existing=undefined), NÃO re-adiciona.
+            const existing = state.byId[task.id];
+            if (existing) {
+              byId[task.id] = existing;
+              order.push(task.id);
+            }
+          } else {
+            byId[task.id] = task;
+            order.push(task.id);
+          }
+        }
+        return {
+          byId,
+          order,
+          isLoading: false,
+          initialLoaded: true,
+          error: null,
+        };
+      });
     } catch (err) {
+      if (silent) {
+        // Refresh em background — não polui o estado de erro/loading da UI.
+        return;
+      }
       set({ error: toErrorMessage(err), isLoading: false, initialLoaded: true });
     }
   },
@@ -245,14 +269,24 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const original = snapshot.byId[taskId];
     if (!original) return;
     const removed = removeFrom(snapshot.byId, snapshot.order, taskId);
-    set({ ...removed });
+    // Marca submitting para que um fetchAll concorrente NÃO re-adicione a task
+    // antes do DELETE comitar no servidor.
+    set({
+      ...removed,
+      mutation: withSubmitting(snapshot.mutation, taskId, true),
+    });
     try {
       await taskService.deleteTask(taskId);
+      set((state) => ({ mutation: withSubmitting(state.mutation, taskId, false) }));
     } catch (err) {
-      // Rollback
-      set((state) => upsert(state.byId, state.order, original));
+      // Rollback: restaura a task e libera o submitting com erro.
       set((state) => ({
-        mutation: withError(state.mutation, taskId, toErrorMessage(err)),
+        ...upsert(state.byId, state.order, original),
+        mutation: withError(
+          withSubmitting(state.mutation, taskId, false),
+          taskId,
+          toErrorMessage(err),
+        ),
       }));
       throw err;
     }

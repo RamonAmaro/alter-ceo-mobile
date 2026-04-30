@@ -18,6 +18,7 @@ import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
 import { NEW_THREAD_DRAFT_KEY, useChatStore } from "@/stores/chat-store";
+import { useTaskStore } from "@/stores/task-store";
 import { goBackOrHome } from "@/utils/navigation";
 import { useNavigation } from "expo-router";
 
@@ -185,6 +186,17 @@ export default function ChatScreen() {
   useEffect(() => {
     return () => cancelStream();
   }, [cancelStream]);
+
+  // Quando o agente termina de responder (isStreaming true → false), o turno
+  // pode ter criado tareas em background. Backend ainda não emite SSE para
+  // task_proposal_*, então refetch silencioso aqui é o gatilho mais confiável.
+  const wasStreamingRef = useRef(false);
+  useEffect(() => {
+    if (wasStreamingRef.current && !isStreaming) {
+      void useTaskStore.getState().fetchAll({ silent: true });
+    }
+    wasStreamingRef.current = isStreaming;
+  }, [isStreaming]);
 
   useEffect(() => {
     if (!draftsHydrated || !user) return;
