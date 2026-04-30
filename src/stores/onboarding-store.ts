@@ -60,11 +60,16 @@ interface OnboardingState {
   currentQuestionIndex: number;
   answers: Map<number, Answer>;
   audioRecords: AudioRecord[];
+  // True when the onboarding flow was opened from inside the app
+  // (e.g., user clicked "Plan de Duplicación" from the strategy screen
+  // to regenerate). Lets the layout show sidebar + back button.
+  openedFromApp: boolean;
 
   load: () => Promise<void>;
   resolveCompletionStatus: (userId: string) => Promise<void>;
   markCompletedForUser: (userId: string) => void;
   setPlanType: (type: PlanType) => void;
+  setOpenedFromApp: (value: boolean) => void;
   getAnswer: (index: number) => Answer | undefined;
   setAnswer: (index: number, answer: Answer) => void;
   setAnswers: (answers: Map<number, Answer>) => void;
@@ -116,6 +121,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   error: null,
   isLoading: true,
   statusUserId: null,
+  openedFromApp: false,
   ...buildEmptyDraftState(),
 
   load: async () => {
@@ -181,6 +187,10 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
       statusUserId: normalizedUserId,
     });
     if (normalizedUserId) void clearPersistedDraft(normalizedUserId);
+  },
+
+  setOpenedFromApp: (value: boolean) => {
+    set({ openedFromApp: value });
   },
 
   setPlanType: (type: PlanType) => {

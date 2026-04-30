@@ -18,6 +18,8 @@ export default function CompletionScreen() {
   const insets = useSafeAreaInsets();
   const clearAnswers = useOnboardingStore((s) => s.clearAnswers);
   const markCompletedForUser = useOnboardingStore((s) => s.markCompletedForUser);
+  const openedFromApp = useOnboardingStore((s) => s.openedFromApp);
+  const setOpenedFromApp = useOnboardingStore((s) => s.setOpenedFromApp);
   const fetchLatestPlan = usePlanStore((s) => s.fetchLatestPlan);
   const user = useAuthStore((s) => s.user);
   const [loading, setLoading] = useState(false);
@@ -34,6 +36,11 @@ export default function CompletionScreen() {
       markCompletedForUser(user.userId);
     }
     clearAnswers();
+    if (openedFromApp) {
+      setOpenedFromApp(false);
+      router.replace("/(app)/strategies");
+      return;
+    }
     router.replace("/(app)/(tabs)/alter");
     setTimeout(() => router.push("/strategies"), 300);
   }

@@ -1,4 +1,7 @@
+import { DesktopSidebar } from "@/components/desktop-sidebar";
+import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Redirect, Stack } from "expo-router";
 import { ImageBackground, StyleSheet, View, type DimensionValue } from "react-native";
@@ -11,14 +14,17 @@ const TRANSPARENT_THEME = {
 };
 
 export default function OnboardingLayout() {
+  const { isMobile } = useResponsiveLayout();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const openedFromApp = useOnboardingStore((s) => s.openedFromApp);
+  const showSidebar = openedFromApp && !isMobile;
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
   }
 
-  return (
+  const content = (
     <ImageBackground
       source={require("@/assets/ui/app-background.png")}
       style={styles.background}
@@ -37,9 +43,27 @@ export default function OnboardingLayout() {
       </View>
     </ImageBackground>
   );
+
+  if (showSidebar) {
+    return (
+      <View style={styles.desktopRow}>
+        <DesktopSidebar />
+        <View style={styles.fill}>{content}</View>
+      </View>
+    );
+  }
+
+  return content;
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
+  desktopRow: {
+    flex: 1,
+    flexDirection: "row",
+  },
   background: {
     flex: 1,
   },
