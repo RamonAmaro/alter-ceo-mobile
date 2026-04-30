@@ -43,7 +43,8 @@ export function RevenueChart({ values }: RevenueChartProps) {
 
   const max = Math.max(...values);
   const svgHeight = CHART_HEIGHT + LABEL_HEIGHT + PADDING_TOP;
-  const barWidth = chartWidth > 0 ? (chartWidth - BAR_GAP * (values.length - 1)) / values.length : 0;
+  const barWidth =
+    chartWidth > 0 ? (chartWidth - BAR_GAP * (values.length - 1)) / values.length : 0;
 
   const gridYPositions = Array.from(
     { length: GRID_LINES },

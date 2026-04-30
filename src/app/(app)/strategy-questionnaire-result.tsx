@@ -651,13 +651,14 @@ export function renderValueIdeasReport(report: ValueIdeasReport) {
         <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
       </LinearGradient>
 
-      <SectionCard
-        title="Propuestas de micro-diferenciación"
-        eyebrow="Ideas para aplicar"
-      >
+      <SectionCard title="Propuestas de micro-diferenciación" eyebrow="Ideas para aplicar">
         <View style={styles.ideasList}>
           {report.propuestas_micro_diferenciacion.map((proposal, index) => (
-            <ValueIdeaCard key={`${proposal.palanca_evaluada}-${index}`} proposal={proposal} index={index} />
+            <ValueIdeaCard
+              key={`${proposal.palanca_evaluada}-${index}`}
+              proposal={proposal}
+              index={index}
+            />
           ))}
         </View>
       </SectionCard>

@@ -1,6 +1,6 @@
 import { SectionHeader } from "@/components/my-plan/section-header";
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, Spacing } from "@/constants/theme";
 import { StyleSheet, View } from "react-native";
 
 interface PlanConclusionProps {

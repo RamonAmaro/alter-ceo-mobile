@@ -32,10 +32,7 @@ export function SalesStrategySection({
 
   return (
     <View style={styles.container}>
-      <SectionHeader
-        eyebrow="ESTRATEGIA · DE CRECIMIENTO"
-        title="Plan para duplicar ventas"
-      />
+      <SectionHeader eyebrow="ESTRATEGIA · DE CRECIMIENTO" title="Plan para duplicar ventas" />
 
       {blocks.map((block, i) => (
         <Fragment key={i}>
