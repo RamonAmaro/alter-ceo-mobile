@@ -7,8 +7,6 @@ import { useEffect, useRef } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 
 interface StrategyTopicCardProps {
-  index: number;
-  total: number;
   label: string;
   iconName: string;
   comingSoon?: boolean;
@@ -17,8 +15,6 @@ interface StrategyTopicCardProps {
 }
 
 export function StrategyTopicCard({
-  index,
-  total,
   label,
   iconName,
   comingSoon = false,
@@ -64,9 +60,6 @@ export function StrategyTopicCard({
       useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
   }
-
-  const indexLabel = String(index + 1).padStart(2, "0");
-  const totalLabel = String(total).padStart(2, "0");
 
   return (
     <Animated.View style={[styles.outer, { opacity, transform: [{ translateY }, { scale }] }]}>

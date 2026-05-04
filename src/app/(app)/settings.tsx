@@ -7,7 +7,6 @@ import { EyebrowPill } from "@/components/ui/eyebrow-pill";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useDebugStore } from "@/stores/debug-store";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -17,7 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isMobile } = useResponsiveLayout();
   const isDebugUnlocked = useDebugStore((s) => s.isUnlocked);
   const unlockDebug = useDebugStore((s) => s.unlock);
   const tapCountRef = useRef(0);

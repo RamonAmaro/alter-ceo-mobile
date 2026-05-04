@@ -686,9 +686,7 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
         <View style={styles.pasosList}>
           {report.proximos_pasos.pasos.map((paso, index) => (
             <View key={`paso-${index}`} style={styles.pasoItem}>
-              <ThemedText style={styles.pasoIndex}>
-                {String(index + 1).padStart(2, "0")}
-              </ThemedText>
+              <ThemedText style={styles.pasoIndex}>{String(index + 1).padStart(2, "0")}</ThemedText>
               <ThemedText style={styles.pasoText}>{paso}</ThemedText>
             </View>
           ))}

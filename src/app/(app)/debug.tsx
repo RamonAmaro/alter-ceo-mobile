@@ -12,7 +12,6 @@ import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { API_BASE_URL, API_VERSION } from "@/constants/env";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { goBackOrHome } from "@/utils/navigation";
 import * as debugApiService from "@/services/debug-api-service";
 import { clearLocalAppData } from "@/services/debug-service";
@@ -72,7 +71,6 @@ function SectionCard({ title, description, children, style }: SectionCardProps) 
 
 export default function DebugScreen() {
   const insets = useSafeAreaInsets();
-  const { isMobile } = useResponsiveLayout();
   const router = useRouter();
   const params = useLocalSearchParams<{ source?: string }>();
   const {
