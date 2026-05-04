@@ -105,7 +105,7 @@ export default function ProfileScreen() {
           icon="person-circle-outline"
           titlePrefix="Mi"
           titleAccent="Perfil"
-          showBack={isMobile}
+          showBack
         />
 
         <ScrollView

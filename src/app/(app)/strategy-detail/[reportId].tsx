@@ -58,7 +58,7 @@ export default function StrategyDetailScreen() {
             icon="bar-chart"
             titlePrefix="Informe"
             titleAccent="estrategia"
-            showBack={isMobile}
+            showBack
           />
 
           <ScrollView

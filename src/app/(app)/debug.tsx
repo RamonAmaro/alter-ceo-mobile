@@ -264,7 +264,7 @@ export default function DebugScreen() {
             titlePrefix="Modo"
             titleAccent="Debug"
             onBack={() => goBackOrHome()}
-            showBack={isMobile}
+            showBack
           />
 
           <ScrollView
