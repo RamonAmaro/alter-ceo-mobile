@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Fragment, useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -10,8 +9,8 @@ import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { FooterActionBar } from "@/components/footer-action-bar";
 import { BlockSubHeader } from "@/components/my-plan/block-sub-header";
-import { SectionBlock } from "@/components/my-plan/section-layout";
 import { SectionHeader } from "@/components/my-plan/section-header";
+import { SectionBlock } from "@/components/my-plan/section-layout";
 import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
@@ -20,16 +19,23 @@ import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import type {
-  Captacion5FasesDiagnosis,
   Captacion5FasesReport,
+  CostesDeLaEstrategiaSection,
+  DescuentoOIncentivoFuturoSection,
+  DiagnosticoDeSituacionActualSection,
   DistribucionPresupuestoTactico,
   Fase1OfertaIrresistibleSection,
   Fase2GrandesDensidadesSection,
   Fase3SistemaCaptacionContactosSection,
   GranDensidadPrioritariaSection,
+  LimitacionEstrategicaItem,
+  PlanDeAccionSection,
   PropuestaDeCaptacionEn5Fases,
+  RetornoDeLaEstrategiaSection,
+  TuOportunidadDeCaptacionSection,
   ValueIdeaProposal,
   ValueIdeasReport,
+  VentaAdicionalSection,
 } from "@/types/report";
 
 interface KeyValueItem {
@@ -45,24 +51,6 @@ const EURO_FORMATTER = new Intl.NumberFormat("es-ES", {
 
 function formatCurrency(amount: number): string {
   return EURO_FORMATTER.format(amount);
-}
-
-function angleCopy(angle: PropuestaDeCaptacionEn5Fases["angulo_principal"]) {
-  if (angle === "sufrimiento") {
-    return {
-      label: "Ángulo sufrimiento",
-      hint: "Activa la propuesta desde una fricción que el cliente ya siente y quiere resolver.",
-      colors: ["rgba(232,115,26,0.36)", "rgba(255,149,0,0.08)"] as const,
-      borderColor: "rgba(232,115,26,0.35)",
-    };
-  }
-
-  return {
-    label: "Ángulo placer",
-    hint: "Activa la propuesta desde una mejora deseable, visible o emocionalmente atractiva.",
-    colors: ["rgba(67,188,184,0.34)", "rgba(42,240,225,0.08)"] as const,
-    borderColor: "rgba(67,188,184,0.35)",
-  };
 }
 
 function SectionCard({
@@ -82,26 +70,39 @@ function SectionCard({
   );
 }
 
-function HeroCard({ report }: { report: Captacion5FasesReport }) {
-  const oportunidad = report.tu_oportunidad_de_captacion;
-
+function TextSection({
+  title,
+  eyebrow,
+  children,
+}: {
+  title: string;
+  eyebrow?: string;
+  children: ReactNode;
+}) {
   return (
-    <LinearGradient
-      colors={["rgba(67,188,184,0.22)", "rgba(0,255,132,0.12)", "rgba(255,255,255,0.05)"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.heroCard}
-    >
-      <ThemedText type="caption" style={styles.heroEyebrow}>
-        Informe listo
+    <SectionBlock>
+      <View style={styles.textSectionHeader}>
+        {eyebrow ? <ThemedText style={styles.textSectionEyebrow}>{eyebrow}</ThemedText> : null}
+        <ThemedText style={styles.textSectionTitle}>{title}</ThemedText>
+      </View>
+      <View style={styles.textSectionBody}>{children}</View>
+    </SectionBlock>
+  );
+}
+
+function HeroCard({ report, isMobile }: { report: Captacion5FasesReport; isMobile: boolean }) {
+  return (
+    <View style={styles.heroBlock}>
+      <View style={styles.heroDivider} />
+      <View style={styles.heroEyebrowRow}>
+        <View style={styles.heroDot} />
+        <ThemedText style={styles.heroEyebrow}>Informe listo</ThemedText>
+      </View>
+      <ThemedText style={[styles.heroTitle, isMobile && styles.heroTitleMobile]}>
+        {report.titulo}
       </ThemedText>
-      <ThemedText type="subtitle" style={styles.heroTitle}>
-        Tu mapa de captación ya tiene puerta de entrada, densidades y foco táctico.
-      </ThemedText>
-      <ThemedText type="bodyLg" style={styles.heroBody}>
-        {oportunidad.resumen_oportunidad}
-      </ThemedText>
-    </LinearGradient>
+      <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
+    </View>
   );
 }
 
@@ -116,101 +117,132 @@ function TextBlock({ text }: { text: string }) {
 function KeyValueList({ items }: { items: KeyValueItem[] }) {
   return (
     <View style={styles.list}>
-      {items.map((item) => (
+      {items.map((item, index) => (
         <View key={item.label} style={styles.listItem}>
-          <ThemedText type="labelSm" style={styles.listLabel}>
-            {item.label}
-          </ThemedText>
-          <ThemedText type="bodyMd" style={styles.listValue}>
-            {item.value}
-          </ThemedText>
+          <ThemedText style={styles.listBullet}>–</ThemedText>
+          <View style={styles.listCopy}>
+            <ThemedText style={styles.listLabel}>{item.label}</ThemedText>
+            <ThemedText style={[styles.listValue, index === 0 && styles.listValueLead]}>
+              {item.value}
+            </ThemedText>
+          </View>
         </View>
       ))}
     </View>
   );
 }
 
-function InsightGrid({ items }: { items: KeyValueItem[] }) {
+function InsightList({ items }: { items: KeyValueItem[] }) {
   return (
-    <View style={styles.insightGrid}>
-      {items.map((item) => (
-        <View key={item.label} style={styles.insightCard}>
-          <ThemedText type="caption" style={styles.insightLabel}>
-            {item.label}
-          </ThemedText>
-          <ThemedText type="bodyMd" style={styles.insightValue}>
-            {item.value}
-          </ThemedText>
+    <View style={styles.insightList}>
+      {items.map((item, index) => (
+        <View key={item.label} style={[styles.insightRow, index === 0 && styles.insightRowLead]}>
+          <ThemedText style={styles.insightIndex}>{String(index + 1).padStart(2, "0")}</ThemedText>
+          <View style={styles.insightCopy}>
+            <ThemedText style={styles.insightLabel}>{item.label}</ThemedText>
+            <ThemedText style={[styles.insightValue, index === 0 && styles.insightValueLead]}>
+              {item.value}
+            </ThemedText>
+          </View>
         </View>
       ))}
     </View>
   );
 }
 
-function diagnosisItems(diagnosis: Captacion5FasesDiagnosis): KeyValueItem[] {
+function diagnosticoClavesItems(diagnostico: DiagnosticoDeSituacionActualSection): KeyValueItem[] {
+  const claves = diagnostico.claves_del_diagnostico;
   return [
-    {
-      label: "Nivel de agresividad más adecuado",
-      value: diagnosis.nivel_agresividad_mas_adecuado,
-    },
-    {
-      label: "Capacidad real de ejecución",
-      value: diagnosis.capacidad_real_de_ejecucion,
-    },
-    {
-      label: "Valor del cliente en el tiempo",
-      value: diagnosis.valor_del_cliente_en_el_tiempo,
-    },
-    {
-      label: "Cómo decide el cliente",
-      value: diagnosis.como_decide_el_cliente,
-    },
-    {
-      label: "Emoción que domina la compra",
-      value: diagnosis.que_emocion_domina_la_compra,
-    },
-    {
-      label: "Fricción principal",
-      value: diagnosis.que_friccion_principal_bloquea_la_captacion,
-    },
-    {
-      label: "Canal más accesible",
-      value: diagnosis.donde_parece_mas_accesible_el_cliente_ideal,
-    },
-    {
-      label: "Fortaleza percibida actual",
-      value: diagnosis.que_fortaleza_percibida_actual_tiene_el_negocio,
-    },
+    { label: "Nivel de agresividad deseado", value: claves.nivel_de_agresividad_deseado },
+    { label: "Capacidad real de ejecución", value: claves.capacidad_real_de_ejecucion },
+    { label: "Valor del cliente en el tiempo", value: claves.valor_del_cliente_en_el_tiempo },
+    { label: "Cómo decide el cliente", value: claves.como_decide_el_cliente },
+    { label: "Emoción que activa la compra", value: claves.que_emocion_activa_la_compra },
+    { label: "Fricción principal", value: claves.friccion_principal },
+    { label: "Canal más accesible", value: claves.canal_mas_accesible },
+    { label: "Fortaleza percibida actual", value: claves.fortaleza_percibida_actual },
   ];
 }
 
-function phaseOneSnapshot(section: Fase1OfertaIrresistibleSection): KeyValueItem[] {
+function oportunidadItems(oportunidad: TuOportunidadDeCaptacionSection): KeyValueItem[] {
   return [
-    { label: "Qué incluye", value: section.que_incluye_exactamente },
-    { label: "Formato", value: section.formato_de_entrega },
-    { label: "Precio", value: section.precio_recomendado },
-    { label: "Tiempo del cliente", value: section.tiempo_esfuerzo_del_cliente },
+    {
+      label: "Oportunidad principal detectada",
+      value: oportunidad.oportunidad_principal_detectada,
+    },
+    { label: "Conducta del cliente", value: oportunidad.conducta_del_cliente },
+    { label: "Tipo de propuesta de captación", value: oportunidad.tipo_de_propuesta_de_captacion },
+    { label: "Objetivo deseado", value: oportunidad.objetivo_deseado },
   ];
 }
 
-function phaseOneExecution(section: Fase1OfertaIrresistibleSection): KeyValueItem[] {
+function phaseOneItems(section: Fase1OfertaIrresistibleSection): KeyValueItem[] {
   return [
+    { label: "Nombre de la oferta", value: section.nombre_de_la_oferta },
+    { label: "Descripción breve", value: section.descripcion_breve },
     { label: "Funcionamiento", value: section.funcionamiento },
+    { label: "Precio recomendado", value: section.precio_recomendado },
+    { label: "Alternativa precio conservador", value: section.alternativa_precio_conservador },
+    { label: "Tiempo / esfuerzo del cliente", value: section.tiempo_esfuerzo_del_cliente },
     {
-      label: "Patrón de comportamiento",
+      label: "Patrón de comportamiento del cliente",
       value: section.patron_de_comportamiento_del_cliente,
     },
     { label: "Guion de venta", value: section.guion_de_venta },
     { label: "Recursos necesarios", value: section.recursos_necesarios },
     { label: "Proceso de implementación", value: section.proceso_de_implementacion },
-    { label: "Por qué tiene sentido", value: section.por_que_tiene_sentido_en_este_negocio },
+  ];
+}
+
+function phaseThreeItems(section: Fase3SistemaCaptacionContactosSection): KeyValueItem[] {
+  return [
+    { label: "Qué datos pedir", value: section.que_datos_pedir },
+    { label: "Cómo pedirlos", value: section.como_pedirlos },
+    { label: "Dónde se recogen", value: section.donde_se_recogen },
+    { label: "Frase para pedirlos", value: section.frase_para_pedirlos },
     {
-      label: "Cuándo usarla",
-      value: section.cuando_usarla_y_con_que_perfil_de_cliente,
+      label: "Cómo reducir sensación de formulario pesado",
+      value: section.como_reducir_sensacion_de_formulario_pesado,
     },
-    { label: "Riesgo principal", value: section.riesgo_principal_de_ejecutarla_mal },
-    { label: "Cómo hacerla más fuerte", value: section.como_hacerla_mas_fuerte },
-    { label: "Frase comercial", value: section.frase_comercial_simple },
+    {
+      label: "Qué hacer después de capturar el contacto",
+      value: section.que_hacer_despues_de_capturar_el_contacto,
+    },
+  ];
+}
+
+function ventaAdicionalItems(section: VentaAdicionalSection): KeyValueItem[] {
+  return [
+    { label: "Qué ofrecer", value: section.que_ofrecer },
+    { label: "Cuándo ofrecerlo", value: section.cuando_ofrecerlo },
+    { label: "Quién lo comunica", value: section.quien_lo_comunica },
+    { label: "Cómo se comunica", value: section.como_se_comunica },
+    {
+      label: "Por qué encaja con la oferta inicial",
+      value: section.por_que_encaja_con_la_oferta_inicial,
+    },
+  ];
+}
+
+function descuentoFuturoItems(section: DescuentoOIncentivoFuturoSection): KeyValueItem[] {
+  return [
+    { label: "Qué incentivo ofrecer", value: section.que_incentivo_ofrecer },
+    { label: "Durante cuánto tiempo", value: section.durante_cuanto_tiempo },
+    { label: "Para qué producto o servicio", value: section.para_que_producto_o_servicio },
+    { label: "Cómo comunicarlo", value: section.como_comunicarlo },
+    {
+      label: "Por qué ayuda a generar recurrencia",
+      value: section.por_que_ayuda_a_generar_recurrencia,
+    },
+  ];
+}
+
+function limitacionItems(limitacion: LimitacionEstrategicaItem): KeyValueItem[] {
+  return [
+    { label: "En qué consiste", value: limitacion.en_que_consiste },
+    { label: "Por qué tiene sentido", value: limitacion.por_que_tiene_sentido },
+    { label: "Cómo se comunica al cliente", value: limitacion.como_se_comunica_al_cliente },
+    { label: "Qué riesgo evita", value: limitacion.que_riesgo_evita },
   ];
 }
 
@@ -226,100 +258,6 @@ function budgetDistributionItems(distribution: DistribucionPresupuestoTactico) {
       color: "#00FF84",
     },
   ];
-}
-
-function phaseThreeCoreItems(section: Fase3SistemaCaptacionContactosSection): KeyValueItem[] {
-  return [
-    {
-      label: "Qué se pide exactamente",
-      value: section.que_se_pide_exactamente,
-    },
-    {
-      label: "Por qué ese nivel de datos es razonable",
-      value: section.por_que_ese_nivel_de_datos_es_razonable,
-    },
-    {
-      label: "Cómo reducir la fricción",
-      value: section.como_reducir_la_friccion,
-    },
-    {
-      label: "Cómo conectarlo con seguimiento posterior",
-      value: section.como_conectar_esto_con_seguimiento_posterior,
-    },
-  ];
-}
-
-function ContactMethodCard({
-  title,
-  text,
-  accent,
-}: {
-  title: string;
-  text: string;
-  accent: string;
-}) {
-  return (
-    <View style={[styles.contactMethodCard, { borderColor: accent }]}>
-      <View style={[styles.contactMethodAccent, { backgroundColor: accent }]} />
-      <ThemedText type="labelSm" style={styles.contactMethodTitle}>
-        {title}
-      </ThemedText>
-      <ThemedText type="bodyMd" style={styles.contactMethodText}>
-        {text}
-      </ThemedText>
-    </View>
-  );
-}
-
-function PhaseThreePanel({
-  section,
-  isMobile,
-}: {
-  section: Fase3SistemaCaptacionContactosSection;
-  isMobile: boolean;
-}) {
-  return (
-    <View style={styles.phaseThreePanel}>
-      <TextBlock text={section.explicacion_educativa} />
-
-      <View style={[styles.contactMethodGrid, !isMobile && styles.contactMethodGridDesktop]}>
-        <ContactMethodCard
-          title="Método principal"
-          text={section.metodo_principal_recomendado}
-          accent={SemanticColors.teal}
-        />
-        <ContactMethodCard
-          title="Método secundario"
-          text={section.metodo_secundario_de_apoyo}
-          accent={SemanticColors.accent}
-        />
-      </View>
-
-      <View style={styles.messagePanel}>
-        <ThemedText type="labelSm" style={styles.messagePanelTitle}>
-          Mensaje sugerido
-        </ThemedText>
-        <ThemedText type="bodyLg" style={styles.messagePanelText}>
-          {section.mensaje_sugerido_para_pedirlos}
-        </ThemedText>
-      </View>
-
-      <InsightGrid
-        items={[
-          {
-            label: "Incentivo / promesa",
-            value: section.incentivo_o_promesa_para_dejar_el_contacto,
-          },
-          {
-            label: "Error a evitar",
-            value: section.error_mas_tipico_que_el_negocio_debe_evitar,
-          },
-        ]}
-      />
-
-      <KeyValueList items={phaseThreeCoreItems(section)} />
-    </View>
-  );
 }
 
 function DensityCard({
@@ -344,23 +282,177 @@ function DensityCard({
             {density.canal_o_entorno}
           </ThemedText>
           <ThemedText type="bodySm" style={styles.densitySubtitle}>
-            {density.tipo_de_cliente_que_habra_ahi}
+            {density.tipo_de_cliente}
           </ThemedText>
         </View>
       </View>
 
-      <TextBlock text={density.por_que_tiene_sentido} />
+      <KeyValueList
+        items={[
+          { label: "Ventaja principal", value: density.ventaja_principal },
+          { label: "Limitación", value: density.limitacion },
+          { label: "Tipo de comunicación", value: density.tipo_de_comunicacion },
+        ]}
+      />
+    </View>
+  );
+}
+
+function CostesPanel({ costes }: { costes: CostesDeLaEstrategiaSection }) {
+  const detalle = costes.detalle_por_partidas;
+  return (
+    <View style={styles.costesPanel}>
+      <View style={styles.costesTotalCard}>
+        <ThemedText style={styles.costesTotalLabel}>COSTE TOTAL ESTIMADO</ThemedText>
+        <ThemedText style={styles.costesTotalValue}>
+          {formatCurrency(costes.coste_total_estimado_eur)}
+        </ThemedText>
+      </View>
+
+      <TextBlock text={costes.explicacion_general} />
 
       <KeyValueList
         items={[
-          { label: "Ventaja", value: density.que_ventaja_tiene_ese_canal },
-          { label: "Limitación", value: density.que_limitacion_tiene },
-          { label: "Mensaje", value: density.que_mensaje_conviene_usar },
-          { label: "Formato", value: density.que_formato_conviene_usar },
-          { label: "Ritmo", value: density.que_ritmo_de_publicacion_o_accion_conviene },
-          { label: "Error a evitar", value: density.que_error_evitar },
+          { label: "Costes imprescindibles", value: costes.costes_imprescindibles },
+          { label: "Costes recomendables", value: costes.costes_recomendables },
+          { label: "Costes opcionales", value: costes.costes_opcionales },
         ]}
       />
+
+      <View style={styles.costesBreakdown}>
+        <ThemedText style={styles.costesBreakdownTitle}>DETALLE POR PARTIDAS</ThemedText>
+        <View style={styles.costesGrid}>
+          <CostItem label="Preparación" value={detalle.preparacion_eur} />
+          <CostItem label="Diseño / producción" value={detalle.diseno_o_produccion_eur} />
+          <CostItem label="Publicidad" value={detalle.publicidad_eur} />
+          <CostItem label="Herramientas" value={detalle.herramientas_eur} />
+          <CostItem label="Entrega de la oferta" value={detalle.entrega_de_la_oferta_eur} />
+          <CostItem label="Personal interno" value={detalle.personal_interno_eur} />
+          <CostItem label="Apoyo externo" value={detalle.apoyo_externo_eur} />
+          <CostItem label="Seguimiento" value={detalle.seguimiento_eur} />
+          <CostItem label="Optimización" value={detalle.optimizacion_eur} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function CostItem({ label, value }: { label: string; value: number }) {
+  return (
+    <View style={styles.costItem}>
+      <ThemedText style={styles.costItemLabel}>{label}</ThemedText>
+      <ThemedText style={styles.costItemValue}>{formatCurrency(value)}</ThemedText>
+    </View>
+  );
+}
+
+function RetornoPanel({ retorno }: { retorno: RetornoDeLaEstrategiaSection }) {
+  return (
+    <View style={styles.retornoPanel}>
+      <View style={styles.retornoKpis}>
+        <RetornoKpi
+          label="ROI APROXIMADO"
+          value={`${retorno.roi_aproximado_pct.toFixed(0)}%`}
+          highlight
+        />
+        <RetornoKpi
+          label="NEGOCIO 12M"
+          value={formatCurrency(retorno.negocio_potencial_12_meses_eur)}
+        />
+        <RetornoKpi
+          label="NEGOCIO 4M"
+          value={formatCurrency(retorno.negocio_potencial_4_meses_eur)}
+        />
+      </View>
+
+      <TextBlock text={retorno.explicacion_general} />
+
+      <KeyValueList
+        items={[
+          { label: "Lectura del retorno", value: retorno.lectura_del_retorno },
+          { label: "Advertencia de estimación", value: retorno.advertencia_de_estimacion },
+        ]}
+      />
+
+      <View style={styles.retornoMetrics}>
+        <RetornoMetric label="Contactos generados" value={String(retorno.contactos_generados)} />
+        <RetornoMetric
+          label="Primeros consumos"
+          value={String(retorno.primeros_consumos_esperados)}
+        />
+        <RetornoMetric label="Clientes convertidos" value={String(retorno.clientes_convertidos)} />
+        <RetornoMetric label="Repetición esperada" value={String(retorno.repeticion_esperada)} />
+        <RetornoMetric
+          label="Valor por cliente"
+          value={formatCurrency(retorno.valor_acumulado_por_cliente_eur)}
+        />
+        <RetornoMetric
+          label="Coste total estimado"
+          value={formatCurrency(retorno.coste_total_estimado_eur)}
+        />
+      </View>
+    </View>
+  );
+}
+
+function RetornoKpi({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={[styles.retornoKpi, highlight && styles.retornoKpiHighlight]}>
+      <ThemedText style={styles.retornoKpiLabel}>{label}</ThemedText>
+      <ThemedText style={[styles.retornoKpiValue, highlight && styles.retornoKpiValueHighlight]}>
+        {value}
+      </ThemedText>
+    </View>
+  );
+}
+
+function RetornoMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.retornoMetric}>
+      <ThemedText style={styles.retornoMetricLabel}>{label}</ThemedText>
+      <ThemedText style={styles.retornoMetricValue}>{value}</ThemedText>
+    </View>
+  );
+}
+
+function PlanDeAccionPanel({ plan }: { plan: PlanDeAccionSection }) {
+  return (
+    <View style={styles.planAccionPanel}>
+      <View style={styles.planAccionDuration}>
+        <ThemedText style={styles.planAccionDurationLabel}>DURACIÓN</ThemedText>
+        <ThemedText style={styles.planAccionDurationValue}>{plan.duracion_dias} días</ThemedText>
+      </View>
+
+      {plan.semanas.map((semana, index) => (
+        <View key={`${semana.semana}-${index}`} style={styles.planAccionSemana}>
+          <View style={styles.planAccionSemanaHeader}>
+            <View style={styles.planAccionSemanaBadge}>
+              <ThemedText style={styles.planAccionSemanaBadgeText}>
+                {String(index + 1).padStart(2, "0")}
+              </ThemedText>
+            </View>
+            <View style={styles.planAccionSemanaCopy}>
+              <ThemedText style={styles.planAccionSemanaTitle}>{semana.semana}</ThemedText>
+              <ThemedText style={styles.planAccionSemanaFoco}>{semana.foco_principal}</ThemedText>
+            </View>
+          </View>
+          <KeyValueList
+            items={[
+              { label: "Tareas clave", value: semana.tareas_clave },
+              { label: "Responsable sugerido", value: semana.responsable_sugerido },
+              { label: "Resultado esperado", value: semana.que_debe_quedar_terminado },
+            ]}
+          />
+        </View>
+      ))}
     </View>
   );
 }
@@ -441,150 +533,167 @@ function BudgetPanel({
 
 function ProposalCard({
   proposal,
-  index,
   isMobile,
 }: {
   proposal: PropuestaDeCaptacionEn5Fases;
-  index: number;
   isMobile: boolean;
 }) {
-  const angle = angleCopy(proposal.angulo_principal);
   const phaseTwo = proposal.fase_2_grandes_densidades;
   const phaseThree = proposal.fase_3_sistema_de_captacion_de_contactos;
+  const phaseFour = proposal.fase_4_venta_adicional_y_consumo_futuro;
+  const phaseFive = proposal.fase_5_limitacion_estrategica;
 
   return (
     <View style={styles.proposalCard}>
-      <LinearGradient
-        colors={angle.colors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.proposalHero, { borderColor: angle.borderColor }]}
-      >
-        <View style={styles.proposalHeroTop}>
-          <View style={styles.proposalNumberBadge}>
-            <ThemedText type="labelSm" style={styles.proposalNumberText}>
-              Propuesta {index + 1}
-            </ThemedText>
-          </View>
-          <View style={[styles.anglePill, { borderColor: angle.borderColor }]}>
-            <ThemedText type="labelSm" style={styles.anglePillText}>
-              {angle.label}
-            </ThemedText>
-          </View>
+      <View style={styles.proposalHero}>
+        <ThemedText style={styles.proposalMonumental}>
+          {String(proposal.numero).padStart(2, "0")}
+        </ThemedText>
+        <View style={styles.proposalHeroCopy}>
+          <ThemedText style={styles.proposalEyebrow}>PROPUESTA {proposal.numero}</ThemedText>
+          <ThemedText style={styles.proposalTitle}>{proposal.titulo}</ThemedText>
         </View>
-
-        <ThemedText type="subtitle" style={styles.proposalTitle}>
-          {proposal.titulo}
-        </ThemedText>
-        <ThemedText type="bodyMd" style={styles.proposalHint}>
-          {angle.hint}
-        </ThemedText>
-      </LinearGradient>
+      </View>
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label="FASE 1 · OFERTA IRRESISTIBLE" />
-        <TextBlock text={proposal.fase_1_oferta_irresistible.explicacion_educativa} />
-        <InsightGrid items={phaseOneSnapshot(proposal.fase_1_oferta_irresistible)} />
-        <KeyValueList items={phaseOneExecution(proposal.fase_1_oferta_irresistible)} />
+        <KeyValueList items={phaseOneItems(proposal.fase_1_oferta_irresistible)} />
       </View>
 
-      {phaseTwo ? (
-        <View style={styles.phaseSection}>
-          <BlockSubHeader label="FASE 2 · GRANDES DENSIDADES" />
-          <TextBlock text={phaseTwo.explicacion_educativa} />
+      <View style={styles.phaseSection}>
+        <BlockSubHeader label="FASE 2 · GRANDES DENSIDADES" />
+        <TextBlock text={phaseTwo.explicacion_educativa} />
 
-          <View style={[styles.densityGrid, !isMobile && styles.densityGridDesktop]}>
-            {phaseTwo.grandes_densidades_prioritarias.map((density, densityIndex) => (
-              <DensityCard
-                key={`${proposal.titulo}-${density.canal_o_entorno}-${densityIndex}`}
-                density={density}
-                index={densityIndex}
-                isMobile={isMobile}
-              />
-            ))}
-          </View>
-
-          <View style={styles.budgetCard}>
-            <ThemedText type="headingMd" style={styles.budgetTitle}>
-              Presupuesto táctico recomendado
-            </ThemedText>
-            <BudgetPanel phaseTwo={phaseTwo} isMobile={isMobile} />
-          </View>
+        <View style={[styles.densityGrid, !isMobile && styles.densityGridDesktop]}>
+          {phaseTwo.grandes_densidades_prioritarias.map((density, densityIndex) => (
+            <DensityCard
+              key={`${proposal.numero}-${density.canal_o_entorno}-${densityIndex}`}
+              density={density}
+              index={densityIndex}
+              isMobile={isMobile}
+            />
+          ))}
         </View>
-      ) : null}
 
-      {phaseThree ? (
-        <View style={styles.phaseSection}>
-          <BlockSubHeader label="FASE 3 · SISTEMA DE CAPTACIÓN DE CONTACTOS" />
-          <PhaseThreePanel section={phaseThree} isMobile={isMobile} />
+        <View style={styles.budgetCard}>
+          <ThemedText type="headingMd" style={styles.budgetTitle}>
+            Presupuesto táctico recomendado
+          </ThemedText>
+          <BudgetPanel phaseTwo={phaseTwo} isMobile={isMobile} />
         </View>
-      ) : null}
+      </View>
+
+      <View style={styles.phaseSection}>
+        <BlockSubHeader label="FASE 3 · SISTEMA DE CAPTACIÓN DE CONTACTOS" />
+        <KeyValueList items={phaseThreeItems(phaseThree)} />
+      </View>
+
+      <View style={styles.phaseSection}>
+        <BlockSubHeader label="FASE 4 · VENTA ADICIONAL Y CONSUMO FUTURO" />
+        <View style={styles.subBlock}>
+          <ThemedText style={styles.subBlockTitle}>Venta adicional</ThemedText>
+          <KeyValueList items={ventaAdicionalItems(phaseFour.venta_adicional)} />
+        </View>
+        <View style={styles.subBlock}>
+          <ThemedText style={styles.subBlockTitle}>Descuento o incentivo futuro</ThemedText>
+          <KeyValueList items={descuentoFuturoItems(phaseFour.descuento_o_incentivo_futuro)} />
+        </View>
+      </View>
+
+      <View style={styles.phaseSection}>
+        <BlockSubHeader label="FASE 5 · LIMITACIÓN ESTRATÉGICA" />
+        {phaseFive.limitaciones.map((limitacion, limitIndex) => (
+          <View key={`limitacion-${limitIndex}`} style={styles.limitacionCard}>
+            <View style={styles.limitacionHeader}>
+              <View style={styles.limitacionBadge}>
+                <ThemedText style={styles.limitacionBadgeText}>
+                  {String(limitIndex + 1).padStart(2, "0")}
+                </ThemedText>
+              </View>
+              <ThemedText style={styles.limitacionTitle}>{limitacion.en_que_consiste}</ThemedText>
+            </View>
+            <KeyValueList items={limitacionItems(limitacion).slice(1)} />
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.phaseSection}>
+        <BlockSubHeader label="COSTES DE LA ESTRATEGIA" />
+        <CostesPanel costes={proposal.costes_de_la_estrategia} />
+      </View>
+
+      <View style={styles.phaseSection}>
+        <BlockSubHeader label="RETORNO DE LA ESTRATEGIA" />
+        <RetornoPanel retorno={proposal.retorno_de_la_estrategia} />
+      </View>
+
+      <View style={styles.phaseSection}>
+        <BlockSubHeader label="PLAN DE ACCIÓN" />
+        <PlanDeAccionPanel plan={proposal.plan_de_accion} />
+      </View>
     </View>
   );
 }
 
+function isLegacyCaptacionReport(report: Captacion5FasesReport): boolean {
+  // Old reports use `introduccion_general` and `diagnostico_de_tu_situacion_actual`.
+  // New reports use `introduccion` + `diagnostico_de_situacion_actual` (with claves nested).
+  // If the new fields are missing, the report follows the legacy schema.
+  return (
+    !report.diagnostico_de_situacion_actual?.claves_del_diagnostico || !report.introduccion?.texto
+  );
+}
+
 export function renderCaptacionReport(report: Captacion5FasesReport, isMobile: boolean) {
+  if (isLegacyCaptacionReport(report)) {
+    return renderGenericReport(report as unknown as Record<string, unknown>);
+  }
   return renderReport(report, isMobile);
 }
 
 function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
   return (
     <>
-      <HeroCard report={report} />
+      <HeroCard report={report} isMobile={isMobile} />
 
-      <SectionCard title="Introducción general" eyebrow="Contexto">
-        <TextBlock text={report.introduccion_general.texto} />
-      </SectionCard>
-
-      <SectionCard title="Diagnóstico de tu situación actual" eyebrow="Lectura de negocio">
-        <InsightGrid items={diagnosisItems(report.diagnostico_de_tu_situacion_actual)} />
-      </SectionCard>
-
-      <SectionCard title="Base estratégica" eyebrow="Por qué este enfoque">
+      <TextSection title="Base estratégica" eyebrow="Por qué este enfoque">
         <TextBlock text={report.base_estrategica.explicacion} />
-      </SectionCard>
+      </TextSection>
 
-      <SectionCard title="Tu oportunidad de captación" eyebrow="Dónde está el desbloqueo">
-        <TextBlock text={report.tu_oportunidad_de_captacion.explicacion_educativa} />
-        <InsightGrid
-          items={[
-            {
-              label: "Oportunidad principal",
-              value: report.tu_oportunidad_de_captacion.oportunidad_principal_detectada,
-            },
-            {
-              label: "Conducta del cliente",
-              value:
-                report.tu_oportunidad_de_captacion.que_conducta_del_cliente_permite_aprovecharla,
-            },
-            {
-              label: "Puerta de entrada",
-              value:
-                report.tu_oportunidad_de_captacion
-                  .que_tipo_de_puerta_de_entrada_parece_mas_prometedora,
-            },
-            {
-              label: "Resultado a mover",
-              value:
-                report.tu_oportunidad_de_captacion
-                  .que_resultado_puede_empezar_a_mover_si_se_activa_bien,
-            },
-          ]}
-        />
-      </SectionCard>
+      <TextSection title="Diagnóstico de situación actual" eyebrow="Lectura de negocio">
+        <TextBlock text={report.diagnostico_de_situacion_actual.como_estas_en_este_momento} />
+        <InsightList items={diagnosticoClavesItems(report.diagnostico_de_situacion_actual)} />
+      </TextSection>
 
-      <SectionCard title="Estrategia de captación en 5 fases" eyebrow="Arquitectura general">
+      <TextSection title="Tu oportunidad de captación" eyebrow="Dónde está el desbloqueo">
+        <InsightList items={oportunidadItems(report.tu_oportunidad_de_captacion)} />
+      </TextSection>
+
+      <TextSection title="Estrategia de captación en 5 fases" eyebrow="Arquitectura general">
         <TextBlock text={report.estrategia_de_captacion_en_5_fases.explicacion_educativa} />
-      </SectionCard>
+      </TextSection>
 
-      {report.estrategia_de_captacion_en_5_fases.propuestas.map((proposal, index) => (
+      {report.estrategia_de_captacion_en_5_fases.propuestas.map((proposal) => (
         <ProposalCard
-          key={`${proposal.titulo}-${index}`}
+          key={`propuesta-${proposal.numero}`}
           proposal={proposal}
-          index={index}
           isMobile={isMobile}
         />
       ))}
+
+      <TextSection title="Próximos pasos" eyebrow="Cómo empezar">
+        <TextBlock text={report.proximos_pasos.texto} />
+        <View style={styles.pasosList}>
+          {report.proximos_pasos.pasos.map((paso, index) => (
+            <View key={`paso-${index}`} style={styles.pasoItem}>
+              <ThemedText style={styles.pasoIndex}>
+                {String(index + 1).padStart(2, "0")}
+              </ThemedText>
+              <ThemedText style={styles.pasoText}>{paso}</ThemedText>
+            </View>
+          ))}
+        </View>
+      </TextSection>
     </>
   );
 }
@@ -638,18 +747,17 @@ function ValueIdeaCard({ proposal, index }: { proposal: ValueIdeaProposal; index
 export function renderValueIdeasReport(report: ValueIdeasReport) {
   return (
     <>
-      <LinearGradient
-        colors={["rgba(67,188,184,0.22)", "rgba(0,255,132,0.12)", "rgba(255,255,255,0.05)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.heroCard}
-      >
-        <ThemedText style={styles.heroEyebrow}>Informe listo</ThemedText>
+      <View style={styles.heroBlock}>
+        <View style={styles.heroDivider} />
+        <View style={styles.heroEyebrowRow}>
+          <View style={styles.heroDot} />
+          <ThemedText style={styles.heroEyebrow}>Informe listo</ThemedText>
+        </View>
         <ThemedText style={styles.heroTitle}>
           Pequeñas palancas que elevan tu valor percibido.
         </ThemedText>
         <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
-      </LinearGradient>
+      </View>
 
       <SectionCard title="Propuestas de micro-diferenciación" eyebrow="Ideas para aplicar">
         <View style={styles.ideasList}>
@@ -663,9 +771,9 @@ export function renderValueIdeasReport(report: ValueIdeasReport) {
         </View>
       </SectionCard>
 
-      <SectionCard title="Puesta en marcha" eyebrow="Próximos pasos">
+      <TextSection title="Puesta en marcha" eyebrow="Próximos pasos">
         <TextBlock text={report.puesta_en_marcha.texto} />
-      </SectionCard>
+      </TextSection>
     </>
   );
 }
@@ -747,7 +855,7 @@ export default function StrategyQuestionnaireResultScreen() {
             icon="bar-chart"
             titlePrefix="Informe"
             titleAccent="Captación"
-            showBack={isMobile}
+            showBack
           />
 
           <ScrollView
@@ -779,35 +887,79 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,
-    gap: Spacing.three,
+    gap: Spacing.four,
   },
-  heroCard: {
-    borderRadius: 24,
-    padding: Spacing.four,
-    gap: Spacing.three,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.18)",
-    overflow: "hidden",
+  heroBlock: {
+    gap: Spacing.two,
+    paddingTop: Spacing.three,
+    paddingHorizontal: Spacing.one,
+  },
+  heroDivider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    marginBottom: Spacing.two,
+  },
+  heroEyebrowRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  heroDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: SemanticColors.success,
   },
   heroEyebrow: {
-    fontFamily: Fonts.montserratSemiBold,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    textTransform: "uppercase",
+    letterSpacing: 1.8,
+  },
+  heroTitle: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 30,
+    lineHeight: 36,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.4,
+    marginTop: Spacing.one,
+  },
+  heroTitleMobile: {
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  heroBody: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 15,
+    lineHeight: 24,
+    color: "rgba(255,255,255,0.78)",
+    marginTop: Spacing.two,
+  },
+  textSectionHeader: {
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.one,
+  },
+  textSectionEyebrow: {
+    fontFamily: Fonts.montserratBold,
     fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.success,
     textTransform: "uppercase",
     letterSpacing: 1.6,
   },
-  heroTitle: {
+  textSectionTitle: {
     fontFamily: Fonts.montserratBold,
     fontSize: 22,
     lineHeight: 28,
     color: SemanticColors.textPrimary,
+    letterSpacing: -0.2,
   },
-  heroBody: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 22,
-    color: "rgba(255,255,255,0.78)",
+  textSectionBody: {
+    paddingHorizontal: Spacing.one,
+    paddingTop: Spacing.two,
+    gap: Spacing.two,
   },
   sectionBody: {
     gap: Spacing.two,
@@ -824,16 +976,27 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   listItem: {
-    gap: Spacing.one,
-    paddingTop: Spacing.two,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  listBullet: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 18,
+    lineHeight: 22,
+    color: "rgba(0,255,132,0.55)",
+    minWidth: 16,
+    textAlign: "center",
+  },
+  listCopy: {
+    flex: 1,
+    gap: 4,
   },
   listLabel: {
-    fontFamily: Fonts.montserratSemiBold,
+    fontFamily: Fonts.montserratBold,
     fontSize: 11,
     lineHeight: 14,
-    color: SemanticColors.success,
+    color: "rgba(255,255,255,0.55)",
     letterSpacing: 1.4,
     textTransform: "uppercase",
   },
@@ -841,90 +1004,97 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratMedium,
     fontSize: 14,
     lineHeight: 22,
-    color: "rgba(255,255,255,0.85)",
+    color: "rgba(255,255,255,0.88)",
   },
-  insightGrid: {
+  listValueLead: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 16,
+    lineHeight: 24,
+    color: SemanticColors.textPrimary,
+  },
+  insightList: {
+    gap: Spacing.three,
+  },
+  insightRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.two,
+    alignItems: "flex-start",
+    gap: Spacing.three,
+    paddingLeft: Spacing.three,
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(255,255,255,0.06)",
   },
-  insightCard: {
-    minWidth: 220,
-    flexGrow: 1,
-    flexShrink: 1,
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.12)",
-    padding: Spacing.three,
-    gap: Spacing.one,
+  insightRowLead: {
+    borderLeftColor: SemanticColors.success,
+    paddingVertical: Spacing.one,
+  },
+  insightIndex: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 22,
+    lineHeight: 26,
+    color: "rgba(0,255,132,0.35)",
+    letterSpacing: -0.5,
+    minWidth: 32,
+  },
+  insightCopy: {
+    flex: 1,
+    gap: 6,
   },
   insightLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 13,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    lineHeight: 14,
     color: SemanticColors.success,
-    letterSpacing: 1.4,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
   insightValue: {
     fontFamily: Fonts.montserratMedium,
-    fontSize: 14,
-    lineHeight: 21,
-    color: "rgba(255,255,255,0.85)",
+    fontSize: 15,
+    lineHeight: 23,
+    color: "rgba(255,255,255,0.88)",
   },
-  proposalCard: {
-    gap: Spacing.three,
-  },
-  proposalHero: {
-    borderRadius: 20,
-    padding: Spacing.four,
-    gap: Spacing.two,
-    borderWidth: 1,
-  },
-  proposalHeroTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: Spacing.two,
-    flexWrap: "wrap",
-  },
-  proposalNumberBadge: {
-    borderRadius: 8,
-    backgroundColor: "rgba(0,0,0,0.32)",
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-  },
-  proposalNumberText: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 10,
-    lineHeight: 13,
-    color: SemanticColors.textPrimary,
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
-  },
-  anglePill: {
-    borderRadius: 999,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 4,
-    borderWidth: 1,
-    backgroundColor: "rgba(0,0,0,0.32)",
-  },
-  anglePillText: {
+  insightValueLead: {
     fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 13,
-    color: SemanticColors.textPrimary,
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
-  },
-  proposalTitle: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 20,
+    fontSize: 17,
     lineHeight: 26,
     color: SemanticColors.textPrimary,
+  },
+  proposalCard: {
+    gap: Spacing.four,
+    paddingTop: Spacing.three,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,255,132,0.18)",
+  },
+  proposalHero: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.one,
+  },
+  proposalMonumental: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 72,
+    lineHeight: 72,
+    color: "rgba(0,255,132,0.18)",
+    letterSpacing: -2,
+  },
+  proposalHeroCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  proposalEyebrow: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    letterSpacing: 1.8,
+  },
+  proposalTitle: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.2,
   },
   proposalHint: {
     fontFamily: Fonts.montserratMedium,
@@ -1192,5 +1362,294 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: "rgba(255,255,255,0.65)",
     fontStyle: "italic",
+  },
+  subBlock: {
+    gap: Spacing.two,
+    paddingTop: Spacing.two,
+  },
+  subBlockTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: SemanticColors.success,
+    letterSpacing: 0.4,
+  },
+  limitacionCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.14)",
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  limitacionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  limitacionBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.28)",
+  },
+  limitacionBadgeText: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.success,
+  },
+  limitacionTitle: {
+    flex: 1,
+    fontFamily: Fonts.montserratBold,
+    fontSize: 15,
+    lineHeight: 22,
+    color: SemanticColors.textPrimary,
+  },
+  costesPanel: {
+    gap: Spacing.three,
+  },
+  costesTotalCard: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: Spacing.three,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.28)",
+    backgroundColor: "rgba(0,255,132,0.06)",
+  },
+  costesTotalLabel: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    flexShrink: 1,
+  },
+  costesTotalValue: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 28,
+    lineHeight: 34,
+    color: SemanticColors.textPrimary,
+    letterSpacing: -0.4,
+  },
+  costesBreakdown: {
+    gap: Spacing.two,
+  },
+  costesBreakdownTitle: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.55)",
+    letterSpacing: 1.4,
+  },
+  costesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
+  costItem: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: "30%",
+    minWidth: 140,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.two,
+    gap: 2,
+  },
+  costItemLabel: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.65)",
+  },
+  costItemValue: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+  },
+  retornoPanel: {
+    gap: Spacing.three,
+  },
+  retornoKpis: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
+  retornoKpi: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: "30%",
+    minWidth: 140,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    gap: 4,
+  },
+  retornoKpiHighlight: {
+    backgroundColor: "rgba(0,255,132,0.10)",
+    borderColor: "rgba(0,255,132,0.32)",
+  },
+  retornoKpiLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: "rgba(255,255,255,0.55)",
+    letterSpacing: 1.4,
+  },
+  retornoKpiValue: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 20,
+    lineHeight: 26,
+    color: SemanticColors.textPrimary,
+  },
+  retornoKpiValueHighlight: {
+    color: SemanticColors.success,
+  },
+  retornoMetrics: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
+  retornoMetric: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: "30%",
+    minWidth: 140,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.two,
+    gap: 2,
+  },
+  retornoMetricLabel: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.65)",
+  },
+  retornoMetricValue: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+  },
+  planAccionPanel: {
+    gap: Spacing.three,
+  },
+  planAccionDuration: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,255,132,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.28)",
+  },
+  planAccionDurationLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: SemanticColors.success,
+    letterSpacing: 1.4,
+  },
+  planAccionDurationValue: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 13,
+    lineHeight: 16,
+    color: SemanticColors.textPrimary,
+  },
+  planAccionSemana: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.14)",
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  planAccionSemanaHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  planAccionSemanaBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.28)",
+  },
+  planAccionSemanaBadgeText: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 12,
+    lineHeight: 14,
+    color: SemanticColors.success,
+  },
+  planAccionSemanaCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  planAccionSemanaTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+  },
+  planAccionSemanaFoco: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: "rgba(255,255,255,0.65)",
+  },
+  pasosList: {
+    gap: Spacing.three,
+    paddingTop: Spacing.two,
+  },
+  pasoItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.three,
+    paddingLeft: Spacing.three,
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(0,255,132,0.32)",
+  },
+  pasoIndex: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 22,
+    lineHeight: 26,
+    color: "rgba(0,255,132,0.45)",
+    letterSpacing: -0.5,
+    minWidth: 32,
+  },
+  pasoText: {
+    flex: 1,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 15,
+    lineHeight: 24,
+    color: "rgba(255,255,255,0.88)",
   },
 });

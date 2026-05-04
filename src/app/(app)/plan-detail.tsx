@@ -34,7 +34,7 @@ export default function PlanDetailScreen() {
             icon="rocket"
             titlePrefix="Plan de"
             titleAccent="duplicación"
-            showBack={isMobile}
+            showBack
           />
           <View style={styles.centered}>
             <ActivityIndicator color={SemanticColors.success} size="large" />
@@ -53,7 +53,7 @@ export default function PlanDetailScreen() {
             icon="rocket"
             titlePrefix="Plan de"
             titleAccent="duplicación"
-            showBack={isMobile}
+            showBack
           />
           <View style={styles.centered}>
             <ThemedText type="bodyMd" style={styles.emptyText}>

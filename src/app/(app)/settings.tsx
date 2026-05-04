@@ -61,7 +61,7 @@ export default function SettingsScreen() {
           titlePrefix="Ajustes"
           titleAccent="Alter CEO"
           onIconPress={() => void handleHiddenDebugTap()}
-          showBack={isMobile}
+          showBack
         />
 
         <ScrollView

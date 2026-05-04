@@ -61,62 +61,56 @@ export interface ReportRunStatusResponse {
   } | null;
 }
 
-export interface IntroduccionGeneralSection {
+export interface IntroduccionSection {
   texto: string;
-}
-
-export interface Captacion5FasesDiagnosis {
-  nivel_agresividad_mas_adecuado: string;
-  capacidad_real_de_ejecucion: string;
-  valor_del_cliente_en_el_tiempo: string;
-  como_decide_el_cliente: string;
-  que_emocion_domina_la_compra: string;
-  que_friccion_principal_bloquea_la_captacion: string;
-  donde_parece_mas_accesible_el_cliente_ideal: string;
-  que_fortaleza_percibida_actual_tiene_el_negocio: string;
 }
 
 export interface BaseEstrategicaSection {
   explicacion: string;
 }
 
+export interface ClavesDelDiagnostico {
+  nivel_de_agresividad_deseado: string;
+  capacidad_real_de_ejecucion: string;
+  valor_del_cliente_en_el_tiempo: string;
+  como_decide_el_cliente: string;
+  que_emocion_activa_la_compra: string;
+  friccion_principal: string;
+  canal_mas_accesible: string;
+  fortaleza_percibida_actual: string;
+}
+
+export interface DiagnosticoDeSituacionActualSection {
+  como_estas_en_este_momento: string;
+  claves_del_diagnostico: ClavesDelDiagnostico;
+}
+
 export interface TuOportunidadDeCaptacionSection {
-  explicacion_educativa: string;
-  resumen_oportunidad: string;
   oportunidad_principal_detectada: string;
-  que_conducta_del_cliente_permite_aprovecharla: string;
-  que_tipo_de_puerta_de_entrada_parece_mas_prometedora: string;
-  que_resultado_puede_empezar_a_mover_si_se_activa_bien: string;
+  conducta_del_cliente: string;
+  tipo_de_propuesta_de_captacion: string;
+  objetivo_deseado: string;
 }
 
 export interface Fase1OfertaIrresistibleSection {
-  explicacion_educativa: string;
-  que_incluye_exactamente: string;
+  nombre_de_la_oferta: string;
+  descripcion_breve: string;
   funcionamiento: string;
-  formato_de_entrega: string;
   precio_recomendado: string;
+  alternativa_precio_conservador: string;
   tiempo_esfuerzo_del_cliente: string;
   patron_de_comportamiento_del_cliente: string;
   guion_de_venta: string;
   recursos_necesarios: string;
   proceso_de_implementacion: string;
-  por_que_tiene_sentido_en_este_negocio: string;
-  cuando_usarla_y_con_que_perfil_de_cliente: string;
-  riesgo_principal_de_ejecutarla_mal: string;
-  como_hacerla_mas_fuerte: string;
-  frase_comercial_simple: string;
 }
 
 export interface GranDensidadPrioritariaSection {
   canal_o_entorno: string;
-  tipo_de_cliente_que_habra_ahi: string;
-  por_que_tiene_sentido: string;
-  que_ventaja_tiene_ese_canal: string;
-  que_limitacion_tiene: string;
-  que_mensaje_conviene_usar: string;
-  que_formato_conviene_usar: string;
-  que_ritmo_de_publicacion_o_accion_conviene: string;
-  que_error_evitar: string;
+  tipo_de_cliente: string;
+  ventaja_principal: string;
+  limitacion: string;
+  tipo_de_comunicacion: string;
 }
 
 export interface DistribucionPresupuestoTactico {
@@ -142,24 +136,106 @@ export interface Fase2GrandesDensidadesSection {
 }
 
 export interface Fase3SistemaCaptacionContactosSection {
-  explicacion_educativa: string;
-  metodo_principal_recomendado: string;
-  metodo_secundario_de_apoyo: string;
-  que_se_pide_exactamente: string;
-  por_que_ese_nivel_de_datos_es_razonable: string;
-  como_reducir_la_friccion: string;
-  mensaje_sugerido_para_pedirlos: string;
-  incentivo_o_promesa_para_dejar_el_contacto: string;
-  error_mas_tipico_que_el_negocio_debe_evitar: string;
-  como_conectar_esto_con_seguimiento_posterior: string;
+  que_datos_pedir: string;
+  como_pedirlos: string;
+  donde_se_recogen: string;
+  frase_para_pedirlos: string;
+  como_reducir_sensacion_de_formulario_pesado: string;
+  que_hacer_despues_de_capturar_el_contacto: string;
+}
+
+export interface VentaAdicionalSection {
+  que_ofrecer: string;
+  cuando_ofrecerlo: string;
+  quien_lo_comunica: string;
+  como_se_comunica: string;
+  por_que_encaja_con_la_oferta_inicial: string;
+}
+
+export interface DescuentoOIncentivoFuturoSection {
+  que_incentivo_ofrecer: string;
+  durante_cuanto_tiempo: string;
+  para_que_producto_o_servicio: string;
+  como_comunicarlo: string;
+  por_que_ayuda_a_generar_recurrencia: string;
+}
+
+export interface Fase4VentaAdicionalSection {
+  venta_adicional: VentaAdicionalSection;
+  descuento_o_incentivo_futuro: DescuentoOIncentivoFuturoSection;
+}
+
+export interface LimitacionEstrategicaItem {
+  en_que_consiste: string;
+  por_que_tiene_sentido: string;
+  como_se_comunica_al_cliente: string;
+  que_riesgo_evita: string;
+}
+
+export interface Fase5LimitacionEstrategicaSection {
+  limitaciones: LimitacionEstrategicaItem[];
+}
+
+export interface DetallePorPartidas {
+  preparacion_eur: number;
+  diseno_o_produccion_eur: number;
+  publicidad_eur: number;
+  herramientas_eur: number;
+  entrega_de_la_oferta_eur: number;
+  personal_interno_eur: number;
+  apoyo_externo_eur: number;
+  seguimiento_eur: number;
+  optimizacion_eur: number;
+}
+
+export interface CostesDeLaEstrategiaSection {
+  explicacion_general: string;
+  costes_imprescindibles: string;
+  costes_recomendables: string;
+  costes_opcionales: string;
+  coste_total_estimado_eur: number;
+  detalle_por_partidas: DetallePorPartidas;
+}
+
+export interface RetornoDeLaEstrategiaSection {
+  explicacion_general: string;
+  lectura_del_retorno: string;
+  advertencia_de_estimacion: string;
+  coste_total_estimado_eur: number;
+  contactos_generados: number;
+  primeros_consumos_esperados: number;
+  clientes_convertidos: number;
+  repeticion_esperada: number;
+  valor_acumulado_por_cliente_eur: number;
+  negocio_potencial_4_meses_eur: number;
+  negocio_potencial_12_meses_eur: number;
+  roi_aproximado_pct: number;
+}
+
+export interface PlanDeAccionSemana {
+  semana: string;
+  foco_principal: string;
+  tareas_clave: string;
+  responsable_sugerido: string;
+  que_debe_quedar_terminado: string;
+}
+
+export interface PlanDeAccionSection {
+  duracion_dias: number;
+  semanas: PlanDeAccionSemana[];
 }
 
 export interface PropuestaDeCaptacionEn5Fases {
+  numero: number;
   titulo: string;
-  angulo_principal: "sufrimiento" | "placer";
   fase_1_oferta_irresistible: Fase1OfertaIrresistibleSection;
-  fase_2_grandes_densidades?: Fase2GrandesDensidadesSection | null;
-  fase_3_sistema_de_captacion_de_contactos?: Fase3SistemaCaptacionContactosSection | null;
+  fase_2_grandes_densidades: Fase2GrandesDensidadesSection;
+  fase_3_sistema_de_captacion_de_contactos: Fase3SistemaCaptacionContactosSection;
+  fase_4_venta_adicional_y_consumo_futuro: Fase4VentaAdicionalSection;
+  fase_5_limitacion_estrategica: Fase5LimitacionEstrategicaSection;
+  costes_de_la_estrategia: CostesDeLaEstrategiaSection;
+  retorno_de_la_estrategia: RetornoDeLaEstrategiaSection;
+  plan_de_accion: PlanDeAccionSection;
 }
 
 export interface EstrategiaDeCaptacionEn5FasesSection {
@@ -167,12 +243,19 @@ export interface EstrategiaDeCaptacionEn5FasesSection {
   propuestas: PropuestaDeCaptacionEn5Fases[];
 }
 
+export interface ProximosPasosSection {
+  texto: string;
+  pasos: string[];
+}
+
 export interface Captacion5FasesReport {
-  introduccion_general: IntroduccionGeneralSection;
-  diagnostico_de_tu_situacion_actual: Captacion5FasesDiagnosis;
+  titulo: string;
+  introduccion: IntroduccionSection;
   base_estrategica: BaseEstrategicaSection;
+  diagnostico_de_situacion_actual: DiagnosticoDeSituacionActualSection;
   tu_oportunidad_de_captacion: TuOportunidadDeCaptacionSection;
   estrategia_de_captacion_en_5_fases: EstrategiaDeCaptacionEn5FasesSection;
+  proximos_pasos: ProximosPasosSection;
 }
 
 export interface ValueIdeaProposal {

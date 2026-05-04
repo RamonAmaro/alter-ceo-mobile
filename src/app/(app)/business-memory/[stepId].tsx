@@ -369,7 +369,7 @@ export default function BusinessMemoryStepScreen() {
             titlePrefix="Memoria"
             titleAccent="de negocio"
             renderIcon={() => <CompassBadge size={28} />}
-            showBack={isMobile}
+            showBack
           />
 
           <View style={styles.feedbackWrap}>
@@ -392,7 +392,7 @@ export default function BusinessMemoryStepScreen() {
             titlePrefix="Memoria"
             titleAccent="de negocio"
             renderIcon={() => <CompassBadge size={28} />}
-            showBack={isMobile}
+            showBack
           />
 
           <View style={styles.feedbackWrap}>
@@ -681,7 +681,7 @@ export default function BusinessMemoryStepScreen() {
           titlePrefix="Memoria"
           titleAccent="de negocio"
           icon="briefcase"
-          showBack={isMobile}
+          showBack
         />
 
         <KeyboardAwareScroll
