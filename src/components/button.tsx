@@ -1,21 +1,37 @@
 import { ThemedText } from "@/components/themed-text";
-import { Fonts, Typography } from "@/constants/theme";
+import { Fonts, Spacing, Typography } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
+  View,
   type GestureResponderEvent,
   type TouchableOpacityProps,
 } from "react-native";
 
+type IoniconName = keyof typeof Ionicons.glyphMap;
+type IconPosition = "leading" | "trailing";
+
 interface ButtonProps extends TouchableOpacityProps {
   label: string;
   loading?: boolean;
+  icon?: IoniconName;
+  iconPosition?: IconPosition;
 }
 
-export function Button({ label, loading, style, disabled, onPress, ...rest }: ButtonProps) {
+export function Button({
+  label,
+  loading,
+  icon,
+  iconPosition = "leading",
+  style,
+  disabled,
+  onPress,
+  ...rest
+}: ButtonProps) {
   const [isPressPending, setIsPressPending] = useState(false);
   const isMountedRef = useRef(true);
   const pressLockedRef = useRef(false);
@@ -66,9 +82,17 @@ export function Button({ label, loading, style, disabled, onPress, ...rest }: Bu
         {isBusy ? (
           <ActivityIndicator color="#000000" />
         ) : (
-          <ThemedText type="labelMd" style={styles.label}>
-            {label}
-          </ThemedText>
+          <View style={styles.content}>
+            {icon && iconPosition === "leading" ? (
+              <Ionicons name={icon} size={14} color="#000000" />
+            ) : null}
+            <ThemedText type="labelMd" style={styles.label}>
+              {label}
+            </ThemedText>
+            {icon && iconPosition === "trailing" ? (
+              <Ionicons name={icon} size={14} color="#000000" />
+            ) : null}
+          </View>
         )}
       </LinearGradient>
     </TouchableOpacity>
@@ -87,6 +111,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 98,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.one,
   },
   label: {
     ...Typography.caption,

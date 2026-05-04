@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Animated, ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import { router } from "expo-router";
 
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
@@ -13,7 +21,7 @@ import { PrefilledDisclosure } from "@/components/strategies/prefilled-disclosur
 import { getStrategyByReportType } from "@/components/strategies/strategy-catalog";
 import { ThemedText } from "@/components/themed-text";
 import { SHOW_SCROLL_INDICATOR, USE_NATIVE_DRIVER } from "@/constants/platform";
-import { SemanticColors, Spacing } from "@/constants/theme";
+import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { createReportRun } from "@/services/report-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useStrategiesStore } from "@/stores/strategies-store";
@@ -153,7 +161,16 @@ export default function StrategyQuestionnaireScreen() {
       animateTransition(() => previousQuestion());
       return;
     }
-    router.back();
+    handleCancel();
+  }
+
+  function handlePreviousQuestion(): void {
+    animateTransition(() => previousQuestion());
+  }
+
+  function handleCancel(): void {
+    discardDraft();
+    router.replace("/(app)/strategy");
   }
 
   function handleNext(): void {
@@ -237,7 +254,7 @@ export default function StrategyQuestionnaireScreen() {
             <Button
               label="Volver"
               onPress={() => router.replace("/(app)/strategy")}
-              style={styles.secondaryButton}
+              style={styles.errorSecondaryButton}
             />
           </View>
         </View>
@@ -292,13 +309,38 @@ export default function StrategyQuestionnaireScreen() {
               {submitError}
             </ThemedText>
           ) : null}
-          <Button
-            label={currentQuestionIndex + 1 === questionCount ? "Finalizar" : "Siguiente"}
-            onPress={handleNext}
-            disabled={!nextEnabled || isFinalSubmitting}
-            loading={isFinalSubmitting}
-            style={!nextEnabled ? styles.buttonDisabled : undefined}
-          />
+          <View style={styles.footerActions}>
+            <Pressable
+              onPress={currentQuestionIndex === 0 ? handleCancel : handlePreviousQuestion}
+              disabled={isFinalSubmitting}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                pressed && styles.secondaryButtonPressed,
+                isFinalSubmitting && styles.secondaryButtonDisabled,
+              ]}
+            >
+              <Ionicons
+                name={currentQuestionIndex === 0 ? "close" : "arrow-back"}
+                size={14}
+                color={SemanticColors.textPrimary}
+              />
+              <ThemedText style={styles.secondaryLabel}>
+                {currentQuestionIndex === 0 ? "Cancelar" : "Volver"}
+              </ThemedText>
+            </Pressable>
+            <Button
+              label={currentQuestionIndex + 1 === questionCount ? "Finalizar" : "Siguiente"}
+              icon={
+                currentQuestionIndex + 1 === questionCount ? "checkmark" : "arrow-forward"
+              }
+              iconPosition="trailing"
+              onPress={handleNext}
+              disabled={!nextEnabled || isFinalSubmitting}
+              loading={isFinalSubmitting}
+              style={[styles.primaryButton, !nextEnabled && styles.buttonDisabled]}
+            />
+          </View>
         </View>
       </View>
     </ScreenLayout>
@@ -316,6 +358,44 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: "center",
     paddingTop: Spacing.three,
+  },
+  footerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.two,
+    width: "100%",
+  },
+  secondaryButton: {
+    flexShrink: 0,
+    flexDirection: "row",
+    paddingHorizontal: Spacing.three,
+    height: 43,
+    borderRadius: 98,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.one,
+  },
+  secondaryButtonPressed: {
+    backgroundColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.32)",
+  },
+  secondaryButtonDisabled: {
+    opacity: 0.4,
+  },
+  secondaryLabel: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 12,
+    lineHeight: 16,
+    color: SemanticColors.textPrimary,
+  },
+  primaryButton: {
+    flex: 1,
+    width: undefined,
+    alignSelf: "auto",
   },
   buttonDisabled: {
     opacity: 0.4,
@@ -365,7 +445,7 @@ const styles = StyleSheet.create({
   errorActions: {
     gap: Spacing.two,
   },
-  secondaryButton: {
+  errorSecondaryButton: {
     opacity: 0.75,
   },
 });

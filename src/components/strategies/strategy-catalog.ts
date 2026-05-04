@@ -29,8 +29,8 @@ export const STRATEGY_CATALOG: readonly StrategyCatalogEntry[] = [
     title: "Crear Guion de Ventas",
     shortTitle: "GUION DE VENTAS",
     iconName: "chatbubbles-outline",
-    reportType: null,
-    available: false,
+    reportType: "guion_ventas",
+    available: true,
   },
   {
     key: "test_mentalidad",

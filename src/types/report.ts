@@ -275,6 +275,47 @@ export interface ValueIdeasReport {
   puesta_en_marcha: { texto: string };
 }
 
+export interface SalesScriptBlock {
+  titulo: string;
+  peso_porcentual: number | null;
+  palabras_orientativas: number | null;
+  texto_guion: string;
+  notas_de_uso: string;
+}
+
+export interface SalesScriptDevelopedScript {
+  previo_a_la_presentacion: SalesScriptBlock;
+  logo: SalesScriptBlock;
+  nombre_producto_servicio: SalesScriptBlock;
+  problema: SalesScriptBlock;
+  solucion: SalesScriptBlock;
+  caracteristicas_y_detalles_de_funcionamiento: SalesScriptBlock;
+  precio_y_condiciones: SalesScriptBlock;
+  para_quien_es_y_para_quien_no_es: SalesScriptBlock;
+  credenciales: SalesScriptBlock;
+  casos_reales: SalesScriptBlock;
+  primera_llamada_a_la_accion: SalesScriptBlock;
+  limitacion: SalesScriptBlock;
+  bonus_o_regalos: SalesScriptBlock;
+  segunda_llamada_a_la_accion: SalesScriptBlock;
+  gestion_de_objeciones: SalesScriptBlock;
+  repeticion_o_ampliacion: SalesScriptBlock;
+  llamada_a_la_accion_final: SalesScriptBlock;
+}
+
+export interface SalesScriptOptimizedScript {
+  texto_introductorio_del_guion: string;
+  guion_desarrollado: SalesScriptDevelopedScript;
+}
+
+export interface SalesScriptReport {
+  titulo: string;
+  introduccion: { texto: string };
+  base_estrategica: { texto: string };
+  guion_optimizado_de_ventas: SalesScriptOptimizedScript;
+  uso_y_particularidades: { texto: string };
+}
+
 export interface ReportSummary {
   report_id: string;
   user_id: string;
