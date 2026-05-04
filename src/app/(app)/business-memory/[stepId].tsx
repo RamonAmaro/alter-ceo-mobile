@@ -342,7 +342,7 @@ function buildSectionPayload(
 
 export default function BusinessMemoryStepScreen() {
   const insets = useSafeAreaInsets();
-  const { isDesktop, isMobile } = useResponsiveLayout();
+  const { isDesktop } = useResponsiveLayout();
   const { stepId } = useLocalSearchParams<{ stepId: string }>();
   const { applySectionPatch, error, isLoading, refresh, steps, userId, version } =
     useBusinessMemoryDashboard();

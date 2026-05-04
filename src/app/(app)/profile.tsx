@@ -6,7 +6,6 @@ import { EyebrowPill } from "@/components/ui/eyebrow-pill";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { Spacing } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRouter, type Href } from "expo-router";
 import { useRef, useState } from "react";
@@ -64,7 +63,6 @@ const MENU_ITEMS: readonly MenuEntry[] = [
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { isMobile } = useResponsiveLayout();
   const router = useRouter();
   const signOut = useAuthStore((s) => s.signOut);
   const [isSigningOut, setIsSigningOut] = useState(false);

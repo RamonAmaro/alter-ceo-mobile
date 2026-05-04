@@ -3,7 +3,6 @@ import { PlanContent } from "@/components/my-plan/plan-content";
 import { ScreenHeader } from "@/components/screen-header";
 import { ThemedText } from "@/components/themed-text";
 import { SemanticColors } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePlanStore } from "@/stores/plan-store";
 import type { PlanData } from "@/types/plan";
@@ -13,7 +12,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function PlanDetailScreen() {
   const insets = useSafeAreaInsets();
-  const { isMobile } = useResponsiveLayout();
   const userId = useAuthStore((s) => s.user?.userId);
   const latestPlan = usePlanStore((s) => s.latestPlan);
   const fetchLatestPlan = usePlanStore((s) => s.fetchLatestPlan);
