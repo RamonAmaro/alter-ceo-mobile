@@ -6,7 +6,12 @@ import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { getReportById } from "@/services/report-service";
-import type { Captacion5FasesReport, ReportRecord, ValueIdeasReport } from "@/types/report";
+import type {
+  Captacion5FasesReport,
+  ReportRecord,
+  SalesScriptReport,
+  ValueIdeasReport,
+} from "@/types/report";
 import { toErrorMessage } from "@/utils/to-error-message";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -16,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   renderCaptacionReport,
   renderGenericReport,
+  renderSalesScriptReport,
   renderValueIdeasReport,
 } from "../strategy-questionnaire-result";
 
@@ -92,6 +98,9 @@ function renderRecord(record: ReportRecord, isMobile: boolean) {
   }
   if (record.report_type === "value_ideas") {
     return renderValueIdeasReport(record.report as unknown as ValueIdeasReport);
+  }
+  if (record.report_type === "guion_ventas") {
+    return renderSalesScriptReport(record.report as unknown as SalesScriptReport, isMobile);
   }
   return renderGenericReport(record.report);
 }

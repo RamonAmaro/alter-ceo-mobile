@@ -1,5 +1,6 @@
 import { AppBackground } from "@/components/app-background";
 import { ScreenHeader } from "@/components/screen-header";
+import { STRATEGY_CATALOG, type StrategyKey } from "@/components/strategies/strategy-catalog";
 import { StrategyTopicSelector } from "@/components/strategy/strategy-topic-selector";
 import { ThemedText } from "@/components/themed-text";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -12,8 +13,6 @@ import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-import { STRATEGY_CATALOG, type StrategyKey } from "@/components/strategies/strategy-catalog";
 
 export default function StrategyScreen() {
   const insets = useSafeAreaInsets();

@@ -32,6 +32,9 @@ import type {
   PlanDeAccionSection,
   PropuestaDeCaptacionEn5Fases,
   RetornoDeLaEstrategiaSection,
+  SalesScriptBlock,
+  SalesScriptDevelopedScript,
+  SalesScriptReport,
   TuOportunidadDeCaptacionSection,
   ValueIdeaProposal,
   ValueIdeasReport,
@@ -742,6 +745,134 @@ function ValueIdeaCard({ proposal, index }: { proposal: ValueIdeaProposal; index
   );
 }
 
+interface SalesScriptBlockEntry {
+  key: keyof SalesScriptDevelopedScript;
+  label: string;
+}
+
+const SALES_SCRIPT_BLOCK_ORDER: readonly SalesScriptBlockEntry[] = [
+  { key: "previo_a_la_presentacion", label: "Previo a la presentación" },
+  { key: "logo", label: "Logo" },
+  { key: "nombre_producto_servicio", label: "Nombre del producto / servicio" },
+  { key: "problema", label: "Problema" },
+  { key: "solucion", label: "Solución" },
+  {
+    key: "caracteristicas_y_detalles_de_funcionamiento",
+    label: "Características y funcionamiento",
+  },
+  { key: "precio_y_condiciones", label: "Precio y condiciones" },
+  { key: "para_quien_es_y_para_quien_no_es", label: "Para quién es / no es" },
+  { key: "credenciales", label: "Credenciales" },
+  { key: "casos_reales", label: "Casos reales" },
+  { key: "primera_llamada_a_la_accion", label: "Primera llamada a la acción" },
+  { key: "limitacion", label: "Limitación" },
+  { key: "bonus_o_regalos", label: "Bonus o regalos" },
+  { key: "segunda_llamada_a_la_accion", label: "Segunda llamada a la acción" },
+  { key: "gestion_de_objeciones", label: "Gestión de objeciones" },
+  { key: "repeticion_o_ampliacion", label: "Repetición / ampliación" },
+  { key: "llamada_a_la_accion_final", label: "Llamada a la acción final" },
+];
+
+function ScriptBlockCard({
+  index,
+  eyebrow,
+  block,
+}: {
+  index: number;
+  eyebrow: string;
+  block: SalesScriptBlock;
+}) {
+  return (
+    <View style={styles.scriptBlockCard}>
+      <View style={styles.scriptBlockHeader}>
+        <View style={styles.scriptBlockBadge}>
+          <ThemedText style={styles.scriptBlockBadgeText}>
+            {String(index + 1).padStart(2, "0")}
+          </ThemedText>
+        </View>
+        <View style={styles.scriptBlockHeaderCopy}>
+          <ThemedText style={styles.scriptBlockEyebrow}>{eyebrow}</ThemedText>
+          <ThemedText style={styles.scriptBlockTitle}>{block.titulo}</ThemedText>
+        </View>
+      </View>
+
+      {(block.peso_porcentual !== null || block.palabras_orientativas !== null) && (
+        <View style={styles.scriptBlockMetrics}>
+          {block.peso_porcentual !== null && (
+            <View style={styles.scriptBlockMetric}>
+              <ThemedText style={styles.scriptBlockMetricLabel}>PESO</ThemedText>
+              <ThemedText style={styles.scriptBlockMetricValue}>
+                {block.peso_porcentual}%
+              </ThemedText>
+            </View>
+          )}
+          {block.palabras_orientativas !== null && (
+            <View style={styles.scriptBlockMetric}>
+              <ThemedText style={styles.scriptBlockMetricLabel}>PALABRAS</ThemedText>
+              <ThemedText style={styles.scriptBlockMetricValue}>
+                ~{block.palabras_orientativas}
+              </ThemedText>
+            </View>
+          )}
+        </View>
+      )}
+
+      <View style={styles.scriptQuotePanel}>
+        <ThemedText style={styles.scriptQuoteLabel}>Texto del guion</ThemedText>
+        <ThemedText style={styles.scriptQuoteText}>“{block.texto_guion}”</ThemedText>
+      </View>
+
+      <View style={styles.scriptNotesPanel}>
+        <ThemedText style={styles.scriptNotesLabel}>Notas de uso</ThemedText>
+        <ThemedText style={styles.scriptNotesText}>{block.notas_de_uso}</ThemedText>
+      </View>
+    </View>
+  );
+}
+
+export function renderSalesScriptReport(report: SalesScriptReport, isMobile: boolean) {
+  const developed = report.guion_optimizado_de_ventas.guion_desarrollado;
+
+  return (
+    <>
+      <View style={styles.heroBlock}>
+        <View style={styles.heroDivider} />
+        <View style={styles.heroEyebrowRow}>
+          <View style={styles.heroDot} />
+          <ThemedText style={styles.heroEyebrow}>Informe listo</ThemedText>
+        </View>
+        <ThemedText style={[styles.heroTitle, isMobile && styles.heroTitleMobile]}>
+          {report.titulo}
+        </ThemedText>
+        <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
+      </View>
+
+      <TextSection title="Base estratégica" eyebrow="Por qué este enfoque">
+        <TextBlock text={report.base_estrategica.texto} />
+      </TextSection>
+
+      <TextSection title="Guion optimizado de ventas" eyebrow="Cómo leerlo">
+        <TextBlock text={report.guion_optimizado_de_ventas.texto_introductorio_del_guion} />
+      </TextSection>
+
+      <View style={styles.scriptBlocksList}>
+        {SALES_SCRIPT_BLOCK_ORDER.map((entry, index) => (
+          <ScriptBlockCard
+            key={entry.key}
+            index={index}
+            eyebrow={entry.label}
+            block={developed[entry.key]}
+          />
+        ))}
+      </View>
+
+      <TextSection title="Uso y particularidades" eyebrow="Cómo aplicarlo">
+        <TextBlock text={report.uso_y_particularidades.texto} />
+      </TextSection>
+    </>
+  );
+}
+
 export function renderValueIdeasReport(report: ValueIdeasReport) {
   return (
     <>
@@ -867,7 +998,12 @@ export default function StrategyQuestionnaireResultScreen() {
               ? renderReport(generatedReport as unknown as Captacion5FasesReport, isMobile)
               : reportType === "value_ideas"
                 ? renderValueIdeasReport(generatedReport as unknown as ValueIdeasReport)
-                : renderGenericReport(generatedReport)}
+                : reportType === "guion_ventas"
+                  ? renderSalesScriptReport(
+                      generatedReport as unknown as SalesScriptReport,
+                      isMobile,
+                    )
+                  : renderGenericReport(generatedReport)}
           </ScrollView>
 
           <FooterActionBar>
@@ -1649,5 +1785,123 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
     color: "rgba(255,255,255,0.88)",
+  },
+  scriptBlocksList: {
+    gap: Spacing.three,
+  },
+  scriptBlockCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.18)",
+    padding: Spacing.three,
+    gap: Spacing.three,
+  },
+  scriptBlockHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  scriptBlockBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,255,132,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.32)",
+  },
+  scriptBlockBadgeText: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 13,
+    lineHeight: 16,
+    color: SemanticColors.success,
+  },
+  scriptBlockHeaderCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  scriptBlockEyebrow: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: SemanticColors.success,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  scriptBlockTitle: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 16,
+    lineHeight: 22,
+    color: SemanticColors.textPrimary,
+  },
+  scriptBlockMetrics: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
+  scriptBlockMetric: {
+    flexGrow: 0,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    gap: 2,
+  },
+  scriptBlockMetricLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: "rgba(255,255,255,0.55)",
+    letterSpacing: 1.4,
+  },
+  scriptBlockMetricValue: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 15,
+    lineHeight: 18,
+    color: SemanticColors.textPrimary,
+  },
+  scriptQuotePanel: {
+    backgroundColor: "rgba(14, 35, 30, 0.58)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.18)",
+    padding: Spacing.three,
+    gap: Spacing.one,
+  },
+  scriptQuoteLabel: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: SemanticColors.success,
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+  },
+  scriptQuoteText: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 15,
+    lineHeight: 24,
+    color: SemanticColors.textPrimary,
+    fontStyle: "italic",
+  },
+  scriptNotesPanel: {
+    gap: 4,
+  },
+  scriptNotesLabel: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: "rgba(255,255,255,0.55)",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  scriptNotesText: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.78)",
   },
 });
