@@ -7,6 +7,7 @@ import { SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { getReportById } from "@/services/report-service";
 import type {
+  BusinessMindsetReport,
   Captacion5FasesReport,
   ReportRecord,
   SalesScriptReport,
@@ -19,6 +20,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  renderBusinessMindsetReport,
   renderCaptacionReport,
   renderGenericReport,
   renderSalesScriptReport,
@@ -101,6 +103,9 @@ function renderRecord(record: ReportRecord, isMobile: boolean) {
   }
   if (record.report_type === "guion_ventas") {
     return renderSalesScriptReport(record.report as unknown as SalesScriptReport, isMobile);
+  }
+  if (record.report_type === "mentalidad_empresarial") {
+    return renderBusinessMindsetReport(record.report as unknown as BusinessMindsetReport, isMobile);
   }
   return renderGenericReport(record.report);
 }

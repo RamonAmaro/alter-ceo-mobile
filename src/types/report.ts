@@ -316,6 +316,86 @@ export interface SalesScriptReport {
   uso_y_particularidades: { texto: string };
 }
 
+export type BusinessMindsetLevel =
+  | "Mentalidad limitante"
+  | "Mentalidad en transición"
+  | "Mentalidad expansiva";
+
+export type BusinessMindsetCategoryKey =
+  | "responsabilidad"
+  | "dinero"
+  | "accion"
+  | "mercado"
+  | "liderazgo";
+
+export interface BusinessMindsetQuestionScore {
+  question_id: string;
+  raw_answer: number;
+  limiting_score: number;
+}
+
+export interface BusinessMindsetCategoryScore {
+  key: BusinessMindsetCategoryKey;
+  name: string;
+  score: number;
+  level: BusinessMindsetLevel;
+  question_ids: string[];
+  limiting_score_mean: number;
+}
+
+export interface BusinessMindsetScorecard {
+  global_score: number;
+  global_level: BusinessMindsetLevel;
+  strongest_category: BusinessMindsetCategoryKey;
+  weakest_category: BusinessMindsetCategoryKey;
+  question_scores: Record<string, BusinessMindsetQuestionScore>;
+  categories: Record<BusinessMindsetCategoryKey, BusinessMindsetCategoryScore>;
+}
+
+export interface BusinessMindsetCategoryDiagnosisSection {
+  score: number;
+  level: BusinessMindsetLevel;
+  analysis: string;
+}
+
+export interface BusinessMindsetRadiographySection {
+  responsabilidad: BusinessMindsetCategoryDiagnosisSection;
+  dinero: BusinessMindsetCategoryDiagnosisSection;
+  accion: BusinessMindsetCategoryDiagnosisSection;
+  mercado: BusinessMindsetCategoryDiagnosisSection;
+  liderazgo: BusinessMindsetCategoryDiagnosisSection;
+}
+
+export interface BusinessMindsetRecommendationsBlock {
+  responsabilidad: { recomendaciones: string[] };
+  dinero: { recomendaciones: string[] };
+  accion: { recomendaciones: string[] };
+  mercado: { recomendaciones: string[] };
+  liderazgo: { recomendaciones: string[] };
+}
+
+export interface BusinessMindsetConclusionsBlock {
+  perfil_de_personalidad_empresarial: string;
+  bloqueos_y_consecuencias_en_tus_resultados: string;
+  evolucion_y_oportunidades_de_crecimiento: string;
+}
+
+export interface BusinessMindsetReport {
+  titulo: string;
+  scorecard: BusinessMindsetScorecard;
+  introduccion: { texto: string };
+  resultado_global: {
+    score: number;
+    level: BusinessMindsetLevel;
+    strongest_category: BusinessMindsetCategoryKey;
+    weakest_category: BusinessMindsetCategoryKey;
+    analysis: string;
+  };
+  radiografia_del_perfil: BusinessMindsetRadiographySection;
+  recomendaciones_de_mejora: BusinessMindsetRecommendationsBlock;
+  conclusiones_finales: BusinessMindsetConclusionsBlock;
+}
+
 export interface ReportSummary {
   report_id: string;
   user_id: string;

@@ -19,6 +19,8 @@ import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import type {
+  BusinessMindsetCategoryKey,
+  BusinessMindsetReport,
   Captacion5FasesReport,
   CostesDeLaEstrategiaSection,
   DescuentoOIncentivoFuturoSection,
@@ -45,6 +47,22 @@ interface KeyValueItem {
   label: string;
   value: string;
 }
+
+const BUSINESS_MINDSET_CATEGORIES: readonly BusinessMindsetCategoryKey[] = [
+  "responsabilidad",
+  "dinero",
+  "accion",
+  "mercado",
+  "liderazgo",
+] as const;
+
+const BUSINESS_MINDSET_CATEGORY_LABELS: Record<BusinessMindsetCategoryKey, string> = {
+  responsabilidad: "Responsabilidad",
+  dinero: "Dinero",
+  accion: "Acción",
+  mercado: "Mercado",
+  liderazgo: "Liderazgo",
+};
 
 const EURO_FORMATTER = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -907,6 +925,148 @@ export function renderValueIdeasReport(report: ValueIdeasReport) {
   );
 }
 
+function categoryLabel(category: BusinessMindsetCategoryKey): string {
+  return BUSINESS_MINDSET_CATEGORY_LABELS[category];
+}
+
+function MindsetScoreCard({
+  label,
+  value,
+  helper,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  helper?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={[styles.mindsetScoreCard, highlight && styles.mindsetScoreCardHighlight]}>
+      <ThemedText style={styles.mindsetScoreLabel}>{label}</ThemedText>
+      <ThemedText style={styles.mindsetScoreValue}>{value}</ThemedText>
+      {helper ? <ThemedText style={styles.mindsetScoreHelper}>{helper}</ThemedText> : null}
+    </View>
+  );
+}
+
+function MindsetRecommendationList({
+  title,
+  recommendations,
+}: {
+  title: string;
+  recommendations: string[];
+}) {
+  return (
+    <View style={styles.mindsetRecommendationGroup}>
+      <ThemedText style={styles.mindsetRecommendationTitle}>{title}</ThemedText>
+      <InsightList
+        items={recommendations.map((recommendation, index) => ({
+          label: `Recomendación ${index + 1}`,
+          value: recommendation,
+        }))}
+      />
+    </View>
+  );
+}
+
+export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMobile: boolean) {
+  const global = report.resultado_global;
+  const scorecard = report.scorecard;
+
+  return (
+    <>
+      <View style={styles.heroBlock}>
+        <View style={styles.heroDivider} />
+        <View style={styles.heroEyebrowRow}>
+          <View style={styles.heroDot} />
+          <ThemedText style={styles.heroEyebrow}>Informe listo</ThemedText>
+        </View>
+        <ThemedText style={[styles.heroTitle, isMobile && styles.heroTitleMobile]}>
+          {report.titulo}
+        </ThemedText>
+        <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
+      </View>
+
+      <SectionCard title="Resultado global" eyebrow="Mentalidad empresarial">
+        <View style={styles.mindsetScoreGrid}>
+          <MindsetScoreCard
+            label="Score global"
+            value={`${global.score}/100`}
+            helper={global.level}
+            highlight
+          />
+          <MindsetScoreCard
+            label="Categoría más fuerte"
+            value={categoryLabel(global.strongest_category)}
+            helper={scorecard.categories[global.strongest_category]?.level}
+          />
+          <MindsetScoreCard
+            label="Categoría más débil"
+            value={categoryLabel(global.weakest_category)}
+            helper={scorecard.categories[global.weakest_category]?.level}
+          />
+        </View>
+        <TextBlock text={global.analysis} />
+      </SectionCard>
+
+      <SectionCard title="Radiografía del perfil" eyebrow="Diagnóstico por categoría">
+        <View style={styles.mindsetCategoryList}>
+          {BUSINESS_MINDSET_CATEGORIES.map((category) => {
+            const diagnosis = report.radiografia_del_perfil[category];
+            const score = scorecard.categories[category]?.score ?? diagnosis.score;
+
+            return (
+              <View key={category} style={styles.mindsetCategoryCard}>
+                <View style={styles.mindsetCategoryHeader}>
+                  <View style={styles.mindsetCategoryTitleWrap}>
+                    <ThemedText style={styles.mindsetCategoryTitle}>
+                      {categoryLabel(category)}
+                    </ThemedText>
+                    <ThemedText style={styles.mindsetCategoryLevel}>{diagnosis.level}</ThemedText>
+                  </View>
+                  <ThemedText style={styles.mindsetCategoryScore}>{score}/100</ThemedText>
+                </View>
+                <TextBlock text={diagnosis.analysis} />
+              </View>
+            );
+          })}
+        </View>
+      </SectionCard>
+
+      <SectionCard title="Recomendaciones de mejora" eyebrow="Tres acciones por área">
+        <View style={styles.mindsetRecommendations}>
+          {BUSINESS_MINDSET_CATEGORIES.map((category) => (
+            <MindsetRecommendationList
+              key={category}
+              title={categoryLabel(category)}
+              recommendations={report.recomendaciones_de_mejora[category].recomendaciones}
+            />
+          ))}
+        </View>
+      </SectionCard>
+
+      <TextSection title="Conclusiones finales" eyebrow="Lectura ejecutiva">
+        <KeyValueList
+          items={[
+            {
+              label: "Perfil de personalidad empresarial",
+              value: report.conclusiones_finales.perfil_de_personalidad_empresarial,
+            },
+            {
+              label: "Bloqueos y consecuencias en tus resultados",
+              value: report.conclusiones_finales.bloqueos_y_consecuencias_en_tus_resultados,
+            },
+            {
+              label: "Evolución y oportunidades de crecimiento",
+              value: report.conclusiones_finales.evolucion_y_oportunidades_de_crecimiento,
+            },
+          ]}
+        />
+      </TextSection>
+    </>
+  );
+}
+
 function humanizeKey(key: string): string {
   return key
     .split("_")
@@ -955,6 +1115,33 @@ export function renderGenericReport(report: Record<string, unknown>): ReactNode 
   ));
 }
 
+function renderGeneratedStrategyReport({
+  reportType,
+  generatedReport,
+  isMobile,
+}: {
+  reportType: string | null;
+  generatedReport: Record<string, unknown>;
+  isMobile: boolean;
+}) {
+  if (reportType === "captacion_5_fases") {
+    return renderReport(generatedReport as unknown as Captacion5FasesReport, isMobile);
+  }
+  if (reportType === "value_ideas") {
+    return renderValueIdeasReport(generatedReport as unknown as ValueIdeasReport);
+  }
+  if (reportType === "guion_ventas") {
+    return renderSalesScriptReport(generatedReport as unknown as SalesScriptReport, isMobile);
+  }
+  if (reportType === "mentalidad_empresarial") {
+    return renderBusinessMindsetReport(
+      generatedReport as unknown as BusinessMindsetReport,
+      isMobile,
+    );
+  }
+  return renderGenericReport(generatedReport);
+}
+
 export default function StrategyQuestionnaireResultScreen() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsiveLayout();
@@ -994,16 +1181,7 @@ export default function StrategyQuestionnaireResultScreen() {
             ]}
             showsVerticalScrollIndicator={SHOW_SCROLL_INDICATOR}
           >
-            {reportType === "captacion_5_fases"
-              ? renderReport(generatedReport as unknown as Captacion5FasesReport, isMobile)
-              : reportType === "value_ideas"
-                ? renderValueIdeasReport(generatedReport as unknown as ValueIdeasReport)
-                : reportType === "guion_ventas"
-                  ? renderSalesScriptReport(
-                      generatedReport as unknown as SalesScriptReport,
-                      isMobile,
-                    )
-                  : renderGenericReport(generatedReport)}
+            {renderGeneratedStrategyReport({ reportType, generatedReport, isMobile })}
           </ScrollView>
 
           <FooterActionBar>
@@ -1191,6 +1369,100 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.montserratSemiBold,
     fontSize: 17,
     lineHeight: 26,
+    color: SemanticColors.textPrimary,
+  },
+  mindsetScoreGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
+  mindsetScoreCard: {
+    flexGrow: 1,
+    flexBasis: 180,
+    gap: 6,
+    padding: Spacing.three,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.03)",
+  },
+  mindsetScoreCardHighlight: {
+    borderColor: "rgba(0,255,132,0.28)",
+    backgroundColor: "rgba(0,255,132,0.08)",
+  },
+  mindsetScoreLabel: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 10,
+    lineHeight: 13,
+    color: "rgba(255,255,255,0.55)",
+    textTransform: "uppercase",
+    letterSpacing: 1.4,
+  },
+  mindsetScoreValue: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 26,
+    lineHeight: 30,
+    color: SemanticColors.textPrimary,
+  },
+  mindsetScoreHelper: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "rgba(255,255,255,0.72)",
+  },
+  mindsetCategoryList: {
+    gap: Spacing.two,
+  },
+  mindsetCategoryCard: {
+    gap: Spacing.two,
+    padding: Spacing.three,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.12)",
+    backgroundColor: "rgba(255,255,255,0.025)",
+  },
+  mindsetCategoryHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: Spacing.two,
+  },
+  mindsetCategoryTitleWrap: {
+    flex: 1,
+    gap: 4,
+  },
+  mindsetCategoryTitle: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 16,
+    lineHeight: 21,
+    color: SemanticColors.textPrimary,
+  },
+  mindsetCategoryLevel: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.success,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+  },
+  mindsetCategoryScore: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 24,
+    lineHeight: 28,
+    color: "rgba(0,255,132,0.8)",
+    minWidth: 72,
+    textAlign: "right",
+  },
+  mindsetRecommendations: {
+    gap: Spacing.four,
+  },
+  mindsetRecommendationGroup: {
+    gap: Spacing.two,
+  },
+  mindsetRecommendationTitle: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 16,
+    lineHeight: 21,
     color: SemanticColors.textPrimary,
   },
   proposalCard: {
