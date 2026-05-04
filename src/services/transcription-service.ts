@@ -108,8 +108,6 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
 
   ws.onmessage = (event) => {
     const msg = parseWsMessage(event.data);
-    // eslint-disable-next-line no-console
-    console.log("[transcription-service] WS message", msg);
     if (!msg) return;
     if (msg.type === "transcript_final" && msg.text) {
       accumulated.final = accumulated.final ? `${accumulated.final} ${msg.text}` : msg.text;
@@ -123,8 +121,6 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
   };
 
   ws.onclose = (e) => {
-    // eslint-disable-next-line no-console
-    console.log("[transcription-service] WS closed", { code: e.code, reason: e.reason });
     // Always resolve a pending stop() with whatever we accumulated when the
     // server closes the connection — backend closes after _STOP_FINAL_TIMEOUT_S
     // (~1.2s), which is normal and must not be treated as failure.
@@ -135,9 +131,7 @@ export async function createTranscriptionSession(): Promise<TranscriptionSession
     }
   };
 
-  ws.onerror = (e) => {
-    // eslint-disable-next-line no-console
-    console.log("[transcription-service] WS error", e);
+  ws.onerror = () => {
     errorCallback?.("Error de conexión con el servidor de transcripción");
     resolveStop();
   };

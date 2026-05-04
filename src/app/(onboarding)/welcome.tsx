@@ -3,6 +3,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
 
+import { goBackOrHome } from "@/utils/navigation";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
@@ -58,7 +60,7 @@ export default function WelcomeScreen() {
 
   function handleBack(): void {
     setOpenedFromApp(false);
-    router.back();
+    goBackOrHome();
   }
 
   return (

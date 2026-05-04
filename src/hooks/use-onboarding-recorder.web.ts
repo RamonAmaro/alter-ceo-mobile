@@ -70,12 +70,10 @@ function createAudioContextSafe(): AudioContext {
   }
 }
 
-// Temporary debug log — remove after the multi-question recording issue is fixed.
+// No-op while we don't have a proper logging service. Call sites preserved
+// so re-enabling debug output is a one-line change here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function debugLog(tag: string, ...args: any[]): void {
-  // eslint-disable-next-line no-console
-  console.log(`[onboarding-recorder/web] ${tag}`, ...args);
-}
+function debugLog(_tag: string, ..._args: any[]): void {}
 
 interface WebRecorderHandles {
   readonly mediaRecorder: MediaRecorder;

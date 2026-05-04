@@ -3,6 +3,8 @@ import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-nat
 
 import { router } from "expo-router";
 
+import { goBackOrHome } from "@/utils/navigation";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppBackground } from "@/components/app-background";
@@ -186,7 +188,7 @@ export default function SignUpScreen() {
                 <ThemedText type="bodyLg" style={styles.loginPromptText}>
                   ¿Ya tienes cuenta?
                 </ThemedText>
-                <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+                <TouchableOpacity onPress={() => goBackOrHome("/login")} activeOpacity={0.7}>
                   <ThemedText type="labelMd" style={styles.loginLinkText}>
                     Inicia sesión aquí
                   </ThemedText>

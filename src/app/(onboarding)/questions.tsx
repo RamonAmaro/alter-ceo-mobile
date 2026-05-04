@@ -3,6 +3,8 @@ import { Animated, ScrollView, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
 
+import { goBackOrHome } from "@/utils/navigation";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
@@ -190,7 +192,7 @@ export default function QuestionsScreen() {
     if (currentQuestionIndex > 0) {
       animateTransition(() => previousQuestion());
     } else {
-      router.back();
+      goBackOrHome();
     }
   }
 
