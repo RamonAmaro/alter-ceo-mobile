@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, AppState, type AppStateStatus, Platform, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,6 +15,7 @@ import {
   stopRecorderAndGetUri,
   useAudioRecorder,
 } from "@/services/audio-service";
+import type { RecordingStatus } from "expo-audio";
 import { persistRecordingFile } from "@/services/recording-storage";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRecordingsStore } from "@/stores/recordings-store";
@@ -75,8 +76,131 @@ export function RecordingPage({
   const accumulatedMsRef = useRef(0);
   const pendingSaveRef = useRef<{ uri: string; durationMs: number } | null>(null);
 
-  const recorder = useAudioRecorder(RECORDING_OPTIONS);
+  const stateRef = useRef<RecordingState>(state);
+  stateRef.current = state;
+  const interruptionAlertShownRef = useRef(false);
+  const recorderRef = useRef<ReturnType<typeof useAudioRecorder> | null>(null);
+
+  const pauseDueToInterruption = useCallback(() => {
+    if (stateRef.current !== "recording") return;
+
+    try {
+      recorderRef.current?.pause();
+    } catch {
+      // ignore — recorder may already be invalidated by the system
+    }
+
+    if (segmentStartRef.current > 0) {
+      accumulatedMsRef.current += Date.now() - segmentStartRef.current;
+      segmentStartRef.current = 0;
+    }
+    setState("paused");
+
+    if (interruptionAlertShownRef.current) return;
+    interruptionAlertShownRef.current = true;
+
+    Alert.alert(
+      "Grabación pausada",
+      "Tu grabación se ha pausado por una llamada o interrupción del sistema. Pulsa Reanudar cuando quieras continuar.",
+      [
+        {
+          text: "Entendido",
+          onPress: () => {
+            interruptionAlertShownRef.current = false;
+          },
+        },
+      ],
+    );
+  }, []);
+
+  const handleRecorderStatus = useCallback(
+    (status: RecordingStatus) => {
+      if (status.mediaServicesDidReset) {
+        preparedRef.current = false;
+        pauseDueToInterruption();
+        return;
+      }
+      if (status.hasError) {
+        pauseDueToInterruption();
+      }
+    },
+    [pauseDueToInterruption],
+  );
+
+  const recorder = useAudioRecorder(RECORDING_OPTIONS, handleRecorderStatus);
+  recorderRef.current = recorder;
   const { uploadRecording } = useUploadRecording();
+
+  const persistAndSaveDraft = useCallback(
+    async (uri: string, durationMs: number, title: string) => {
+      const userId = useAuthStore.getState().user?.userId;
+      if (!userId) return;
+
+      const persistedUri = await persistRecordingFile(uri).catch(() => uri);
+      const recordingId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const now = new Date();
+
+      await useRecordingsStore.getState().addRecording({
+        id: recordingId,
+        userId,
+        uri: persistedUri,
+        title,
+        date: formatShortDate(now),
+        durationMs,
+        createdAt: now.toISOString(),
+        uploadStatus: "local_only",
+      });
+
+      onUploadComplete?.();
+
+      await uploadRecording({
+        recordingId,
+        uri: persistedUri,
+        title,
+        durationMs,
+      });
+    },
+    [uploadRecording, onUploadComplete],
+  );
+
+  const saveAsAutoDraft = useCallback(async () => {
+    const current = stateRef.current;
+    if (current === "idle") return;
+
+    const segmentMs =
+      current === "recording" && segmentStartRef.current > 0
+        ? Date.now() - segmentStartRef.current
+        : 0;
+    const durationMs = accumulatedMsRef.current + segmentMs;
+
+    accumulatedMsRef.current = 0;
+    segmentStartRef.current = 0;
+    setState("idle");
+
+    const uri = await stopRecorderAndGetUri(recorderRef.current!).catch(() => null);
+    preparedRef.current = false;
+    if (!uri || durationMs < 1000) return;
+
+    const autoTitle = `Grabación ${formatShortDate(new Date())}`;
+    await persistAndSaveDraft(uri, durationMs, autoTitle);
+  }, [persistAndSaveDraft]);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+
+    const appStateRef = { current: AppState.currentState };
+    const subscription = AppState.addEventListener("change", (next: AppStateStatus) => {
+      const wasActive = appStateRef.current === "active";
+      appStateRef.current = next;
+      if (wasActive && next !== "active" && stateRef.current !== "idle") {
+        void saveAsAutoDraft();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [saveAsAutoDraft]);
 
   const handleStart = useCallback(async () => {
     if (state !== "idle") return;
@@ -112,12 +236,20 @@ export function RecordingPage({
     setState("recording");
   }, [state, recorder]);
 
-  const handlePauseResume = useCallback(() => {
+  const handlePauseResume = useCallback(async () => {
     if (state === "recording") {
       recorder.pause();
-      accumulatedMsRef.current += Date.now() - segmentStartRef.current;
+      if (segmentStartRef.current > 0) {
+        accumulatedMsRef.current += Date.now() - segmentStartRef.current;
+        segmentStartRef.current = 0;
+      }
       setState("paused");
     } else if (state === "paused") {
+      if (!preparedRef.current) {
+        await enableRecordingMode();
+        await recorder.prepareToRecordAsync();
+        preparedRef.current = true;
+      }
       recorder.record();
       segmentStartRef.current = Date.now();
       setState("recording");
@@ -137,7 +269,7 @@ export function RecordingPage({
   const handleSave = useCallback(async () => {
     if (state === "idle") return;
 
-    if (state === "recording") {
+    if (state === "recording" && segmentStartRef.current > 0) {
       accumulatedMsRef.current += Date.now() - segmentStartRef.current;
     }
 
@@ -162,42 +294,13 @@ export function RecordingPage({
       if (!pending) return;
       pendingSaveRef.current = null;
 
-      const userId = useAuthStore.getState().user?.userId;
-      if (!userId) return;
-
-      // Se `persistRecordingFile` falhar (quota do IndexedDB cheia no web,
-      // erro de I/O no native), preferimos guardar o URI temporário original
-      // a perder o áudio. O URI `blob:` sobrevive a sessão corrente (web) ou
-      // fica no cache do SO (nativo) — pior que documentDirectory, melhor que
-      // nada. O upload posterior pode funcionar ainda dentro da sessão.
-      const persistedUri = await persistRecordingFile(pending.uri).catch(() => pending.uri);
-      const recordingId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const now = new Date();
-
-      await useRecordingsStore.getState().addRecording({
-        id: recordingId,
-        userId,
-        uri: persistedUri,
-        title,
-        date: formatShortDate(now),
-        durationMs: pending.durationMs,
-        createdAt: now.toISOString(),
-        uploadStatus: "local_only",
-      });
-
-      onUploadComplete?.();
       onGoToHistory?.();
       setShowToast(true);
       setTimeout(() => setShowToast(false), TOAST_DURATION_MS);
 
-      await uploadRecording({
-        recordingId,
-        uri: persistedUri,
-        title,
-        durationMs: pending.durationMs,
-      });
+      await persistAndSaveDraft(pending.uri, pending.durationMs, title);
     },
-    [uploadRecording, onUploadComplete, onGoToHistory],
+    [persistAndSaveDraft, onGoToHistory],
   );
 
   const handleTitleCancel = useCallback(() => {

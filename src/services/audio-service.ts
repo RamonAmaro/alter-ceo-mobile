@@ -42,6 +42,7 @@ export async function enableRecordingMode(): Promise<void> {
   await AudioModule.setAudioModeAsync({
     allowsRecording: true,
     playsInSilentMode: true,
+    interruptionMode: "doNotMix",
   });
 }
 

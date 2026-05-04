@@ -40,8 +40,16 @@ export function RecordingTimer({ isRecording, isPaused }: RecordingTimerProps) {
     }
 
     if (isPaused) {
-      const segmentElapsed = Date.now() - segmentStartRef.current;
-      accumulatedRef.current += segmentElapsed;
+      // Only fold the active segment into the accumulator if there actually
+      // was one. Without this guard, a direct idle→paused transition (which
+      // can happen on system interruption) would compute Date.now() - 0,
+      // producing a multi-decade offset.
+      if (segmentStartRef.current > 0) {
+        const segmentElapsed = Date.now() - segmentStartRef.current;
+        accumulatedRef.current += segmentElapsed;
+        segmentStartRef.current = 0;
+        setDisplayMs(accumulatedRef.current);
+      }
       return;
     }
 
