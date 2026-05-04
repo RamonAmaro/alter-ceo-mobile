@@ -25,6 +25,8 @@ export function ProgressCircle({ progress, size = 200, strokeWidth = 6 }: Progre
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
+    // progressAnim is a stable useRef value — never changes identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
   const strokeDashoffset = progressAnim.interpolate({

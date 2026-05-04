@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
 
@@ -331,9 +324,7 @@ export default function StrategyQuestionnaireScreen() {
             </Pressable>
             <Button
               label={currentQuestionIndex + 1 === questionCount ? "Finalizar" : "Siguiente"}
-              icon={
-                currentQuestionIndex + 1 === questionCount ? "checkmark" : "arrow-forward"
-              }
+              icon={currentQuestionIndex + 1 === questionCount ? "checkmark" : "arrow-forward"}
               iconPosition="trailing"
               onPress={handleNext}
               disabled={!nextEnabled || isFinalSubmitting}

@@ -79,10 +79,7 @@ export const AudioWaveform = memo(function AudioWaveform({
 }: AudioWaveformProps) {
   const [visibleCount, setVisibleCount] = useState(MAX_BAR_COUNT);
 
-  const levels = useMemo(
-    () => Array.from({ length: MAX_BAR_COUNT }, () => makeMutable(0)),
-    [],
-  );
+  const levels = useMemo(() => Array.from({ length: MAX_BAR_COUNT }, () => makeMutable(0)), []);
   const translateX = useMemo(() => makeMutable(0), []);
 
   const levelsRef = useRef(levels);

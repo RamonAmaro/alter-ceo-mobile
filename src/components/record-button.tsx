@@ -50,6 +50,8 @@ export function RecordButton({
         useNativeDriver: USE_NATIVE_DRIVER,
       }).start();
     }
+    // anim is a stable useRef value — never changes identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   const idleOpacity = anim.interpolate({

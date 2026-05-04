@@ -93,11 +93,7 @@ function pickBestTranscript(acc: TranscriptAccumulator): string {
 
 export async function createTranscriptionSession(): Promise<TranscriptionSession> {
   const wsUrl = buildWsUrl();
-  // eslint-disable-next-line no-console
-  console.log("[transcription-service] connecting WS", wsUrl);
   const ws = await connectWebSocket(wsUrl);
-  // eslint-disable-next-line no-console
-  console.log("[transcription-service] WS OPEN");
 
   const accumulated: TranscriptAccumulator = { final: "", delta: "" };
   let errorCallback: ((message: string) => void) | null = null;
