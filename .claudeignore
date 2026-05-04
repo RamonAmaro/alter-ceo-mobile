@@ -1,0 +1,67 @@
+# .claudeignore — paths que Claude Code deve ignorar para economizar contexto
+#
+# IMPORTANTE: Este arquivo NÃO é lido nativamente pelo Claude Code (a CLI usa
+# `permissions.deny` em .claude/settings.json para bloquear acesso real). Ele
+# serve como documentação da intenção e como fonte para manter as deny rules
+# em sincronia. Se atualizar este arquivo, espelhe em .claude/settings.json.
+#
+# Sintaxe: gitignore-style (compatível com ferramentas que respeitarem o arquivo).
+
+# Dependências e caches de package managers
+node_modules/
+.yarn/
+.pnp.*
+
+# Builds nativos
+ios/Pods/
+ios/build/
+android/build/
+android/app/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+
+# Builds de bundler / Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+.next/
+
+# Lockfiles (Claude raramente precisa lê-los inteiros)
+yarn.lock
+package-lock.json
+ios/Podfile.lock
+
+# Segredos e configuração local
+.env
+.env.*
+*.pem
+*.p12
+*.keystore
+
+# Git interno
+.git/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs e relatórios
+*.log
+coverage/
+.nyc_output/
+
+# Arquivos do editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Assets binários grandes (Claude não precisa do conteúdo bruto)
+*.mp4
+*.mov
+*.aac
+*.wav
+*.psd
+*.fig

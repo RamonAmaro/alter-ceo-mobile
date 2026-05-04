@@ -122,16 +122,6 @@ export function usePlanGeneration(): PlanGenerationState {
     const currentAnswers = answersRef.current;
     const currentAudioRecords = audioRecordsRef.current;
 
-    // eslint-disable-next-line no-console
-    console.log("[plan-generation] startGeneration:context", {
-      hasUser: Boolean(currentUser?.userId),
-      planType: currentPlanType,
-      answersCount: currentAnswers.size,
-      answerKeys: Array.from(currentAnswers.keys()).sort((a, b) => a - b),
-      audioRecordsCount: currentAudioRecords.length,
-      audioRecordIndices: currentAudioRecords.map((r) => r.questionIndex),
-    });
-
     if (!currentUser?.userId) {
       setError("Sesión no válida. Por favor, vuelve a iniciar sesión.");
       return;
@@ -174,25 +164,15 @@ export function usePlanGeneration(): PlanGenerationState {
               userId: currentUser.userId,
             });
 
-      // eslint-disable-next-line no-console
-      console.log("[plan-generation] createRun:request", JSON.stringify(runRequest, null, 2));
-
       const accepted = await createRun(runRequest);
-
-      // eslint-disable-next-line no-console
-      console.log("[plan-generation] createRun:accepted", accepted);
 
       advanceToStage("running");
       connectToRun(accepted.run_id);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error("[plan-generation] createRun:error", err);
       if (err instanceof ApiError) {
         const validationDetail = err.validationErrors
           ?.map((v) => `${v.loc?.join(".")} ${v.msg}`)
           .join(" | ");
-        // eslint-disable-next-line no-console
-        console.error("[plan-generation] validation errors:", validationDetail);
         setError(
           validationDetail
             ? `Error de validación (${err.status}): ${validationDetail}`
