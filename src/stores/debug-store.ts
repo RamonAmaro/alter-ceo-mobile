@@ -1,5 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
+
+import { storage } from "@/lib/storage";
 
 export const DEBUG_STORAGE_KEY = "alterceo_debug_state";
 
@@ -65,7 +66,7 @@ function normalizeCeoArchetypeId(archetypeId?: string): CeoArchetypeId {
 }
 
 async function persistDebugState(state: PersistedDebugState): Promise<void> {
-  await AsyncStorage.setItem(DEBUG_STORAGE_KEY, JSON.stringify(state));
+  await storage.setJSON(DEBUG_STORAGE_KEY, state);
 }
 
 export const useDebugStore = create<DebugState>((set, get) => ({
@@ -73,23 +74,17 @@ export const useDebugStore = create<DebugState>((set, get) => ({
   isHydrated: false,
 
   load: async () => {
-    try {
-      const raw = await AsyncStorage.getItem(DEBUG_STORAGE_KEY);
-      if (!raw) {
-        set({ ...DEFAULT_STATE, isHydrated: true });
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as Partial<PersistedDebugState>;
-      set({
-        isUnlocked: parsed.isUnlocked ?? DEFAULT_STATE.isUnlocked,
-        selectedProfileId: normalizeProfileId(parsed.selectedProfileId),
-        selectedCeoArchetypeId: normalizeCeoArchetypeId(parsed.selectedCeoArchetypeId),
-        isHydrated: true,
-      });
-    } catch {
+    const parsed = await storage.getJSON<Partial<PersistedDebugState>>(DEBUG_STORAGE_KEY);
+    if (!parsed) {
       set({ ...DEFAULT_STATE, isHydrated: true });
+      return;
     }
+    set({
+      isUnlocked: parsed.isUnlocked ?? DEFAULT_STATE.isUnlocked,
+      selectedProfileId: normalizeProfileId(parsed.selectedProfileId),
+      selectedCeoArchetypeId: normalizeCeoArchetypeId(parsed.selectedCeoArchetypeId),
+      isHydrated: true,
+    });
   },
 
   unlock: async () => {

@@ -1,6 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
+import { storage } from "@/lib/storage";
+import { createPersistDebouncer } from "@/services/persist-debounce-service";
 import { getReportTemplate } from "@/services/report-service";
 import type { ReportTemplate } from "@/types/report";
 import { toErrorMessage } from "@/utils/to-error-message";
@@ -19,26 +20,21 @@ interface PersistedStrategyDraft {
   runId: string | null;
 }
 
-let draftPersistTimer: ReturnType<typeof setTimeout> | null = null;
+interface StrategyDraftPayload {
+  readonly userId: string;
+  readonly draft: PersistedStrategyDraft;
+}
 
 function strategyDraftKey(userId: string): string {
   return `${STRATEGY_DRAFT_STORAGE_PREFIX}${userId}`;
 }
 
 async function persistStrategyDraft(userId: string, draft: PersistedStrategyDraft): Promise<void> {
-  try {
-    await AsyncStorage.setItem(strategyDraftKey(userId), JSON.stringify(draft));
-  } catch {
-    // best-effort
-  }
+  await storage.setJSON(strategyDraftKey(userId), draft);
 }
 
 async function clearPersistedStrategyDraft(userId: string): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(strategyDraftKey(userId));
-  } catch {
-    // best-effort
-  }
+  await storage.remove(strategyDraftKey(userId));
 }
 
 interface StrategyReportState {
@@ -81,26 +77,30 @@ function buildEmptyState() {
   };
 }
 
-function cancelScheduledStrategyPersist(): void {
-  if (draftPersistTimer) {
-    clearTimeout(draftPersistTimer);
-    draftPersistTimer = null;
-  }
+const strategyDebouncer = createPersistDebouncer<StrategyDraftPayload | null>(async (payload) => {
+  if (!payload) return;
+  await persistStrategyDraft(payload.userId, payload.draft);
+}, DRAFT_DEBOUNCE_MS);
+
+function buildStrategyDraftPayload(state: StrategyReportState): StrategyDraftPayload | null {
+  if (!state.draftUserId) return null;
+  return {
+    userId: state.draftUserId,
+    draft: {
+      reportType: state.reportType,
+      currentQuestionIndex: state.currentQuestionIndex,
+      answers: state.answers,
+      runId: state.runId,
+    },
+  };
 }
 
 function scheduleStrategyPersist(getState: () => StrategyReportState): void {
-  if (draftPersistTimer) clearTimeout(draftPersistTimer);
-  draftPersistTimer = setTimeout(() => {
-    draftPersistTimer = null;
-    const s = getState();
-    if (!s.draftUserId) return;
-    void persistStrategyDraft(s.draftUserId, {
-      reportType: s.reportType,
-      currentQuestionIndex: s.currentQuestionIndex,
-      answers: s.answers,
-      runId: s.runId,
-    });
-  }, DRAFT_DEBOUNCE_MS);
+  strategyDebouncer.schedule(() => buildStrategyDraftPayload(getState()));
+}
+
+function cancelScheduledStrategyPersist(): void {
+  strategyDebouncer.cancel();
 }
 
 export const useStrategyReportStore = create<StrategyReportState>((set, get) => ({
@@ -213,21 +213,21 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
   },
 
   restoreDraft: async (userId: string) => {
-    try {
-      const raw = await AsyncStorage.getItem(strategyDraftKey(userId));
-      if (!raw) return false;
-      const parsed = JSON.parse(raw) as PersistedStrategyDraft;
-      set({
-        reportType: parsed.reportType,
-        currentQuestionIndex: parsed.currentQuestionIndex ?? 0,
-        answers: parsed.answers ?? {},
-        runId: parsed.runId ?? null,
-        draftUserId: userId,
-      });
-      return Boolean(parsed.reportType);
-    } catch {
-      return false;
-    }
+    const parsed = await storage.getJSON<PersistedStrategyDraft>(strategyDraftKey(userId));
+    if (!parsed || typeof parsed !== "object") return false;
+    const answers =
+      parsed.answers && typeof parsed.answers === "object" && !Array.isArray(parsed.answers)
+        ? parsed.answers
+        : {};
+    set({
+      reportType: parsed.reportType ?? null,
+      currentQuestionIndex:
+        typeof parsed.currentQuestionIndex === "number" ? parsed.currentQuestionIndex : 0,
+      answers,
+      runId: parsed.runId ?? null,
+      draftUserId: userId,
+    });
+    return Boolean(parsed.reportType);
   },
 
   // Clears in-memory state but keeps the persisted draft on disk. Used on

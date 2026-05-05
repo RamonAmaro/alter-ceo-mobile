@@ -1,8 +1,8 @@
 import { Platform } from "react-native";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
+import { storage } from "@/lib/storage";
 import { clearAllAudioBlobs, closeDatabase } from "@/services/indexed-db-audio-store";
 import { deletePersistedRecording, recordingFileExists } from "@/services/recording-storage";
 
@@ -34,11 +34,7 @@ type DraftsByUser = Record<string, Record<string, ChatAudioDraft>>;
 // (unmount durante gravação, envio, descarte) e perder uma gravação longa numa
 // corrida com o shutdown do app é inaceitável.
 async function persistDrafts(drafts: DraftsByUser): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CHAT_AUDIO_DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
-  } catch {
-    // best-effort
-  }
+  await storage.setJSON(CHAT_AUDIO_DRAFTS_STORAGE_KEY, drafts);
 }
 
 interface ChatAudioDraftState {
@@ -56,24 +52,20 @@ export const useChatAudioDraftStore = create<ChatAudioDraftState>((set, get) => 
   hydrated: false,
 
   loadDrafts: async () => {
-    try {
-      const raw = await AsyncStorage.getItem(CHAT_AUDIO_DRAFTS_STORAGE_KEY);
-      const parsed: DraftsByUser = raw ? JSON.parse(raw) : {};
+    const raw = await storage.getJSON<DraftsByUser>(CHAT_AUDIO_DRAFTS_STORAGE_KEY);
+    const parsed = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
 
-      // Valida se cada draft ainda tem o arquivo de áudio acessível:
-      // - Web: entrada no IndexedDB pode ter sido apagada (quota, limpeza de
-      //   dados, ITP do Safari). Drafts antigos `blob:` sempre dão lost.
-      // - Native (iOS/Android): arquivo em `documentDirectory/recordings/`
-      //   pode ter sido limpo pelo SO (raro) ou usuário pelo Settings.
-      // Drafts cujo arquivo sumiu recebem flag `lost: true` — o banner mostra
-      // mensagem clara em es-ES e só oferece Descartar.
-      const validated = await validateDrafts(parsed);
-      set({ drafts: validated, hydrated: true });
-      if (JSON.stringify(validated) !== JSON.stringify(parsed)) {
-        await persistDrafts(validated);
-      }
-    } catch {
-      set({ drafts: {}, hydrated: true });
+    // Valida se cada draft ainda tem o arquivo de áudio acessível:
+    // - Web: entrada no IndexedDB pode ter sido apagada (quota, limpeza de
+    //   dados, ITP do Safari). Drafts antigos `blob:` sempre dão lost.
+    // - Native (iOS/Android): arquivo em `documentDirectory/recordings/`
+    //   pode ter sido limpo pelo SO (raro) ou usuário pelo Settings.
+    // Drafts cujo arquivo sumiu recebem flag `lost: true` — o banner mostra
+    // mensagem clara em es-ES e só oferece Descartar.
+    const validated = await validateDrafts(parsed);
+    set({ drafts: validated, hydrated: true });
+    if (JSON.stringify(validated) !== JSON.stringify(parsed)) {
+      await persistDrafts(validated);
     }
   },
 
