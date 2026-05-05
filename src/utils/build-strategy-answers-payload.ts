@@ -10,8 +10,8 @@ export function buildStrategyAnswersPayload(
   for (const question of questions) {
     const rawAnswer = answers[question.key];
     if (rawAnswer === undefined) continue;
-    payload[question.key] =
-      question.input_type === "integer" ? Number.parseInt(String(rawAnswer), 10) : rawAnswer;
+    const isNumeric = question.input_type === "integer" || question.input_type === "scale";
+    payload[question.key] = isNumeric ? Number.parseInt(String(rawAnswer), 10) : rawAnswer;
   }
 
   // Backend removes kernel-resolvable questions from `questions` but the answers

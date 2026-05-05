@@ -1,6 +1,6 @@
 import type { RunStatus } from "@/types/api";
 
-export type ReportInputType = "single_choice" | "multi_choice" | "integer" | "text";
+export type ReportInputType = "single_choice" | "multi_choice" | "integer" | "scale" | "text";
 
 export interface ReportQuestionOption {
   value: string;
@@ -16,6 +16,8 @@ export interface ReportQuestion {
   section?: string | null;
   help_text?: string | null;
   options: ReportQuestionOption[];
+  scale_min?: number | null;
+  scale_max?: number | null;
 }
 
 export interface PrefilledField {

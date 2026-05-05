@@ -22,7 +22,7 @@ export default function StrategyQuestionnaireLoadingScreen() {
 
   if (error) {
     return (
-      <ScreenLayout>
+      <ScreenLayout maxWidth={900}>
         <View style={[styles.inner, topPadding]}>
           <View style={styles.content}>
             <ThemedText type="headingMd" style={styles.errorTitle}>
@@ -44,7 +44,7 @@ export default function StrategyQuestionnaireLoadingScreen() {
   }
 
   return (
-    <ScreenLayout>
+    <ScreenLayout maxWidth={900}>
       <View style={[styles.inner, topPadding, { paddingBottom: insets.bottom + Spacing.four }]}>
         <View style={styles.content}>
           <ProgressCircle progress={step.percent} />

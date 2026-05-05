@@ -21,6 +21,10 @@ export function validateQuestionAnswer(
     return typeof answer === "string" && /^\d+$/.test(answer.trim());
   }
 
+  if (questionType === "scale") {
+    return typeof answer === "string" && /^\d+$/.test(answer.trim());
+  }
+
   if (questionType === "multi") {
     return Array.isArray(answer) && answer.length > 0;
   }

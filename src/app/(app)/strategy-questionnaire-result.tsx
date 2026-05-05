@@ -929,22 +929,37 @@ function categoryLabel(category: BusinessMindsetCategoryKey): string {
   return BUSINESS_MINDSET_CATEGORY_LABELS[category];
 }
 
-function MindsetScoreCard({
+function MindsetGlobalScoreCard({ score, level }: { score: number; level: string }) {
+  return (
+    <View style={styles.mindsetGlobalCard}>
+      <View style={styles.mindsetGlobalCardLeft}>
+        <ThemedText style={styles.mindsetScoreLabel}>Score global</ThemedText>
+        <View style={styles.mindsetGlobalScoreRow}>
+          <ThemedText style={styles.mindsetGlobalScoreValue}>{score}</ThemedText>
+          <ThemedText style={styles.mindsetGlobalScoreSuffix}>/100</ThemedText>
+        </View>
+      </View>
+      <View style={styles.mindsetGlobalCardRight}>
+        <ThemedText style={styles.mindsetGlobalLevel}>{level}</ThemedText>
+      </View>
+    </View>
+  );
+}
+
+function MindsetCategoryHighlight({
   label,
-  value,
-  helper,
-  highlight,
+  category,
+  level,
 }: {
   label: string;
-  value: string;
-  helper?: string;
-  highlight?: boolean;
+  category: string;
+  level?: string;
 }) {
   return (
-    <View style={[styles.mindsetScoreCard, highlight && styles.mindsetScoreCardHighlight]}>
+    <View style={styles.mindsetCategoryHighlight}>
       <ThemedText style={styles.mindsetScoreLabel}>{label}</ThemedText>
-      <ThemedText style={styles.mindsetScoreValue}>{value}</ThemedText>
-      {helper ? <ThemedText style={styles.mindsetScoreHelper}>{helper}</ThemedText> : null}
+      <ThemedText style={styles.mindsetCategoryHighlightValue}>{category}</ThemedText>
+      {level ? <ThemedText style={styles.mindsetScoreHelper}>{level}</ThemedText> : null}
     </View>
   );
 }
@@ -988,22 +1003,17 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
       </View>
 
       <SectionCard title="Resultado global" eyebrow="Mentalidad empresarial">
-        <View style={styles.mindsetScoreGrid}>
-          <MindsetScoreCard
-            label="Score global"
-            value={`${global.score}/100`}
-            helper={global.level}
-            highlight
-          />
-          <MindsetScoreCard
+        <MindsetGlobalScoreCard score={global.score} level={global.level} />
+        <View style={styles.mindsetCategoryHighlightsRow}>
+          <MindsetCategoryHighlight
             label="Categoría más fuerte"
-            value={categoryLabel(global.strongest_category)}
-            helper={scorecard.categories[global.strongest_category]?.level}
+            category={categoryLabel(global.strongest_category)}
+            level={scorecard.categories[global.strongest_category]?.level}
           />
-          <MindsetScoreCard
+          <MindsetCategoryHighlight
             label="Categoría más débil"
-            value={categoryLabel(global.weakest_category)}
-            helper={scorecard.categories[global.weakest_category]?.level}
+            category={categoryLabel(global.weakest_category)}
+            level={scorecard.categories[global.weakest_category]?.level}
           />
         </View>
         <TextBlock text={global.analysis} />
@@ -1371,14 +1381,58 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     color: SemanticColors.textPrimary,
   },
-  mindsetScoreGrid: {
+  mindsetGlobalCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,132,0.28)",
+    backgroundColor: "rgba(0,255,132,0.08)",
+  },
+  mindsetGlobalCardLeft: {
+    gap: 6,
+  },
+  mindsetGlobalCardRight: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  mindsetGlobalScoreRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  mindsetGlobalScoreValue: {
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 44,
+    lineHeight: 46,
+    color: SemanticColors.textPrimary,
+  },
+  mindsetGlobalScoreSuffix: {
+    fontFamily: Fonts.montserratSemiBold,
+    fontSize: 16,
+    lineHeight: 20,
+    color: "rgba(255,255,255,0.55)",
+    marginLeft: 4,
+  },
+  mindsetGlobalLevel: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: SemanticColors.success,
+    textAlign: "right",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    flexShrink: 1,
+  },
+  mindsetCategoryHighlightsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.two,
   },
-  mindsetScoreCard: {
+  mindsetCategoryHighlight: {
     flexGrow: 1,
-    flexBasis: 180,
+    flexBasis: 160,
     gap: 6,
     padding: Spacing.three,
     borderRadius: 12,
@@ -1386,9 +1440,11 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(255,255,255,0.03)",
   },
-  mindsetScoreCardHighlight: {
-    borderColor: "rgba(0,255,132,0.28)",
-    backgroundColor: "rgba(0,255,132,0.08)",
+  mindsetCategoryHighlightValue: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 18,
+    lineHeight: 24,
+    color: SemanticColors.textPrimary,
   },
   mindsetScoreLabel: {
     fontFamily: Fonts.montserratBold,
@@ -1397,12 +1453,6 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.55)",
     textTransform: "uppercase",
     letterSpacing: 1.4,
-  },
-  mindsetScoreValue: {
-    fontFamily: Fonts.octosquaresBlack,
-    fontSize: 26,
-    lineHeight: 30,
-    color: SemanticColors.textPrimary,
   },
   mindsetScoreHelper: {
     fontFamily: Fonts.montserratSemiBold,

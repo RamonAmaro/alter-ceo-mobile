@@ -1,4 +1,4 @@
-import { Animated, StyleSheet, TextInput, View } from "react-native";
+import { Animated, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { QuestionOption } from "@/components/question-option";
 import { ThemedText } from "@/components/themed-text";
@@ -18,6 +18,13 @@ interface QuestionConfig {
   options?: readonly { label: string; subtitle?: string; value?: string }[];
   unavailableOptionLabel?: string;
   unavailableOptionValue?: string;
+  scaleMin?: number;
+  scaleMax?: number;
+}
+
+function buildScaleValues(min: number, max: number): readonly number[] {
+  if (max < min) return [];
+  return Array.from({ length: max - min + 1 }, (_, index) => min + index);
 }
 
 interface QuestionBodyProps {
@@ -49,6 +56,10 @@ export function QuestionBody({
   const options = question.options ?? [];
   const isMulti = question.type === "multi";
   const isTextInput = question.type === "text" || question.type === "integer";
+  const isScale = question.type === "scale";
+  const scaleMin = question.scaleMin ?? 1;
+  const scaleMax = question.scaleMax ?? 10;
+  const scaleValues = isScale ? buildScaleValues(scaleMin, scaleMax) : [];
   const unavailableOptionValue = question.unavailableOptionValue;
   const unavailableSelected =
     unavailableOptionValue !== undefined && currentAnswer === unavailableOptionValue;
@@ -74,7 +85,46 @@ export function QuestionBody({
       </ThemedText>
 
       <View style={styles.optionsContainer}>
-        {isTextInput ? (
+        {isScale ? (
+          <View>
+            <View style={styles.scaleRow}>
+              {scaleValues.map((value) => {
+                const valueStr = String(value);
+                const selected = currentAnswer === valueStr;
+                return (
+                  <Pressable
+                    key={valueStr}
+                    onPress={() => onOptionPress(valueStr)}
+                    hitSlop={8}
+                    style={({ pressed }) => [
+                      styles.scaleChip,
+                      selected && styles.scaleChipSelected,
+                      pressed && !selected && styles.scaleChipPressed,
+                    ]}
+                  >
+                    <ThemedText
+                      style={[styles.scaleChipLabel, selected && styles.scaleChipLabelSelected]}
+                    >
+                      {valueStr}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={styles.scaleLegendRow}>
+              <View style={styles.scaleLegendItem}>
+                <ThemedText style={styles.scaleLegendNumber}>{scaleMin}</ThemedText>
+                <ThemedText style={styles.scaleLegendLabel}>Totalmente en desacuerdo</ThemedText>
+              </View>
+              <View style={[styles.scaleLegendItem, styles.scaleLegendItemEnd]}>
+                <ThemedText style={styles.scaleLegendNumber}>{scaleMax}</ThemedText>
+                <ThemedText style={[styles.scaleLegendLabel, styles.scaleLegendLabelEnd]}>
+                  Totalmente de acuerdo
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+        ) : isTextInput ? (
           <>
             <TextInput
               style={[styles.textInput, unavailableSelected && styles.textInputDisabled]}
@@ -160,5 +210,69 @@ const styles = StyleSheet.create({
   validationMessage: {
     color: SemanticColors.error,
     marginTop: 2,
+  },
+  scaleRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  scaleChip: {
+    flex: 1,
+    height: 48,
+    paddingHorizontal: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: SemanticColors.borderLight,
+    backgroundColor: SemanticColors.glassBackground,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scaleChipPressed: {
+    backgroundColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.32)",
+  },
+  scaleChipSelected: {
+    backgroundColor: SemanticColors.accent,
+    borderColor: SemanticColors.accent,
+  },
+  scaleChipLabel: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: SemanticColors.textSecondaryLight,
+  },
+  scaleChipLabelSelected: {
+    color: SemanticColors.textPrimary,
+  },
+  scaleLegendRow: {
+    flexDirection: "row",
+    marginTop: Spacing.three,
+    gap: Spacing.two,
+  },
+  scaleLegendItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+  },
+  scaleLegendItemEnd: {
+    justifyContent: "flex-end",
+  },
+  scaleLegendNumber: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 12,
+    lineHeight: 14,
+    color: SemanticColors.success,
+  },
+  scaleLegendLabel: {
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 11,
+    lineHeight: 14,
+    color: SemanticColors.textSecondaryLight,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    flexShrink: 1,
+  },
+  scaleLegendLabelEnd: {
+    textAlign: "right",
   },
 });

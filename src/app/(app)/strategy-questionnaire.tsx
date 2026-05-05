@@ -24,12 +24,16 @@ import { buildStrategyAnswersPayload } from "@/utils/build-strategy-answers-payl
 import { toErrorMessage } from "@/utils/to-error-message";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
 
-function mapQuestionType(inputType: ReportInputType): "single" | "multi" | "text" | "integer" {
+function mapQuestionType(
+  inputType: ReportInputType,
+): "single" | "multi" | "text" | "integer" | "scale" {
   switch (inputType) {
     case "multi_choice":
       return "multi";
     case "integer":
       return "integer";
+    case "scale":
+      return "scale";
     case "text":
       return "text";
     default:
@@ -105,6 +109,8 @@ export default function StrategyQuestionnaireScreen() {
         label: option.label,
         value: option.value,
       })),
+      scaleMin: question.scale_min ?? undefined,
+      scaleMax: question.scale_max ?? undefined,
     };
   }, [currentQuestionIndex, question, questionCount]);
 
@@ -218,7 +224,7 @@ export default function StrategyQuestionnaireScreen() {
 
   if (isLoading) {
     return (
-      <ScreenLayout>
+      <ScreenLayout maxWidth={900}>
         <View style={[styles.centered, { paddingTop: insets.top + Spacing.five }]}>
           <ActivityIndicator color={SemanticColors.success} size="large" />
           <ThemedText type="bodyLg" style={styles.helperText}>
@@ -231,7 +237,7 @@ export default function StrategyQuestionnaireScreen() {
 
   if (error || !question || !viewQuestion) {
     return (
-      <ScreenLayout>
+      <ScreenLayout maxWidth={900}>
         <View style={[styles.errorWrap, { paddingTop: insets.top + Spacing.five }]}>
           <View style={styles.errorContent}>
             <ThemedText type="headingMd" style={styles.errorTitle}>
@@ -256,7 +262,7 @@ export default function StrategyQuestionnaireScreen() {
   }
 
   return (
-    <ScreenLayout withKeyboard>
+    <ScreenLayout withKeyboard maxWidth={900}>
       <View
         style={[
           styles.inner,
@@ -358,7 +364,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   secondaryButton: {
-    flexShrink: 0,
+    flex: 1,
     flexDirection: "row",
     paddingHorizontal: Spacing.three,
     height: 43,
