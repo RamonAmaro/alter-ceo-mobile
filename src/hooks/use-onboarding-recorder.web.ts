@@ -70,8 +70,6 @@ function createAudioContextSafe(): AudioContext {
   }
 }
 
-// No-op while we don't have a proper logging service. Call sites preserved
-// so re-enabling debug output is a one-line change here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function debugLog(_tag: string, ..._args: any[]): void {}
 

@@ -1,12 +1,11 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
+import { storage } from "@/lib/storage";
 import { getBusinessKernel } from "@/services/business-kernel-service";
+import { createPersistDebouncer } from "@/services/persist-debounce-service";
 import { ApiError } from "@/types/api";
 import { toErrorMessage } from "@/utils/to-error-message";
 
-// Onboarding draft: preservado através de 401 para que o usuário não perca o progresso
-// de preenchimento quando a sessão expira no meio do flow.
 const ONBOARDING_DRAFT_STORAGE_PREFIX = "onboarding_draft_v1:";
 const DRAFT_DEBOUNCE_MS = 400;
 
@@ -17,26 +16,21 @@ interface PersistedDraft {
   audioRecords: AudioRecord[];
 }
 
-let draftPersistTimer: ReturnType<typeof setTimeout> | null = null;
+interface DraftPersistPayload {
+  readonly userId: string;
+  readonly draft: PersistedDraft;
+}
 
 function draftKey(userId: string): string {
   return `${ONBOARDING_DRAFT_STORAGE_PREFIX}${userId}`;
 }
 
 async function persistDraft(userId: string, draft: PersistedDraft): Promise<void> {
-  try {
-    await AsyncStorage.setItem(draftKey(userId), JSON.stringify(draft));
-  } catch {
-    // best-effort
-  }
+  await storage.setJSON(draftKey(userId), draft);
 }
 
 async function clearPersistedDraft(userId: string): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(draftKey(userId));
-  } catch {
-    // best-effort
-  }
+  await storage.remove(draftKey(userId));
 }
 
 type PlanType = "express" | "professional";
@@ -60,9 +54,6 @@ interface OnboardingState {
   currentQuestionIndex: number;
   answers: Map<number, Answer>;
   audioRecords: AudioRecord[];
-  // True when the onboarding flow was opened from inside the app
-  // (e.g., user clicked "Plan de Duplicación" from the strategy screen
-  // to regenerate). Lets the layout show sidebar + back button.
   openedFromApp: boolean;
 
   load: () => Promise<void>;
@@ -94,26 +85,30 @@ function buildEmptyDraftState() {
   };
 }
 
-function cancelScheduledDraftPersist(): void {
-  if (draftPersistTimer) {
-    clearTimeout(draftPersistTimer);
-    draftPersistTimer = null;
-  }
+const draftDebouncer = createPersistDebouncer<DraftPersistPayload | null>(async (payload) => {
+  if (!payload) return;
+  await persistDraft(payload.userId, payload.draft);
+}, DRAFT_DEBOUNCE_MS);
+
+function buildDraftPayload(state: OnboardingState): DraftPersistPayload | null {
+  if (!state.statusUserId) return null;
+  return {
+    userId: state.statusUserId,
+    draft: {
+      planType: state.planType,
+      currentQuestionIndex: state.currentQuestionIndex,
+      answers: Array.from(state.answers.entries()),
+      audioRecords: state.audioRecords,
+    },
+  };
 }
 
 function schedulePersistDraft(getState: () => OnboardingState): void {
-  if (draftPersistTimer) clearTimeout(draftPersistTimer);
-  draftPersistTimer = setTimeout(() => {
-    draftPersistTimer = null;
-    const s = getState();
-    if (!s.statusUserId) return;
-    void persistDraft(s.statusUserId, {
-      planType: s.planType,
-      currentQuestionIndex: s.currentQuestionIndex,
-      answers: Array.from(s.answers.entries()),
-      audioRecords: s.audioRecords,
-    });
-  }, DRAFT_DEBOUNCE_MS);
+  draftDebouncer.schedule(() => buildDraftPayload(getState()));
+}
+
+function cancelScheduledDraftPersist(): void {
+  draftDebouncer.cancel();
 }
 
 export const useOnboardingStore = create<OnboardingState>((set, get) => ({
@@ -280,10 +275,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     });
   },
 
-  // Clears in-memory state. Persisted per-user draft is kept intact so the
-  // user finds it on next sign-in (whether after logout, 401, or account
-  // switch). Drafts are only explicitly purged on successful submission
-  // (`markCompletedForUser`) or by uninstalling the app.
+  // Persisted per-user draft is intentionally kept; only `markCompletedForUser` purges it.
   reset: async () => {
     cancelScheduledDraftPersist();
     set({
@@ -295,9 +287,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     });
   },
 
-  // Clears transient completion/status flags but keeps the in-memory draft
-  // AND the persisted draft intact. Use this on 401 / session expiry so the
-  // user recovers their progress after signing back in.
+  // Used on 401: keeps in-memory + persisted draft so progress survives session expiry.
   resetKeepingDraft: () => {
     set({
       completed: false,
@@ -308,18 +298,16 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   },
 
   restoreDraft: async (userId: string) => {
-    try {
-      const raw = await AsyncStorage.getItem(draftKey(userId));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as PersistedDraft;
-      set({
-        planType: parsed.planType,
-        currentQuestionIndex: parsed.currentQuestionIndex ?? 0,
-        answers: new Map(parsed.answers ?? []),
-        audioRecords: parsed.audioRecords ?? [],
-      });
-    } catch {
-      // best-effort — if draft is corrupted, start fresh
-    }
+    const parsed = await storage.getJSON<PersistedDraft>(draftKey(userId));
+    if (!parsed || typeof parsed !== "object") return;
+    const answers = Array.isArray(parsed.answers) ? parsed.answers : [];
+    const audioRecords = Array.isArray(parsed.audioRecords) ? parsed.audioRecords : [];
+    set({
+      planType: parsed.planType,
+      currentQuestionIndex:
+        typeof parsed.currentQuestionIndex === "number" ? parsed.currentQuestionIndex : 0,
+      answers: new Map(answers),
+      audioRecords,
+    });
   },
 }));

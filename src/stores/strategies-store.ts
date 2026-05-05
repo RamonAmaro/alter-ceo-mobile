@@ -1,7 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
-import { listReports, getReportRunStatus } from "@/services/report-service";
+import { storage } from "@/lib/storage";
+import { getReportRunStatus, listReports } from "@/services/report-service";
 import type { ReportSummary, ReportRunStatusResponse } from "@/types/report";
 import type { RunStatus } from "@/types/api";
 import { toErrorMessage } from "@/utils/to-error-message";
@@ -40,22 +40,12 @@ function pendingRunsKey(userId: string): string {
 }
 
 async function persistPendingRuns(userId: string, runs: PendingStrategyRun[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(pendingRunsKey(userId), JSON.stringify(runs));
-  } catch {
-    // best-effort
-  }
+  await storage.setJSON(pendingRunsKey(userId), runs);
 }
 
 async function loadPendingRuns(userId: string): Promise<PendingStrategyRun[]> {
-  try {
-    const raw = await AsyncStorage.getItem(pendingRunsKey(userId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as PendingStrategyRun[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  const parsed = await storage.getJSON<PendingStrategyRun[]>(pendingRunsKey(userId));
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function buildEmptyState() {
