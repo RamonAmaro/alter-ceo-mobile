@@ -9,9 +9,6 @@ import { handleStreamDone, handleStreamEvent } from "@/utils/chat-stream-handler
 import { toErrorMessage } from "@/utils/to-error-message";
 import { ulid } from "@/utils/ulid";
 
-// Drafts: texto no input que o usuário ainda não enviou. Preservado em 401.
-// Estrutura: { [userId]: { [threadId]: text } }
-// Chave especial `__new__` guarda o draft de uma conversa ainda não criada.
 export const CHAT_DRAFTS_STORAGE_KEY = "chat_drafts_v1";
 export const NEW_THREAD_DRAFT_KEY = "__new__";
 

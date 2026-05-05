@@ -25,10 +25,7 @@ describe("validateContactInput — website", () => {
   });
 
   it("aceita marker 'no tengo' como válido (unavailable)", () => {
-    // O matcher real depende dos values em onboarding-contact-presence —
-    // testamos só que o caminho de unavailable é tratado.
     const result = validateContactInput("website", "no_tengo_web");
-    // Valor exato depende de constantes; só checamos que não crash.
     expect(typeof result.valid).toBe("boolean");
   });
 });

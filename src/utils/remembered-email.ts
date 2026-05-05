@@ -2,9 +2,7 @@ import { storage } from "@/lib/storage";
 
 const REMEMBERED_EMAIL_KEY = "alterceo_remembered_email";
 
-// Stores ONLY the email (no password) so the next login pre-fills the input.
-// The browser's password manager handles credential autofill via autoComplete
-// attributes — we never store passwords in JS-accessible storage.
+// Email-only — passwords are never stored in JS-accessible storage.
 export async function getRememberedEmail(): Promise<string | null> {
   return storage.getString(REMEMBERED_EMAIL_KEY);
 }

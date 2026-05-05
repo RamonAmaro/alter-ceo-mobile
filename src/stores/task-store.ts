@@ -101,8 +101,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         const order: string[] = [];
         for (const task of items) {
           if (submitting.has(task.id)) {
-            // Mutation em vôo para esta task — preserva o estado local.
-            // Se foi removida otimisticamente (existing=undefined), NÃO re-adiciona.
+            // In-flight mutation: keep local state. If task was removed optimistically, don't re-add.
             const existing = state.byId[task.id];
             if (existing) {
               byId[task.id] = existing;
@@ -122,10 +121,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         };
       });
     } catch (err) {
-      if (silent) {
-        // Refresh em background — não polui o estado de erro/loading da UI.
-        return;
-      }
+      if (silent) return;
       set({ error: toErrorMessage(err), isLoading: false, initialLoaded: true });
     }
   },
@@ -159,7 +155,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   acceptProposal: async (taskId: string) => {
     const original = get().byId[taskId];
     if (!original) return;
-    // Optimistic
     set((state) => ({
       byId: { ...state.byId, [taskId]: { ...original, status: "todo" } },
       mutation: withError(withSubmitting(state.mutation, taskId, true), taskId, null),
@@ -241,8 +236,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const original = snapshot.byId[taskId];
     if (!original) return;
     const removed = removeFrom(snapshot.byId, snapshot.order, taskId);
-    // Marca submitting para que um fetchAll concorrente NÃO re-adicione a task
-    // antes do DELETE comitar no servidor.
+    // submitting flag prevents a concurrent fetchAll from re-adding the task before DELETE commits.
     set({
       ...removed,
       mutation: withSubmitting(snapshot.mutation, taskId, true),
@@ -251,7 +245,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       await taskService.deleteTask(taskId);
       set((state) => ({ mutation: withSubmitting(state.mutation, taskId, false) }));
     } catch (err) {
-      // Rollback: restaura a task e libera o submitting com erro.
       set((state) => ({
         ...upsert(state.byId, state.order, original),
         mutation: withError(
@@ -268,7 +261,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const { _streamUserId, _eventStream } = get();
     if (_eventStream && _streamUserId === userId) return;
 
-    // Tear down any previous stream first
     get().stopEventStream();
 
     const handle = startTaskEventStream({

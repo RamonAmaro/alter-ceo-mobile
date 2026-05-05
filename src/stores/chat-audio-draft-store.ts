@@ -6,33 +6,19 @@ import { storage } from "@/lib/storage";
 import { clearAllAudioBlobs, closeDatabase } from "@/services/indexed-db-audio-store";
 import { deletePersistedRecording, recordingFileExists } from "@/services/recording-storage";
 
-// Rascunho de audio: grabación que el usuario empezó en el chat pero no envió
-// (ej. navegó fuera de la pantalla mientras grababa). El archivo persistido
-// debe sobrevivir hasta que el usuario lo envíe o lo descarte — nunca se pierde
-// silenciosamente.
-//
-// Estrutura: { [userId]: { [threadId]: ChatAudioDraft } }
-// Apenas um draft por thread (igual ao padrão de `chat-store.drafts`).
 export const CHAT_AUDIO_DRAFTS_STORAGE_KEY = "chat_audio_drafts_v1";
 
 export interface ChatAudioDraft {
   readonly uri: string;
   readonly durationMs: number;
   readonly createdAt: string;
-  // Setado após `loadDrafts` detectar que o arquivo referenciado não existe
-  // mais. No web: entrada no IndexedDB apagada (quota, limpeza de dados, ITP
-  // do Safari), ou URI legado `blob:` de antes da 2E. No nativo: arquivo em
-  // `documentDirectory/recordings/` foi limpo pelo SO ou usuário. Quando
-  // true, o banner deve oferecer apenas "Descartar".
+  // Set when loadDrafts detects the underlying audio file is gone (IndexedDB
+  // wiped on web, file purged on native). UI offers only "Descartar" in this case.
   readonly lost?: boolean;
 }
 
 type DraftsByUser = Record<string, Record<string, ChatAudioDraft>>;
 
-// Diferente do draft de texto (que usa debounce para evitar flood em cada
-// keystroke), o draft de áudio persiste imediato: só ocorre em eventos raros
-// (unmount durante gravação, envio, descarte) e perder uma gravação longa numa
-// corrida com o shutdown do app é inaceitável.
 async function persistDrafts(drafts: DraftsByUser): Promise<void> {
   await storage.setJSON(CHAT_AUDIO_DRAFTS_STORAGE_KEY, drafts);
 }
@@ -54,14 +40,6 @@ export const useChatAudioDraftStore = create<ChatAudioDraftState>((set, get) => 
   loadDrafts: async () => {
     const raw = await storage.getJSON<DraftsByUser>(CHAT_AUDIO_DRAFTS_STORAGE_KEY);
     const parsed = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
-
-    // Valida se cada draft ainda tem o arquivo de áudio acessível:
-    // - Web: entrada no IndexedDB pode ter sido apagada (quota, limpeza de
-    //   dados, ITP do Safari). Drafts antigos `blob:` sempre dão lost.
-    // - Native (iOS/Android): arquivo em `documentDirectory/recordings/`
-    //   pode ter sido limpo pelo SO (raro) ou usuário pelo Settings.
-    // Drafts cujo arquivo sumiu recebem flag `lost: true` — o banner mostra
-    // mensagem clara em es-ES e só oferece Descartar.
     const validated = await validateDrafts(parsed);
     set({ drafts: validated, hydrated: true });
     if (JSON.stringify(validated) !== JSON.stringify(parsed)) {
@@ -72,10 +50,6 @@ export const useChatAudioDraftStore = create<ChatAudioDraftState>((set, get) => 
   saveDraft: async (userId, threadId, draft) => {
     const current = get().drafts;
     const userDrafts = current[userId] ?? {};
-    // Se já havia um draft anterior nesse thread, sobrescrever o arquivo em
-    // disco deixaria o antigo órfão. Deletar antes é best-effort — se falhar,
-    // o draft novo é gravado mesmo assim (preferir não perder o novo a garantir
-    // que o antigo foi deletado).
     const previous = userDrafts[threadId];
     const next: DraftsByUser = {
       ...current,
@@ -105,12 +79,9 @@ export const useChatAudioDraftStore = create<ChatAudioDraftState>((set, get) => 
     };
     set({ drafts: next });
     await persistDrafts(next);
-
-    // Best-effort: apaga o arquivo de áudio persistido no disco.
     await deletePersistedRecording(previous.uri);
   },
 
-  // Logout explícito: apaga tudo (inclusive arquivos em disco).
   reset: async () => {
     const previous = get().drafts;
     set({ drafts: {}, hydrated: true });
@@ -124,19 +95,15 @@ export const useChatAudioDraftStore = create<ChatAudioDraftState>((set, get) => 
     }
     await Promise.all(urisToDelete.map((uri) => deletePersistedRecording(uri)));
 
-    // Web: garante que nenhum blob órfão sobra (ex: entrada com URI não-durável
-    // que o `deletePersistedRecording` pulou), depois fecha a conexão pra que
-    // um próximo login re-abra limpo.
+    // Web only: catch orphan blobs deletePersistedRecording skipped, then close
+    // the IndexedDB connection so a fresh login re-opens clean.
     if (Platform.OS === "web") {
       await clearAllAudioBlobs();
       await closeDatabase();
     }
   },
 
-  // 401 / troca de sessão: preserva tudo (é "pending work").
-  resetKeepingDrafts: () => {
-    // Nada a limpar — drafts continuam intactos.
-  },
+  resetKeepingDrafts: () => {},
 }));
 
 async function validateDrafts(drafts: DraftsByUser): Promise<DraftsByUser> {

@@ -1,17 +1,6 @@
-/**
- * Factory para um "debouncer" de persist em AsyncStorage.
- *
- * Stores Zustand não devem conter setTimeout/setInterval (regra
- * .claude/rules/state-management.md). Toda a orquestração de tempo
- * fica encapsulada aqui — o store só chama `schedule()` ou `cancel()`.
- */
-
 interface PersistDebouncer<T> {
-  /** Agenda uma persistência. Cancela pendências anteriores. */
   readonly schedule: (getValue: () => T) => void;
-  /** Cancela qualquer persistência pendente sem executá-la. */
   readonly cancel: () => void;
-  /** Executa imediatamente o último valor agendado, se houver. */
   readonly flush: () => Promise<void>;
 }
 
@@ -21,12 +10,19 @@ export function createPersistDebouncer<T>(
 ): PersistDebouncer<T> {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let pendingGetValue: (() => T) | null = null;
+  let inFlight: Promise<void> = Promise.resolve();
 
   function clearTimer(): void {
     if (timer !== null) {
       clearTimeout(timer);
       timer = null;
     }
+  }
+
+  function runSave(value: T): Promise<void> {
+    const next = inFlight.then(() => saveFn(value));
+    inFlight = next.catch(() => undefined);
+    return next;
   }
 
   return {
@@ -38,7 +34,7 @@ export function createPersistDebouncer<T>(
         const get = pendingGetValue;
         pendingGetValue = null;
         if (!get) return;
-        void saveFn(get());
+        void runSave(get());
       }, delayMs);
     },
 
@@ -51,8 +47,11 @@ export function createPersistDebouncer<T>(
       const get = pendingGetValue;
       clearTimer();
       pendingGetValue = null;
-      if (!get) return;
-      await saveFn(get());
+      if (!get) {
+        await inFlight;
+        return;
+      }
+      await runSave(get());
     },
   };
 }

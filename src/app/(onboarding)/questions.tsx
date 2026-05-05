@@ -3,12 +3,12 @@ import { Animated, ScrollView, StyleSheet, View } from "react-native";
 
 import { router } from "expo-router";
 
-import { goBackOrHome } from "@/utils/navigation";
-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
 import { AudioRecorderView } from "@/components/onboarding/audio-recorder-view";
+import { QuestionBody } from "@/components/onboarding/question-body";
+import { QuestionHeader } from "@/components/onboarding/question-header";
 import { ScreenLayout } from "@/components/screen-layout";
 import { getExpressQuestions, getProfessionalQuestions } from "@/constants/onboarding-questions";
 import { SHOW_SCROLL_INDICATOR, USE_NATIVE_DRIVER } from "@/constants/platform";
@@ -16,6 +16,7 @@ import { Spacing } from "@/constants/theme";
 import { prefetchUrlContext } from "@/services/onboarding-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { goBackOrHome } from "@/utils/navigation";
 import { normalizeWebsiteUrl } from "@/utils/normalize-website-url";
 import {
   isInstagramUnavailableAnswer,
@@ -23,9 +24,6 @@ import {
 } from "@/utils/onboarding-contact-presence";
 import { validateContactInput } from "@/utils/validate-contact-input";
 import { validateQuestionAnswer } from "@/utils/validate-question-answer";
-
-import { QuestionBody } from "@/components/onboarding/question-body";
-import { QuestionHeader } from "@/components/onboarding/question-header";
 
 const INSTAGRAM_INDEX_EXPRESS = 10;
 const INSTAGRAM_INDEX_PROFESSIONAL = 17;
@@ -42,15 +40,6 @@ export default function QuestionsScreen() {
   const previousQuestion = useOnboardingStore((s) => s.previousQuestion);
   const user = useAuthStore((s) => s.user);
   const [isFinalSubmitting, setIsFinalSubmitting] = useState(false);
-  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (prefetchTimerRef.current) {
-        clearTimeout(prefetchTimerRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     setIsFinalSubmitting(false);
@@ -95,7 +84,8 @@ export default function QuestionsScreen() {
 
   function handleOptionPress(label: string): void {
     if (question.type === "multi") {
-      const current = (currentAnswer as string[]) || [];
+      // Guard against legacy string answer: spread + includes would otherwise treat each char as item.
+      const current = Array.isArray(currentAnswer) ? currentAnswer : [];
       const updated = current.includes(label)
         ? current.filter((item) => item !== label)
         : [...current, label];

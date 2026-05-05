@@ -1,17 +1,3 @@
-/**
- * Stream de eventos SSE de tasks com reconnect/backoff.
- *
- * Tirado do task-store para respeitar a regra
- * .claude/rules/state-management.md (stores não devem conter setTimeout/SSE).
- *
- * Uso:
- *   const handle = startTaskEventStream({
- *     onTaskUpsert: (task) => store.upsert(task),
- *   });
- *   ...
- *   handle.stop();
- */
-
 import { streamUserEvents } from "@/services/business-entity-service";
 import type { UserSSETypedEvent } from "@/types/sse";
 import type { Task, TaskProposalCreatedEvent, TaskProposalResolvedEvent } from "@/types/task";

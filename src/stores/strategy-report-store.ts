@@ -8,8 +8,6 @@ import { toErrorMessage } from "@/utils/to-error-message";
 
 export type StrategyReportAnswer = string | string[];
 
-// Strategy questionnaire draft: preserved across 401 so the user does not lose
-// the questionnaire state if the session expires mid-flow.
 const STRATEGY_DRAFT_STORAGE_PREFIX = "strategy_report_draft_v1:";
 const DRAFT_DEBOUNCE_MS = 400;
 
@@ -123,8 +121,6 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
       return;
     }
 
-    // Preserve currentQuestionIndex/answers if they belong to the same reportType
-    // (restored from a persisted draft). Only reset them if this is a fresh flow.
     const shouldPreserveDraft = current.reportType === reportType;
 
     set({
@@ -138,11 +134,8 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
 
     try {
       const template = await getReportTemplate(reportType);
-      // Backend strips kernel-resolvable questions from `questions` and reports
-      // them as `prefilled` entries. Their `key` still belongs in the answers
-      // payload (the answers model uses `extra="forbid"`), so we hydrate the
-      // answers map with those values upfront — if the user never sees the
-      // question, the prefilled value still travels in the final submission.
+      // Backend `prefilled` keys must travel in the final submission (answers
+      // model has extra="forbid"); hydrate them upfront.
       const hydratedAnswers: Record<string, StrategyReportAnswer> = {
         ...(shouldPreserveDraft ? current.answers : {}),
       };
@@ -230,24 +223,16 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
     return Boolean(parsed.reportType);
   },
 
-  // Clears in-memory state but keeps the persisted draft on disk. Used on
-  // logout (manual or 401) and account switch — when the user returns, their
-  // draft is restored. To actively discard the draft (finished report, user
-  // aborts the questionnaire) use `discardDraft` instead.
+  // Persisted draft is intentionally kept; `discardDraft` is the only path that purges it.
   reset: () => {
     cancelScheduledStrategyPersist();
     set(buildEmptyState());
   },
 
-  // Preserves the in-memory draft AND the persisted draft; only clears
-  // transient loading/error flags. Use on 401 so the user recovers after
-  // re-login.
   resetKeepingDraft: () => {
     set({ isLoading: false, error: null, template: null, generatedReport: null });
   },
 
-  // Explicitly discard the draft (user finished the report or abandoned the
-  // questionnaire on purpose).
   discardDraft: () => {
     cancelScheduledStrategyPersist();
     const userId = get().draftUserId;

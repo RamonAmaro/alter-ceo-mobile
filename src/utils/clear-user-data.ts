@@ -27,9 +27,7 @@ export async function clearUserScopedStores(): Promise<void> {
   await useChatAudioDraftStore.getState().reset();
 }
 
-// Like `clearUserScopedStores`, but preserves user drafts & pending local work
-// so the user doesn't lose anything they were producing if their session
-// expires (401) mid-flow. Safe to call on session expiry.
+// Used on 401: keeps drafts and pending local work alive across session expiry.
 export async function clearUserScopedStoresKeepingPending(): Promise<void> {
   useChatStore.getState().resetKeepingDrafts();
   useMeetingStore.getState().reset();
