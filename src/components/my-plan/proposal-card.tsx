@@ -4,7 +4,6 @@ import type { PlanProposalItem } from "@/types/plan";
 import { StyleSheet, View } from "react-native";
 
 interface ProposalCardProps {
-  index: number;
   item: PlanProposalItem;
 }
 
@@ -13,8 +12,7 @@ interface FieldDef {
   value?: string;
 }
 
-export function ProposalCard({ index, item }: ProposalCardProps) {
-  const indexLabel = String(index).padStart(2, "0");
+export function ProposalCard({ item }: ProposalCardProps) {
   const title = item.titulo?.trim();
 
   const fields: FieldDef[] = [
@@ -32,8 +30,7 @@ export function ProposalCard({ index, item }: ProposalCardProps) {
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <ThemedText style={styles.indexLabel}>{indexLabel}</ThemedText>
-        <View style={styles.indexDot} />
+        <ThemedText style={styles.bullet}>–</ThemedText>
         {title ? (
           <ThemedText style={styles.title}>{title}</ThemedText>
         ) : (
@@ -66,18 +63,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.two,
   },
-  indexLabel: {
+  bullet: {
     fontFamily: Fonts.montserratBold,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 16,
+    lineHeight: 20,
     color: "rgba(0,255,132,0.75)",
-    letterSpacing: 0.4,
-  },
-  indexDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    width: 14,
   },
   title: {
     flex: 1,

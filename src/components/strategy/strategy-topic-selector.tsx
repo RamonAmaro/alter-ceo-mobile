@@ -22,6 +22,7 @@ export function StrategyTopicSelector({ onSelect }: StrategyTopicSelectorProps) 
           <StrategyTopicCard
             label={topic.title}
             iconName={topic.iconName}
+            iconLibrary={topic.iconLibrary}
             comingSoon={!topic.available}
             onPress={() => onSelect(topic.key)}
             animationDelay={index * STAGGER_MS}

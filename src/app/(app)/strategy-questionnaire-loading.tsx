@@ -9,14 +9,17 @@ import { FooterActionBar } from "@/components/footer-action-bar";
 import { ProgressCircle } from "@/components/onboarding/progress-circle";
 import { ScreenLayout } from "@/components/screen-layout";
 import { ThemedText } from "@/components/themed-text";
-import { STRATEGY_REPORT_STEPS } from "@/constants/strategy-report-loading-steps";
+import { getStrategyReportSteps } from "@/constants/strategy-report-loading-steps";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { useStrategyReportGeneration } from "@/hooks/use-strategy-report-generation";
+import { useStrategyReportStore } from "@/stores/strategy-report-store";
 
 export default function StrategyQuestionnaireLoadingScreen() {
   const insets = useSafeAreaInsets();
   const { stepIndex, error } = useStrategyReportGeneration();
-  const step = STRATEGY_REPORT_STEPS[Math.min(stepIndex, STRATEGY_REPORT_STEPS.length - 1)];
+  const reportType = useStrategyReportStore((s) => s.reportType);
+  const steps = getStrategyReportSteps(reportType);
+  const step = steps[Math.min(stepIndex, steps.length - 1)];
 
   const topPadding = { paddingTop: insets.top + Spacing.five };
 

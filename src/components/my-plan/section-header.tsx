@@ -1,33 +1,26 @@
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 
 interface SectionHeaderProps {
   title: string;
   eyebrow?: string;
   badge?: string | number;
+  sectionNumber?: string;
 }
 
-export function SectionHeader({ title, eyebrow, badge }: SectionHeaderProps) {
+export function SectionHeader({ title, eyebrow, badge, sectionNumber }: SectionHeaderProps) {
   return (
     <View style={styles.wrap}>
-      <LinearGradient
-        colors={["rgba(0,255,132,0.10)", "rgba(0,255,132,0.02)", "rgba(0,0,0,0)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {eyebrow ? (
-        <View style={styles.eyebrowRow}>
-          <View style={styles.dot} />
-          <ThemedText style={styles.eyebrow}>{eyebrow}</ThemedText>
-        </View>
-      ) : null}
+      {eyebrow ? <ThemedText style={styles.eyebrow}>{eyebrow}</ThemedText> : null}
 
       <View style={styles.titleRow}>
-        <ThemedText style={styles.title}>{title}</ThemedText>
+        <ThemedText style={styles.title}>
+          {sectionNumber ? (
+            <ThemedText style={styles.sectionNumber}>{sectionNumber}. </ThemedText>
+          ) : null}
+          {title}
+        </ThemedText>
         {badge !== undefined ? (
           <View style={styles.badge}>
             <ThemedText style={styles.badgeText}>{badge}</ThemedText>
@@ -40,31 +33,15 @@ export function SectionHeader({ title, eyebrow, badge }: SectionHeaderProps) {
 
 const styles = StyleSheet.create({
   wrap: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.15)",
-    backgroundColor: "rgba(255,255,255,0.02)",
-    overflow: "hidden",
     gap: Spacing.one,
-  },
-  eyebrowRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-  },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: SemanticColors.success,
+    paddingHorizontal: Spacing.one,
   },
   eyebrow: {
     fontFamily: Fonts.montserratBold,
     fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.success,
+    textTransform: "uppercase",
     letterSpacing: 1.6,
   },
   titleRow: {
@@ -76,18 +53,26 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     fontFamily: Fonts.montserratBold,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
     color: SemanticColors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  sectionNumber: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: SemanticColors.success,
+    letterSpacing: -0.2,
   },
   badge: {
     minWidth: 28,
     height: 24,
     paddingHorizontal: Spacing.one,
     borderRadius: 6,
-    backgroundColor: "rgba(0,255,132,0.10)",
+    backgroundColor: "rgba(0,255,132,0.16)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.25)",
+    borderColor: "rgba(0,255,132,0.32)",
     alignItems: "center",
     justifyContent: "center",
   },

@@ -7,6 +7,7 @@ import Svg, { Circle } from "react-native-svg";
 
 interface IndicatorsSectionProps {
   pillars?: PlanPillar[] | null;
+  sectionNumber?: string;
 }
 
 interface LevelMeta {
@@ -87,13 +88,17 @@ function PillarRing({ pillar }: { pillar: PlanPillar }) {
   );
 }
 
-export function IndicatorsSection({ pillars }: IndicatorsSectionProps) {
+export function IndicatorsSection({ pillars, sectionNumber }: IndicatorsSectionProps) {
   const valid = (pillars ?? []).filter((p) => p?.nombre?.trim() && p?.nivel);
   if (valid.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="VISIÓN · GENERAL" title="Indicadores principales" />
+      <SectionHeader
+        eyebrow="VISIÓN · GENERAL"
+        title="Indicadores principales"
+        sectionNumber={sectionNumber}
+      />
       <ThemedText style={styles.intro}>{INTRO_TEXT}</ThemedText>
       <View style={styles.list}>
         {valid.map((p) => (

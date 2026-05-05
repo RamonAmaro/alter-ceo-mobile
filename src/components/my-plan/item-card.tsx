@@ -7,6 +7,7 @@ interface ItemCardProps {
   title: string;
   description: string;
   accentColor: string;
+  badgeLabel?: string;
 }
 
 function withAlpha(hex: string, alpha: number): string {
@@ -17,8 +18,8 @@ function withAlpha(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-export function ItemCard({ index, title, description, accentColor }: ItemCardProps) {
-  const indexLabel = String(index).padStart(2, "0");
+export function ItemCard({ index, title, description, accentColor, badgeLabel }: ItemCardProps) {
+  const indexLabel = badgeLabel ?? String(index).padStart(2, "0");
   const tint15 = withAlpha(accentColor, 0.15);
   const tint35 = withAlpha(accentColor, 0.35);
   const tint55 = withAlpha(accentColor, 0.55);
@@ -50,8 +51,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   indexBadge: {
-    width: 28,
+    minWidth: 36,
     height: 28,
+    paddingHorizontal: 6,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",

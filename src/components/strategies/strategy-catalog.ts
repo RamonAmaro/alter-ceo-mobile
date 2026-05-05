@@ -6,11 +6,14 @@ export type StrategyKey =
   | "captacion_5_fases"
   | "value_ideas";
 
+export type StrategyIconLibrary = "ionicons" | "feather";
+
 export interface StrategyCatalogEntry {
   key: StrategyKey;
   title: string;
   shortTitle: string;
   iconName: string;
+  iconLibrary?: StrategyIconLibrary;
   reportType: string | null;
   available: boolean;
 }
@@ -28,7 +31,8 @@ export const STRATEGY_CATALOG: readonly StrategyCatalogEntry[] = [
     key: "guion_ventas",
     title: "Crear Guion de Ventas",
     shortTitle: "GUION DE VENTAS",
-    iconName: "chatbubbles-outline",
+    iconName: "dollar-sign",
+    iconLibrary: "feather",
     reportType: "guion_ventas",
     available: true,
   },

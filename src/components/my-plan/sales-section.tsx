@@ -12,6 +12,7 @@ interface SalesSectionProps {
   projectionIntroduction?: string;
   monthlyProjection: number[];
   immediatePriorities: string[];
+  sectionNumber?: string;
 }
 
 export function SalesSection({
@@ -19,6 +20,7 @@ export function SalesSection({
   projectionIntroduction,
   monthlyProjection,
   immediatePriorities,
+  sectionNumber,
 }: SalesSectionProps) {
   const hasTarget = typeof target === "number" && target > 0;
   const validProjection = monthlyProjection.filter((v) => typeof v === "number" && v > 0);
@@ -31,7 +33,11 @@ export function SalesSection({
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="PROYECCIÓN · 12 MESES" title="Evolución de ventas" />
+      <SectionHeader
+        eyebrow="PROYECCIÓN · 12 MESES"
+        title="Evolución de ventas"
+        sectionNumber={sectionNumber}
+      />
 
       {hasTarget ? (
         <View style={styles.targetCard}>

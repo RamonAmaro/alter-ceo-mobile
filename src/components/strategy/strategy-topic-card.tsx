@@ -1,7 +1,8 @@
 import { ThemedText } from "@/components/themed-text";
 import { USE_NATIVE_DRIVER } from "@/constants/platform";
+import type { StrategyIconLibrary } from "@/components/strategies/strategy-catalog";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
@@ -9,6 +10,7 @@ import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 interface StrategyTopicCardProps {
   label: string;
   iconName: string;
+  iconLibrary?: StrategyIconLibrary;
   comingSoon?: boolean;
   onPress: () => void;
   animationDelay?: number;
@@ -17,6 +19,7 @@ interface StrategyTopicCardProps {
 export function StrategyTopicCard({
   label,
   iconName,
+  iconLibrary = "ionicons",
   comingSoon = false,
   onPress,
   animationDelay = 0,
@@ -95,11 +98,19 @@ export function StrategyTopicCard({
           ) : null}
 
           <View style={styles.iconWrap}>
-            <Ionicons
-              name={iconName as never}
-              size={88}
-              color={comingSoon ? SemanticColors.textMuted : SemanticColors.success}
-            />
+            {iconLibrary === "feather" ? (
+              <Feather
+                name={iconName as never}
+                size={88}
+                color={comingSoon ? SemanticColors.textMuted : SemanticColors.success}
+              />
+            ) : (
+              <Ionicons
+                name={iconName as never}
+                size={88}
+                color={comingSoon ? SemanticColors.textMuted : SemanticColors.success}
+              />
+            )}
           </View>
 
           <View style={styles.bottom}>

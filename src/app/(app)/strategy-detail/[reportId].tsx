@@ -99,7 +99,7 @@ function renderRecord(record: ReportRecord, isMobile: boolean) {
     return renderCaptacionReport(record.report as unknown as Captacion5FasesReport, isMobile);
   }
   if (record.report_type === "value_ideas") {
-    return renderValueIdeasReport(record.report as unknown as ValueIdeasReport);
+    return renderValueIdeasReport(record.report as unknown as ValueIdeasReport, isMobile);
   }
   if (record.report_type === "guion_ventas") {
     return renderSalesScriptReport(record.report as unknown as SalesScriptReport, isMobile);

@@ -35,18 +35,11 @@ function cellText(value: unknown): string {
   }
 }
 
-function pageRangeLabel(start: number | null | undefined, end: number | null | undefined): string {
-  if (start == null && end == null) return "";
-  if (start != null && end != null && start !== end) return `p. ${start}–${end}`;
-  return `p. ${start ?? end}`;
-}
-
 interface TableCardProps {
   table: SourceTable;
-  index: number;
 }
 
-function TableCard({ table, index }: TableCardProps) {
+function TableCard({ table }: TableCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
@@ -57,7 +50,6 @@ function TableCard({ table, index }: TableCardProps) {
   const rows = table.rows ?? [];
   const visibleRows = expanded ? rows : rows.slice(0, COLLAPSED_ROW_COUNT);
   const hiddenCount = rows.length - visibleRows.length;
-  const pageLabel = pageRangeLabel(table.page_start, table.page_end);
 
   const hasOverflow = contentWidth > viewportWidth + SCROLL_EDGE_THRESHOLD;
   const canScrollRight =
@@ -88,15 +80,6 @@ function TableCard({ table, index }: TableCardProps) {
 
   return (
     <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <ThemedText style={styles.cardFolio}>
-          TABLA · {String(index + 1).padStart(2, "0")}
-        </ThemedText>
-        {pageLabel ? (
-          <ThemedText style={styles.cardPage}>{pageLabel.toUpperCase()}</ThemedText>
-        ) : null}
-      </View>
-
       {table.caption ? (
         <ThemedText style={styles.caption} numberOfLines={3}>
           {table.caption}
@@ -213,8 +196,8 @@ export function SourceTablesSection({ tables }: SourceTablesSectionProps) {
       </ThemedText>
 
       <View style={styles.list}>
-        {tables.map((table, index) => (
-          <TableCard key={table.table_id} table={table} index={index} />
+        {tables.map((table) => (
+          <TableCard key={table.table_id} table={table} />
         ))}
       </View>
     </View>

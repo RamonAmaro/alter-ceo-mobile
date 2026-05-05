@@ -10,6 +10,7 @@ import { StyleSheet, View } from "react-native";
 
 interface SalesAcquisitionBlockProps {
   data: PlanCustomerAcquisition;
+  sectionNumber?: string;
 }
 
 function cleanList(list?: string[]): string[] {
@@ -17,7 +18,7 @@ function cleanList(list?: string[]): string[] {
   return list.map((s) => s.trim()).filter(Boolean);
 }
 
-export function SalesAcquisitionBlock({ data }: SalesAcquisitionBlockProps) {
+export function SalesAcquisitionBlock({ data, sectionNumber }: SalesAcquisitionBlockProps) {
   const explanatory = data.texto_explicativo?.trim();
   const puertas = cleanList(data.puertas_entrada);
   const acciones = cleanList(data.acciones_alcance);
@@ -42,7 +43,7 @@ export function SalesAcquisitionBlock({ data }: SalesAcquisitionBlockProps) {
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.indexBadge}>
-          <ThemedText style={styles.indexLabel}>02</ThemedText>
+          <ThemedText style={styles.indexLabel}>{sectionNumber ?? "02"}</ThemedText>
         </View>
         <ThemedText style={styles.title}>Aumentar la captación de clientes</ThemedText>
       </View>
@@ -83,7 +84,7 @@ export function SalesAcquisitionBlock({ data }: SalesAcquisitionBlockProps) {
           <BlockSubHeader label="Propuestas de captación" />
           <View style={styles.proposals}>
             {proposals.map((p, i) => (
-              <ProposalCard key={`prop-${i}`} index={i + 1} item={p} />
+              <ProposalCard key={`prop-${i}`} item={p} />
             ))}
           </View>
         </View>
@@ -103,8 +104,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   indexBadge: {
-    width: 28,
-    height: 28,
+    minWidth: 28,
+    height: 22,
+    paddingHorizontal: 6,
     borderRadius: 8,
     backgroundColor: "rgba(0,255,132,0.10)",
     borderWidth: 1,
@@ -114,10 +116,11 @@ const styles = StyleSheet.create({
   },
   indexLabel: {
     fontFamily: Fonts.montserratExtraBold,
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.success,
     letterSpacing: -0.2,
+    fontVariant: ["tabular-nums"],
   },
   title: {
     flex: 1,

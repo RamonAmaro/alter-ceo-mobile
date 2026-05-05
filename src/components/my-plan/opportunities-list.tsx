@@ -9,9 +9,14 @@ import { StyleSheet, View } from "react-native";
 interface OpportunitiesListProps {
   introduction?: string;
   opportunities: PlanOpportunity[];
+  sectionNumber?: string;
 }
 
-export function OpportunitiesList({ introduction, opportunities }: OpportunitiesListProps) {
+export function OpportunitiesList({
+  introduction,
+  opportunities,
+  sectionNumber,
+}: OpportunitiesListProps) {
   const unique = deduplicateByTitle(opportunities).filter(
     (o) => o.titulo?.trim() && o.propuesta_accion?.trim(),
   );
@@ -25,6 +30,7 @@ export function OpportunitiesList({ introduction, opportunities }: Opportunities
         eyebrow="PALANCAS · DE CRECIMIENTO"
         title="Oportunidades de mejora"
         badge={unique.length}
+        sectionNumber={sectionNumber}
       />
 
       {trimmedIntro ? <ThemedText style={styles.intro}>{trimmedIntro}</ThemedText> : null}
@@ -34,6 +40,7 @@ export function OpportunitiesList({ introduction, opportunities }: Opportunities
           <ItemCard
             key={o.id_mejora ?? i}
             index={i + 1}
+            badgeLabel={sectionNumber ? `${sectionNumber}.${i + 1}` : undefined}
             title={o.titulo.trim()}
             description={o.propuesta_accion.trim()}
             accentColor={SemanticColors.success}
