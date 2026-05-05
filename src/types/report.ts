@@ -88,14 +88,19 @@ export interface DiagnosticoDeSituacionActualSection {
 }
 
 export interface TuOportunidadDeCaptacionSection {
+  introduccion: string;
   oportunidad_principal_detectada: string;
   conducta_del_cliente: string;
   tipo_de_propuesta_de_captacion: string;
   objetivo_deseado: string;
 }
 
+export type TipoDeOferta = "nueva" | "adaptacion_existente";
+
 export interface Fase1OfertaIrresistibleSection {
+  introduccion_educativa: string;
   nombre_de_la_oferta: string;
+  tipo_de_oferta: TipoDeOferta;
   descripcion_breve: string;
   funcionamiento: string;
   precio_recomendado: string;
@@ -107,7 +112,13 @@ export interface Fase1OfertaIrresistibleSection {
   proceso_de_implementacion: string;
 }
 
+export type TipoCanalDensidad =
+  | "redes_sociales_organicas"
+  | "redes_sociales_pagas"
+  | "otro";
+
 export interface GranDensidadPrioritariaSection {
+  tipo_canal: TipoCanalDensidad;
   canal_o_entorno: string;
   tipo_de_cliente: string;
   ventaja_principal: string;
@@ -133,11 +144,13 @@ export interface PresupuestoTacticoSection {
 
 export interface Fase2GrandesDensidadesSection {
   explicacion_educativa: string;
+  perfil_demografico_psicografico_campana: string;
   grandes_densidades_prioritarias: GranDensidadPrioritariaSection[];
   presupuesto_tactico: PresupuestoTacticoSection;
 }
 
 export interface Fase3SistemaCaptacionContactosSection {
+  explicacion_educativa: string;
   que_datos_pedir: string;
   como_pedirlos: string;
   donde_se_recogen: string;
@@ -154,17 +167,10 @@ export interface VentaAdicionalSection {
   por_que_encaja_con_la_oferta_inicial: string;
 }
 
-export interface DescuentoOIncentivoFuturoSection {
-  que_incentivo_ofrecer: string;
-  durante_cuanto_tiempo: string;
-  para_que_producto_o_servicio: string;
-  como_comunicarlo: string;
-  por_que_ayuda_a_generar_recurrencia: string;
-}
-
 export interface Fase4VentaAdicionalSection {
+  explicacion_educativa: string;
   venta_adicional: VentaAdicionalSection;
-  descuento_o_incentivo_futuro: DescuentoOIncentivoFuturoSection;
+  descuento_o_incentivo_futuro: string;
 }
 
 export interface LimitacionEstrategicaItem {
@@ -175,6 +181,7 @@ export interface LimitacionEstrategicaItem {
 }
 
 export interface Fase5LimitacionEstrategicaSection {
+  explicacion_educativa: string;
   limitaciones: LimitacionEstrategicaItem[];
 }
 
@@ -223,6 +230,7 @@ export interface PlanDeAccionSemana {
 }
 
 export interface PlanDeAccionSection {
+  explicacion_educativa: string;
   duracion_dias: number;
   semanas: PlanDeAccionSemana[];
 }
