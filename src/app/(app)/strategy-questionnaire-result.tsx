@@ -22,7 +22,6 @@ import type {
   BusinessMindsetReport,
   Captacion5FasesReport,
   CostesDeLaEstrategiaSection,
-  DescuentoOIncentivoFuturoSection,
   DiagnosticoDeSituacionActualSection,
   DistribucionPresupuestoTactico,
   Fase1OfertaIrresistibleSection,
@@ -216,9 +215,24 @@ function oportunidadItems(oportunidad: TuOportunidadDeCaptacionSection): KeyValu
   ];
 }
 
+const TIPO_DE_OFERTA_LABEL: Record<Fase1OfertaIrresistibleSection["tipo_de_oferta"], string> = {
+  nueva: "Nueva",
+  adaptacion_existente: "Adaptación de algo ya existente",
+};
+
+const TIPO_CANAL_LABEL: Record<GranDensidadPrioritariaSection["tipo_canal"], string> = {
+  redes_sociales_organicas: "Redes sociales orgánicas",
+  redes_sociales_pagas: "Redes sociales de pago",
+  otro: "Otro canal",
+};
+
 function phaseOneItems(section: Fase1OfertaIrresistibleSection): KeyValueItem[] {
   return [
     { label: "Nombre de la oferta", value: section.nombre_de_la_oferta },
+    {
+      label: "Tipo de oferta",
+      value: TIPO_DE_OFERTA_LABEL[section.tipo_de_oferta] ?? section.tipo_de_oferta,
+    },
     { label: "Descripción breve", value: section.descripcion_breve },
     { label: "Funcionamiento", value: section.funcionamiento },
     { label: "Precio recomendado", value: section.precio_recomendado },
@@ -260,19 +274,6 @@ function ventaAdicionalItems(section: VentaAdicionalSection): KeyValueItem[] {
     {
       label: "Por qué encaja con la oferta inicial",
       value: section.por_que_encaja_con_la_oferta_inicial,
-    },
-  ];
-}
-
-function descuentoFuturoItems(section: DescuentoOIncentivoFuturoSection): KeyValueItem[] {
-  return [
-    { label: "Qué incentivo ofrecer", value: section.que_incentivo_ofrecer },
-    { label: "Durante cuánto tiempo", value: section.durante_cuanto_tiempo },
-    { label: "Para qué producto o servicio", value: section.para_que_producto_o_servicio },
-    { label: "Cómo comunicarlo", value: section.como_comunicarlo },
-    {
-      label: "Por qué ayuda a generar recurrencia",
-      value: section.por_que_ayuda_a_generar_recurrencia,
     },
   ];
 }
@@ -329,6 +330,10 @@ function DensityCard({
 
       <KeyValueList
         items={[
+          {
+            label: "Tipo de canal",
+            value: TIPO_CANAL_LABEL[density.tipo_canal] ?? density.tipo_canal,
+          },
           { label: "Ventaja principal", value: density.ventaja_principal },
           { label: "Limitación", value: density.limitacion },
           { label: "Tipo de comunicación", value: density.tipo_de_comunicacion },
@@ -595,18 +600,30 @@ function ProposalCard({
           {sectionNumber ?? String(proposal.numero).padStart(2, "0")}
         </ThemedText>
         <View style={styles.proposalHeroCopy}>
-          <ThemedText style={styles.proposalTitle}>{proposal.titulo}</ThemedText>
+          <ThemedText style={styles.proposalTitle}>PROPUESTA {proposal.numero}</ThemedText>
         </View>
       </View>
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label={`${subSection(1)} · FASE 1 · OFERTA IRRESISTIBLE`} />
+        {proposal.fase_1_oferta_irresistible.introduccion_educativa ? (
+          <TextBlock text={proposal.fase_1_oferta_irresistible.introduccion_educativa} />
+        ) : null}
         <KeyValueList items={phaseOneItems(proposal.fase_1_oferta_irresistible)} />
       </View>
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label={`${subSection(2)} · FASE 2 · GRANDES DENSIDADES`} />
         <TextBlock text={phaseTwo.explicacion_educativa} />
+
+        {phaseTwo.perfil_demografico_psicografico_campana ? (
+          <View style={styles.subBlock}>
+            <ThemedText style={styles.subBlockTitle}>
+              Perfil demográfico y psicográfico de la campaña
+            </ThemedText>
+            <TextBlock text={phaseTwo.perfil_demografico_psicografico_campana} />
+          </View>
+        ) : null}
 
         <View style={[styles.densityGrid, !isMobile && styles.densityGridDesktop]}>
           {phaseTwo.grandes_densidades_prioritarias.map((density, densityIndex) => (
@@ -629,23 +646,32 @@ function ProposalCard({
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label={`${subSection(3)} · FASE 3 · SISTEMA DE CAPTACIÓN DE CONTACTOS`} />
+        {phaseThree.explicacion_educativa ? (
+          <TextBlock text={phaseThree.explicacion_educativa} />
+        ) : null}
         <KeyValueList items={phaseThreeItems(phaseThree)} />
       </View>
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label={`${subSection(4)} · FASE 4 · VENTA ADICIONAL Y CONSUMO FUTURO`} />
+        {phaseFour.explicacion_educativa ? (
+          <TextBlock text={phaseFour.explicacion_educativa} />
+        ) : null}
         <View style={styles.subBlock}>
           <ThemedText style={styles.subBlockTitle}>Venta adicional</ThemedText>
           <KeyValueList items={ventaAdicionalItems(phaseFour.venta_adicional)} />
         </View>
         <View style={styles.subBlock}>
           <ThemedText style={styles.subBlockTitle}>Descuento o incentivo futuro</ThemedText>
-          <KeyValueList items={descuentoFuturoItems(phaseFour.descuento_o_incentivo_futuro)} />
+          <TextBlock text={phaseFour.descuento_o_incentivo_futuro} />
         </View>
       </View>
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label={`${subSection(5)} · FASE 5 · LIMITACIÓN ESTRATÉGICA`} />
+        {phaseFive.explicacion_educativa ? (
+          <TextBlock text={phaseFive.explicacion_educativa} />
+        ) : null}
         {phaseFive.limitaciones.map((limitacion, limitIndex) => (
           <View key={`limitacion-${limitIndex}`} style={styles.limitacionCard}>
             <View style={styles.limitacionHeader}>
@@ -669,6 +695,9 @@ function ProposalCard({
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label={`${subSection(8)} · PLAN DE ACCIÓN`} />
+        {proposal.plan_de_accion.explicacion_educativa ? (
+          <TextBlock text={proposal.plan_de_accion.explicacion_educativa} />
+        ) : null}
         <PlanDeAccionPanel plan={proposal.plan_de_accion} sectionNumber={subSection(8)} />
       </View>
     </View>
@@ -717,6 +746,9 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
         title="Tu oportunidad de captación"
         eyebrow="Dónde está el desbloqueo"
       >
+        {report.tu_oportunidad_de_captacion.introduccion ? (
+          <TextBlock text={report.tu_oportunidad_de_captacion.introduccion} />
+        ) : null}
         <InsightList
           items={oportunidadItems(report.tu_oportunidad_de_captacion)}
           sectionNumber="4"
@@ -740,7 +772,11 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
         />
       ))}
 
-      <TextSection sectionNumber="6" title="Próximos pasos" eyebrow="Cómo empezar">
+      <TextSection
+        sectionNumber="6"
+        title="Próximos pasos"
+        eyebrow="Comprensión global de la estrategia"
+      >
         <TextBlock text={report.proximos_pasos.texto} />
         <View style={styles.pasosList}>
           {report.proximos_pasos.pasos
@@ -1577,11 +1613,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   proposalTitle: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 22,
-    lineHeight: 28,
+    fontFamily: Fonts.octosquaresBlack,
+    fontSize: 44,
+    lineHeight: 48,
     color: SemanticColors.textPrimary,
-    letterSpacing: -0.2,
+    letterSpacing: -0.5,
   },
   proposalHint: {
     fontFamily: Fonts.montserratMedium,
