@@ -1,4 +1,5 @@
 import { AppLoader } from "@/components/app-loader";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { KeyboardProvider } from "@/components/keyboard-provider";
 import { NetworkStatusOverlay } from "@/components/network-status-overlay";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
@@ -28,20 +29,22 @@ export default function RootLayout() {
   });
 
   return (
-    <KeyboardProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        {isReady && <Stack screenOptions={{ headerShown: false }} />}
-        {isReady && <NetworkStatusOverlay />}
-        {showLoader && (
-          <Animated.View
-            style={[styles.loaderOverlay, { opacity: loaderOpacity }]}
-            pointerEvents={loaderPointerEvents}
-          >
-            <AppLoader />
-          </Animated.View>
-        )}
-      </ThemeProvider>
-    </KeyboardProvider>
+    <ErrorBoundary>
+      <KeyboardProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          {isReady && <Stack screenOptions={{ headerShown: false }} />}
+          {isReady && <NetworkStatusOverlay />}
+          {showLoader && (
+            <Animated.View
+              style={[styles.loaderOverlay, { opacity: loaderOpacity }]}
+              pointerEvents={loaderPointerEvents}
+            >
+              <AppLoader />
+            </Animated.View>
+          )}
+        </ThemeProvider>
+      </KeyboardProvider>
+    </ErrorBoundary>
   );
 }
 

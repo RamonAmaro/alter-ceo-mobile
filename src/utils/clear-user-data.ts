@@ -1,5 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { storage } from "@/lib/storage";
 import { useActiveRecordingStore } from "@/stores/active-recording-store";
 import { useChatAudioDraftStore } from "@/stores/chat-audio-draft-store";
 import { useChatStore } from "@/stores/chat-store";
@@ -28,9 +27,7 @@ export async function clearUserScopedStores(): Promise<void> {
   await useChatAudioDraftStore.getState().reset();
 }
 
-// Like `clearUserScopedStores`, but preserves user drafts & pending local work
-// so the user doesn't lose anything they were producing if their session
-// expires (401) mid-flow. Safe to call on session expiry.
+// Used on 401: keeps drafts and pending local work alive across session expiry.
 export async function clearUserScopedStoresKeepingPending(): Promise<void> {
   useChatStore.getState().resetKeepingDrafts();
   useMeetingStore.getState().reset();
@@ -46,27 +43,15 @@ export async function clearUserScopedStoresKeepingPending(): Promise<void> {
 }
 
 export async function getLastAuthenticatedUserId(): Promise<string | null> {
-  try {
-    return await AsyncStorage.getItem(LAST_USER_ID_KEY);
-  } catch {
-    return null;
-  }
+  return storage.getString(LAST_USER_ID_KEY);
 }
 
 export async function setLastAuthenticatedUserId(userId: string): Promise<void> {
-  try {
-    await AsyncStorage.setItem(LAST_USER_ID_KEY, userId);
-  } catch {
-    // ignore
-  }
+  await storage.setString(LAST_USER_ID_KEY, userId);
 }
 
 export async function clearLastAuthenticatedUserId(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(LAST_USER_ID_KEY);
-  } catch {
-    // ignore
-  }
+  await storage.remove(LAST_USER_ID_KEY);
 }
 
 export async function ensureCleanForUser(nextUserId: string): Promise<void> {

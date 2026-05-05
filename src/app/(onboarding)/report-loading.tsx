@@ -1,7 +1,5 @@
 import { StyleSheet, View } from "react-native";
 
-import { router } from "expo-router";
-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
@@ -12,6 +10,7 @@ import { ThemedText } from "@/components/themed-text";
 import { STEPS } from "@/constants/report-loading-steps";
 import { SemanticColors, Spacing } from "@/constants/theme";
 import { usePlanGeneration } from "@/hooks/use-plan-generation";
+import { goBackOrHome } from "@/utils/navigation";
 
 export default function ReportLoadingScreen() {
   const insets = useSafeAreaInsets();
@@ -33,7 +32,7 @@ export default function ReportLoadingScreen() {
             </ThemedText>
           </View>
           <FooterActionBar>
-            <Button label="Volver" onPress={() => router.back()} />
+            <Button label="Volver" onPress={() => goBackOrHome()} />
           </FooterActionBar>
         </View>
       </ScreenLayout>

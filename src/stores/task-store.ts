@@ -1,29 +1,15 @@
 import { create } from "zustand";
 
 import * as taskService from "@/services/task-service";
-import { streamUserEvents } from "@/services/business-entity-service";
-import type {
-  CreateTaskInput,
-  PatchTaskInput,
-  Task,
-  TaskProposalCreatedEvent,
-  TaskProposalResolvedEvent,
-  TaskStatus,
-} from "@/types/task";
-import type { UserSSETypedEvent } from "@/types/sse";
+import { startTaskEventStream, type TaskEventStreamHandle } from "@/services/task-events-service";
+import type { CreateTaskInput, PatchTaskInput, Task, TaskStatus } from "@/types/task";
 import { toErrorMessage } from "@/utils/to-error-message";
 
-const RECONNECT_INITIAL_MS = 3000;
-const RECONNECT_MAX_MS = 60000;
 const FETCH_LIMIT = 200;
 
 interface MutationState {
   readonly submitting: ReadonlySet<string>;
   readonly errors: Readonly<Record<string, string>>;
-}
-
-interface SseConnection {
-  abort: () => void;
 }
 
 interface TaskState {
@@ -34,11 +20,8 @@ interface TaskState {
   error: string | null;
   mutation: MutationState;
 
-  _sseConnection: SseConnection | null;
-  _reconnectTimer: ReturnType<typeof setTimeout> | null;
-  _backoffMs: number;
+  _eventStream: TaskEventStreamHandle | null;
   _streamUserId: string | null;
-  _stopRequested: boolean;
 
   fetchAll: (options?: { silent?: boolean }) => Promise<void>;
   createTask: (input: CreateTaskInput) => Promise<Task>;
@@ -55,14 +38,6 @@ interface TaskState {
 }
 
 const EMPTY_MUTATION: MutationState = { submitting: new Set(), errors: {} };
-
-function safeParse<T>(raw: string): T | null {
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
 
 function withSubmitting(prev: MutationState, taskId: string, on: boolean): MutationState {
   const next = new Set(prev.submitting);
@@ -112,11 +87,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   error: null,
   mutation: EMPTY_MUTATION,
 
-  _sseConnection: null,
-  _reconnectTimer: null,
-  _backoffMs: RECONNECT_INITIAL_MS,
+  _eventStream: null,
   _streamUserId: null,
-  _stopRequested: false,
 
   fetchAll: async (options) => {
     const silent = options?.silent === true;
@@ -129,8 +101,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         const order: string[] = [];
         for (const task of items) {
           if (submitting.has(task.id)) {
-            // Mutation em vôo para esta task — preserva o estado local.
-            // Se foi removida otimisticamente (existing=undefined), NÃO re-adiciona.
+            // In-flight mutation: keep local state. If task was removed optimistically, don't re-add.
             const existing = state.byId[task.id];
             if (existing) {
               byId[task.id] = existing;
@@ -150,10 +121,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         };
       });
     } catch (err) {
-      if (silent) {
-        // Refresh em background — não polui o estado de erro/loading da UI.
-        return;
-      }
+      if (silent) return;
       set({ error: toErrorMessage(err), isLoading: false, initialLoaded: true });
     }
   },
@@ -187,7 +155,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   acceptProposal: async (taskId: string) => {
     const original = get().byId[taskId];
     if (!original) return;
-    // Optimistic
     set((state) => ({
       byId: { ...state.byId, [taskId]: { ...original, status: "todo" } },
       mutation: withError(withSubmitting(state.mutation, taskId, true), taskId, null),
@@ -269,8 +236,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const original = snapshot.byId[taskId];
     if (!original) return;
     const removed = removeFrom(snapshot.byId, snapshot.order, taskId);
-    // Marca submitting para que um fetchAll concorrente NÃO re-adicione a task
-    // antes do DELETE comitar no servidor.
+    // submitting flag prevents a concurrent fetchAll from re-adding the task before DELETE commits.
     set({
       ...removed,
       mutation: withSubmitting(snapshot.mutation, taskId, true),
@@ -279,7 +245,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       await taskService.deleteTask(taskId);
       set((state) => ({ mutation: withSubmitting(state.mutation, taskId, false) }));
     } catch (err) {
-      // Rollback: restaura a task e libera o submitting com erro.
       set((state) => ({
         ...upsert(state.byId, state.order, original),
         mutation: withError(
@@ -293,83 +258,24 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   startEventStream: (userId: string) => {
-    const { _streamUserId, _sseConnection } = get();
-    if (_sseConnection && _streamUserId === userId) return;
+    const { _streamUserId, _eventStream } = get();
+    if (_eventStream && _streamUserId === userId) return;
 
-    // Tear down any previous stream first
     get().stopEventStream();
-    set({ _stopRequested: false, _streamUserId: userId, _backoffMs: RECONNECT_INITIAL_MS });
 
-    const handleEvent = (event: UserSSETypedEvent): void => {
-      if (event.event === "task_proposal_created") {
-        const payload = safeParse<TaskProposalCreatedEvent>(event.data);
-        if (payload?.task) {
-          set((state) => upsert(state.byId, state.order, payload.task));
-        }
-        return;
-      }
-      if (event.event === "task_proposal_resolved") {
-        const payload = safeParse<TaskProposalResolvedEvent>(event.data);
-        if (payload?.task) {
-          set((state) => upsert(state.byId, state.order, payload.task));
-        }
-      }
-    };
+    const handle = startTaskEventStream({
+      onTaskUpsert: (task) => {
+        set((state) => upsert(state.byId, state.order, task));
+      },
+    });
 
-    const scheduleReconnect = (): void => {
-      const state = get();
-      if (state._stopRequested) return;
-      const delay = state._backoffMs;
-      const nextBackoff = Math.min(delay * 2, RECONNECT_MAX_MS);
-      const timer = setTimeout(() => {
-        if (get()._stopRequested) return;
-        set({ _reconnectTimer: null });
-        connect();
-      }, delay);
-      set({ _reconnectTimer: timer, _backoffMs: nextBackoff });
-    };
-
-    const connect = (): void => {
-      if (get()._stopRequested) return;
-      let receivedAnyEvent = false;
-      const connection = streamUserEvents(
-        (event) => {
-          if (get()._stopRequested) return;
-          if (!receivedAnyEvent) {
-            receivedAnyEvent = true;
-            set({ _backoffMs: RECONNECT_INITIAL_MS });
-          }
-          handleEvent(event);
-        },
-        () => {
-          if (get()._stopRequested) return;
-          set({ _sseConnection: null });
-          scheduleReconnect();
-        },
-        () => {
-          if (get()._stopRequested) return;
-          set({ _sseConnection: null });
-          scheduleReconnect();
-        },
-      );
-      set({ _sseConnection: connection });
-    };
-
-    connect();
+    set({ _eventStream: handle, _streamUserId: userId });
     void get().fetchAll();
   },
 
   stopEventStream: () => {
-    const { _sseConnection, _reconnectTimer } = get();
-    if (_reconnectTimer) clearTimeout(_reconnectTimer);
-    _sseConnection?.abort();
-    set({
-      _sseConnection: null,
-      _reconnectTimer: null,
-      _backoffMs: RECONNECT_INITIAL_MS,
-      _streamUserId: null,
-      _stopRequested: true,
-    });
+    get()._eventStream?.stop();
+    set({ _eventStream: null, _streamUserId: null });
   },
 
   reset: () => {

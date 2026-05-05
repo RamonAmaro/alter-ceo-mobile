@@ -1,46 +1,26 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 import type { SSEConnection } from "@/lib/sse-client";
+import { storage } from "@/lib/storage";
 import * as chatService from "@/services/chat-service";
+import { createPersistDebouncer } from "@/services/persist-debounce-service";
 import type { ChatMessageResponse, ChatThreadSummary } from "@/types/chat";
 import { handleStreamDone, handleStreamEvent } from "@/utils/chat-stream-handlers";
 import { toErrorMessage } from "@/utils/to-error-message";
 import { ulid } from "@/utils/ulid";
 
-// Drafts: texto no input que o usuário ainda não enviou. Preservado em 401.
-// Estrutura: { [userId]: { [threadId]: text } }
-// Chave especial `__new__` guarda o draft de uma conversa ainda não criada.
 export const CHAT_DRAFTS_STORAGE_KEY = "chat_drafts_v1";
 export const NEW_THREAD_DRAFT_KEY = "__new__";
 
 type DraftsByUser = Record<string, Record<string, string>>;
 
 const DRAFT_DEBOUNCE_MS = 400;
-let draftPersistTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function persistDrafts(drafts: DraftsByUser): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CHAT_DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
-  } catch {
-    // best-effort
-  }
+  await storage.setJSON(CHAT_DRAFTS_STORAGE_KEY, drafts);
 }
 
-function schedulePersist(getDrafts: () => DraftsByUser): void {
-  if (draftPersistTimer) clearTimeout(draftPersistTimer);
-  draftPersistTimer = setTimeout(() => {
-    draftPersistTimer = null;
-    void persistDrafts(getDrafts());
-  }, DRAFT_DEBOUNCE_MS);
-}
-
-function cancelScheduledPersist(): void {
-  if (draftPersistTimer) {
-    clearTimeout(draftPersistTimer);
-    draftPersistTimer = null;
-  }
-}
+const draftDebouncer = createPersistDebouncer<DraftsByUser>(persistDrafts, DRAFT_DEBOUNCE_MS);
 
 interface ChatState {
   threads: ChatThreadSummary[];
@@ -260,13 +240,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   loadDrafts: async () => {
-    try {
-      const raw = await AsyncStorage.getItem(CHAT_DRAFTS_STORAGE_KEY);
-      const parsed: DraftsByUser = raw ? JSON.parse(raw) : {};
-      set({ drafts: parsed });
-    } catch {
-      set({ drafts: {} });
-    }
+    const raw = await storage.getJSON<DraftsByUser>(CHAT_DRAFTS_STORAGE_KEY);
+    const parsed = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    set({ drafts: parsed });
   },
 
   setDraft: (userId: string, threadKey: string, text: string) => {
@@ -277,7 +253,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       : Object.fromEntries(Object.entries(userDrafts).filter(([k]) => k !== threadKey));
     const next: DraftsByUser = { ...current, [userId]: nextUserDrafts };
     set({ drafts: next });
-    schedulePersist(() => get().drafts);
+    draftDebouncer.schedule(() => get().drafts);
   },
 
   getDraft: (userId: string, threadKey: string) => {
@@ -294,7 +270,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // away when the user actively sends the message or uninstalls the app.
   reset: () => {
     get().cancelStream();
-    cancelScheduledPersist();
+    draftDebouncer.cancel();
     set({
       threads: [],
       activeThreadId: null,

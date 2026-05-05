@@ -68,15 +68,6 @@ export function handleAxiosError(err: unknown): never {
       message = data;
     }
 
-    // eslint-disable-next-line no-console
-    console.error("[api-client] HTTP error", {
-      status: err.response.status,
-      url: err.config?.url,
-      method: err.config?.method,
-      message,
-      responseBody: data,
-    });
-
     throw new ApiError(err.response.status, message, validationErrors);
   }
   throw err;

@@ -13,6 +13,8 @@
     "lint:fix": "expo lint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev:android": "expo start --dev-client --android",
     "dev:tunnel": "expo start --dev-client --tunnel",
     "build:dev:android": "eas build --profile development --platform android",
@@ -73,7 +75,8 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.1",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "vitest": "^2.1.9"
   },
   "private": true
 }

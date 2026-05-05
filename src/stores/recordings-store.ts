@@ -1,6 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
+import { storage } from "@/lib/storage";
 import { deletePersistedRecording } from "@/services/recording-storage";
 
 export const LOCAL_RECORDINGS_STORAGE_KEY = "local_recordings";
@@ -47,37 +47,21 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
   currentUserId: null,
 
   loadRecordings: async (userId: string) => {
-    try {
-      const raw = await AsyncStorage.getItem(LOCAL_RECORDINGS_STORAGE_KEY);
-      const parsed: LocalRecording[] = raw ? JSON.parse(raw) : [];
-      // Garbage-collect handed-off recordings: once the backend owns them
-      // (meetingId set + processing/completed), the local copy is no longer useful.
-      const pruned = parsed.filter((r) => {
-        if (!r.meetingId) return true;
-        return r.uploadStatus === "local_only" || r.uploadStatus === "failed";
-      });
-      // Quando um recording é podado do AsyncStorage por ter sido handed off
-      // ao backend, o arquivo local também precisa ser apagado — do contrário
-      // acumula lixo em `documentDirectory/recordings/` (nativo) ou no
-      // IndexedDB (web) até o usuário reinstalar o app.
-      const removedUris = parsed
-        .filter((r) => !pruned.some((p) => p.id === r.id))
-        .map((r) => r.uri);
-      await Promise.all(removedUris.map((uri) => deletePersistedRecording(uri)));
-      // In-memory state is scoped to the current user; other users' recordings
-      // remain in the persisted blob so they are restored when those users sign
-      // back in on this device.
-      const forCurrentUser = pruned.filter((r) => r.userId === userId);
-      set({ recordings: forCurrentUser, currentUserId: userId });
-      if (pruned.length !== parsed.length) {
-        try {
-          await AsyncStorage.setItem(LOCAL_RECORDINGS_STORAGE_KEY, JSON.stringify(pruned));
-        } catch {
-          // best-effort
-        }
-      }
-    } catch {
-      set({ recordings: [], currentUserId: userId });
+    const raw = await storage.getJSON<LocalRecording[]>(LOCAL_RECORDINGS_STORAGE_KEY);
+    const parsed = Array.isArray(raw) ? raw : [];
+    // Drop recordings already handed off to the backend; delete their local files
+    // too — otherwise documentDirectory/IndexedDB accumulate garbage until reinstall.
+    const pruned = parsed.filter((r) => {
+      if (!r.meetingId) return true;
+      return r.uploadStatus === "local_only" || r.uploadStatus === "failed";
+    });
+    const removedUris = parsed.filter((r) => !pruned.some((p) => p.id === r.id)).map((r) => r.uri);
+    await Promise.all(removedUris.map((uri) => deletePersistedRecording(uri)));
+    // Multi-tenant device: only THIS user's recordings go into in-memory state.
+    const forCurrentUser = pruned.filter((r) => r.userId === userId);
+    set({ recordings: forCurrentUser, currentUserId: userId });
+    if (pruned.length !== parsed.length) {
+      await storage.setJSON(LOCAL_RECORDINGS_STORAGE_KEY, pruned);
     }
   },
 
@@ -95,15 +79,12 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
     if (target?.uri) await deletePersistedRecording(target.uri);
   },
 
-  // In-memory clear only — persisted recordings of THIS user remain on disk,
-  // so signing back in restores them. Recordings are only purged when the
-  // user uninstalls the app.
+  // In-memory clear only; persisted blob is intentionally kept across sign-outs.
   reset: async () => {
     set({ recordings: [], currentUserId: null });
   },
 
-  // Preserves pending recordings (local_only/uploading/processing/failed) of
-  // the current user in memory. Used on 401.
+  // Used on 401: keeps pending uploads alive across session expiry.
   resetKeepingPending: async () => {
     const kept = get().recordings.filter((r) =>
       r.uploadStatus ? PENDING_STATUSES.has(r.uploadStatus) : false,
@@ -119,17 +100,12 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
   },
 }));
 
-// Merge the current user's in-memory recordings back into the persisted blob,
-// preserving recordings that belong to other users on the same device.
+// Multi-tenant merge: persist THIS user's set without overwriting other users' entries.
 async function persistAllMerging(currentUserRecordings: LocalRecording[]): Promise<void> {
   const currentUserId = useRecordingsStore.getState().currentUserId;
-  try {
-    const raw = await AsyncStorage.getItem(LOCAL_RECORDINGS_STORAGE_KEY);
-    const existing: LocalRecording[] = raw ? JSON.parse(raw) : [];
-    const others = currentUserId ? existing.filter((r) => r.userId !== currentUserId) : existing;
-    const merged = [...currentUserRecordings, ...others];
-    await AsyncStorage.setItem(LOCAL_RECORDINGS_STORAGE_KEY, JSON.stringify(merged));
-  } catch {
-    // best-effort
-  }
+  const raw = await storage.getJSON<LocalRecording[]>(LOCAL_RECORDINGS_STORAGE_KEY);
+  const existing = Array.isArray(raw) ? raw : [];
+  const others = currentUserId ? existing.filter((r) => r.userId !== currentUserId) : existing;
+  const merged = [...currentUserRecordings, ...others];
+  await storage.setJSON(LOCAL_RECORDINGS_STORAGE_KEY, merged);
 }

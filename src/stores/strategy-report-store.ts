@@ -1,14 +1,13 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
+import { storage } from "@/lib/storage";
+import { createPersistDebouncer } from "@/services/persist-debounce-service";
 import { getReportTemplate } from "@/services/report-service";
 import type { ReportTemplate } from "@/types/report";
 import { toErrorMessage } from "@/utils/to-error-message";
 
 export type StrategyReportAnswer = string | string[];
 
-// Strategy questionnaire draft: preserved across 401 so the user does not lose
-// the questionnaire state if the session expires mid-flow.
 const STRATEGY_DRAFT_STORAGE_PREFIX = "strategy_report_draft_v1:";
 const DRAFT_DEBOUNCE_MS = 400;
 
@@ -19,26 +18,21 @@ interface PersistedStrategyDraft {
   runId: string | null;
 }
 
-let draftPersistTimer: ReturnType<typeof setTimeout> | null = null;
+interface StrategyDraftPayload {
+  readonly userId: string;
+  readonly draft: PersistedStrategyDraft;
+}
 
 function strategyDraftKey(userId: string): string {
   return `${STRATEGY_DRAFT_STORAGE_PREFIX}${userId}`;
 }
 
 async function persistStrategyDraft(userId: string, draft: PersistedStrategyDraft): Promise<void> {
-  try {
-    await AsyncStorage.setItem(strategyDraftKey(userId), JSON.stringify(draft));
-  } catch {
-    // best-effort
-  }
+  await storage.setJSON(strategyDraftKey(userId), draft);
 }
 
 async function clearPersistedStrategyDraft(userId: string): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(strategyDraftKey(userId));
-  } catch {
-    // best-effort
-  }
+  await storage.remove(strategyDraftKey(userId));
 }
 
 interface StrategyReportState {
@@ -81,26 +75,30 @@ function buildEmptyState() {
   };
 }
 
-function cancelScheduledStrategyPersist(): void {
-  if (draftPersistTimer) {
-    clearTimeout(draftPersistTimer);
-    draftPersistTimer = null;
-  }
+const strategyDebouncer = createPersistDebouncer<StrategyDraftPayload | null>(async (payload) => {
+  if (!payload) return;
+  await persistStrategyDraft(payload.userId, payload.draft);
+}, DRAFT_DEBOUNCE_MS);
+
+function buildStrategyDraftPayload(state: StrategyReportState): StrategyDraftPayload | null {
+  if (!state.draftUserId) return null;
+  return {
+    userId: state.draftUserId,
+    draft: {
+      reportType: state.reportType,
+      currentQuestionIndex: state.currentQuestionIndex,
+      answers: state.answers,
+      runId: state.runId,
+    },
+  };
 }
 
 function scheduleStrategyPersist(getState: () => StrategyReportState): void {
-  if (draftPersistTimer) clearTimeout(draftPersistTimer);
-  draftPersistTimer = setTimeout(() => {
-    draftPersistTimer = null;
-    const s = getState();
-    if (!s.draftUserId) return;
-    void persistStrategyDraft(s.draftUserId, {
-      reportType: s.reportType,
-      currentQuestionIndex: s.currentQuestionIndex,
-      answers: s.answers,
-      runId: s.runId,
-    });
-  }, DRAFT_DEBOUNCE_MS);
+  strategyDebouncer.schedule(() => buildStrategyDraftPayload(getState()));
+}
+
+function cancelScheduledStrategyPersist(): void {
+  strategyDebouncer.cancel();
 }
 
 export const useStrategyReportStore = create<StrategyReportState>((set, get) => ({
@@ -123,8 +121,6 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
       return;
     }
 
-    // Preserve currentQuestionIndex/answers if they belong to the same reportType
-    // (restored from a persisted draft). Only reset them if this is a fresh flow.
     const shouldPreserveDraft = current.reportType === reportType;
 
     set({
@@ -138,11 +134,8 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
 
     try {
       const template = await getReportTemplate(reportType);
-      // Backend strips kernel-resolvable questions from `questions` and reports
-      // them as `prefilled` entries. Their `key` still belongs in the answers
-      // payload (the answers model uses `extra="forbid"`), so we hydrate the
-      // answers map with those values upfront — if the user never sees the
-      // question, the prefilled value still travels in the final submission.
+      // Backend `prefilled` keys must travel in the final submission (answers
+      // model has extra="forbid"); hydrate them upfront.
       const hydratedAnswers: Record<string, StrategyReportAnswer> = {
         ...(shouldPreserveDraft ? current.answers : {}),
       };
@@ -213,41 +206,33 @@ export const useStrategyReportStore = create<StrategyReportState>((set, get) => 
   },
 
   restoreDraft: async (userId: string) => {
-    try {
-      const raw = await AsyncStorage.getItem(strategyDraftKey(userId));
-      if (!raw) return false;
-      const parsed = JSON.parse(raw) as PersistedStrategyDraft;
-      set({
-        reportType: parsed.reportType,
-        currentQuestionIndex: parsed.currentQuestionIndex ?? 0,
-        answers: parsed.answers ?? {},
-        runId: parsed.runId ?? null,
-        draftUserId: userId,
-      });
-      return Boolean(parsed.reportType);
-    } catch {
-      return false;
-    }
+    const parsed = await storage.getJSON<PersistedStrategyDraft>(strategyDraftKey(userId));
+    if (!parsed || typeof parsed !== "object") return false;
+    const answers =
+      parsed.answers && typeof parsed.answers === "object" && !Array.isArray(parsed.answers)
+        ? parsed.answers
+        : {};
+    set({
+      reportType: parsed.reportType ?? null,
+      currentQuestionIndex:
+        typeof parsed.currentQuestionIndex === "number" ? parsed.currentQuestionIndex : 0,
+      answers,
+      runId: parsed.runId ?? null,
+      draftUserId: userId,
+    });
+    return Boolean(parsed.reportType);
   },
 
-  // Clears in-memory state but keeps the persisted draft on disk. Used on
-  // logout (manual or 401) and account switch — when the user returns, their
-  // draft is restored. To actively discard the draft (finished report, user
-  // aborts the questionnaire) use `discardDraft` instead.
+  // Persisted draft is intentionally kept; `discardDraft` is the only path that purges it.
   reset: () => {
     cancelScheduledStrategyPersist();
     set(buildEmptyState());
   },
 
-  // Preserves the in-memory draft AND the persisted draft; only clears
-  // transient loading/error flags. Use on 401 so the user recovers after
-  // re-login.
   resetKeepingDraft: () => {
     set({ isLoading: false, error: null, template: null, generatedReport: null });
   },
 
-  // Explicitly discard the draft (user finished the report or abandoned the
-  // questionnaire on purpose).
   discardDraft: () => {
     cancelScheduledStrategyPersist();
     const userId = get().draftUserId;
