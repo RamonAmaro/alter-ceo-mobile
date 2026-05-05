@@ -154,11 +154,11 @@ function TextBlock({ text }: { text: string }) {
 function KeyValueList({ items }: { items: KeyValueItem[] }) {
   return (
     <View style={styles.list}>
-      {items.map((item) => (
-        <View key={item.label} style={styles.listItem}>
+      {items.map((item, index) => (
+        <View key={item.label || `kv-${index}`} style={styles.listItem}>
           <ThemedText style={styles.listBullet}>–</ThemedText>
           <View style={styles.listCopy}>
-            <ThemedText style={styles.listLabel}>{item.label}</ThemedText>
+            {item.label ? <ThemedText style={styles.listLabel}>{item.label}</ThemedText> : null}
             <ThemedText style={styles.listValue}>{item.value}</ThemedText>
           </View>
         </View>
@@ -167,18 +167,25 @@ function KeyValueList({ items }: { items: KeyValueItem[] }) {
   );
 }
 
-function InsightList({ items }: { items: KeyValueItem[] }) {
+function InsightList({ items, sectionNumber }: { items: KeyValueItem[]; sectionNumber?: string }) {
   return (
     <View style={styles.insightList}>
-      {items.map((item, index) => (
-        <View key={item.label || `insight-${index}`} style={styles.insightRow}>
-          <ThemedText style={styles.insightIndex}>{String(index + 1).padStart(2, "0")}</ThemedText>
-          <View style={styles.insightCopy}>
-            {item.label ? <ThemedText style={styles.insightLabel}>{item.label}</ThemedText> : null}
-            <ThemedText style={styles.insightValue}>{item.value}</ThemedText>
+      {items.map((item, index) => {
+        const indexLabel = sectionNumber
+          ? `${sectionNumber}.${index + 1}`
+          : String(index + 1).padStart(2, "0");
+        return (
+          <View key={item.label || `insight-${index}`} style={styles.insightRow}>
+            <ThemedText style={styles.insightIndex}>{indexLabel}</ThemedText>
+            <View style={styles.insightCopy}>
+              {item.label ? (
+                <ThemedText style={styles.insightLabel}>{item.label}</ThemedText>
+              ) : null}
+              <ThemedText style={styles.insightValue}>{item.value}</ThemedText>
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -456,7 +463,13 @@ function RetornoMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PlanDeAccionPanel({ plan }: { plan: PlanDeAccionSection }) {
+function PlanDeAccionPanel({
+  plan,
+  sectionNumber,
+}: {
+  plan: PlanDeAccionSection;
+  sectionNumber?: string;
+}) {
   return (
     <View style={styles.planAccionPanel}>
       <View style={styles.planAccionDuration}>
@@ -467,11 +480,7 @@ function PlanDeAccionPanel({ plan }: { plan: PlanDeAccionSection }) {
       {plan.semanas.map((semana, index) => (
         <View key={`${semana.semana}-${index}`} style={styles.planAccionSemana}>
           <View style={styles.planAccionSemanaHeader}>
-            <View style={styles.planAccionSemanaBadge}>
-              <ThemedText style={styles.planAccionSemanaBadgeText}>
-                {String(index + 1).padStart(2, "0")}
-              </ThemedText>
-            </View>
+            <ThemedText style={styles.planAccionSemanaBullet}>–</ThemedText>
             <View style={styles.planAccionSemanaCopy}>
               <ThemedText style={styles.planAccionSemanaFoco}>{semana.foco_principal}</ThemedText>
             </View>
@@ -640,11 +649,7 @@ function ProposalCard({
         {phaseFive.limitaciones.map((limitacion, limitIndex) => (
           <View key={`limitacion-${limitIndex}`} style={styles.limitacionCard}>
             <View style={styles.limitacionHeader}>
-              <View style={styles.limitacionBadge}>
-                <ThemedText style={styles.limitacionBadgeText}>
-                  {String(limitIndex + 1).padStart(2, "0")}
-                </ThemedText>
-              </View>
+              <ThemedText style={styles.limitacionBullet}>–</ThemedText>
               <ThemedText style={styles.limitacionTitle}>{limitacion.en_que_consiste}</ThemedText>
             </View>
             <KeyValueList items={limitacionItems(limitacion).slice(1)} />
@@ -664,7 +669,7 @@ function ProposalCard({
 
       <View style={styles.phaseSection}>
         <BlockSubHeader label={`${subSection(8)} · PLAN DE ACCIÓN`} />
-        <PlanDeAccionPanel plan={proposal.plan_de_accion} />
+        <PlanDeAccionPanel plan={proposal.plan_de_accion} sectionNumber={subSection(8)} />
       </View>
     </View>
   );
@@ -701,7 +706,10 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
         eyebrow="Lectura de negocio"
       >
         <TextBlock text={report.diagnostico_de_situacion_actual.como_estas_en_este_momento} />
-        <InsightList items={diagnosticoClavesItems(report.diagnostico_de_situacion_actual)} />
+        <InsightList
+          items={diagnosticoClavesItems(report.diagnostico_de_situacion_actual)}
+          sectionNumber="3"
+        />
       </TextSection>
 
       <TextSection
@@ -709,7 +717,10 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
         title="Tu oportunidad de captación"
         eyebrow="Dónde está el desbloqueo"
       >
-        <InsightList items={oportunidadItems(report.tu_oportunidad_de_captacion)} />
+        <InsightList
+          items={oportunidadItems(report.tu_oportunidad_de_captacion)}
+          sectionNumber="4"
+        />
       </TextSection>
 
       <TextSection
@@ -734,7 +745,7 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
         <View style={styles.pasosList}>
           {report.proximos_pasos.pasos.map((paso, index) => (
             <View key={`paso-${index}`} style={styles.pasoItem}>
-              <ThemedText style={styles.pasoIndex}>{String(index + 1).padStart(2, "0")}</ThemedText>
+              <ThemedText style={styles.pasoIndex}>{`6.${index + 1}`}</ThemedText>
               <ThemedText style={styles.pasoText}>{paso}</ThemedText>
             </View>
           ))}
@@ -1003,8 +1014,11 @@ function MindsetRecommendationList({
   return (
     <View style={styles.mindsetRecommendationGroup}>
       <ThemedText style={styles.mindsetRecommendationTitle}>{title}</ThemedText>
-      <InsightList
-        items={recommendations.map((recommendation) => ({ label: "", value: recommendation }))}
+      <KeyValueList
+        items={recommendations.map((recommendation) => ({
+          label: "",
+          value: recommendation,
+        }))}
       />
     </View>
   );
@@ -1051,7 +1065,7 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
         eyebrow="Diagnóstico por categoría"
       >
         <View style={styles.mindsetCategoryList}>
-          {BUSINESS_MINDSET_CATEGORIES.map((category) => {
+          {BUSINESS_MINDSET_CATEGORIES.map((category, index) => {
             const diagnosis = report.radiografia_del_perfil[category];
             const score = scorecard.categories[category]?.score ?? diagnosis.score;
 
@@ -1060,7 +1074,7 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
                 <View style={styles.mindsetCategoryHeader}>
                   <View style={styles.mindsetCategoryTitleWrap}>
                     <ThemedText style={styles.mindsetCategoryTitle}>
-                      {categoryLabel(category)}
+                      {`2.${index + 1} ${categoryLabel(category)}`}
                     </ThemedText>
                     <ThemedText style={styles.mindsetCategoryLevel}>{diagnosis.level}</ThemedText>
                   </View>
@@ -1079,10 +1093,10 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
         eyebrow="Tres acciones por área"
       >
         <View style={styles.mindsetRecommendations}>
-          {BUSINESS_MINDSET_CATEGORIES.map((category) => (
+          {BUSINESS_MINDSET_CATEGORIES.map((category, index) => (
             <MindsetRecommendationList
               key={category}
-              title={categoryLabel(category)}
+              title={`3.${index + 1} ${categoryLabel(category)}`}
               recommendations={report.recomendaciones_de_mejora[category].recomendaciones}
             />
           ))}
@@ -1377,11 +1391,12 @@ const styles = StyleSheet.create({
   },
   insightIndex: {
     fontFamily: Fonts.octosquaresBlack,
-    fontSize: 22,
-    lineHeight: 26,
-    color: "rgba(0,255,132,0.35)",
-    letterSpacing: -0.5,
-    minWidth: 32,
+    fontSize: 18,
+    lineHeight: 24,
+    color: "rgba(0,255,132,0.55)",
+    letterSpacing: -0.3,
+    minWidth: 44,
+    fontVariant: ["tabular-nums"],
   },
   insightCopy: {
     flex: 1,
@@ -1857,21 +1872,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: Spacing.two,
   },
-  limitacionBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.32)",
-  },
-  limitacionBadgeText: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 11,
-    lineHeight: 14,
+  limitacionBullet: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 16,
+    lineHeight: 22,
     color: SemanticColors.success,
+    width: 14,
   },
   limitacionTitle: {
     flex: 1,
@@ -2063,21 +2069,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: Spacing.two,
   },
-  planAccionSemanaBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.32)",
-  },
-  planAccionSemanaBadgeText: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 12,
-    lineHeight: 14,
+  planAccionSemanaBullet: {
+    fontFamily: Fonts.montserratBold,
+    fontSize: 16,
+    lineHeight: 22,
     color: SemanticColors.success,
+    width: 14,
   },
   planAccionSemanaCopy: {
     flex: 1,
@@ -2103,11 +2100,12 @@ const styles = StyleSheet.create({
   },
   pasoIndex: {
     fontFamily: Fonts.octosquaresBlack,
-    fontSize: 22,
-    lineHeight: 26,
-    color: "rgba(0,255,132,0.45)",
-    letterSpacing: -0.5,
-    minWidth: 32,
+    fontSize: 18,
+    lineHeight: 24,
+    color: "rgba(0,255,132,0.55)",
+    letterSpacing: -0.3,
+    minWidth: 44,
+    fontVariant: ["tabular-nums"],
   },
   pasoText: {
     flex: 1,

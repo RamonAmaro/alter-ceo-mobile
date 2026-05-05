@@ -24,10 +24,19 @@ export function SalesStrategySection({
   conversionImprovement,
   sectionNumber,
 }: SalesStrategySectionProps) {
+  const subNumber = (n: number): string | undefined =>
+    sectionNumber ? `${sectionNumber}.${n}` : undefined;
+
   const blocks = [
-    productImprovement ? <SalesProductBlock data={productImprovement} /> : null,
-    customerAcquisition ? <SalesAcquisitionBlock data={customerAcquisition} /> : null,
-    conversionImprovement ? <SalesConversionBlock data={conversionImprovement} /> : null,
+    productImprovement ? (
+      <SalesProductBlock data={productImprovement} sectionNumber={subNumber(1)} />
+    ) : null,
+    customerAcquisition ? (
+      <SalesAcquisitionBlock data={customerAcquisition} sectionNumber={subNumber(2)} />
+    ) : null,
+    conversionImprovement ? (
+      <SalesConversionBlock data={conversionImprovement} sectionNumber={subNumber(3)} />
+    ) : null,
   ].filter(Boolean);
 
   if (blocks.length === 0) return null;

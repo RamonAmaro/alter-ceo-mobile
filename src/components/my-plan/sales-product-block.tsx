@@ -7,6 +7,7 @@ import { StyleSheet, View } from "react-native";
 
 interface SalesProductBlockProps {
   data: PlanProductImprovement;
+  sectionNumber?: string;
 }
 
 interface DiffRowProps {
@@ -28,7 +29,7 @@ function DiffRow({ label, value }: DiffRowProps) {
   );
 }
 
-export function SalesProductBlock({ data }: SalesProductBlockProps) {
+export function SalesProductBlock({ data, sectionNumber }: SalesProductBlockProps) {
   const explanatory = data.texto_explicativo?.trim();
   const clientDiag = data.diagnostico_cliente_objetivo?.trim();
   const messageGap = data.brecha_mensaje_mercado?.trim();
@@ -48,7 +49,7 @@ export function SalesProductBlock({ data }: SalesProductBlockProps) {
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.indexBadge}>
-          <ThemedText style={styles.indexLabel}>01</ThemedText>
+          <ThemedText style={styles.indexLabel}>{sectionNumber ?? "01"}</ThemedText>
         </View>
         <ThemedText style={styles.title}>Mejorar producto o servicio</ThemedText>
       </View>
@@ -77,7 +78,7 @@ export function SalesProductBlock({ data }: SalesProductBlockProps) {
           <BlockSubHeader label="Propuestas de mejora" />
           <View style={styles.proposals}>
             {proposals.map((p, i) => (
-              <ProposalCard key={`prop-${i}`} index={i + 1} item={p} />
+              <ProposalCard key={`prop-${i}`} item={p} />
             ))}
           </View>
         </View>
@@ -97,8 +98,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   indexBadge: {
-    width: 28,
-    height: 28,
+    minWidth: 28,
+    height: 22,
+    paddingHorizontal: 6,
     borderRadius: 8,
     backgroundColor: "rgba(0,255,132,0.10)",
     borderWidth: 1,
@@ -108,10 +110,11 @@ const styles = StyleSheet.create({
   },
   indexLabel: {
     fontFamily: Fonts.montserratExtraBold,
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 14,
     color: SemanticColors.success,
     letterSpacing: -0.2,
+    fontVariant: ["tabular-nums"],
   },
   title: {
     flex: 1,
