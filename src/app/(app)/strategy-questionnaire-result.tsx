@@ -743,12 +743,15 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
       <TextSection sectionNumber="6" title="Próximos pasos" eyebrow="Cómo empezar">
         <TextBlock text={report.proximos_pasos.texto} />
         <View style={styles.pasosList}>
-          {report.proximos_pasos.pasos.map((paso, index) => (
-            <View key={`paso-${index}`} style={styles.pasoItem}>
-              <ThemedText style={styles.pasoIndex}>{`6.${index + 1}`}</ThemedText>
-              <ThemedText style={styles.pasoText}>{paso}</ThemedText>
-            </View>
-          ))}
+          {report.proximos_pasos.pasos
+            .map((paso, index) => ({ paso: paso?.trim(), index }))
+            .filter((entry) => Boolean(entry.paso))
+            .map(({ paso, index }, displayIndex) => (
+              <View key={`paso-${index}`} style={styles.pasoItem}>
+                <ThemedText style={styles.pasoIndex}>{`6.${displayIndex + 1}`}</ThemedText>
+                <ThemedText style={styles.pasoText}>{paso}</ThemedText>
+              </View>
+            ))}
         </View>
       </TextSection>
     </>
