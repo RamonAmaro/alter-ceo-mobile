@@ -37,8 +37,8 @@ export const STRATEGY_CATALOG: readonly StrategyCatalogEntry[] = [
     title: "Test de Mentalidad",
     shortTitle: "MENTALIDAD",
     iconName: "bulb-outline",
-    reportType: null,
-    available: false,
+    reportType: "mentalidad_empresarial",
+    available: true,
   },
   {
     key: "analisis_competencia",
