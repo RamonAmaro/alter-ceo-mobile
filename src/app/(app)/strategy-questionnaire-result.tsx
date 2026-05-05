@@ -9,7 +9,6 @@ import { AppBackground } from "@/components/app-background";
 import { Button } from "@/components/button";
 import { FooterActionBar } from "@/components/footer-action-bar";
 import { BlockSubHeader } from "@/components/my-plan/block-sub-header";
-import { SectionHeader } from "@/components/my-plan/section-header";
 import { SectionBlock } from "@/components/my-plan/section-layout";
 import { ResponsiveContainer } from "@/components/responsive-container";
 import { ScreenHeader } from "@/components/screen-header";
@@ -77,16 +76,26 @@ function formatCurrency(amount: number): string {
 function SectionCard({
   title,
   eyebrow,
+  sectionNumber,
   children,
 }: {
   title: string;
   eyebrow?: string;
+  sectionNumber?: string;
   children: ReactNode;
 }) {
   return (
     <SectionBlock>
-      <SectionHeader title={title} eyebrow={eyebrow} />
-      <View style={styles.sectionBody}>{children}</View>
+      <View style={styles.textSectionHeader}>
+        {eyebrow ? <ThemedText style={styles.textSectionEyebrow}>{eyebrow}</ThemedText> : null}
+        <ThemedText style={styles.textSectionTitle}>
+          {sectionNumber ? (
+            <ThemedText style={styles.textSectionNumber}>{sectionNumber}. </ThemedText>
+          ) : null}
+          {title}
+        </ThemedText>
+      </View>
+      <View style={styles.textSectionBody}>{children}</View>
     </SectionBlock>
   );
 }
@@ -94,17 +103,24 @@ function SectionCard({
 function TextSection({
   title,
   eyebrow,
+  sectionNumber,
   children,
 }: {
   title: string;
   eyebrow?: string;
+  sectionNumber?: string;
   children: ReactNode;
 }) {
   return (
     <SectionBlock>
       <View style={styles.textSectionHeader}>
         {eyebrow ? <ThemedText style={styles.textSectionEyebrow}>{eyebrow}</ThemedText> : null}
-        <ThemedText style={styles.textSectionTitle}>{title}</ThemedText>
+        <ThemedText style={styles.textSectionTitle}>
+          {sectionNumber ? (
+            <ThemedText style={styles.textSectionNumber}>{sectionNumber}. </ThemedText>
+          ) : null}
+          {title}
+        </ThemedText>
       </View>
       <View style={styles.textSectionBody}>{children}</View>
     </SectionBlock>
@@ -138,14 +154,12 @@ function TextBlock({ text }: { text: string }) {
 function KeyValueList({ items }: { items: KeyValueItem[] }) {
   return (
     <View style={styles.list}>
-      {items.map((item, index) => (
+      {items.map((item) => (
         <View key={item.label} style={styles.listItem}>
           <ThemedText style={styles.listBullet}>–</ThemedText>
           <View style={styles.listCopy}>
             <ThemedText style={styles.listLabel}>{item.label}</ThemedText>
-            <ThemedText style={[styles.listValue, index === 0 && styles.listValueLead]}>
-              {item.value}
-            </ThemedText>
+            <ThemedText style={styles.listValue}>{item.value}</ThemedText>
           </View>
         </View>
       ))}
@@ -157,13 +171,11 @@ function InsightList({ items }: { items: KeyValueItem[] }) {
   return (
     <View style={styles.insightList}>
       {items.map((item, index) => (
-        <View key={item.label} style={[styles.insightRow, index === 0 && styles.insightRowLead]}>
+        <View key={item.label || `insight-${index}`} style={styles.insightRow}>
           <ThemedText style={styles.insightIndex}>{String(index + 1).padStart(2, "0")}</ThemedText>
           <View style={styles.insightCopy}>
-            <ThemedText style={styles.insightLabel}>{item.label}</ThemedText>
-            <ThemedText style={[styles.insightValue, index === 0 && styles.insightValueLead]}>
-              {item.value}
-            </ThemedText>
+            {item.label ? <ThemedText style={styles.insightLabel}>{item.label}</ThemedText> : null}
+            <ThemedText style={styles.insightValue}>{item.value}</ThemedText>
           </View>
         </View>
       ))}
@@ -461,7 +473,6 @@ function PlanDeAccionPanel({ plan }: { plan: PlanDeAccionSection }) {
               </ThemedText>
             </View>
             <View style={styles.planAccionSemanaCopy}>
-              <ThemedText style={styles.planAccionSemanaTitle}>{semana.semana}</ThemedText>
               <ThemedText style={styles.planAccionSemanaFoco}>{semana.foco_principal}</ThemedText>
             </View>
           </View>
@@ -555,34 +566,37 @@ function BudgetPanel({
 function ProposalCard({
   proposal,
   isMobile,
+  sectionNumber,
 }: {
   proposal: PropuestaDeCaptacionEn5Fases;
   isMobile: boolean;
+  sectionNumber?: string;
 }) {
   const phaseTwo = proposal.fase_2_grandes_densidades;
   const phaseThree = proposal.fase_3_sistema_de_captacion_de_contactos;
   const phaseFour = proposal.fase_4_venta_adicional_y_consumo_futuro;
   const phaseFive = proposal.fase_5_limitacion_estrategica;
 
+  const subSection = (n: number): string => (sectionNumber ? `${sectionNumber}.${n}` : String(n));
+
   return (
     <View style={styles.proposalCard}>
       <View style={styles.proposalHero}>
         <ThemedText style={styles.proposalMonumental}>
-          {String(proposal.numero).padStart(2, "0")}
+          {sectionNumber ?? String(proposal.numero).padStart(2, "0")}
         </ThemedText>
         <View style={styles.proposalHeroCopy}>
-          <ThemedText style={styles.proposalEyebrow}>PROPUESTA {proposal.numero}</ThemedText>
           <ThemedText style={styles.proposalTitle}>{proposal.titulo}</ThemedText>
         </View>
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="FASE 1 · OFERTA IRRESISTIBLE" />
+        <BlockSubHeader label={`${subSection(1)} · FASE 1 · OFERTA IRRESISTIBLE`} />
         <KeyValueList items={phaseOneItems(proposal.fase_1_oferta_irresistible)} />
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="FASE 2 · GRANDES DENSIDADES" />
+        <BlockSubHeader label={`${subSection(2)} · FASE 2 · GRANDES DENSIDADES`} />
         <TextBlock text={phaseTwo.explicacion_educativa} />
 
         <View style={[styles.densityGrid, !isMobile && styles.densityGridDesktop]}>
@@ -605,12 +619,12 @@ function ProposalCard({
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="FASE 3 · SISTEMA DE CAPTACIÓN DE CONTACTOS" />
+        <BlockSubHeader label={`${subSection(3)} · FASE 3 · SISTEMA DE CAPTACIÓN DE CONTACTOS`} />
         <KeyValueList items={phaseThreeItems(phaseThree)} />
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="FASE 4 · VENTA ADICIONAL Y CONSUMO FUTURO" />
+        <BlockSubHeader label={`${subSection(4)} · FASE 4 · VENTA ADICIONAL Y CONSUMO FUTURO`} />
         <View style={styles.subBlock}>
           <ThemedText style={styles.subBlockTitle}>Venta adicional</ThemedText>
           <KeyValueList items={ventaAdicionalItems(phaseFour.venta_adicional)} />
@@ -622,7 +636,7 @@ function ProposalCard({
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="FASE 5 · LIMITACIÓN ESTRATÉGICA" />
+        <BlockSubHeader label={`${subSection(5)} · FASE 5 · LIMITACIÓN ESTRATÉGICA`} />
         {phaseFive.limitaciones.map((limitacion, limitIndex) => (
           <View key={`limitacion-${limitIndex}`} style={styles.limitacionCard}>
             <View style={styles.limitacionHeader}>
@@ -639,17 +653,17 @@ function ProposalCard({
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="COSTES DE LA ESTRATEGIA" />
+        <BlockSubHeader label={`${subSection(6)} · COSTES DE LA ESTRATEGIA`} />
         <CostesPanel costes={proposal.costes_de_la_estrategia} />
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="RETORNO DE LA ESTRATEGIA" />
+        <BlockSubHeader label={`${subSection(7)} · RETORNO DE LA ESTRATEGIA`} />
         <RetornoPanel retorno={proposal.retorno_de_la_estrategia} />
       </View>
 
       <View style={styles.phaseSection}>
-        <BlockSubHeader label="PLAN DE ACCIÓN" />
+        <BlockSubHeader label={`${subSection(8)} · PLAN DE ACCIÓN`} />
         <PlanDeAccionPanel plan={proposal.plan_de_accion} />
       </View>
     </View>
@@ -677,32 +691,45 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
     <>
       <HeroCard report={report} isMobile={isMobile} />
 
-      <TextSection title="Base estratégica" eyebrow="Por qué este enfoque">
+      <TextSection sectionNumber="2" title="Base estratégica" eyebrow="Por qué este enfoque">
         <TextBlock text={report.base_estrategica.explicacion} />
       </TextSection>
 
-      <TextSection title="Diagnóstico de situación actual" eyebrow="Lectura de negocio">
+      <TextSection
+        sectionNumber="3"
+        title="Diagnóstico de situación actual"
+        eyebrow="Lectura de negocio"
+      >
         <TextBlock text={report.diagnostico_de_situacion_actual.como_estas_en_este_momento} />
         <InsightList items={diagnosticoClavesItems(report.diagnostico_de_situacion_actual)} />
       </TextSection>
 
-      <TextSection title="Tu oportunidad de captación" eyebrow="Dónde está el desbloqueo">
+      <TextSection
+        sectionNumber="4"
+        title="Tu oportunidad de captación"
+        eyebrow="Dónde está el desbloqueo"
+      >
         <InsightList items={oportunidadItems(report.tu_oportunidad_de_captacion)} />
       </TextSection>
 
-      <TextSection title="Estrategia de captación en 5 fases" eyebrow="Arquitectura general">
+      <TextSection
+        sectionNumber="5"
+        title="Estrategia de captación en 5 fases"
+        eyebrow="Arquitectura general"
+      >
         <TextBlock text={report.estrategia_de_captacion_en_5_fases.explicacion_educativa} />
       </TextSection>
 
-      {report.estrategia_de_captacion_en_5_fases.propuestas.map((proposal) => (
+      {report.estrategia_de_captacion_en_5_fases.propuestas.map((proposal, index) => (
         <ProposalCard
           key={`propuesta-${proposal.numero}`}
           proposal={proposal}
           isMobile={isMobile}
+          sectionNumber={`5.${index + 1}`}
         />
       ))}
 
-      <TextSection title="Próximos pasos" eyebrow="Cómo empezar">
+      <TextSection sectionNumber="6" title="Próximos pasos" eyebrow="Cómo empezar">
         <TextBlock text={report.proximos_pasos.texto} />
         <View style={styles.pasosList}>
           {report.proximos_pasos.pasos.map((paso, index) => (
@@ -717,15 +744,23 @@ function renderReport(report: Captacion5FasesReport, isMobile: boolean) {
   );
 }
 
-function ValueIdeaCard({ proposal, index }: { proposal: ValueIdeaProposal; index: number }) {
+function ValueIdeaCard({
+  proposal,
+  index,
+  sectionNumber,
+}: {
+  proposal: ValueIdeaProposal;
+  index: number;
+  sectionNumber?: string;
+}) {
   const palancaLabel = humanizeKey(proposal.palanca_evaluada);
-  const indexLabel = String(index + 1).padStart(2, "0");
+  const badgeLabel = sectionNumber ?? String(index + 1).padStart(2, "0");
 
   return (
     <View style={styles.ideaCard}>
       <View style={styles.ideaHeader}>
         <View style={styles.ideaIndexBadge}>
-          <ThemedText style={styles.ideaIndexText}>{indexLabel}</ThemedText>
+          <ThemedText style={styles.ideaIndexText}>{badgeLabel}</ThemedText>
         </View>
         <View style={styles.ideaHeaderCopy}>
           <ThemedText style={styles.ideaPalancaEyebrow}>{palancaLabel}</ThemedText>
@@ -795,55 +830,43 @@ function ScriptBlockCard({
   index,
   eyebrow,
   block,
+  sectionNumber,
 }: {
   index: number;
   eyebrow: string;
   block: SalesScriptBlock;
+  sectionNumber?: string;
 }) {
+  const badgeLabel = sectionNumber ?? String(index + 1).padStart(2, "0");
+  const hasMetrics = block.peso_porcentual !== null || block.palabras_orientativas !== null;
+  const metricChips: string[] = [];
+  if (block.peso_porcentual !== null) metricChips.push(`Peso ${block.peso_porcentual}%`);
+  if (block.palabras_orientativas !== null)
+    metricChips.push(`~${block.palabras_orientativas} palabras`);
+
   return (
     <View style={styles.scriptBlockCard}>
       <View style={styles.scriptBlockHeader}>
         <View style={styles.scriptBlockBadge}>
-          <ThemedText style={styles.scriptBlockBadgeText}>
-            {String(index + 1).padStart(2, "0")}
-          </ThemedText>
+          <ThemedText style={styles.scriptBlockBadgeText}>{badgeLabel}</ThemedText>
         </View>
         <View style={styles.scriptBlockHeaderCopy}>
           <ThemedText style={styles.scriptBlockEyebrow}>{eyebrow}</ThemedText>
           <ThemedText style={styles.scriptBlockTitle}>{block.titulo}</ThemedText>
+          {hasMetrics ? (
+            <ThemedText style={styles.scriptBlockMetricsInline}>
+              {metricChips.join(" · ")}
+            </ThemedText>
+          ) : null}
         </View>
       </View>
 
-      {(block.peso_porcentual !== null || block.palabras_orientativas !== null) && (
-        <View style={styles.scriptBlockMetrics}>
-          {block.peso_porcentual !== null && (
-            <View style={styles.scriptBlockMetric}>
-              <ThemedText style={styles.scriptBlockMetricLabel}>PESO</ThemedText>
-              <ThemedText style={styles.scriptBlockMetricValue}>
-                {block.peso_porcentual}%
-              </ThemedText>
-            </View>
-          )}
-          {block.palabras_orientativas !== null && (
-            <View style={styles.scriptBlockMetric}>
-              <ThemedText style={styles.scriptBlockMetricLabel}>PALABRAS</ThemedText>
-              <ThemedText style={styles.scriptBlockMetricValue}>
-                ~{block.palabras_orientativas}
-              </ThemedText>
-            </View>
-          )}
-        </View>
-      )}
-
-      <View style={styles.scriptQuotePanel}>
-        <ThemedText style={styles.scriptQuoteLabel}>Texto del guion</ThemedText>
+      <View style={styles.scriptQuoteRow}>
+        <View style={styles.scriptQuoteAccent} />
         <ThemedText style={styles.scriptQuoteText}>“{block.texto_guion}”</ThemedText>
       </View>
 
-      <View style={styles.scriptNotesPanel}>
-        <ThemedText style={styles.scriptNotesLabel}>Notas de uso</ThemedText>
-        <ThemedText style={styles.scriptNotesText}>{block.notas_de_uso}</ThemedText>
-      </View>
+      <ThemedText style={styles.scriptNotesText}>{block.notas_de_uso}</ThemedText>
     </View>
   );
 }
@@ -865,11 +888,11 @@ export function renderSalesScriptReport(report: SalesScriptReport, isMobile: boo
         <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
       </View>
 
-      <TextSection title="Base estratégica" eyebrow="Por qué este enfoque">
+      <TextSection sectionNumber="2" title="Base estratégica" eyebrow="Por qué este enfoque">
         <TextBlock text={report.base_estrategica.texto} />
       </TextSection>
 
-      <TextSection title="Guion optimizado de ventas" eyebrow="Cómo leerlo">
+      <TextSection sectionNumber="3" title="Guion optimizado de ventas" eyebrow="Cómo leerlo">
         <TextBlock text={report.guion_optimizado_de_ventas.texto_introductorio_del_guion} />
       </TextSection>
 
@@ -878,20 +901,21 @@ export function renderSalesScriptReport(report: SalesScriptReport, isMobile: boo
           <ScriptBlockCard
             key={entry.key}
             index={index}
+            sectionNumber={`3.${index + 1}`}
             eyebrow={entry.label}
             block={developed[entry.key]}
           />
         ))}
       </View>
 
-      <TextSection title="Uso y particularidades" eyebrow="Cómo aplicarlo">
+      <TextSection sectionNumber="4" title="Uso y particularidades" eyebrow="Cómo aplicarlo">
         <TextBlock text={report.uso_y_particularidades.texto} />
       </TextSection>
     </>
   );
 }
 
-export function renderValueIdeasReport(report: ValueIdeasReport) {
+export function renderValueIdeasReport(report: ValueIdeasReport, isMobile: boolean) {
   return (
     <>
       <View style={styles.heroBlock}>
@@ -900,25 +924,30 @@ export function renderValueIdeasReport(report: ValueIdeasReport) {
           <View style={styles.heroDot} />
           <ThemedText style={styles.heroEyebrow}>Informe listo</ThemedText>
         </View>
-        <ThemedText style={styles.heroTitle}>
+        <ThemedText style={[styles.heroTitle, isMobile && styles.heroTitleMobile]}>
           Pequeñas palancas que elevan tu valor percibido.
         </ThemedText>
         <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
       </View>
 
-      <SectionCard title="Propuestas de micro-diferenciación" eyebrow="Ideas para aplicar">
+      <SectionCard
+        sectionNumber="2"
+        title="Propuestas de micro-diferenciación"
+        eyebrow="Ideas para aplicar"
+      >
         <View style={styles.ideasList}>
           {report.propuestas_micro_diferenciacion.map((proposal, index) => (
             <ValueIdeaCard
               key={`${proposal.palanca_evaluada}-${index}`}
               proposal={proposal}
               index={index}
+              sectionNumber={`2.${index + 1}`}
             />
           ))}
         </View>
       </SectionCard>
 
-      <TextSection title="Puesta en marcha" eyebrow="Próximos pasos">
+      <TextSection sectionNumber="3" title="Puesta en marcha" eyebrow="Próximos pasos">
         <TextBlock text={report.puesta_en_marcha.texto} />
       </TextSection>
     </>
@@ -975,10 +1004,7 @@ function MindsetRecommendationList({
     <View style={styles.mindsetRecommendationGroup}>
       <ThemedText style={styles.mindsetRecommendationTitle}>{title}</ThemedText>
       <InsightList
-        items={recommendations.map((recommendation, index) => ({
-          label: `Recomendación ${index + 1}`,
-          value: recommendation,
-        }))}
+        items={recommendations.map((recommendation) => ({ label: "", value: recommendation }))}
       />
     </View>
   );
@@ -1002,7 +1028,7 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
         <ThemedText style={styles.heroBody}>{report.introduccion.texto}</ThemedText>
       </View>
 
-      <SectionCard title="Resultado global" eyebrow="Mentalidad empresarial">
+      <SectionCard sectionNumber="1" title="Resultado global" eyebrow="Mentalidad empresarial">
         <MindsetGlobalScoreCard score={global.score} level={global.level} />
         <View style={styles.mindsetCategoryHighlightsRow}>
           <MindsetCategoryHighlight
@@ -1019,7 +1045,11 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
         <TextBlock text={global.analysis} />
       </SectionCard>
 
-      <SectionCard title="Radiografía del perfil" eyebrow="Diagnóstico por categoría">
+      <SectionCard
+        sectionNumber="2"
+        title="Radiografía del perfil"
+        eyebrow="Diagnóstico por categoría"
+      >
         <View style={styles.mindsetCategoryList}>
           {BUSINESS_MINDSET_CATEGORIES.map((category) => {
             const diagnosis = report.radiografia_del_perfil[category];
@@ -1043,7 +1073,11 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
         </View>
       </SectionCard>
 
-      <SectionCard title="Recomendaciones de mejora" eyebrow="Tres acciones por área">
+      <SectionCard
+        sectionNumber="3"
+        title="Recomendaciones de mejora"
+        eyebrow="Tres acciones por área"
+      >
         <View style={styles.mindsetRecommendations}>
           {BUSINESS_MINDSET_CATEGORIES.map((category) => (
             <MindsetRecommendationList
@@ -1055,7 +1089,7 @@ export function renderBusinessMindsetReport(report: BusinessMindsetReport, isMob
         </View>
       </SectionCard>
 
-      <TextSection title="Conclusiones finales" eyebrow="Lectura ejecutiva">
+      <TextSection sectionNumber="4" title="Conclusiones finales" eyebrow="Lectura ejecutiva">
         <KeyValueList
           items={[
             {
@@ -1138,7 +1172,7 @@ function renderGeneratedStrategyReport({
     return renderReport(generatedReport as unknown as Captacion5FasesReport, isMobile);
   }
   if (reportType === "value_ideas") {
-    return renderValueIdeasReport(generatedReport as unknown as ValueIdeasReport);
+    return renderValueIdeasReport(generatedReport as unknown as ValueIdeasReport, isMobile);
   }
   if (reportType === "guion_ventas") {
     return renderSalesScriptReport(generatedReport as unknown as SalesScriptReport, isMobile);
@@ -1209,7 +1243,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.three,
-    gap: Spacing.four,
+    gap: Spacing.two,
   },
   heroBlock: {
     gap: Spacing.two,
@@ -1278,15 +1312,17 @@ const styles = StyleSheet.create({
     color: SemanticColors.textPrimary,
     letterSpacing: -0.2,
   },
+  textSectionNumber: {
+    fontFamily: Fonts.montserratExtraBold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: SemanticColors.success,
+    letterSpacing: -0.2,
+  },
   textSectionBody: {
     paddingHorizontal: Spacing.one,
     paddingTop: Spacing.two,
     gap: Spacing.two,
-  },
-  sectionBody: {
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.three,
   },
   paragraph: {
     fontFamily: Fonts.montserratMedium,
@@ -1328,12 +1364,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: "rgba(255,255,255,0.88)",
   },
-  listValueLead: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 16,
-    lineHeight: 24,
-    color: SemanticColors.textPrimary,
-  },
   insightList: {
     gap: Spacing.three,
   },
@@ -1344,10 +1374,6 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.three,
     borderLeftWidth: 2,
     borderLeftColor: "rgba(255,255,255,0.06)",
-  },
-  insightRowLead: {
-    borderLeftColor: SemanticColors.success,
-    paddingVertical: Spacing.one,
   },
   insightIndex: {
     fontFamily: Fonts.octosquaresBlack,
@@ -1375,12 +1401,6 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     color: "rgba(255,255,255,0.88)",
   },
-  insightValueLead: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 17,
-    lineHeight: 26,
-    color: SemanticColors.textPrimary,
-  },
   mindsetGlobalCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -1388,7 +1408,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.32)",
     backgroundColor: "rgba(0,255,132,0.08)",
   },
   mindsetGlobalCardLeft: {
@@ -1435,7 +1455,7 @@ const styles = StyleSheet.create({
     flexBasis: 160,
     gap: 6,
     padding: Spacing.three,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(255,255,255,0.03)",
@@ -1466,9 +1486,9 @@ const styles = StyleSheet.create({
   mindsetCategoryCard: {
     gap: Spacing.two,
     padding: Spacing.three,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.12)",
+    borderColor: "rgba(0,255,132,0.16)",
     backgroundColor: "rgba(255,255,255,0.025)",
   },
   mindsetCategoryHeader: {
@@ -1538,13 +1558,6 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  proposalEyebrow: {
-    fontFamily: Fonts.montserratBold,
-    fontSize: 11,
-    lineHeight: 14,
-    color: SemanticColors.success,
-    letterSpacing: 1.8,
-  },
   proposalTitle: {
     fontFamily: Fonts.montserratExtraBold,
     fontSize: 22,
@@ -1571,9 +1584,9 @@ const styles = StyleSheet.create({
   },
   densityCard: {
     backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.12)",
+    borderColor: "rgba(0,255,132,0.16)",
     padding: Spacing.three,
     gap: Spacing.two,
   },
@@ -1591,9 +1604,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.12)",
+    backgroundColor: "rgba(0,255,132,0.16)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.32)",
   },
   densityRankText: {
     fontFamily: Fonts.montserratExtraBold,
@@ -1619,9 +1632,9 @@ const styles = StyleSheet.create({
   },
   budgetCard: {
     backgroundColor: "rgba(7,18,16,0.48)",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.12)",
+    borderColor: "rgba(0,255,132,0.16)",
     padding: Spacing.three,
     gap: Spacing.three,
   },
@@ -1763,11 +1776,11 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   ideasList: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   ideaCard: {
     backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(0,255,132,0.18)",
     padding: Spacing.three,
@@ -1779,12 +1792,13 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   ideaIndexBadge: {
-    width: 32,
+    minWidth: 40,
     height: 32,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.12)",
+    backgroundColor: "rgba(0,255,132,0.16)",
     borderWidth: 1,
     borderColor: "rgba(0,255,132,0.32)",
   },
@@ -1834,7 +1848,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.14)",
+    borderColor: "rgba(0,255,132,0.16)",
     padding: Spacing.three,
     gap: Spacing.two,
   },
@@ -1849,9 +1863,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.12)",
+    backgroundColor: "rgba(0,255,132,0.16)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.32)",
   },
   limitacionBadgeText: {
     fontFamily: Fonts.montserratExtraBold,
@@ -1878,7 +1892,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.32)",
     backgroundColor: "rgba(0,255,132,0.06)",
   },
   costesTotalLabel: {
@@ -2021,7 +2035,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: "rgba(0,255,132,0.10)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.32)",
   },
   planAccionDurationLabel: {
     fontFamily: Fonts.montserratSemiBold,
@@ -2040,7 +2054,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.14)",
+    borderColor: "rgba(0,255,132,0.16)",
     padding: Spacing.three,
     gap: Spacing.two,
   },
@@ -2055,9 +2069,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.12)",
+    backgroundColor: "rgba(0,255,132,0.16)",
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.28)",
+    borderColor: "rgba(0,255,132,0.32)",
   },
   planAccionSemanaBadgeText: {
     fontFamily: Fonts.montserratExtraBold,
@@ -2069,17 +2083,11 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  planAccionSemanaTitle: {
+  planAccionSemanaFoco: {
     fontFamily: Fonts.montserratBold,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 20,
     color: SemanticColors.textPrimary,
-  },
-  planAccionSemanaFoco: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 12,
-    lineHeight: 16,
-    color: "rgba(255,255,255,0.65)",
   },
   pasosList: {
     gap: Spacing.three,
@@ -2109,28 +2117,30 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.88)",
   },
   scriptBlocksList: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   scriptBlockCard: {
     backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.18)",
-    padding: Spacing.three,
-    gap: Spacing.three,
+    borderColor: "rgba(0,255,132,0.16)",
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    gap: Spacing.two,
   },
   scriptBlockHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: Spacing.two,
   },
   scriptBlockBadge: {
-    width: 36,
+    minWidth: 44,
     height: 36,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,255,132,0.12)",
+    backgroundColor: "rgba(0,255,132,0.16)",
     borderWidth: 1,
     borderColor: "rgba(0,255,132,0.32)",
   },
@@ -2158,72 +2168,36 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: SemanticColors.textPrimary,
   },
-  scriptBlockMetrics: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.two,
-  },
-  scriptBlockMetric: {
-    flexGrow: 0,
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    gap: 2,
-  },
-  scriptBlockMetricLabel: {
+  scriptBlockMetricsInline: {
     fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 13,
-    color: "rgba(255,255,255,0.55)",
-    letterSpacing: 1.4,
-  },
-  scriptBlockMetricValue: {
-    fontFamily: Fonts.montserratExtraBold,
-    fontSize: 15,
-    lineHeight: 18,
-    color: SemanticColors.textPrimary,
-  },
-  scriptQuotePanel: {
-    backgroundColor: "rgba(14, 35, 30, 0.58)",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(0,255,132,0.18)",
-    padding: Spacing.three,
-    gap: Spacing.one,
-  },
-  scriptQuoteLabel: {
-    fontFamily: Fonts.montserratSemiBold,
-    fontSize: 10,
-    lineHeight: 13,
-    color: SemanticColors.success,
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
-  },
-  scriptQuoteText: {
-    fontFamily: Fonts.montserratMedium,
-    fontSize: 15,
-    lineHeight: 24,
-    color: SemanticColors.textPrimary,
-    fontStyle: "italic",
-  },
-  scriptNotesPanel: {
-    gap: 4,
-  },
-  scriptNotesLabel: {
-    fontFamily: Fonts.montserratBold,
     fontSize: 11,
     lineHeight: 14,
     color: "rgba(255,255,255,0.55)",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginTop: 2,
+  },
+  scriptQuoteRow: {
+    flexDirection: "row",
+    gap: Spacing.two,
+    paddingLeft: Spacing.one,
+  },
+  scriptQuoteAccent: {
+    width: 2,
+    borderRadius: 2,
+    backgroundColor: SemanticColors.success,
+  },
+  scriptQuoteText: {
+    flex: 1,
+    fontFamily: Fonts.montserratMedium,
+    fontSize: 14,
+    lineHeight: 22,
+    color: "rgba(255,255,255,0.92)",
+    fontStyle: "italic",
   },
   scriptNotesText: {
     fontFamily: Fonts.montserratMedium,
     fontSize: 13,
     lineHeight: 20,
-    color: "rgba(255,255,255,0.78)",
+    color: "rgba(255,255,255,0.65)",
   },
 });

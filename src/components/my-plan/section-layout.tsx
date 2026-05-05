@@ -2,7 +2,7 @@ import { Spacing } from "@/constants/theme";
 import type { ReactNode } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
-const SECTION_GAP = Platform.OS === "web" ? Spacing.six : Spacing.five;
+const SECTION_GAP = Platform.OS === "web" ? Spacing.four : Spacing.three;
 
 export function SectionBlock({ children }: { children: ReactNode }) {
   return <View style={styles.block}>{children}</View>;

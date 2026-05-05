@@ -1,6 +1,7 @@
 import {
   getStepIndexForStrategyReportStage,
   getStepIndexForStrategyReportStep,
+  getStrategyReportSteps,
   type StrategyReportStage,
 } from "@/constants/strategy-report-loading-steps";
 import {
@@ -73,12 +74,14 @@ export function useStrategyReportGeneration(): StrategyReportGenerationState {
   }, []);
 
   function advanceToStage(stage: StrategyReportStage): void {
-    const nextIndex = getStepIndexForStrategyReportStage(stage);
+    const steps = getStrategyReportSteps(reportTypeRef.current);
+    const nextIndex = getStepIndexForStrategyReportStage(stage, steps);
     setStepIndex((prev) => Math.max(prev, nextIndex));
   }
 
   function advanceToReportStep(stepId: string): void {
-    const nextIndex = getStepIndexForStrategyReportStep(stepId);
+    const steps = getStrategyReportSteps(reportTypeRef.current);
+    const nextIndex = getStepIndexForStrategyReportStep(stepId, steps);
     if (nextIndex === null) return;
     setStepIndex((prev) => Math.max(prev, nextIndex));
   }

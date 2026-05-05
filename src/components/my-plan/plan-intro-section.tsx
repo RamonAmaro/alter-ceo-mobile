@@ -5,15 +5,20 @@ import { StyleSheet, View } from "react-native";
 
 interface PlanIntroSectionProps {
   introduction?: string;
+  sectionNumber?: string;
 }
 
-export function PlanIntroSection({ introduction }: PlanIntroSectionProps) {
+export function PlanIntroSection({ introduction, sectionNumber }: PlanIntroSectionProps) {
   const trimmed = introduction?.trim();
   if (!trimmed) return null;
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="RESUMEN · DEL NEGOCIO" title="Tu negocio hoy" />
+      <SectionHeader
+        eyebrow="RESUMEN · DEL NEGOCIO"
+        title="Tu negocio hoy"
+        sectionNumber={sectionNumber}
+      />
       <ThemedText style={styles.intro}>{trimmed}</ThemedText>
     </View>
   );

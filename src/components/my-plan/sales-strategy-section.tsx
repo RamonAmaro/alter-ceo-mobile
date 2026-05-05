@@ -15,12 +15,14 @@ interface SalesStrategySectionProps {
   productImprovement?: PlanProductImprovement | null;
   customerAcquisition?: PlanCustomerAcquisition | null;
   conversionImprovement?: PlanConversionImprovement | null;
+  sectionNumber?: string;
 }
 
 export function SalesStrategySection({
   productImprovement,
   customerAcquisition,
   conversionImprovement,
+  sectionNumber,
 }: SalesStrategySectionProps) {
   const blocks = [
     productImprovement ? <SalesProductBlock data={productImprovement} /> : null,
@@ -32,7 +34,11 @@ export function SalesStrategySection({
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="ESTRATEGIA · DE CRECIMIENTO" title="Plan para duplicar ventas" />
+      <SectionHeader
+        eyebrow="ESTRATEGIA · DE CRECIMIENTO"
+        title="Plan para duplicar ventas"
+        sectionNumber={sectionNumber}
+      />
 
       {blocks.map((block, i) => (
         <Fragment key={i}>

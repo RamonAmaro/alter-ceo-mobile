@@ -16,9 +16,10 @@ const AREA_CONFIG: { key: keyof PlanAreaAnalysis; label: string }[] = [
 
 interface AreaAnalysisSectionProps {
   areas: PlanAreaAnalysis;
+  sectionNumber?: string;
 }
 
-export function AreaAnalysisSection({ areas }: AreaAnalysisSectionProps) {
+export function AreaAnalysisSection({ areas, sectionNumber }: AreaAnalysisSectionProps) {
   const items = AREA_CONFIG.map(({ key, label }) => {
     const raw = areas[key];
     const value = raw?.trim();
@@ -31,7 +32,11 @@ export function AreaAnalysisSection({ areas }: AreaAnalysisSectionProps) {
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="CARTOGRAFÍA · ÁREAS" title="Análisis por áreas" />
+      <SectionHeader
+        eyebrow="CARTOGRAFÍA · ÁREAS"
+        title="Análisis por áreas"
+        sectionNumber={sectionNumber}
+      />
 
       <View style={styles.list}>
         {items.map(({ key, label, value }) => (

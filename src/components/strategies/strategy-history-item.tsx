@@ -1,7 +1,8 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
+import type { StrategyIconLibrary } from "@/components/strategies/strategy-catalog";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 
@@ -10,6 +11,7 @@ export type HistoryItemStatus = "completed" | "processing" | "failed" | "queued"
 interface StrategyHistoryItemProps {
   title: string;
   iconName: string;
+  iconLibrary?: StrategyIconLibrary;
   date: string;
   status: HistoryItemStatus;
   errorMessage?: string | null;
@@ -65,6 +67,7 @@ function statusVisual(status: HistoryItemStatus): StatusVisual {
 export function StrategyHistoryItem({
   title,
   iconName,
+  iconLibrary = "ionicons",
   date,
   status,
   errorMessage,
@@ -90,7 +93,11 @@ export function StrategyHistoryItem({
 
       <View style={styles.mainRow}>
         <View style={styles.iconWrap}>
-          <Ionicons name={iconName as never} size={22} color={SemanticColors.success} />
+          {iconLibrary === "feather" ? (
+            <Feather name={iconName as never} size={22} color={SemanticColors.success} />
+          ) : (
+            <Ionicons name={iconName as never} size={22} color={SemanticColors.success} />
+          )}
         </View>
 
         <View style={styles.body}>

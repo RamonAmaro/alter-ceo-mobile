@@ -5,20 +5,17 @@ import { StrategyTopicSelector } from "@/components/strategy/strategy-topic-sele
 import { ThemedText } from "@/components/themed-text";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SHOW_SCROLL_INDICATOR } from "@/constants/platform";
+import { STRATEGY_INTROS } from "@/constants/strategy-intros";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
-import { useResponsiveLayout } from "@/hooks/use-responsive-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOnboardingStore } from "@/stores/onboarding-store";
-import { useStrategyReportStore } from "@/stores/strategy-report-store";
 import { router } from "expo-router";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StrategyScreen() {
   const insets = useSafeAreaInsets();
-  const { isMobile } = useResponsiveLayout();
   const userId = useAuthStore((s) => s.user?.userId);
-  const beginDraft = useStrategyReportStore((s) => s.beginDraft);
   const setOpenedFromApp = useOnboardingStore((s) => s.setOpenedFromApp);
 
   function handleSelectTopic(key: StrategyKey): void {
@@ -31,13 +28,17 @@ export default function StrategyScreen() {
     }
 
     const entry = STRATEGY_CATALOG.find((e) => e.key === key);
-    if (!entry?.available || !entry?.reportType) {
+    if (!entry?.available) {
       Alert.alert("Próximamente", "Esta estrategia estará disponible muy pronto.");
       return;
     }
 
-    beginDraft(userId, entry.reportType);
-    router.push("/(app)/strategy-questionnaire");
+    if (!STRATEGY_INTROS[key]) {
+      Alert.alert("Próximamente", "Esta estrategia estará disponible muy pronto.");
+      return;
+    }
+
+    router.push(`/(app)/strategy-intro/${key}`);
   }
 
   return (
@@ -48,7 +49,6 @@ export default function StrategyScreen() {
           icon="bar-chart"
           titlePrefix="Estrategias"
           titleAccent="personalizadas"
-          showBack={isMobile}
         />
 
         <ScrollView

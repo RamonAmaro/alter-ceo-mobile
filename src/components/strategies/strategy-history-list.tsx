@@ -5,7 +5,7 @@ import { Platform, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, SemanticColors, Spacing } from "@/constants/theme";
 
-import { getStrategyByReportType } from "./strategy-catalog";
+import { getStrategyByReportType, type StrategyIconLibrary } from "./strategy-catalog";
 import { StrategyHistoryItem, type HistoryItemStatus } from "./strategy-history-item";
 
 import type { PendingStrategyRun } from "@/stores/strategies-store";
@@ -24,10 +24,18 @@ interface HistoryRow {
   id: string;
   title: string;
   iconName: string;
+  iconLibrary?: StrategyIconLibrary;
   date: string;
+  sortAt: number;
   status: HistoryItemStatus;
   errorMessage?: string | null;
   onPress?: () => void;
+}
+
+function toSortAt(iso: string | null | undefined): number {
+  if (!iso) return 0;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? 0 : t;
 }
 
 function formatHistoryDate(iso: string): string {
@@ -55,6 +63,7 @@ export function StrategyHistoryList({
       title: "Plan de Duplicación",
       iconName: "rocket-outline",
       date: planDate ? formatHistoryDate(planDate) : "—",
+      sortAt: toSortAt(planDate),
       status: "completed",
       onPress: onOpenPlan,
     });
@@ -66,7 +75,9 @@ export function StrategyHistoryList({
       id: `pending:${run.runId}`,
       title: entry?.title ?? run.reportType,
       iconName: entry?.iconName ?? "hourglass-outline",
+      iconLibrary: entry?.iconLibrary,
       date: formatHistoryDate(run.startedAt),
+      sortAt: toSortAt(run.startedAt),
       status:
         run.status === "FAILED" ? "failed" : run.status === "QUEUED" ? "queued" : "processing",
       errorMessage: run.errorMessage,
@@ -79,11 +90,15 @@ export function StrategyHistoryList({
       id: report.report_id,
       title: entry?.title ?? report.report_type,
       iconName: entry?.iconName ?? "document-text-outline",
+      iconLibrary: entry?.iconLibrary,
       date: formatHistoryDate(report.created_at),
+      sortAt: toSortAt(report.created_at),
       status: "completed",
       onPress: () => onOpenReport(report),
     });
   });
+
+  rows.sort((a, b) => b.sortAt - a.sortAt);
 
   if (rows.length === 0) {
     return (
@@ -113,6 +128,7 @@ export function StrategyHistoryList({
           key={row.id}
           title={row.title}
           iconName={row.iconName}
+          iconLibrary={row.iconLibrary}
           date={row.date}
           status={row.status}
           errorMessage={row.errorMessage}

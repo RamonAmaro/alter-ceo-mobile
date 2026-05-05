@@ -5,15 +5,16 @@ import { StyleSheet, View } from "react-native";
 
 interface PlanConclusionProps {
   text?: string;
+  sectionNumber?: string;
 }
 
-export function PlanConclusion({ text }: PlanConclusionProps) {
+export function PlanConclusion({ text, sectionNumber }: PlanConclusionProps) {
   const trimmed = text?.trim();
   if (!trimmed) return null;
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="CIERRE · DEL PLAN" title="Conclusión" />
+      <SectionHeader eyebrow="CIERRE · DEL PLAN" title="Conclusión" sectionNumber={sectionNumber} />
       <ThemedText style={styles.body}>{trimmed}</ThemedText>
     </View>
   );

@@ -5,15 +5,20 @@ import { StyleSheet, View } from "react-native";
 
 interface FirstStepSectionProps {
   message: string;
+  sectionNumber?: string;
 }
 
-export function FirstStepSection({ message }: FirstStepSectionProps) {
+export function FirstStepSection({ message, sectionNumber }: FirstStepSectionProps) {
   const trimmed = message?.trim();
   if (!trimmed) return null;
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="ACCIÓN · INMEDIATA" title="Primer paso para trabajar la mitad" />
+      <SectionHeader
+        eyebrow="ACCIÓN · INMEDIATA"
+        title="Primer paso para trabajar la mitad"
+        sectionNumber={sectionNumber}
+      />
       <ThemedText style={styles.text}>{trimmed}</ThemedText>
     </View>
   );

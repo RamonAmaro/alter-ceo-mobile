@@ -16,7 +16,7 @@ import { SalesStrategySection } from "./sales-strategy-section";
 interface PlanSectionDescriptor {
   readonly key: PlanSectionKey;
   readonly visible: boolean;
-  readonly render: () => React.ReactNode;
+  readonly render: (sectionNumber: string) => React.ReactNode;
 }
 
 interface PlanSectionsListProps {
@@ -38,7 +38,7 @@ export function PlanSectionsList({ plan, flags, onSectionLayout }: PlanSectionsL
           isFirst={index === 0}
           onLayout={onSectionLayout}
         >
-          {descriptor.render()}
+          {descriptor.render(String(index + 1))}
         </PlanSection>
       ))}
     </>
@@ -57,90 +57,99 @@ function buildSectionDescriptors(
     {
       key: "summary",
       visible: flags.summary,
-      render: () => <PlanIntroSection introduction={plan.introduccion_general} />,
+      render: (n) => (
+        <PlanIntroSection introduction={plan.introduccion_general} sectionNumber={n} />
+      ),
     },
     {
       key: "diagnosis",
       visible: flags.diagnosis,
-      render: () => (
+      render: (n) => (
         <DiagnosisSection
           introduction={diagnosis?.mensaje_introduccion}
           summary={diagnosis?.resumen_negocio}
+          sectionNumber={n}
         />
       ),
     },
     {
       key: "indicators",
       visible: flags.indicators,
-      render: () => <IndicatorsSection pillars={diagnosis?.seis_pilares} />,
+      render: (n) => <IndicatorsSection pillars={diagnosis?.seis_pilares} sectionNumber={n} />,
     },
     {
       key: "areas",
       visible: flags.areas,
-      render: () =>
+      render: (n) =>
         diagnosis?.analisis_por_areas ? (
-          <AreaAnalysisSection areas={diagnosis.analisis_por_areas} />
+          <AreaAnalysisSection areas={diagnosis.analisis_por_areas} sectionNumber={n} />
         ) : null,
     },
     {
       key: "blockers",
       visible: flags.blockers,
-      render: () =>
+      render: (n) =>
         diagnosis?.bloqueos_detectados ? (
           <BlockersList
             introduction={diagnosis.introduccion_bloqueos}
             blockers={diagnosis.bloqueos_detectados}
+            sectionNumber={n}
           />
         ) : null,
     },
     {
       key: "opportunities",
       visible: flags.opportunities,
-      render: () =>
+      render: (n) =>
         diagnosis?.oportunidades_mejora ? (
           <OpportunitiesList
             introduction={diagnosis.introduccion_oportunidades}
             opportunities={diagnosis.oportunidades_mejora}
+            sectionNumber={n}
           />
         ) : null,
     },
     {
       key: "strategy",
       visible: flags.strategy,
-      render: () => (
+      render: (n) => (
         <SalesStrategySection
           productImprovement={sales?.mejorar_producto_servicio}
           customerAcquisition={sales?.aumentar_captacion_clientes}
           conversionImprovement={sales?.mejorar_conversion}
+          sectionNumber={n}
         />
       ),
     },
     {
       key: "sales",
       visible: flags.sales,
-      render: () =>
+      render: (n) =>
         sales?.objetivo_facturacion_12_meses ? (
           <SalesSection
             target={sales.objetivo_facturacion_12_meses}
             projectionIntroduction={sales.introduccion_evolucion_ventas}
             monthlyProjection={sales.proyeccion_mensual_euros ?? []}
             immediatePriorities={sales.prioridad_inmediata_30_dias ?? []}
+            sectionNumber={n}
           />
         ) : null,
     },
     {
       key: "firststep",
       visible: flags.firststep,
-      render: () => {
+      render: (n) => {
         const message = leadership?.primer_paso_trabajar_la_mitad?.mensaje;
-        return message ? <FirstStepSection message={message} /> : null;
+        return message ? <FirstStepSection message={message} sectionNumber={n} /> : null;
       },
     },
     {
       key: "conclusion",
       visible: flags.conclusion,
-      render: () =>
-        plan.conclusion_express ? <PlanConclusion text={plan.conclusion_express} /> : null,
+      render: (n) =>
+        plan.conclusion_express ? (
+          <PlanConclusion text={plan.conclusion_express} sectionNumber={n} />
+        ) : null,
     },
   ];
 }

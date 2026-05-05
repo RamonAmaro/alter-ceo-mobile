@@ -8,14 +8,19 @@ import { StyleSheet, View } from "react-native";
 interface DiagnosisSectionProps {
   introduction?: string;
   summary?: PlanBusinessSummary | null;
+  sectionNumber?: string;
 }
 
-export function DiagnosisSection({ introduction, summary }: DiagnosisSectionProps) {
+export function DiagnosisSection({ introduction, summary, sectionNumber }: DiagnosisSectionProps) {
   const trimmedIntro = introduction?.trim();
 
   return (
     <View style={styles.container}>
-      <SectionHeader eyebrow="ESTADO · ACTUAL" title="Diagnóstico estratégico" />
+      <SectionHeader
+        eyebrow="ESTADO · ACTUAL"
+        title="Diagnóstico estratégico"
+        sectionNumber={sectionNumber}
+      />
       {trimmedIntro ? <ThemedText style={styles.intro}>{trimmedIntro}</ThemedText> : null}
       <BusinessSummary summary={summary} />
     </View>
